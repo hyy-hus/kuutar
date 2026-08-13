@@ -15,6 +15,14 @@ use super::{
 use crate::errors::AppError;
 
 /// GET /api/resources
+#[utoipa::path(
+    get,
+    path = "/resources",
+    tag = "Resources",
+    responses(
+        (status = 200, description = "List of active resources", body = [Resource]),
+    )
+)]
 #[tracing::instrument(skip(pool))]
 pub async fn list_resources(State(pool): State<PgPool>) -> Result<Json<Vec<Resource>>, AppError> {
     let resources = db::list_all(&pool).await?;
@@ -22,6 +30,18 @@ pub async fn list_resources(State(pool): State<PgPool>) -> Result<Json<Vec<Resou
 }
 
 /// GET /api/resources/:id
+#[utoipa::path(
+    get,
+    path = "/resources/{id}",
+    tag = "Resources",
+    params(
+        ("id" = Uuid, Path, description = "Resource UUID")
+    ),
+    responses(
+        (status = 200, description = "Resource details", body = Resource),
+        (status = 404, description = "Resource not found")
+    )
+)]
 #[tracing::instrument(skip(pool))]
 pub async fn get_resource(
     State(pool): State<PgPool>,
@@ -32,6 +52,17 @@ pub async fn get_resource(
 }
 
 /// POST /api/resources
+#[utoipa::path(
+    post,
+    path = "/resources",
+    tag = "Resources",
+    request_body = CreateResource,
+    responses(
+        (status = 201, description = "Resource created successfully", body = Resource),
+        (status = 409, description = "Resource name conflict in collection"),
+        (status = 422, description = "Validation error")
+    )
+)]
 #[tracing::instrument(skip(pool))]
 pub async fn create_resource(
     State(pool): State<PgPool>,
@@ -44,6 +75,21 @@ pub async fn create_resource(
 }
 
 /// PATCH /api/resources/:id
+#[utoipa::path(
+    patch,
+    path = "/resources/{id}",
+    tag = "Resources",
+    params(
+        ("id" = Uuid, Path, description = "Resource UUID")
+    ),
+    request_body = UpdateResource,
+    responses(
+        (status = 200, description = "Resource updated successfully", body = Resource),
+        (status = 404, description = "Resource not found"),
+        (status = 409, description = "Resource name conflict"),
+        (status = 422, description = "Validation error")
+    )
+)]
 #[tracing::instrument(skip(pool))]
 pub async fn update_resource(
     State(pool): State<PgPool>,
@@ -57,6 +103,18 @@ pub async fn update_resource(
 }
 
 /// DELETE /api/resources/:id
+#[utoipa::path(
+    delete,
+    path = "/resources/{id}",
+    tag = "Resources",
+    params(
+        ("id" = Uuid, Path, description = "Resource UUID")
+    ),
+    responses(
+        (status = 204, description = "Resource soft-deleted successfully"),
+        (status = 404, description = "Resource not found")
+    )
+)]
 #[tracing::instrument(skip(pool))]
 pub async fn delete_resource(
     State(pool): State<PgPool>,

@@ -3,94 +3,143 @@ use axum::{
     http::{Request, StatusCode, header},
 };
 use http_body_util::BodyExt;
+use kuutar::app;
 use serde_json::{Value, json};
 use sqlx::PgPool;
 use tower::ServiceExt;
 
-use kuutar::app;
-
-#[sqlx::test]
-async fn test_create_and_get_collection_and_resource(pool: PgPool) {
-    let app = app(pool);
-
+/// Helper to create a parent collection for resource tests
+async fn create_test_collection(app: &axum::Router) -> String {
     let req = Request::builder()
         .method("POST")
         .uri("/collections")
-        .header(header::CONTENT_TYPE, mime::APPLICATION_JSON.as_ref())
-        .body(Body::from(json!({ "name": "Test Collection" }).to_string()))
-        .unwrap();
-
-    let response = app.clone().oneshot(req).await.unwrap();
-    assert_eq!(response.status(), StatusCode::CREATED);
-
-    let body = response.into_body().collect().await.unwrap().to_bytes();
-    let collection: Value = serde_json::from_slice(&body).unwrap();
-    let collection_id = collection["id"].as_str().unwrap();
-
-    let req = Request::builder()
-        .method("POST")
-        .uri("/resources")
-        .header(header::CONTENT_TYPE, mime::APPLICATION_JSON.as_ref())
+        .header(header::CONTENT_TYPE, "application/json")
         .body(Body::from(
-            json!({
-                "collection_id": collection_id,
-                "name": "Test Resource"
-            })
-            .to_string(),
+            json!({ "name": "Parent Collection" }).to_string(),
         ))
-        .unwrap();
-
-    let response = app.clone().oneshot(req).await.unwrap();
-    assert_eq!(response.status(), StatusCode::CREATED);
-
-    let body = response.into_body().collect().await.unwrap().to_bytes();
-    let resource: Value = serde_json::from_slice(&body).unwrap();
-    let resource_id = resource["id"].as_str().unwrap();
-
-    let req = Request::builder()
-        .method("GET")
-        .uri(format!("/resources/{}", resource_id))
-        .body(Body::empty())
-        .unwrap();
-
-    let response = app.clone().oneshot(req).await.unwrap();
-    assert_eq!(response.status(), StatusCode::OK);
-}
-
-#[sqlx::test]
-async fn test_duplicate_resource_name_returns_conflict(pool: PgPool) {
-    let app = app(pool);
-
-    let req = Request::builder()
-        .method("POST")
-        .uri("/collections")
-        .header(header::CONTENT_TYPE, mime::APPLICATION_JSON.as_ref())
-        .body(Body::from(json!({ "name": "Col 1" }).to_string()))
         .unwrap();
     let res = app.clone().oneshot(req).await.unwrap();
     let body = res.into_body().collect().await.unwrap().to_bytes();
     let col: Value = serde_json::from_slice(&body).unwrap();
-    let col_id = col["id"].as_str().unwrap();
+    col["id"].as_str().unwrap().to_string()
+}
 
-    let req1 = Request::builder()
+#[sqlx::test]
+async fn test_resources_crud_lifecycle(pool: PgPool) {
+    let app = app(pool);
+    let col_id = create_test_collection(&app).await;
+
+    // 1. LIST RESOURCES
+    let req = Request::builder()
+        .method("GET")
+        .uri("/resources")
+        .body(Body::empty())
+        .unwrap();
+    let res = app.clone().oneshot(req).await.unwrap();
+    assert_eq!(res.status(), StatusCode::OK);
+
+    // 2. CREATE RESOURCE
+    let req = Request::builder()
         .method("POST")
         .uri("/resources")
-        .header(header::CONTENT_TYPE, mime::APPLICATION_JSON.as_ref())
+        .header(header::CONTENT_TYPE, "application/json")
         .body(Body::from(
-            json!({ "collection_id": col_id, "name": "Shared Name" }).to_string(),
+            json!({ "collection_id": col_id, "name": "Widget Alpha" }).to_string(),
         ))
         .unwrap();
-    let res1 = app.clone().oneshot(req1).await.unwrap();
-    assert_eq!(res1.status(), StatusCode::CREATED);
+    let res = app.clone().oneshot(req).await.unwrap();
+    assert_eq!(res.status(), StatusCode::CREATED);
 
-    let req2 = Request::builder()
+    let body = res.into_body().collect().await.unwrap().to_bytes();
+    let resource: Value = serde_json::from_slice(&body).unwrap();
+    let res_id = resource["id"].as_str().unwrap();
+
+    // 3. GET BY ID
+    let req = Request::builder()
+        .method("GET")
+        .uri(format!("/resources/{}", res_id))
+        .body(Body::empty())
+        .unwrap();
+    let res = app.clone().oneshot(req).await.unwrap();
+    assert_eq!(res.status(), StatusCode::OK);
+
+    // 4. PATCH (UPDATE RESOURCE)
+    let req = Request::builder()
+        .method("PATCH")
+        .uri(format!("/resources/{}", res_id))
+        .header(header::CONTENT_TYPE, "application/json")
+        .body(Body::from(json!({ "name": "Widget Beta" }).to_string()))
+        .unwrap();
+    let res = app.clone().oneshot(req).await.unwrap();
+    assert_eq!(res.status(), StatusCode::OK);
+
+    // 5. DELETE (SOFT DELETE)
+    let req = Request::builder()
+        .method("DELETE")
+        .uri(format!("/resources/{}", res_id))
+        .body(Body::empty())
+        .unwrap();
+    let res = app.clone().oneshot(req).await.unwrap();
+    assert_eq!(res.status(), StatusCode::NO_CONTENT);
+
+    // 6. VERIFY SOFT DELETED ITEM RETURNS 404
+    let req = Request::builder()
+        .method("GET")
+        .uri(format!("/resources/{}", res_id))
+        .body(Body::empty())
+        .unwrap();
+    let res = app.clone().oneshot(req).await.unwrap();
+    assert_eq!(res.status(), StatusCode::NOT_FOUND);
+}
+
+#[sqlx::test]
+async fn test_resources_duplicate_conflict_and_validation(pool: PgPool) {
+    let app = app(pool);
+    let col_id = create_test_collection(&app).await;
+
+    // Create Initial Resource
+    let req = Request::builder()
         .method("POST")
         .uri("/resources")
-        .header(header::CONTENT_TYPE, mime::APPLICATION_JSON.as_ref())
+        .header(header::CONTENT_TYPE, "application/json")
         .body(Body::from(
-            json!({ "collection_id": col_id, "name": "Shared Name" }).to_string(),
+            json!({ "collection_id": col_id, "name": "Unique Name" }).to_string(),
         ))
         .unwrap();
-    let res2 = app.clone().oneshot(req2).await.unwrap();
-    assert_eq!(res2.status(), StatusCode::CONFLICT);
+    let res = app.clone().oneshot(req).await.unwrap();
+    assert_eq!(res.status(), StatusCode::CREATED);
+
+    // Duplicate Creation -> 409 CONFLICT
+    let req = Request::builder()
+        .method("POST")
+        .uri("/resources")
+        .header(header::CONTENT_TYPE, "application/json")
+        .body(Body::from(
+            json!({ "collection_id": col_id, "name": "Unique Name" }).to_string(),
+        ))
+        .unwrap();
+    let res = app.clone().oneshot(req).await.unwrap();
+    assert_eq!(res.status(), StatusCode::CONFLICT);
+
+    // Empty Name Validation Failure -> 422
+    let req = Request::builder()
+        .method("POST")
+        .uri("/resources")
+        .header(header::CONTENT_TYPE, "application/json")
+        .body(Body::from(
+            json!({ "collection_id": col_id, "name": "" }).to_string(),
+        ))
+        .unwrap();
+    let res = app.clone().oneshot(req).await.unwrap();
+    assert_eq!(res.status(), StatusCode::UNPROCESSABLE_ENTITY);
+
+    // Update Non-Existent Resource -> 404 NOT FOUND
+    let req = Request::builder()
+        .method("PATCH")
+        .uri("/resources/00000000-0000-0000-0000-000000000001")
+        .header(header::CONTENT_TYPE, "application/json")
+        .body(Body::from(json!({ "name": "New Name" }).to_string()))
+        .unwrap();
+    let res = app.clone().oneshot(req).await.unwrap();
+    assert_eq!(res.status(), StatusCode::NOT_FOUND);
 }

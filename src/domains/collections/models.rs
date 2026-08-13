@@ -1,11 +1,12 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
 use uuid::Uuid;
 use validator::Validate;
 
 use crate::utils::trim::{deserialize_trimmed_option_string, deserialize_trimmed_string};
 
-#[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
+#[derive(Debug, Serialize, Deserialize, sqlx::FromRow, ToSchema)]
 pub struct Collection {
     pub id: Uuid,
     pub name: String,
@@ -16,7 +17,7 @@ pub struct Collection {
     pub deleted_at: Option<DateTime<Utc>>,
 }
 
-#[derive(Debug, Deserialize, Validate)]
+#[derive(Debug, Deserialize, Validate, ToSchema)]
 pub struct CreateCollection {
     #[serde(deserialize_with = "deserialize_trimmed_string")]
     #[validate(length(
@@ -27,7 +28,7 @@ pub struct CreateCollection {
     pub name: String,
 }
 
-#[derive(Debug, Deserialize, Validate)]
+#[derive(Debug, Deserialize, Validate, ToSchema)]
 pub struct UpdateCollection {
     #[serde(deserialize_with = "deserialize_trimmed_option_string")]
     #[validate(length(

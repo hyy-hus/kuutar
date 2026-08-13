@@ -1,38 +1,37 @@
 // src/main.rs
 use anyhow::Context;
+use clap::Parser;
 use dotenvy::dotenv;
 use sqlx::postgres::PgPoolOptions;
-use std::net::SocketAddr;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
-use kuutar::app;
+use kuutar::{app, config::Config};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     dotenv().ok();
 
+    let config = Config::parse();
+
     tracing_subscriber::registry()
         .with(tracing_subscriber::fmt::layer())
         .init();
 
-    let database_url =
-        std::env::var("DATABASE_URL").expect("DATABASE_URL environment variable must be set");
-
     tracing::info!("Connecting to the database...");
 
     let db_pool = PgPoolOptions::new()
-        .max_connections(5)
-        .connect(&database_url)
-        .await?;
+        .max_connections(config.max_db_connections)
+        .connect(&config.database_url)
+        .await
+        .context("Failed to connect to database")?;
 
     tracing::info!("Database connection established successfully.");
 
     let app = app(db_pool);
 
-    let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
-    tracing::info!("Server running on http://{}", addr);
+    tracing::info!("Server running on http://{}", config.bind_addr);
 
-    let listener = tokio::net::TcpListener::bind(addr)
+    let listener = tokio::net::TcpListener::bind(config.bind_addr)
         .await
         .context("Failed to bind to local socket address")?;
 

@@ -13,7 +13,15 @@ use super::{
 };
 use crate::errors::AppError;
 
-/// GET /api/collections
+/// GET /collections
+#[utoipa::path(
+    get,
+    path = "/collections",
+    tag = "Collections",
+    responses(
+        (status = 200, description = "List of active collections", body = [Collection]),
+    )
+)]
 #[tracing::instrument(skip(pool))]
 pub async fn list_collections(
     State(pool): State<PgPool>,
@@ -22,7 +30,19 @@ pub async fn list_collections(
     Ok(Json(collections))
 }
 
-/// GET /api/collections/{id}
+/// GET /collections/{id}
+#[utoipa::path(
+    get,
+    path = "/collections/{id}",
+    tag = "Collections",
+    params(
+        ("id" = Uuid, Path, description = "Collection UUID")
+    ),
+    responses(
+        (status = 200, description = "Collection details", body = Collection),
+        (status = 404, description = "Collection not found")
+    )
+)]
 #[tracing::instrument(skip(pool))]
 pub async fn get_collection(
     State(pool): State<PgPool>,
@@ -32,7 +52,18 @@ pub async fn get_collection(
     Ok(Json(collection))
 }
 
-/// POST /api/collections
+/// POST /collections
+#[utoipa::path(
+    post,
+    path = "/collections",
+    tag = "Collections",
+    request_body = CreateCollection,
+    responses(
+        (status = 201, description = "Collection created successfully", body = Collection),
+        (status = 409, description = "Collection name conflict"),
+        (status = 422, description = "Validation error")
+    )
+)]
 #[tracing::instrument(skip(pool))]
 pub async fn create_collection(
     State(pool): State<PgPool>,
@@ -43,7 +74,22 @@ pub async fn create_collection(
     Ok((StatusCode::CREATED, Json(collection)))
 }
 
-/// PATCH /api/collections/{id}
+/// PATCH /collections/{id}
+#[utoipa::path(
+    patch,
+    path = "/collections/{id}",
+    tag = "Collections",
+    params(
+        ("id" = Uuid, Path, description = "Collection UUID")
+    ),
+    request_body = UpdateCollection,
+    responses(
+        (status = 200, description = "Collection updated successfully", body = Collection),
+        (status = 404, description = "Collection not found"),
+        (status = 409, description = "Collection name conflict"),
+        (status = 422, description = "Validation error")
+    )
+)]
 #[tracing::instrument(skip(pool))]
 pub async fn update_collection(
     State(pool): State<PgPool>,
@@ -55,7 +101,19 @@ pub async fn update_collection(
     Ok(Json(collection))
 }
 
-/// DELETE /api/collections/{id}
+/// DELETE /collections/{id}
+#[utoipa::path(
+    delete,
+    path = "/collections/{id}",
+    tag = "Collections",
+    params(
+        ("id" = Uuid, Path, description = "Collection UUID")
+    ),
+    responses(
+        (status = 204, description = "Collection soft-deleted successfully"),
+        (status = 404, description = "Collection not found")
+    )
+)]
 #[tracing::instrument(skip(pool))]
 pub async fn delete_collection(
     State(pool): State<PgPool>,
