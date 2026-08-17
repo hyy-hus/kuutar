@@ -8,6 +8,9 @@ use serde_json::{Value, json};
 use sqlx::PgPool;
 use tower::ServiceExt;
 
+mod common;
+use common::test_config;
+
 /// Helper to create a parent collection for resource tests
 async fn create_test_collection(app: &axum::Router) -> String {
     let req = Request::builder()
@@ -26,7 +29,7 @@ async fn create_test_collection(app: &axum::Router) -> String {
 
 #[sqlx::test]
 async fn test_resources_crud_lifecycle(pool: PgPool) {
-    let app = app(pool);
+    let app = app(pool, test_config());
     let col_id = create_test_collection(&app).await;
 
     // 1. LIST RESOURCES
@@ -94,7 +97,7 @@ async fn test_resources_crud_lifecycle(pool: PgPool) {
 
 #[sqlx::test]
 async fn test_resources_duplicate_conflict_and_validation(pool: PgPool) {
-    let app = app(pool);
+    let app = app(pool, test_config());
     let col_id = create_test_collection(&app).await;
 
     // Create Initial Resource

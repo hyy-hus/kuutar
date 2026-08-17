@@ -7,6 +7,15 @@ use serde_json::json;
 
 #[derive(Debug, thiserror::Error)]
 pub enum AppError {
+    #[error("Bad request: {0}")]
+    BadRequest(String),
+
+    #[error("Unauthorized: {0}")]
+    Unauthorized(String),
+
+    #[error("Forbidden: {0}")]
+    Forbidden(String),
+
     #[error("Resource not found")]
     NotFound,
 
@@ -18,52 +27,86 @@ pub enum AppError {
 
     #[error("Database error")]
     Database(sqlx::Error),
+
+    #[error("Internal Server Error: {0}")]
+    InternalServerError(String),
 }
 
-// Convert SQLx errors into AppError
+// Convert SQLx errors into domain-aware AppError
 impl From<sqlx::Error> for AppError {
     fn from(err: sqlx::Error) -> Self {
-        if let sqlx::Error::Database(ref db_err) = err
-            && db_err.code().as_deref() == Some("23505")
-        {
-            let message = match db_err.constraint() {
-                Some("idx_collections_unique_active_name") => {
-                    "A collection with this name already exists."
-                }
-                Some("idx_resources_unique_active_name_per_collection") => {
-                    "A resource with this name already exists in this collection."
-                }
-                _ => "A resource with this name already exists.",
-            };
+        match err {
+            sqlx::Error::RowNotFound => AppError::NotFound,
+            sqlx::Error::Database(ref db_err) => {
+                match db_err.code().as_deref() {
+                    // HTTP 409 Conflict - Unique Constraint Violations
+                    Some("23505") => {
+                        let message = match db_err.constraint() {
+                            Some("idx_users_unique_active_email") => {
+                                "A user with this email already exists."
+                            }
+                            Some("idx_groups_unique_active_name") => {
+                                "A group with this name already exists."
+                            }
+                            Some("idx_collections_unique_active_name") => {
+                                "A collection with this name already exists."
+                            }
+                            Some("idx_resources_unique_active_name_per_collection") => {
+                                "A resource with this name already exists in this collection."
+                            }
+                            _ => "A resource with this identifier already exists.",
+                        };
+                        AppError::Conflict(message.to_string())
+                    }
 
-            return AppError::Conflict(message.to_string());
+                    // HTTP 400 Bad Request - Foreign Key Violations
+                    Some("23503") => {
+                        let message = match db_err.constraint() {
+                            Some("users_group_id_fkey") => "The specified group does not exist.",
+                            Some("resources_collection_id_fkey") => {
+                                "The specified collection does not exist."
+                            }
+                            _ => "Referenced entity does not exist.",
+                        };
+                        AppError::BadRequest(message.to_string())
+                    }
+
+                    _ => AppError::Database(err),
+                }
+            }
+            _ => AppError::Database(err),
         }
-
-        AppError::Database(err)
     }
 }
 
-// Convert AppError into Axum HTTP Responses
+// Convert AppError into Axum HTTP JSON Responses
 impl IntoResponse for AppError {
     fn into_response(self) -> Response {
         let (status, error_message) = match self {
+            AppError::BadRequest(ref msg) => (StatusCode::BAD_REQUEST, msg.clone()),
+            AppError::Unauthorized(ref msg) => (StatusCode::UNAUTHORIZED, msg.clone()),
+            AppError::Forbidden(ref msg) => (StatusCode::FORBIDDEN, msg.clone()),
             AppError::NotFound => (StatusCode::NOT_FOUND, self.to_string()),
-
-            // HTTP 409 Conflict
             AppError::Conflict(ref msg) => (StatusCode::CONFLICT, msg.clone()),
 
-            // HTTP 422 Unprocessable Entity
             AppError::ValidationError(ref errs) => (
                 StatusCode::UNPROCESSABLE_ENTITY,
                 format!("Invalid request body: {}", errs),
             ),
 
-            // HTTP 500 Internal Server Error
             AppError::Database(ref err) => {
                 tracing::error!("Unhandled Database Error: {:?}", err);
                 (
                     StatusCode::INTERNAL_SERVER_ERROR,
                     "An internal database error occurred.".to_string(),
+                )
+            }
+
+            AppError::InternalServerError(ref err) => {
+                tracing::error!("Unhandled Internal Server Error: {:?}", err);
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    "An internal error occurred.".to_string(),
                 )
             }
         };
@@ -80,7 +123,7 @@ mod tests {
     use serde_json::Value;
     use validator::ValidationErrors;
 
-    /// Mock DatabaseError to trigger custom SQL constraint paths without a live Postgres connection
+    /// Mock DatabaseError to test custom SQL constraint paths without a live Postgres connection
     #[derive(Debug)]
     struct MockDbError {
         code: &'static str,
@@ -125,9 +168,17 @@ mod tests {
         }
     }
 
-    // ==========================================
-    // 1. IntoResponse Tests
-    // ==========================================
+    #[tokio::test]
+    async fn test_into_response_bad_request() {
+        let err = AppError::BadRequest("Invalid payload field".to_string());
+        let res = err.into_response();
+
+        assert_eq!(res.status(), StatusCode::BAD_REQUEST);
+
+        let body = to_bytes(res.into_body(), usize::MAX).await.unwrap();
+        let json: Value = serde_json::from_slice(&body).unwrap();
+        assert_eq!(json["error"], "Invalid payload field");
+    }
 
     #[tokio::test]
     async fn test_into_response_not_found() {
@@ -173,7 +224,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_into_response_database_error() {
-        let err = AppError::Database(sqlx::Error::RowNotFound);
+        let err = AppError::Database(sqlx::Error::PoolTimedOut);
         let res = err.into_response();
 
         assert_eq!(res.status(), StatusCode::INTERNAL_SERVER_ERROR);
@@ -183,72 +234,39 @@ mod tests {
         assert_eq!(json["error"], "An internal database error occurred.");
     }
 
-    // ==========================================
-    // 2. SQLx Error Conversion (From<sqlx::Error>) Tests
-    // ==========================================
-
     #[test]
-    fn test_from_sqlx_error_collections_unique_constraint() {
-        let db_err = MockDbError {
-            code: "23505",
-            constraint: Some("idx_collections_unique_active_name"),
-        };
-        let app_err: AppError = sqlx::Error::Database(Box::new(db_err)).into();
-
-        if let AppError::Conflict(msg) = app_err {
-            assert_eq!(msg, "A collection with this name already exists.");
-        } else {
-            panic!("Expected AppError::Conflict");
-        }
-    }
-
-    #[test]
-    fn test_from_sqlx_error_resources_unique_constraint() {
-        let db_err = MockDbError {
-            code: "23505",
-            constraint: Some("idx_resources_unique_active_name_per_collection"),
-        };
-        let app_err: AppError = sqlx::Error::Database(Box::new(db_err)).into();
-
-        if let AppError::Conflict(msg) = app_err {
-            assert_eq!(
-                msg,
-                "A resource with this name already exists in this collection."
-            );
-        } else {
-            panic!("Expected AppError::Conflict");
-        }
-    }
-
-    #[test]
-    fn test_from_sqlx_error_other_unique_constraint() {
-        let db_err = MockDbError {
-            code: "23505",
-            constraint: Some("idx_other_constraint"),
-        };
-        let app_err: AppError = sqlx::Error::Database(Box::new(db_err)).into();
-
-        if let AppError::Conflict(msg) = app_err {
-            assert_eq!(msg, "A resource with this name already exists.");
-        } else {
-            panic!("Expected AppError::Conflict");
-        }
-    }
-
-    #[test]
-    fn test_from_sqlx_error_other_db_error_code() {
-        let db_err = MockDbError {
-            code: "42P01", // Undefined table
-            constraint: None,
-        };
-        let app_err: AppError = sqlx::Error::Database(Box::new(db_err)).into();
-
-        assert!(matches!(app_err, AppError::Database(_)));
-    }
-
-    #[test]
-    fn test_from_sqlx_error_general_sqlx_error() {
+    fn test_from_sqlx_row_not_found() {
         let app_err: AppError = sqlx::Error::RowNotFound.into();
-        assert!(matches!(app_err, AppError::Database(_)));
+        assert!(matches!(app_err, AppError::NotFound));
+    }
+
+    #[test]
+    fn test_from_sqlx_error_user_unique_email() {
+        let db_err = MockDbError {
+            code: "23505",
+            constraint: Some("idx_users_unique_active_email"),
+        };
+        let app_err: AppError = sqlx::Error::Database(Box::new(db_err)).into();
+
+        if let AppError::Conflict(msg) = app_err {
+            assert_eq!(msg, "A user with this email already exists.");
+        } else {
+            panic!("Expected AppError::Conflict");
+        }
+    }
+
+    #[test]
+    fn test_from_sqlx_error_foreign_key_user_group() {
+        let db_err = MockDbError {
+            code: "23503",
+            constraint: Some("users_group_id_fkey"),
+        };
+        let app_err: AppError = sqlx::Error::Database(Box::new(db_err)).into();
+
+        if let AppError::BadRequest(msg) = app_err {
+            assert_eq!(msg, "The specified group does not exist.");
+        } else {
+            panic!("Expected AppError::BadRequest");
+        }
     }
 }

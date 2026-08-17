@@ -13,13 +13,13 @@ mod common;
 use common::test_config;
 
 #[sqlx::test]
-async fn test_collections_crud_lifecycle(pool: PgPool) {
+async fn test_groups_crud_lifecycle(pool: PgPool) {
     let app = app(pool, test_config());
 
     // 1. LIST (Starts Empty)
     let req = Request::builder()
         .method("GET")
-        .uri("/collections")
+        .uri("/groups")
         .body(Body::empty())
         .unwrap();
     let res = app.clone().oneshot(req).await.unwrap();
@@ -32,25 +32,21 @@ async fn test_collections_crud_lifecycle(pool: PgPool) {
     // 2. CREATE
     let req = Request::builder()
         .method("POST")
-        .uri("/collections")
+        .uri("/groups")
         .header(header::CONTENT_TYPE, "application/json")
-        .body(Body::from(
-            json!({ "name": "  Project Alpha  " }).to_string(),
-        ))
+        .body(Body::from(json!({ "name": "  DevOps Team  " }).to_string()))
         .unwrap();
     let res = app.clone().oneshot(req).await.unwrap();
     assert_eq!(res.status(), StatusCode::CREATED);
 
     let body = res.into_body().collect().await.unwrap().to_bytes();
-    let collection: Value = serde_json::from_slice(&body).unwrap();
-    let col_id = collection["id"].as_str().unwrap();
-    // Verify custom Serde trimming worked
-    assert_eq!(collection["name"], "Project Alpha");
+    let group: Value = serde_json::from_slice(&body).unwrap();
+    let group_id = group["id"].as_str().unwrap();
 
     // 3. GET BY ID
     let req = Request::builder()
         .method("GET")
-        .uri(format!("/collections/{}", col_id))
+        .uri(format!("/groups/{}", group_id))
         .body(Body::empty())
         .unwrap();
     let res = app.clone().oneshot(req).await.unwrap();
@@ -59,10 +55,10 @@ async fn test_collections_crud_lifecycle(pool: PgPool) {
     // 4. PATCH (UPDATE NAME)
     let req = Request::builder()
         .method("PATCH")
-        .uri(format!("/collections/{}", col_id))
+        .uri(format!("/groups/{}", group_id))
         .header(header::CONTENT_TYPE, "application/json")
         .body(Body::from(
-            json!({ "name": "Project Alpha (Updated)" }).to_string(),
+            json!({ "name": "DevOps Team Lead" }).to_string(),
         ))
         .unwrap();
     let res = app.clone().oneshot(req).await.unwrap();
@@ -71,7 +67,7 @@ async fn test_collections_crud_lifecycle(pool: PgPool) {
     // 5. DELETE (SOFT DELETE)
     let req = Request::builder()
         .method("DELETE")
-        .uri(format!("/collections/{}", col_id))
+        .uri(format!("/groups/{}", group_id))
         .body(Body::empty())
         .unwrap();
     let res = app.clone().oneshot(req).await.unwrap();
@@ -80,7 +76,7 @@ async fn test_collections_crud_lifecycle(pool: PgPool) {
     // 6. VERIFY SOFT DELETED ITEM RETURNS 404
     let req = Request::builder()
         .method("GET")
-        .uri(format!("/collections/{}", col_id))
+        .uri(format!("/groups/{}", group_id))
         .body(Body::empty())
         .unwrap();
     let res = app.clone().oneshot(req).await.unwrap();
@@ -88,32 +84,42 @@ async fn test_collections_crud_lifecycle(pool: PgPool) {
 }
 
 #[sqlx::test]
-async fn test_collections_error_handling(pool: PgPool) {
+async fn test_groups_error_handling(pool: PgPool) {
     let app = app(pool, test_config());
 
     // 1. Validation Error: Empty Name (422)
     let req = Request::builder()
         .method("POST")
-        .uri("/collections")
+        .uri("/groups")
         .header(header::CONTENT_TYPE, "application/json")
         .body(Body::from(json!({ "name": "" }).to_string()))
         .unwrap();
     let res = app.clone().oneshot(req).await.unwrap();
     assert_eq!(res.status(), StatusCode::UNPROCESSABLE_ENTITY);
 
-    // 2. Not Found Error: Unknown UUID (404)
+    // 2. Not Found Error: Get Non-Existent ID (404)
     let req = Request::builder()
         .method("GET")
-        .uri("/collections/00000000-0000-0000-0000-000000000001")
+        .uri("/groups/00000000-0000-0000-0000-000000000001")
         .body(Body::empty())
         .unwrap();
     let res = app.clone().oneshot(req).await.unwrap();
     assert_eq!(res.status(), StatusCode::NOT_FOUND);
 
-    // 3. Delete Non-Existent ID (404)
+    // 3. Not Found Error: Patch Non-Existent ID (404)
+    let req = Request::builder()
+        .method("PATCH")
+        .uri("/groups/00000000-0000-0000-0000-000000000001")
+        .header(header::CONTENT_TYPE, "application/json")
+        .body(Body::from(json!({ "name": "Valid Name" }).to_string()))
+        .unwrap();
+    let res = app.clone().oneshot(req).await.unwrap();
+    assert_eq!(res.status(), StatusCode::NOT_FOUND);
+
+    // 4. Not Found Error: Delete Non-Existent ID (404)
     let req = Request::builder()
         .method("DELETE")
-        .uri("/collections/00000000-0000-0000-0000-000000000001")
+        .uri("/groups/00000000-0000-0000-0000-000000000001")
         .body(Body::empty())
         .unwrap();
     let res = app.clone().oneshot(req).await.unwrap();

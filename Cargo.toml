@@ -6,12 +6,18 @@ license = "Apache-2.0"
 
 [dependencies]
 anyhow = "1.0.102"
+argon2 = "0.5.3"
 axum = "0.8.9"
 chrono = { version = "0.4.45", features = ["serde"] }
 clap = { version = "4.6.6", features = ["derive", "env"] }
 dotenvy = "0.15.7"
+hex = "0.4.3"
+jsonwebtoken = { version = "11.0.0", features = ["rust_crypto"] }
+rand = "0.10.2"
+rand_core = { version = "0.6", features = ["getrandom"] }
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.150"
+sha2 = "0.11.0"
 sqlx = { version = "0.9.0", features = ["postgres", "runtime-tokio", "uuid", "chrono"] }
 thiserror = "2.0.18"
 tokio = { version = "1.52.3", features = ["full"] }
