@@ -12,29 +12,32 @@ use super::models::{
 };
 use crate::errors::AppError;
 
-/// Fetches all active reservations for a group, including their associated occurrences.
-pub async fn list_all_by_group(
+/// Fetches all active reservations, including their associated occurrences.
+/// Redacts `admin_notes` if `is_admin` is false.
+pub async fn list_all(
     pool: &PgPool,
-    group_id: Uuid,
+    is_admin: bool,
 ) -> Result<Vec<ReservationWithOccurrences>, AppError> {
     let reservations = sqlx::query_as!(
         Reservation,
         r#"
         SELECT 
-            id, group_id, user_id, title, description, rrule, 
+            id, group_id, user_id, title, description, admin_notes, rrule, 
             status AS "status: ReservationStatus", created_at, updated_at
         FROM reservations
-        WHERE group_id = $1 AND deleted_at IS NULL
+        WHERE deleted_at IS NULL
         ORDER BY created_at DESC
-        "#,
-        group_id
+        "#
     )
     .fetch_all(pool)
     .await?;
 
     let mut result = Vec::with_capacity(reservations.len());
 
-    for reservation in reservations {
+    for mut reservation in reservations {
+        if !is_admin {
+            reservation.admin_notes = None;
+        }
         let occurrences = fetch_occurrences_for_reservation(pool, reservation.id).await?;
         result.push(ReservationWithOccurrences {
             reservation,
@@ -46,6 +49,7 @@ pub async fn list_all_by_group(
 }
 
 /// Fetches an active reservation by its ID, including all its occurrences.
+/// Redacts `admin_notes` if `is_admin` is false.
 ///
 /// # Errors
 ///
@@ -53,23 +57,26 @@ pub async fn list_all_by_group(
 pub async fn find_by_id(
     pool: &PgPool,
     id: Uuid,
-    group_id: Uuid,
+    is_admin: bool,
 ) -> Result<ReservationWithOccurrences, AppError> {
-    let reservation = sqlx::query_as!(
+    let mut reservation = sqlx::query_as!(
         Reservation,
         r#"
         SELECT 
-            id, group_id, user_id, title, description, rrule, 
+            id, group_id, user_id, title, description, admin_notes, rrule, 
             status AS "status: ReservationStatus", created_at, updated_at
         FROM reservations
-        WHERE id = $1 AND group_id = $2 AND deleted_at IS NULL
+        WHERE id = $1 AND deleted_at IS NULL
         "#,
-        id,
-        group_id
+        id
     )
     .fetch_optional(pool)
     .await?
     .ok_or(AppError::NotFound)?;
+
+    if !is_admin {
+        reservation.admin_notes = None;
+    }
 
     let occurrences = fetch_occurrences_for_reservation(pool, reservation.id).await?;
 
@@ -97,16 +104,17 @@ pub async fn create(
     let reservation = sqlx::query_as!(
         Reservation,
         r#"
-        INSERT INTO reservations (group_id, user_id, title, description, rrule, status)
-        VALUES ($1, $2, $3, $4, $5, $6)
+        INSERT INTO reservations (group_id, user_id, title, description, admin_notes, rrule, status)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
         RETURNING 
-            id, group_id, user_id, title, description, rrule, 
+            id, group_id, user_id, title, description, admin_notes, rrule, 
             status AS "status: ReservationStatus", created_at, updated_at
         "#,
         group_id,
         user_id,
         dto.title,
         dto.description,
+        dto.admin_notes,
         dto.rrule,
         initial_status as ReservationStatus
     )
@@ -160,15 +168,17 @@ pub async fn update(
         SET 
             title = COALESCE($1, title),
             description = COALESCE($2, description),
-            rrule = COALESCE($3, rrule),
-            status = COALESCE($4, status)
-        WHERE id = $5 AND group_id = $6 AND deleted_at IS NULL
+            admin_notes = COALESCE($3, admin_notes),
+            rrule = COALESCE($4, rrule),
+            status = COALESCE($5, status)
+        WHERE id = $6 AND group_id = $7 AND deleted_at IS NULL
         RETURNING 
-            id, group_id, user_id, title, description, rrule, 
+            id, group_id, user_id, title, description, admin_notes, rrule, 
             status AS "status: ReservationStatus", created_at, updated_at
         "#,
         dto.title,
         dto.description,
+        dto.admin_notes,
         dto.rrule,
         dto.status as Option<ReservationStatus>,
         id,

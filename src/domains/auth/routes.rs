@@ -1,8 +1,4 @@
-use axum::{
-    Json,
-    extract::{FromRef, State},
-    http::StatusCode,
-};
+use axum::{Json, extract::State, http::StatusCode};
 use sqlx::PgPool;
 use uuid::Uuid;
 use validator::Validate;

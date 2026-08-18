@@ -20,6 +20,10 @@ pub struct Reservation {
     pub user_id: Uuid,
     pub title: String,
     pub description: Option<String>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub admin_notes: Option<String>,
+
     pub rrule: Option<String>,
     pub status: ReservationStatus,
     pub created_at: DateTime<Utc>,
@@ -55,6 +59,7 @@ pub struct CreateReservationPayload {
     #[validate(length(min = 1, max = 255))]
     pub title: String,
     pub description: Option<String>,
+    pub admin_notes: Option<String>,
     pub rrule: Option<String>,
     pub status: Option<ReservationStatus>,
 
@@ -77,6 +82,7 @@ pub struct UpdateReservationPayload {
     #[validate(length(min = 1, max = 255))]
     pub title: Option<String>,
     pub description: Option<String>,
+    pub admin_notes: Option<String>,
     pub rrule: Option<String>,
     pub status: Option<ReservationStatus>,
 }

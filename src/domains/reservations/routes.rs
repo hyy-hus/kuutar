@@ -14,52 +14,59 @@ use super::{
     },
 };
 use crate::{
-    domains::auth::{AuthState, extractor::AuthUser},
+    domains::{
+        auth::{
+            AuthState,
+            extractor::{AuthUser, OptionalAuthUser},
+        },
+        users::models::Role,
+    },
     errors::AppError,
 };
 
-/// GET /reservations
+/// GET /reservations (PUBLIC)
 #[utoipa::path(
     get,
     path = "/reservations",
     tag = "Reservations",
-    security(("bearer_auth" = [])),
     responses(
-        (status = 200, description = "List of active reservations", body = [ReservationWithOccurrences]),
-        (status = 401, description = "Unauthorized")
+        (status = 200, description = "List of active reservations", body = [ReservationWithOccurrences])
     )
 )]
-#[tracing::instrument(skip(auth_state, auth_user))]
+#[tracing::instrument(skip(auth_state, opt_user))]
 pub async fn list_reservations(
     State(auth_state): State<AuthState>,
-    auth_user: AuthUser,
+    opt_user: OptionalAuthUser,
 ) -> Result<Json<Vec<ReservationWithOccurrences>>, AppError> {
-    let reservations = db::list_all_by_group(&auth_state.pool, auth_user.group_id).await?;
+    let is_admin = opt_user.0.map(|u| u.role == Role::Admin).unwrap_or(false);
+
+    let reservations = db::list_all(&auth_state.pool, is_admin).await?;
     Ok(Json(reservations))
 }
 
-/// GET /reservations/{id}
+/// GET /reservations/{id} (PUBLIC)
 #[utoipa::path(
     get,
     path = "/reservations/{id}",
     tag = "Reservations",
-    security(("bearer_auth" = [])),
     params(
         ("id" = Uuid, Path, description = "Reservation UUID")
     ),
     responses(
         (status = 200, description = "Reservation details", body = ReservationWithOccurrences),
-        (status = 401, description = "Unauthorized"),
         (status = 404, description = "Reservation not found")
     )
 )]
-#[tracing::instrument(skip(auth_state, auth_user))]
+#[tracing::instrument(skip(auth_state, opt_user))]
 pub async fn get_reservation(
     State(auth_state): State<AuthState>,
     Path(id): Path<Uuid>,
-    auth_user: AuthUser,
+    opt_user: OptionalAuthUser,
 ) -> Result<Json<ReservationWithOccurrences>, AppError> {
-    let reservation = db::find_by_id(&auth_state.pool, id, auth_user.group_id).await?;
+    // ✅ Corrected return type
+    let is_admin = opt_user.0.map(|u| u.role == Role::Admin).unwrap_or(false);
+
+    let reservation = db::find_by_id(&auth_state.pool, id, is_admin).await?;
     Ok(Json(reservation))
 }
 
