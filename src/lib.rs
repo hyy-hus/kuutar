@@ -15,6 +15,8 @@ use sqlx::PgPool;
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
 
+use crate::domains::users;
+
 pub fn app(pool: PgPool, config: Config) -> Router {
     let auth_state = AuthState {
         pool: pool.clone(),
@@ -24,7 +26,8 @@ pub fn app(pool: PgPool, config: Config) -> Router {
     Router::new()
         .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", ApiDoc::openapi()))
         .route("/health", get(health_check))
-        .nest("/auth", auth::router(auth_state))
+        .nest("/auth", auth::router(auth_state.clone()))
+        .nest("/users", users::router(auth_state))
         .nest("/groups", groups::router(pool.clone()))
         .nest("/collections", collections::router(pool.clone()))
         .nest("/resources", resources::router(pool))

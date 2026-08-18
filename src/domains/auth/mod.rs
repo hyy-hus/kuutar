@@ -1,10 +1,13 @@
 pub mod db;
+pub mod extractor;
 pub mod jwt;
 pub mod models;
 pub mod password;
 pub mod routes;
 
 use axum::{Router, routing::post};
+
+pub use extractor::AuthUser;
 pub use routes::AuthState;
 
 pub fn router(state: AuthState) -> Router {
