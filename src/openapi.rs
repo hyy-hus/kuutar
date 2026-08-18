@@ -1,9 +1,10 @@
-use utoipa::openapi::security::{HttpAuthScheme, HttpBuilder};
-use utoipa::{Modify, OpenApi, openapi::security::SecurityScheme};
+use utoipa::openapi::security::{HttpAuthScheme, HttpBuilder, SecurityScheme};
+use utoipa::{Modify, OpenApi};
 
 use crate::domains::auth;
 use crate::domains::collections;
 use crate::domains::groups;
+use crate::domains::reservations;
 use crate::domains::resources;
 use crate::domains::users;
 
@@ -64,6 +65,14 @@ impl Modify for SecurityAddon {
         groups::routes::create_group,
         groups::routes::update_group,
         groups::routes::delete_group,
+
+        // Reservations
+        reservations::routes::list_reservations,
+        reservations::routes::get_reservation,
+        reservations::routes::create_reservation,
+        reservations::routes::check_reservation_conflicts,
+        reservations::routes::update_reservation,
+        reservations::routes::delete_reservation,
     ),
     components(
         schemas(
@@ -83,6 +92,13 @@ impl Modify for SecurityAddon {
             groups::models::Group,
             groups::models::CreateGroup,
             groups::models::UpdateGroup,
+            reservations::models::Reservation,
+            reservations::models::Occurrence,
+            reservations::models::ReservationStatus,
+            reservations::models::ReservationWithOccurrences,
+            reservations::models::CreateReservationPayload,
+            reservations::models::CreateOccurrencePayload,
+            reservations::models::UpdateReservationPayload,
         )
     ),
     tags(
@@ -90,7 +106,8 @@ impl Modify for SecurityAddon {
         (name = "Users", description = "User management endpoints"),
         (name = "Collections", description = "Collection management endpoints"),
         (name = "Resources", description = "Resource management endpoints"),
-        (name = "Groups", description = "Group management endpoints")
+        (name = "Groups", description = "Group management endpoints"),
+        (name = "Reservations", description = "Reservation and occurrence management endpoints")
     ),
     modifiers(&SecurityAddon)
 )]
