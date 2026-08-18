@@ -8,7 +8,7 @@ use axum::{Router, routing::get};
 use config::Config;
 use domains::{
     auth::{self, AuthState},
-    collections, groups, resources,
+    collections, groups, reservations, resources,
 };
 use openapi::ApiDoc;
 use sqlx::PgPool;
@@ -27,9 +27,10 @@ pub fn app(pool: PgPool, config: Config) -> Router {
         .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", ApiDoc::openapi()))
         .route("/health", get(health_check))
         .nest("/auth", auth::router(auth_state.clone()))
-        .nest("/users", users::router(auth_state))
+        .nest("/users", users::router(auth_state.clone()))
         .nest("/groups", groups::router(pool.clone()))
         .nest("/collections", collections::router(pool.clone()))
+        .nest("/reservations", reservations::router(auth_state.clone()))
         .nest("/resources", resources::router(pool))
 }
 
