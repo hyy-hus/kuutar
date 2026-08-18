@@ -8,7 +8,7 @@ use super::{
     models::{AuthTokens, LoginPayload, RefreshPayload, RegisterPayload},
     password,
 };
-use crate::{config::Config, errors::AppError};
+use crate::{config::Config, domains::users::models::Role, errors::AppError};
 
 #[derive(Clone)]
 pub struct AuthState {
@@ -38,7 +38,7 @@ pub async fn register(
     let password_hash = password::hash_password(&payload.password)?;
     let user = db::create_user(&state.pool, &payload, &password_hash).await?;
 
-    let tokens = issue_token_pair(&state, user.id, user.group_id).await?;
+    let tokens = issue_token_pair(&state, user.id, user.group_id, user.role).await?;
     Ok((StatusCode::CREATED, Json(tokens)))
 }
 
@@ -71,7 +71,7 @@ pub async fn login(
         ));
     }
 
-    let tokens = issue_token_pair(&state, user.id, user.group_id).await?;
+    let tokens = issue_token_pair(&state, user.id, user.group_id, user.role).await?;
     Ok(Json(tokens))
 }
 
@@ -94,7 +94,7 @@ pub async fn refresh(
     // Validates refresh token & revokes it (Token Rotation)
     let user = db::verify_and_consume_refresh_token(&state.pool, &payload.refresh_token).await?;
 
-    let tokens = issue_token_pair(&state, user.id, user.group_id).await?;
+    let tokens = issue_token_pair(&state, user.id, user.group_id, user.role).await?;
     Ok(Json(tokens))
 }
 
@@ -122,10 +122,12 @@ async fn issue_token_pair(
     state: &AuthState,
     user_id: Uuid,
     group_id: Uuid,
+    role: Role,
 ) -> Result<AuthTokens, AppError> {
     let access_token = jwt::encode_jwt(
         user_id,
         group_id,
+        role,
         &state.config.jwt_secret,
         state.config.jwt_expiration_seconds,
     )?;

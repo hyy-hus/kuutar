@@ -11,7 +11,11 @@ use super::{
     models::{CreateUser, UpdateUser, User},
 };
 use crate::{
-    domains::auth::{AuthState, extractor::AuthUser, password},
+    domains::auth::{
+        AuthState,
+        extractor::{AuthUser, RequireAdmin},
+        password,
+    },
     errors::AppError,
 };
 
@@ -24,7 +28,7 @@ use crate::{
 )]
 pub async fn list_users(
     State(state): State<AuthState>,
-    _auth_user: AuthUser,
+    RequireAdmin(_admin): RequireAdmin,
 ) -> Result<Json<Vec<User>>, AppError> {
     let users = db::list_users(&state.pool).await?;
     Ok(Json(users))
@@ -61,7 +65,7 @@ pub async fn get_me(
 )]
 pub async fn get_user(
     State(state): State<AuthState>,
-    _auth_user: AuthUser,
+    RequireAdmin(_admin): RequireAdmin,
     Path(id): Path<Uuid>,
 ) -> Result<Json<User>, AppError> {
     let user = db::get_user(&state.pool, id).await?;
@@ -82,7 +86,7 @@ pub async fn get_user(
 )]
 pub async fn create_user(
     State(state): State<AuthState>,
-    _auth_user: AuthUser,
+    RequireAdmin(_admin): RequireAdmin,
     Json(payload): Json<CreateUser>,
 ) -> Result<(StatusCode, Json<User>), AppError> {
     payload.validate()?;
@@ -138,7 +142,7 @@ pub async fn update_me(
 )]
 pub async fn update_user(
     State(state): State<AuthState>,
-    _auth_user: AuthUser,
+    RequireAdmin(_admin): RequireAdmin,
     Path(id): Path<Uuid>,
     Json(payload): Json<UpdateUser>,
 ) -> Result<Json<User>, AppError> {
@@ -181,7 +185,7 @@ pub async fn delete_me(
 )]
 pub async fn delete_user(
     State(state): State<AuthState>,
-    _auth_user: AuthUser,
+    RequireAdmin(_admin): RequireAdmin,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, AppError> {
     db::delete_user(&state.pool, id).await?;

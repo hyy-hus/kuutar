@@ -5,12 +5,13 @@ use axum::{
 use uuid::Uuid;
 
 use super::{AuthState, jwt};
-use crate::errors::AppError;
+use crate::{domains::users::models::Role, errors::AppError};
 
 #[derive(Debug, Clone)]
 pub struct AuthUser {
     pub id: Uuid,
     pub group_id: Uuid,
+    pub role: Role,
 }
 
 impl<S> FromRequestParts<S> for AuthUser
@@ -38,6 +39,27 @@ where
         Ok(AuthUser {
             id: claims.sub,
             group_id: claims.group_id,
+            role: claims.role,
         })
+    }
+}
+
+/// Requires the user to be an Admin
+#[derive(Debug, Clone)]
+pub struct RequireAdmin(pub AuthUser);
+
+impl<S> FromRequestParts<S> for RequireAdmin
+where
+    S: Send + Sync,
+    AuthState: FromRef<S>,
+{
+    type Rejection = AppError;
+
+    async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
+        let user = AuthUser::from_request_parts(parts, state).await?;
+        if user.role != Role::Admin {
+            return Err(AppError::Forbidden("Admin privileges required".to_string()));
+        }
+        Ok(RequireAdmin(user))
     }
 }

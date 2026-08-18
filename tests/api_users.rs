@@ -1,5 +1,3 @@
-// tests/api_users.rs
-
 mod common;
 
 use axum::{
@@ -7,7 +5,10 @@ use axum::{
     http::{Request, StatusCode, header},
 };
 use common::test_config;
-use kuutar::{app, domains::auth::jwt::encode_jwt};
+use kuutar::{
+    app,
+    domains::{auth::jwt::encode_jwt, users::models::Role},
+};
 use serde_json::{Value, json};
 use sqlx::PgPool;
 use tower::ServiceExt;
@@ -26,9 +27,13 @@ async fn setup_authenticated_user(pool: &PgPool) -> (Uuid, Uuid, String) {
     .unwrap();
 
     let user = sqlx::query!(
-        "INSERT INTO users (group_id, email, password_hash) VALUES ($1, $2, $3) RETURNING id",
+        r#"
+        INSERT INTO users (group_id, email, password_hash, role) 
+        VALUES ($1, $2, $3, 'admin'::user_role) 
+        RETURNING id, role AS "role: Role"
+        "#,
         group.id,
-        format!("user_{}@example.com", Uuid::new_v4()),
+        format!("admin_{}@example.com", Uuid::new_v4()),
         "fake_hashed_password"
     )
     .fetch_one(pool)
@@ -38,6 +43,7 @@ async fn setup_authenticated_user(pool: &PgPool) -> (Uuid, Uuid, String) {
     let token = encode_jwt(
         user.id,
         group.id,
+        user.role,
         &config.jwt_secret,
         config.jwt_expiration_seconds,
     )
@@ -69,6 +75,7 @@ async fn test_get_me_success(pool: PgPool) {
     let json: Value = serde_json::from_slice(&body).unwrap();
 
     assert_eq!(json["id"], user_id.to_string());
+    assert_eq!(json["role"], "admin");
 }
 
 #[sqlx::test]
@@ -144,6 +151,7 @@ async fn test_create_user(pool: PgPool) {
     let json: Value = serde_json::from_slice(&body).unwrap();
 
     assert_eq!(json["email"], "new_created_user@example.com");
+    assert_eq!(json["role"], "user");
 }
 
 #[sqlx::test]
@@ -203,8 +211,6 @@ async fn test_delete_me(pool: PgPool) {
 
     assert!(deleted_user.deleted_at.is_some());
 }
-
-// Append to tests/api_users.rs
 
 #[sqlx::test]
 async fn test_get_user_by_id_success(pool: PgPool) {

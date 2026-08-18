@@ -10,6 +10,7 @@ use crate::utils::trim::{deserialize_trimmed_option_string, deserialize_trimmed_
 pub struct User {
     pub id: Uuid,
     pub group_id: Uuid,
+    pub role: Role,
     pub email: String,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
@@ -38,4 +39,12 @@ pub struct UpdateUser {
     pub password: Option<String>,
 
     pub group_id: Option<Uuid>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, sqlx::Type, ToSchema)]
+#[sqlx(type_name = "user_role", rename_all = "lowercase")]
+#[serde(rename_all = "lowercase")]
+pub enum Role {
+    Admin,
+    User,
 }

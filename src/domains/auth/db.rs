@@ -4,13 +4,14 @@ use sqlx::PgPool;
 use uuid::Uuid;
 
 use super::models::RegisterPayload;
-use crate::errors::AppError;
+use crate::{domains::users::models::Role, errors::AppError};
 
 pub struct UserAuthInfo {
     pub id: Uuid,
     pub group_id: Uuid,
     pub email: String,
     pub password_hash: String,
+    pub role: Role,
 }
 
 /// Create a new user during registration
@@ -24,7 +25,7 @@ pub async fn create_user(
         r#"
         INSERT INTO users (group_id, email, password_hash)
         VALUES ($1, $2, $3)
-        RETURNING id, group_id, email, password_hash
+        RETURNING id, group_id, email, password_hash, role AS "role: Role"
         "#,
         payload.group_id,
         payload.email.to_lowercase(),
@@ -44,7 +45,7 @@ pub async fn find_user_by_email(
     let user = sqlx::query_as!(
         UserAuthInfo,
         r#"
-        SELECT id, group_id, email, password_hash
+        SELECT id, group_id, email, password_hash, role AS "role: Role"
         FROM users
         WHERE LOWER(email) = LOWER($1) AND deleted_at IS NULL
         "#,
@@ -91,7 +92,15 @@ pub async fn verify_and_consume_refresh_token(
     // Fetch token + user
     let row = sqlx::query!(
         r#"
-        SELECT rt.id as token_id, u.id as user_id, u.group_id, u.email, u.password_hash, rt.expires_at, rt.revoked_at
+        SELECT 
+            rt.id as token_id, 
+            u.id as user_id, 
+            u.group_id, 
+            u.email, 
+            u.password_hash, 
+            u.role AS "role: Role", 
+            rt.expires_at, 
+            rt.revoked_at
         FROM refresh_tokens rt
         JOIN users u ON u.id = rt.user_id
         WHERE rt.token_hash = $1 AND u.deleted_at IS NULL
@@ -122,6 +131,7 @@ pub async fn verify_and_consume_refresh_token(
         group_id: row.group_id,
         email: row.email,
         password_hash: row.password_hash,
+        role: row.role,
     })
 }
 
