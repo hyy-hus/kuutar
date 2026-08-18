@@ -1,0 +1,74 @@
+{
+    "name": "client",
+    "private": true,
+    "type": "module",
+    "imports": {
+        "#/*": "./src/*"
+    },
+    "scripts": {
+        "dev": "vite dev --port 3000",
+        "generate-routes": "tsr generate",
+        "build": "vite build",
+        "preview": "vite preview",
+        "format": "biome format",
+        "lint": "biome lint",
+        "check": "biome check",
+        "storybook": "storybook dev -p 6006",
+        "build-storybook": "storybook build",
+        "generate:api": "openapi-typescript http://127.0.0.1:3000/api-docs/openapi.json -o src/api/schema.d.ts"
+    },
+    "dependencies": {
+        "@faker-js/faker": "^10.3.0",
+        "@tailwindcss/vite": "^4.1.18",
+        "@tanstack/match-sorter-utils": "latest",
+        "@tanstack/react-devtools": "latest",
+        "@tanstack/react-form": "latest",
+        "@tanstack/react-query": "latest",
+        "@tanstack/react-query-devtools": "latest",
+        "@tanstack/react-router": "latest",
+        "@tanstack/react-router-devtools": "latest",
+        "@tanstack/react-router-ssr-query": "latest",
+        "@tanstack/react-start": "latest",
+        "@tanstack/react-table": "latest",
+        "clsx": "^2.1.1",
+        "lucide-react": "^1.31.0",
+        "nitro": "3.0.260610-beta",
+        "react": "^19.2.0",
+        "react-dom": "^19.2.0",
+        "tailwind-merge": "^3.6.0",
+        "tailwindcss": "^4.1.18",
+        "zod": "^4.3.6"
+    },
+    "devDependencies": {
+        "@biomejs/biome": "2.4.5",
+        "@chromatic-com/storybook": "latest",
+        "@inlang/paraglide-js": "^2.13.1",
+        "@rolldown/plugin-babel": "^0.2.3",
+        "@storybook/addon-a11y": "^10.5.9",
+        "@storybook/addon-docs": "^10.5.9",
+        "@storybook/addon-mcp": "latest",
+        "@storybook/addon-vitest": "^10.5.9",
+        "@storybook/tanstack-react": "^10.5.9",
+        "@tanstack/devtools-vite": "latest",
+        "@tanstack/router-cli": "^1.132.0",
+        "@types/node": "^22.10.2",
+        "@types/react": "^19.2.0",
+        "@types/react-dom": "^19.2.0",
+        "@vitejs/plugin-react": "^6.0.1",
+        "@vitest/browser-playwright": "latest",
+        "@vitest/coverage-v8": "latest",
+        "babel-plugin-react-compiler": "^1.0.0",
+        "openapi-typescript": "^7.13.0",
+        "playwright": "latest",
+        "storybook": "^10.5.9",
+        "typescript": "^6.0.2",
+        "vite": "^8.0.0",
+        "vitest": "latest"
+    },
+    "pnpm": {
+        "onlyBuiltDependencies": [
+            "esbuild",
+            "lightningcss"
+        ]
+    }
+}
