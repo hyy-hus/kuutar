@@ -4,24 +4,35 @@ pub mod errors;
 pub mod openapi;
 pub mod utils;
 
-use axum::{Router, http::StatusCode, routing::get};
+use axum::{Router, routing::get};
+use config::Config;
+use domains::{
+    auth::{self, AuthState},
+    collections, groups, resources,
+};
+use openapi::ApiDoc;
 use sqlx::PgPool;
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
 
-/// Constructs the entire Axum application router with state and middleware.
-/// Used by both `main.rs` (production) and integration tests.
-pub fn app(pool: PgPool) -> Router {
+use crate::domains::users;
+
+pub fn app(pool: PgPool, config: Config) -> Router {
+    let auth_state = AuthState {
+        pool: pool.clone(),
+        config: config.clone(),
+    };
+
     Router::new()
+        .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", ApiDoc::openapi()))
         .route("/health", get(health_check))
-        .merge(
-            SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", openapi::ApiDoc::openapi()),
-        )
-        .nest("/collections", domains::collections::router())
-        .nest("/resources", domains::resources::router())
-        .with_state(pool)
+        .nest("/auth", auth::router(auth_state.clone()))
+        .nest("/users", users::router(auth_state))
+        .nest("/groups", groups::router(pool.clone()))
+        .nest("/collections", collections::router(pool.clone()))
+        .nest("/resources", resources::router(pool))
 }
 
-async fn health_check() -> StatusCode {
-    StatusCode::OK
+async fn health_check() -> &'static str {
+    "OK"
 }

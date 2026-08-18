@@ -6,9 +6,12 @@ use kuutar::app;
 use sqlx::PgPool;
 use tower::ServiceExt;
 
+mod common;
+use common::test_config;
+
 #[sqlx::test]
 async fn test_health_check_endpoint(pool: PgPool) {
-    let app = app(pool);
+    let app = app(pool, test_config());
 
     let req = Request::builder()
         .method("GET")

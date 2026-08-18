@@ -5,7 +5,7 @@ pub mod routes;
 use axum::{Router, routing::get};
 use sqlx::PgPool;
 
-pub fn router() -> Router<PgPool> {
+pub fn router(pool: PgPool) -> Router {
     Router::new()
         .route(
             "/",
@@ -17,4 +17,5 @@ pub fn router() -> Router<PgPool> {
                 .patch(routes::update_collection)
                 .delete(routes::delete_collection),
         )
+        .with_state(pool)
 }

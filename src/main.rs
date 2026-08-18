@@ -27,7 +27,7 @@ async fn main() -> anyhow::Result<()> {
 
     tracing::info!("Database connection established successfully.");
 
-    let app = app(db_pool);
+    let app = app(db_pool, config.clone());
 
     tracing::info!("Server running on http://{}", config.bind_addr);
 
