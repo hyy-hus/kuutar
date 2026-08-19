@@ -11,6 +11,10 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SandboxRouteImport } from './routes/sandbox'
+import { Route as ResourcesIndexRouteImport } from './routes/resources/index'
+import { Route as ResourcesIdRouteImport } from './routes/resources/$id'
+import { Route as ResourcesCreateRouteImport } from './routes/resources/create'
+import { Route as ResourcesEditIdRouteImport } from './routes/resources/edit/$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -22,31 +26,86 @@ const SandboxRoute = SandboxRouteImport.update({
   path: '/sandbox',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ResourcesIndexRoute = ResourcesIndexRouteImport.update({
+  id: '/resources/',
+  path: '/resources/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResourcesIdRoute = ResourcesIdRouteImport.update({
+  id: '/resources/$id',
+  path: '/resources/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResourcesCreateRoute = ResourcesCreateRouteImport.update({
+  id: '/resources/create',
+  path: '/resources/create',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResourcesEditIdRoute = ResourcesEditIdRouteImport.update({
+  id: '/resources/edit/$id',
+  path: '/resources/edit/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/sandbox': typeof SandboxRoute
+  '/resources/$id': typeof ResourcesIdRoute
+  '/resources/create': typeof ResourcesCreateRoute
+  '/resources/': typeof ResourcesIndexRoute
+  '/resources/edit/$id': typeof ResourcesEditIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/sandbox': typeof SandboxRoute
+  '/resources/$id': typeof ResourcesIdRoute
+  '/resources/create': typeof ResourcesCreateRoute
+  '/resources': typeof ResourcesIndexRoute
+  '/resources/edit/$id': typeof ResourcesEditIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/sandbox': typeof SandboxRoute
+  '/resources/$id': typeof ResourcesIdRoute
+  '/resources/create': typeof ResourcesCreateRoute
+  '/resources/': typeof ResourcesIndexRoute
+  '/resources/edit/$id': typeof ResourcesEditIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/sandbox'
+  fullPaths:
+    | '/'
+    | '/sandbox'
+    | '/resources/$id'
+    | '/resources/create'
+    | '/resources/'
+    | '/resources/edit/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/sandbox'
-  id: '__root__' | '/' | '/sandbox'
+  to:
+    | '/'
+    | '/sandbox'
+    | '/resources/$id'
+    | '/resources/create'
+    | '/resources'
+    | '/resources/edit/$id'
+  id:
+    | '__root__'
+    | '/'
+    | '/sandbox'
+    | '/resources/$id'
+    | '/resources/create'
+    | '/resources/'
+    | '/resources/edit/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   SandboxRoute: typeof SandboxRoute
+  ResourcesIdRoute: typeof ResourcesIdRoute
+  ResourcesCreateRoute: typeof ResourcesCreateRoute
+  ResourcesIndexRoute: typeof ResourcesIndexRoute
+  ResourcesEditIdRoute: typeof ResourcesEditIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -65,12 +124,44 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SandboxRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/resources/': {
+      id: '/resources/'
+      path: '/resources'
+      fullPath: '/resources/'
+      preLoaderRoute: typeof ResourcesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/resources/$id': {
+      id: '/resources/$id'
+      path: '/resources/$id'
+      fullPath: '/resources/$id'
+      preLoaderRoute: typeof ResourcesIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/resources/create': {
+      id: '/resources/create'
+      path: '/resources/create'
+      fullPath: '/resources/create'
+      preLoaderRoute: typeof ResourcesCreateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/resources/edit/$id': {
+      id: '/resources/edit/$id'
+      path: '/resources/edit/$id'
+      fullPath: '/resources/edit/$id'
+      preLoaderRoute: typeof ResourcesEditIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   SandboxRoute: SandboxRoute,
+  ResourcesIdRoute: ResourcesIdRoute,
+  ResourcesCreateRoute: ResourcesCreateRoute,
+  ResourcesIndexRoute: ResourcesIndexRoute,
+  ResourcesEditIdRoute: ResourcesEditIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
