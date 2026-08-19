@@ -14,10 +14,12 @@ import appCss from '../styles.css?url'
 
 import type { QueryClient } from '@tanstack/react-query'
 
-import { Globe, Menu, Moon, Sun, User } from 'lucide-react';
+import { Globe, Menu, Moon, Sun } from 'lucide-react'
 import { SearchBar } from '#/components/SearchBar'
 import { useEffect, useState } from 'react'
 import { cn } from '#/utils/cn'
+import { Button } from '#/components/Button'
+import { AuthDialog } from '#/components/AuthPopover'
 
 interface MyRouterContext {
     queryClient: QueryClient
@@ -94,27 +96,25 @@ function RootDocument({ children }: { children: React.ReactNode }) {
                 className={cn(
                     "h-screen bg-stone-100 text-stone-800 dark:bg-stone-950 dark:text-stone-300",
                     "grid grid-rows-[4rem_1fr_2rem]",
-                    // Animate grid track changes smoothly
                     "transition-[grid-template-columns,colors] duration-300 ease-in-out",
                     isSidebarOpen ? "grid-cols-[15rem_1fr]" : "grid-cols-[0rem_1fr]"
                 )}
             >
                 <header className={cn("col-span-2 flex gap-2 items-center p-2 border-b-2 border-stone-800 dark:border-stone-600")}>
-                    <button
-                        type="button"
+                    <Button
+                        variant="ghost"
+                        size="icon"
                         onClick={() => setIsSidebarOpen((prev) => !prev)}
-                        className={cn("p-1 rounded-md hover:bg-stone-200 dark:hover:bg-stone-900 transition-colors cursor-pointer")}
                         aria-label="Toggle Menu"
                     >
-                        <Menu />
-                    </button>
+                        <Menu size="20" />
+                    </Button>
                     <h1 className={cn("font-bold text-lg")}>Varauskalenteri</h1>
                     <div className={cn("flex-1")} />
                     <SearchBar />
-                    <User />
+                    <AuthDialog />
                 </header>
 
-                {/* Sidebar always stays in DOM; overflow-hidden clips inner content during slide */}
                 <aside
                     className={cn(
                         "overflow-hidden transition-all duration-300 ease-in-out",
@@ -122,31 +122,30 @@ function RootDocument({ children }: { children: React.ReactNode }) {
                         isSidebarOpen ? "border-r-2 opacity-100" : "border-r-0 opacity-0"
                     )}
                 >
-                    {/* Fixed inner width prevents content text from squishing while sliding */}
-                    <div className={cn("w-[15rem] h-full whitespace-nowrap")}>
+                    <div className={cn("w-60 h-full whitespace-nowrap")}>
                         <ul className={cn("gap-2 h-full flex flex-col divide-y-2 divide-stone-800 dark:divide-stone-600 *:p-2")}>
                             <li>Varaukset</li>
                             <li>Resurssit</li>
                             <li>Tilastoja</li>
                             <li className={cn("flex-1")} />
                             <li className={cn("flex items-center justify-between gap-2")}>
-                                <button
-                                    type="button"
+                                <Button
+                                    size="sm"
+                                    variant="ghost"
                                     onClick={toggleLanguage}
-                                    className={cn("flex items-center gap-1.5 text-xs font-semibold hover:underline cursor-pointer")}
                                 >
                                     <Globe size={16} />
                                     <span>{currentLocale === 'fi' ? 'Suomi' : 'English'}</span>
-                                </button>
+                                </Button>
 
-                                <button
-                                    type="button"
+                                <Button
+                                    size="icon"
+                                    variant="ghost"
                                     onClick={toggleTheme}
-                                    className={cn("p-1 rounded hover:bg-stone-200 dark:hover:bg-stone-900 transition-colors cursor-pointer")}
                                     aria-label="Toggle Theme"
                                 >
                                     {theme === 'light' ? <Sun size={16} /> : <Moon size={16} />}
-                                </button>
+                                </Button>
                             </li>
                         </ul>
                     </div>
