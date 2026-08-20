@@ -1,4 +1,4 @@
-import { useEffect, useRef, useMemo } from 'react'
+import { useEffect, useRef, useMemo, useState } from 'react'
 import type { CalendarEvent } from '#/utils/calendarUtils'
 import { DayColumn } from './DayColumn'
 
@@ -9,6 +9,43 @@ interface WeekViewProps {
     start: Date
     days: number
     events: CalendarEvent[]
+}
+
+/**
+ * Renders a horizontal red ruler marking the current time if today falls within the visible date range.
+ */
+function CurrentTimeIndicator({ start, days }: { start: Date; days: number }) {
+    const [now, setNow] = useState(() => new Date())
+
+    useEffect(() => {
+        const timer = setInterval(() => setNow(new Date()), 60000) // Update every minute
+        return () => clearInterval(timer)
+    }, [])
+
+    // Check if today falls within the visible start -> start + days window
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime()
+    const startDateOnly = new Date(start.getFullYear(), start.getMonth(), start.getDate()).getTime()
+    const dayOffset = Math.round((today - startDateOnly) / (1000 * 60 * 60 * 24))
+
+    const isTodayVisible = dayOffset >= 0 && dayOffset < days
+
+    if (!isTodayVisible) return null
+
+    const minutesSinceMidnight = now.getHours() * 60 + now.getMinutes()
+    // Header is 3rem high + 5rem per hour (5rem / 60min)
+    const topOffset = `calc(3rem + ${(minutesSinceMidnight / 60) * 5}rem)`
+
+    return (
+        <div
+            className="absolute left-0 right-0 z-30 pointer-events-none flex items-center border-none"
+            style={{ top: topOffset }}
+        >
+            {/* Red dot on the left time edge */}
+            <div className="w-2.5 h-2.5 rounded-full bg-rose-600 -ml-1 shrink-0" />
+            {/* Red horizontal line */}
+            <div className="h-0.5 bg-rose-600 dark:bg-rose-500 w-full shadow-xs" />
+        </div>
+    )
 }
 
 export function WeekView({ start, days, events }: WeekViewProps) {
@@ -41,14 +78,18 @@ export function WeekView({ start, days, events }: WeekViewProps) {
     return (
         <div
             ref={scrollRef}
-            className="h-150 overflow-y-auto border border-stone-200 dark:border-stone-800 rounded-md bg-stone-50 dark:bg-stone-950"
+            className="flex-1 min-h-0 overflow-y-auto border border-stone-200 dark:border-stone-800 rounded-md bg-stone-50 dark:bg-stone-950"
         >
+            {/* Note: added `relative` to the grid wrapper so the red line positions accurately */}
             <div
-                className="grid grid-rows-[3rem_repeat(24,5rem)] divide-x divide-y divide-stone-200 dark:divide-stone-800 w-full min-w-150"
+                className="relative grid grid-rows-[3rem_repeat(24,5rem)] divide-x divide-y divide-stone-200 dark:divide-stone-800 w-full min-w-150"
                 style={{
                     gridTemplateColumns: `4rem repeat(${days}, minmax(8rem, 1fr))`,
                 }}
             >
+                {/* Red Current Time Line */}
+                <CurrentTimeIndicator start={start} days={days} />
+
                 {/* Render grid slots & headers */}
                 {Array.from({ length: 25 }).map((_, row) =>
                     Array.from({ length: days + 1 }).map((__, col) => {

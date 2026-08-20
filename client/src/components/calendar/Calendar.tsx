@@ -70,9 +70,9 @@ export function Calendar() {
     }
 
     return (
-        <div className="flex flex-col gap-4 p-2">
+        <div className="flex flex-col gap-4 p-2 flex-1 min-h-0">
             {/* Controls Bar */}
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2 shrink-0">
                 <Button variant="secondary" size="sm" onClick={() => moveStart(-days)}>
                     <ChevronLeft size={18} />
                 </Button>
@@ -101,7 +101,7 @@ export function Calendar() {
             </div>
 
             {/* Resource Filter Chips */}
-            <div className="flex flex-wrap gap-1.5">
+            <div className="flex flex-wrap gap-1.5 shrink-0">
                 {resources?.map((res) => {
                     const isSelected = selectedResourceIds.includes(res.id)
                     return (
