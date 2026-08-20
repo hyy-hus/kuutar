@@ -7,19 +7,17 @@ import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 import { TanStackDevtools } from '@tanstack/react-devtools'
 
 import TanStackQueryDevtools from '../integrations/tanstack-query/devtools'
-
 import { getLocale, setLocale } from '#/paraglide/runtime'
-
 import appCss from '../styles.css?url'
-
 import type { QueryClient } from '@tanstack/react-query'
 
-import { Globe, Menu, Moon, Sun } from 'lucide-react'
+import { Menu } from 'lucide-react'
 import { SearchBar } from '#/components/SearchBar'
 import { useEffect, useState } from 'react'
 import { cn } from '#/utils/cn'
 import { Button } from '#/components/Button'
 import { AuthDialog } from '#/components/AuthPopover'
+import { SideBar } from '#/components/SideBar'
 
 interface MyRouterContext {
     queryClient: QueryClient
@@ -27,8 +25,6 @@ interface MyRouterContext {
 
 export const Route = createRootRouteWithContext<MyRouterContext>()({
     beforeLoad: async () => {
-        // Other redirect strategies are possible; see
-        // https://github.com/TanStack/router/tree/main/examples/react/i18n-paraglide#offline-redirect
         if (typeof document !== 'undefined') {
             document.documentElement.setAttribute('lang', getLocale())
         }
@@ -36,56 +32,46 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 
     head: () => ({
         meta: [
-            {
-                charSet: 'utf-8',
-            },
-            {
-                name: 'viewport',
-                content: 'width=device-width, initial-scale=1',
-            },
-            {
-                title: 'Kuutar varauskalenteri',
-            },
+            { charSet: 'utf-8' },
+            { name: 'viewport', content: 'width=device-width, initial-scale=1' },
+            { title: 'Kuutar varauskalenteri' },
         ],
         links: [
-            {
-                rel: 'stylesheet',
-                href: appCss,
-            },
+            { rel: 'stylesheet', href: appCss },
         ],
     }),
     shellComponent: RootDocument,
 })
 
 function RootDocument({ children }: { children: React.ReactNode }) {
-    const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(true)
 
     const [theme, setTheme] = useState<'light' | 'dark'>(() => {
         if (typeof window !== 'undefined') {
-            return (localStorage.getItem('theme') as 'light' | 'dark') || 'light';
+            return (localStorage.getItem('theme') as 'light' | 'dark') || 'light'
         }
-        return 'light';
-    });
+        return 'light'
+    })
 
     useEffect(() => {
-        const root = document.documentElement;
+        const root = document.documentElement
         if (theme === 'dark') {
-            root.classList.add('dark');
+            root.classList.add('dark')
         } else {
-            root.classList.remove('dark');
+            root.classList.remove('dark')
         }
-        localStorage.setItem('theme', theme);
-    }, [theme]);
+        localStorage.setItem('theme', theme)
+    }, [theme])
 
     const toggleTheme = () => {
-        setTheme((prev) => (prev === 'light' ? 'dark' : 'light'));
-    };
+        setTheme((prev) => (prev === 'light' ? 'dark' : 'light'))
+    }
 
-    const currentLocale = getLocale();
+    const currentLocale = getLocale()
     const toggleLanguage = () => {
-        const nextLocale = currentLocale === 'fi' ? 'en' : 'fi';
-        setLocale(nextLocale);
-    };
+        const nextLocale = currentLocale === 'fi' ? 'en' : 'fi'
+        setLocale(nextLocale)
+    }
 
     return (
         <html lang={currentLocale}>
@@ -94,13 +80,13 @@ function RootDocument({ children }: { children: React.ReactNode }) {
             </head>
             <body
                 className={cn(
-                    "h-screen bg-stone-100 text-stone-800 dark:bg-stone-950 dark:text-stone-300",
-                    "grid grid-rows-[4rem_1fr_2rem]",
-                    "transition-[grid-template-columns,colors] duration-300 ease-in-out",
-                    isSidebarOpen ? "grid-cols-[15rem_1fr]" : "grid-cols-[0rem_1fr]"
+                    'h-screen bg-stone-100 text-stone-800 dark:bg-stone-950 dark:text-stone-300',
+                    'grid grid-rows-[4rem_1fr_2rem]',
+                    'transition-[grid-template-columns,colors] duration-300 ease-in-out',
+                    isSidebarOpen ? 'grid-cols-[15rem_1fr]' : 'grid-cols-[0rem_1fr]'
                 )}
             >
-                <header className={cn("col-span-2 flex gap-2 items-center p-2 border-b-2 border-stone-800 dark:border-stone-600")}>
+                <header className={cn('col-span-2 flex gap-2 items-center p-2 border-b-2 border-stone-800 dark:border-stone-600 bg-stone-100 dark:bg-stone-900')}>
                     <Button
                         variant="ghost"
                         size="icon"
@@ -109,60 +95,30 @@ function RootDocument({ children }: { children: React.ReactNode }) {
                     >
                         <Menu size="20" />
                     </Button>
-                    <h1 className={cn("font-bold text-lg")}>Varauskalenteri</h1>
-                    <div className={cn("flex-1")} />
+                    <h1 className={cn('font-bold text-lg tracking-tight')}>Varauskalenteri</h1>
+                    <div className={cn('flex-1')} />
                     <SearchBar />
                     <AuthDialog />
                 </header>
 
-                <aside
-                    className={cn(
-                        "overflow-hidden transition-all duration-300 ease-in-out",
-                        "border-stone-800 dark:border-stone-600",
-                        isSidebarOpen ? "border-r-2 opacity-100" : "border-r-0 opacity-0"
-                    )}
-                >
-                    <div className={cn("w-60 h-full whitespace-nowrap")}>
-                        <ul className={cn("gap-2 h-full flex flex-col divide-y-2 divide-stone-800 dark:divide-stone-600 *:p-2")}>
-                            <li>Varaukset</li>
-                            <li>Resurssit</li>
-                            <li>Tilastoja</li>
-                            <li className={cn("flex-1")} />
-                            <li className={cn("flex items-center justify-between gap-2")}>
-                                <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    onClick={toggleLanguage}
-                                >
-                                    <Globe size={16} />
-                                    <span>{currentLocale === 'fi' ? 'Suomi' : 'English'}</span>
-                                </Button>
+                <SideBar
+                    isSidebarOpen={isSidebarOpen}
+                    currentLocale={currentLocale}
+                    toggleLanguage={toggleLanguage}
+                    theme={theme}
+                    toggleTheme={toggleTheme}
+                />
 
-                                <Button
-                                    size="icon"
-                                    variant="ghost"
-                                    onClick={toggleTheme}
-                                    aria-label="Toggle Theme"
-                                >
-                                    {theme === 'light' ? <Sun size={16} /> : <Moon size={16} />}
-                                </Button>
-                            </li>
-                        </ul>
-                    </div>
-                </aside>
-
-                <main className={cn("p-4 overflow-y-auto")}>
+                <main className={cn('p-4 overflow-y-auto')}>
                     {children}
                 </main>
 
-                <footer className={cn("col-span-2 border-t-2 border-stone-800 dark:border-stone-600 flex gap-2 items-center p-2 text-xs")}>
+                <footer className={cn('col-span-2 border-t-2 border-stone-800 dark:border-stone-600 flex gap-2 items-center p-2 text-xs font-mono bg-stone-100 dark:bg-stone-900')}>
                     kuutar 0.1.0
                 </footer>
 
                 <TanStackDevtools
-                    config={{
-                        position: 'bottom-right',
-                    }}
+                    config={{ position: 'bottom-right' }}
                     plugins={[
                         {
                             name: 'Tanstack Router',
@@ -174,5 +130,5 @@ function RootDocument({ children }: { children: React.ReactNode }) {
                 <Scripts />
             </body>
         </html>
-    );
+    )
 }
