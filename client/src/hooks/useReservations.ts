@@ -92,3 +92,18 @@ export function useDeleteReservation() {
         },
     })
 }
+
+export type CreateOccurrencePayload = components['schemas']['CreateOccurrencePayload']
+export type Occurrence = components['schemas']['Occurrence']
+
+export function useCheckConflicts() {
+    return useMutation({
+        mutationFn: async (occurrences: CreateOccurrencePayload[]) => {
+            const { data, error } = await api.POST('/reservations/check-conflicts', {
+                body: occurrences,
+            })
+            if (error || !data) throw new Error('Ristiriitojen tarkistus epäonnistui.')
+            return data
+        },
+    })
+}

@@ -1,3 +1,4 @@
+// src/routes/reservations/create.tsx
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { ReservationForm, type ReservationFormValues } from '#/components/ReservationForm'
 import { useCreateReservation } from '#/hooks/useReservations'
@@ -11,23 +12,13 @@ function CreateReservationPage() {
     const createReservation = useCreateReservation()
 
     const handleSubmit = async (values: ReservationFormValues) => {
-        const occurrences =
-            values.resource_id && values.start_time && values.end_time
-                ? [
-                    {
-                        resource_id: values.resource_id,
-                        start_time: new Date(values.start_time).toISOString(),
-                        end_time: new Date(values.end_time).toISOString(),
-                    },
-                ]
-                : []
-
         const created = await createReservation.mutateAsync({
             title: values.title,
             description: values.description || null,
             status: values.status,
             admin_notes: values.admin_notes || null,
-            occurrences,
+            rrule: values.rrule || null,
+            occurrences: values.occurrences ?? [],
         })
 
         navigate({ to: '/reservations/$id', params: { id: created.id } })

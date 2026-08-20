@@ -15,6 +15,17 @@ function EditReservationPage() {
     if (isLoading) return <div className="p-4">Ladataan varausta...</div>
     if (!reservation) return <div className="p-4">Varausta ei löytynyt.</div>
 
+    const firstOccurrence = reservation.occurrences?.[0]
+
+    // Convert ISO dates to local datetime-local format (YYYY-MM-DDTHH:mm)
+    const formatLocalISO = (isoStr?: string) => {
+        if (!isoStr) return ''
+        const date = new Date(isoStr)
+        const offset = date.getTimezoneOffset()
+        const localDate = new Date(date.getTime() - offset * 60 * 1000)
+        return localDate.toISOString().slice(0, 16)
+    }
+
     const handleSubmit = async (values: ReservationFormValues) => {
         await updateReservation.mutateAsync({
             id: reservation.id,
@@ -23,6 +34,7 @@ function EditReservationPage() {
                 description: values.description || null,
                 status: values.status,
                 admin_notes: values.admin_notes || null,
+                rrule: values.rrule || null,
             },
         })
         navigate({ to: '/reservations/$id', params: { id: reservation.id } })
@@ -37,6 +49,10 @@ function EditReservationPage() {
                     description: reservation.description ?? '',
                     status: reservation.status,
                     admin_notes: reservation.admin_notes ?? '',
+                    rrule: reservation.rrule,
+                    resource_id: firstOccurrence?.resource_id ?? '',
+                    start_time: formatLocalISO(firstOccurrence?.start_time),
+                    end_time: formatLocalISO(firstOccurrence?.end_time),
                 }}
                 onSubmit={handleSubmit}
                 isSubmitting={updateReservation.isPending}
