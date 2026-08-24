@@ -24,7 +24,6 @@ use crate::{
     errors::AppError,
 };
 
-/// GET /reservations (PUBLIC)
 #[utoipa::path(
     get,
     path = "/reservations",
@@ -44,7 +43,6 @@ pub async fn list_reservations(
     Ok(Json(reservations))
 }
 
-/// GET /reservations/{id} (PUBLIC)
 #[utoipa::path(
     get,
     path = "/reservations/{id}",
@@ -63,14 +61,12 @@ pub async fn get_reservation(
     Path(id): Path<Uuid>,
     opt_user: OptionalAuthUser,
 ) -> Result<Json<ReservationWithOccurrences>, AppError> {
-    // ✅ Corrected return type
     let is_admin = opt_user.0.map(|u| u.role == Role::Admin).unwrap_or(false);
 
     let reservation = db::find_by_id(&auth_state.pool, id, is_admin).await?;
     Ok(Json(reservation))
 }
 
-/// POST /reservations
 #[utoipa::path(
     post,
     path = "/reservations",
@@ -98,12 +94,10 @@ pub async fn create_reservation(
         ));
     }
 
-    let reservation =
-        db::create(&auth_state.pool, auth_user.id, auth_user.group_id, payload).await?;
+    let reservation = db::create(&auth_state.pool, auth_user.id, payload).await?;
     Ok((StatusCode::CREATED, Json(reservation)))
 }
 
-/// POST /reservations/check-conflicts
 #[utoipa::path(
     post,
     path = "/reservations/check-conflicts",
@@ -125,7 +119,6 @@ pub async fn check_reservation_conflicts(
     Ok(Json(conflicts))
 }
 
-/// PATCH /reservations/{id}
 #[utoipa::path(
     patch,
     path = "/reservations/{id}",
@@ -142,19 +135,18 @@ pub async fn check_reservation_conflicts(
         (status = 422, description = "Validation error")
     )
 )]
-#[tracing::instrument(skip(auth_state, auth_user))]
+#[tracing::instrument(skip(auth_state, _auth_user))]
 pub async fn update_reservation(
     State(auth_state): State<AuthState>,
     Path(id): Path<Uuid>,
-    auth_user: AuthUser,
+    _auth_user: AuthUser,
     Json(payload): Json<UpdateReservationPayload>,
 ) -> Result<Json<Reservation>, AppError> {
     payload.validate()?;
-    let reservation = db::update(&auth_state.pool, id, auth_user.group_id, payload).await?;
+    let reservation = db::update(&auth_state.pool, id, payload).await?;
     Ok(Json(reservation))
 }
 
-/// DELETE /reservations/{id}
 #[utoipa::path(
     delete,
     path = "/reservations/{id}",
@@ -169,12 +161,12 @@ pub async fn update_reservation(
         (status = 404, description = "Reservation not found")
     )
 )]
-#[tracing::instrument(skip(auth_state, auth_user))]
+#[tracing::instrument(skip(auth_state, _auth_user))]
 pub async fn delete_reservation(
     State(auth_state): State<AuthState>,
     Path(id): Path<Uuid>,
-    auth_user: AuthUser,
+    _auth_user: AuthUser,
 ) -> Result<StatusCode, AppError> {
-    db::soft_delete(&auth_state.pool, id, auth_user.group_id).await?;
+    db::soft_delete(&auth_state.pool, id).await?;
     Ok(StatusCode::NO_CONTENT)
 }

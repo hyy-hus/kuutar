@@ -1,8 +1,3 @@
-//! Database layer for the `reservations` domain.
-//!
-//! Handles all SQL queries for reservations and occurrences. All read and update
-//! operations automatically exclude soft-deleted records (`deleted_at IS NULL`).
-
 use sqlx::PgPool;
 use uuid::Uuid;
 
@@ -12,8 +7,6 @@ use super::models::{
 };
 use crate::errors::AppError;
 
-/// Fetches all active reservations, including their associated occurrences.
-/// Redacts `admin_notes` if `is_admin` is false.
 pub async fn list_all(
     pool: &PgPool,
     is_admin: bool,
@@ -22,7 +15,7 @@ pub async fn list_all(
         Reservation,
         r#"
         SELECT 
-            id, group_id, user_id, title, description, admin_notes, rrule, 
+            id, user_id, title, description, admin_notes, rrule, 
             status AS "status: ReservationStatus", created_at, updated_at
         FROM reservations
         WHERE deleted_at IS NULL
@@ -48,12 +41,6 @@ pub async fn list_all(
     Ok(result)
 }
 
-/// Fetches an active reservation by its ID, including all its occurrences.
-/// Redacts `admin_notes` if `is_admin` is false.
-///
-/// # Errors
-///
-/// Returns [`AppError::NotFound`] if the reservation does not exist or is soft-deleted.
 pub async fn find_by_id(
     pool: &PgPool,
     id: Uuid,
@@ -63,7 +50,7 @@ pub async fn find_by_id(
         Reservation,
         r#"
         SELECT 
-            id, group_id, user_id, title, description, admin_notes, rrule, 
+            id, user_id, title, description, admin_notes, rrule, 
             status AS "status: ReservationStatus", created_at, updated_at
         FROM reservations
         WHERE id = $1 AND deleted_at IS NULL
@@ -86,15 +73,9 @@ pub async fn find_by_id(
     })
 }
 
-/// Creates a new reservation and batch inserts all occurrences within a single transaction.
-///
-/// # Errors
-///
-/// Returns [`AppError::BadRequest`] if an occurrence reference ID is invalid or time bounds fail constraints.
 pub async fn create(
     pool: &PgPool,
     user_id: Uuid,
-    group_id: Uuid,
     dto: CreateReservationPayload,
 ) -> Result<ReservationWithOccurrences, AppError> {
     let mut tx = pool.begin().await?;
@@ -104,13 +85,12 @@ pub async fn create(
     let reservation = sqlx::query_as!(
         Reservation,
         r#"
-        INSERT INTO reservations (group_id, user_id, title, description, admin_notes, rrule, status)
-        VALUES ($1, $2, $3, $4, $5, $6, $7)
+        INSERT INTO reservations (user_id, title, description, admin_notes, rrule, status)
+        VALUES ($1, $2, $3, $4, $5, $6)
         RETURNING 
-            id, group_id, user_id, title, description, admin_notes, rrule, 
+            id, user_id, title, description, admin_notes, rrule, 
             status AS "status: ReservationStatus", created_at, updated_at
         "#,
-        group_id,
         user_id,
         dto.title,
         dto.description,
@@ -150,15 +130,9 @@ pub async fn create(
     })
 }
 
-/// Performs a partial update on reservation metadata.
-///
-/// # Errors
-///
-/// Returns [`AppError::NotFound`] if the reservation does not exist or is soft-deleted.
 pub async fn update(
     pool: &PgPool,
     id: Uuid,
-    group_id: Uuid,
     dto: UpdateReservationPayload,
 ) -> Result<Reservation, AppError> {
     let reservation = sqlx::query_as!(
@@ -171,9 +145,9 @@ pub async fn update(
             admin_notes = COALESCE($3, admin_notes),
             rrule = COALESCE($4, rrule),
             status = COALESCE($5, status)
-        WHERE id = $6 AND group_id = $7 AND deleted_at IS NULL
+        WHERE id = $6 AND deleted_at IS NULL
         RETURNING 
-            id, group_id, user_id, title, description, admin_notes, rrule, 
+            id, user_id, title, description, admin_notes, rrule, 
             status AS "status: ReservationStatus", created_at, updated_at
         "#,
         dto.title,
@@ -181,8 +155,7 @@ pub async fn update(
         dto.admin_notes,
         dto.rrule,
         dto.status as Option<ReservationStatus>,
-        id,
-        group_id
+        id
     )
     .fetch_optional(pool)
     .await?
@@ -191,20 +164,14 @@ pub async fn update(
     Ok(reservation)
 }
 
-/// Soft-deletes a reservation by setting its `deleted_at` timestamp.
-///
-/// # Errors
-///
-/// Returns [`AppError::NotFound`] if the reservation does not exist or was already deleted.
-pub async fn soft_delete(pool: &PgPool, id: Uuid, group_id: Uuid) -> Result<(), AppError> {
+pub async fn soft_delete(pool: &PgPool, id: Uuid) -> Result<(), AppError> {
     let result = sqlx::query!(
         r#"
         UPDATE reservations
         SET deleted_at = NOW()
-        WHERE id = $1 AND group_id = $2 AND deleted_at IS NULL
+        WHERE id = $1 AND deleted_at IS NULL
         "#,
-        id,
-        group_id
+        id
     )
     .execute(pool)
     .await?;
@@ -216,7 +183,6 @@ pub async fn soft_delete(pool: &PgPool, id: Uuid, group_id: Uuid) -> Result<(), 
     Ok(())
 }
 
-/// Helper function to fetch all occurrences associated with a reservation.
 async fn fetch_occurrences_for_reservation(
     pool: &PgPool,
     reservation_id: Uuid,
@@ -237,7 +203,6 @@ async fn fetch_occurrences_for_reservation(
     Ok(occurrences)
 }
 
-/// Checks proposed occurrences against active non-cancelled occurrences for scheduling conflicts.
 pub async fn check_conflicts(
     pool: &PgPool,
     proposed_occurrences: &[CreateOccurrencePayload],

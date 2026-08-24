@@ -16,8 +16,7 @@ pub enum ReservationStatus {
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct Reservation {
     pub id: Uuid,
-    pub group_id: Uuid,
-    pub user_id: Uuid,
+    pub user_id: Uuid, // Owned directly by user
     pub title: String,
     pub description: Option<String>,
 
@@ -69,7 +68,6 @@ pub struct CreateReservationPayload {
 }
 
 impl CreateReservationPayload {
-    /// Helper to validate time order across all occurrences in the payload
     pub fn validate_occurrence_times(&self) -> bool {
         self.occurrences
             .iter()
