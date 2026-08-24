@@ -34,7 +34,6 @@ export function Calendar() {
         )
     }
 
-    // Flatten occurrences into calendar event objects
     const calendarEvents = useMemo(() => {
         if (!reservations || !resources) return []
 
@@ -42,22 +41,56 @@ export function Calendar() {
         const events: CalendarEvent[] = []
 
         reservations.forEach((res) => {
-            res.occurrences?.forEach((occ) => {
+            if (!res.occurrences || res.occurrences.length === 0) return
+
+            // Group occurrences by Reservation ID + Start Time
+            const timeGroups = new Map<string, typeof res.occurrences>()
+
+            res.occurrences.forEach((occ) => {
                 if (selectedResourceIds.includes(occ.resource_id)) {
-                    events.push({
-                        id: occ.id,
-                        reservationId: res.id,
-                        title: res.title,
-                        start: new Date(occ.start_time),
-                        end: new Date(occ.end_time),
-                        resourceId: occ.resource_id,
-                        resourceName: resourcesMap.get(occ.resource_id),
-                    })
+                    const startMs = new Date(occ.start_time).getTime()
+                    const endMs = new Date(occ.end_time).getTime()
+                    const key = `${res.id}_${startMs}_${endMs}`
+
+                    const group = timeGroups.get(key) || []
+                    group.push(occ)
+                    timeGroups.set(key, group)
                 }
+            })
+
+            timeGroups.forEach((occurrencesGroup) => {
+                const resourceNames = Array.from(
+                    new Set(
+                        occurrencesGroup
+                            .map((occ) => resourcesMap.get(occ.resource_id))
+                            .filter(Boolean)
+                    )
+                ).join(', ')
+
+                const firstOcc = occurrencesGroup[0]
+
+                events.push({
+                    id: firstOcc.id,
+                    reservationId: res.id,
+                    title: res.title,
+                    start: new Date(firstOcc.start_time),
+                    end: new Date(firstOcc.end_time),
+                    resourceId: firstOcc.resource_id,
+                    resourceName: resourceNames,
+                })
             })
         })
 
-        return events
+        // Final deduplication: Ensure no two events share the same (reservationId, startMs)
+        const uniqueEvents = new Map<string, CalendarEvent>()
+        events.forEach((evt) => {
+            const key = `${evt.reservationId}_${evt.start.getTime()}`
+            if (!uniqueEvents.has(key)) {
+                uniqueEvents.set(key, evt)
+            }
+        })
+
+        return Array.from(uniqueEvents.values())
     }, [reservations, resources, selectedResourceIds])
 
     if (loadingResources || loadingReservations) {

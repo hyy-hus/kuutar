@@ -35,7 +35,8 @@ export function getMinutesBetween(start: Date, end: Date): number {
 }
 
 /**
- * Calculates overlap column placement for events within a day column
+ * Calculates overlap column placement for events within a day column.
+ * Cluster-based greedy allocation that stretches non-conflicting events across available spans.
  */
 export function layoutDay(events: CalendarEvent[]): {
     maxCols: number
@@ -43,26 +44,93 @@ export function layoutDay(events: CalendarEvent[]): {
 } {
     if (!events.length) return { maxCols: 1, placed: [] }
 
-    const sorted = [...events].sort((a, b) => a.start.getTime() - b.start.getTime())
-    const columns: CalendarEvent[][] = []
-    const placed: PlacedEvent[] = []
+    // 1. Sort events by start time, then duration (descending)
+    const sorted = [...events].sort((a, b) => {
+        if (a.start.getTime() !== b.start.getTime()) {
+            return a.start.getTime() - b.start.getTime()
+        }
+        return b.end.getTime() - a.end.getTime()
+    })
 
-    for (const event of sorted) {
-        let placedInCol = false
-        for (let i = 0; i < columns.length; i++) {
-            const lastInCol = columns[i][columns[i].length - 1]
-            if (lastInCol.end.getTime() <= event.start.getTime()) {
-                columns[i].push(event)
-                placed.push({ ...event, col: i + 1, span: 1 })
-                placedInCol = true
-                break
-            }
+    // 2. Partition into contiguous overlapping clusters
+    const clusters: CalendarEvent[][] = []
+    let currentCluster: CalendarEvent[] = []
+    let clusterEnd = 0
+
+    sorted.forEach((evt) => {
+        const startMs = evt.start.getTime()
+        const endMs = evt.end.getTime()
+
+        if (currentCluster.length === 0 || startMs < clusterEnd) {
+            currentCluster.push(evt)
+            clusterEnd = Math.max(clusterEnd, endMs)
+        } else {
+            clusters.push(currentCluster)
+            currentCluster = [evt]
+            clusterEnd = endMs
         }
-        if (!placedInCol) {
-            columns.push([event])
-            placed.push({ ...event, col: columns.length, span: 1 })
-        }
+    })
+    if (currentCluster.length > 0) {
+        clusters.push(currentCluster)
     }
 
-    return { maxCols: Math.max(1, columns.length), placed }
+    // 3. Lay out each cluster and calculate dynamic column span
+    const placed: PlacedEvent[] = []
+    let globalMaxCols = 1
+
+    clusters.forEach((cluster) => {
+        const columns: CalendarEvent[][] = []
+
+        cluster.forEach((evt) => {
+            let placedInCol = false
+            for (let i = 0; i < columns.length; i++) {
+                const lastInCol = columns[i][columns[i].length - 1]
+                if (lastInCol.end.getTime() <= evt.start.getTime()) {
+                    columns[i].push(evt)
+                    placedInCol = true
+                    break
+                }
+            }
+            if (!placedInCol) {
+                columns.push([evt])
+            }
+        })
+
+        const clusterCols = columns.length
+        globalMaxCols = Math.max(globalMaxCols, clusterCols)
+
+        // Assign column indices and compute dynamic span expansion
+        cluster.forEach((evt) => {
+            let colIdx = 0
+            for (let i = 0; i < columns.length; i++) {
+                if (columns[i].includes(evt)) {
+                    colIdx = i
+                    break
+                }
+            }
+
+            // Expand span if there are no colliding neighbors to the right
+            let span = 1
+            for (let j = colIdx + 1; j < clusterCols; j++) {
+                const hasCollision = columns[j].some(
+                    (other) =>
+                        evt.start.getTime() < other.end.getTime() &&
+                        evt.end.getTime() > other.start.getTime()
+                )
+                if (!hasCollision) {
+                    span++
+                } else {
+                    break
+                }
+            }
+
+            placed.push({
+                ...evt,
+                col: colIdx + 1,
+                span,
+            })
+        })
+    })
+
+    return { maxCols: globalMaxCols, placed }
 }
