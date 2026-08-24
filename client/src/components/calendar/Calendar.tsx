@@ -1,37 +1,90 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
 import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react'
 import { Button } from '#/components/Button'
 import { useResources } from '#/hooks/useResorces'
 import { useReservations } from '#/hooks/useReservations'
-import { startOfCurrentWeek, type CalendarEvent } from '#/utils/calendarUtils'
+import type { CalendarEvent } from '#/utils/calendarUtils'
 import { WeekView } from './WeekView'
 import { ToggleChip } from '../Chip'
+import type { CalendarSearch } from '#/routes/calendar'
 
-export function Calendar() {
-    const [start, setStart] = useState<Date>(startOfCurrentWeek)
-    const [days, setDays] = useState<number>(7)
-    const [selectedResourceIds, setSelectedResourceIds] = useState<string[]>([])
+interface CalendarProps {
+    startStr: string
+    days: number
+    selectedResourceIds?: string[]
+    onSearchChange: (nextSearch: CalendarSearch) => void
+}
+
+const parseLocalDate = (dateStr: string): Date => {
+    const [year, month, day] = dateStr.split('-').map(Number)
+    return new Date(year, month - 1, day, 0, 0, 0, 0)
+}
+
+const formatYYYYMMDD = (d: Date): string => {
+    const year = d.getFullYear()
+    const month = String(d.getMonth() + 1).padStart(2, '0')
+    const day = String(d.getDate()).padStart(2, '0')
+    return `${year}-${month}-${day}`
+}
+
+export function Calendar({
+    startStr,
+    days,
+    selectedResourceIds,
+    onSearchChange,
+}: CalendarProps) {
+    const start = useMemo(() => parseLocalDate(startStr), [startStr])
 
     const { data: resources, isLoading: loadingResources } = useResources()
-    const { data: reservations, isLoading: loadingReservations } = useReservations()
 
-    // Pre-select all resources when loaded
-    useEffect(() => {
-        if (resources && selectedResourceIds.length === 0) {
-            setSelectedResourceIds(resources.map((r) => r.id))
+    // Active selected resources fallback to all resources if none specified in URL
+    const activeResourceIds = useMemo(() => {
+        if (selectedResourceIds && selectedResourceIds.length > 0) {
+            return selectedResourceIds
         }
-    }, [resources, selectedResourceIds.length])
+        return resources?.map((r) => r.id) || []
+    }, [selectedResourceIds, resources])
+
+    // Pre-select all resources in URL if no filter param exists yet
+    useEffect(() => {
+        if (resources && (!selectedResourceIds || selectedResourceIds.length === 0)) {
+            onSearchChange({ resources: resources.map((r) => r.id) })
+        }
+    }, [resources, selectedResourceIds, onSearchChange])
+
+    // Calculate start & end ISO strings for useReservations query params
+    const { startDateISO, endDateISO } = useMemo(() => {
+        const startDate = new Date(start)
+        startDate.setHours(0, 0, 0, 0)
+
+        const endDate = new Date(start)
+        endDate.setDate(endDate.getDate() + days)
+        endDate.setHours(23, 59, 59, 999)
+
+        return {
+            startDateISO: startDate.toISOString(),
+            endDateISO: endDate.toISOString(),
+        }
+    }, [start, days])
+
+    // Fetch reservations filtered by range boundary
+    const { data: reservations, isLoading: loadingReservations } = useReservations({
+        startDate: startDateISO,
+        endDate: endDateISO,
+    })
 
     const moveStart = (deltaDays: number) => {
         const next = new Date(start)
         next.setDate(next.getDate() + deltaDays)
-        setStart(next)
+        onSearchChange({ start: formatYYYYMMDD(next) })
     }
 
     const toggleResource = (id: string) => {
-        setSelectedResourceIds((prev) =>
-            prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
-        )
+        const nextResources = activeResourceIds.includes(id)
+            ? activeResourceIds.filter((item) => item !== id)
+            : [...activeResourceIds, id]
+
+        onSearchChange({ resources: nextResources })
     }
 
     const calendarEvents = useMemo(() => {
@@ -43,11 +96,10 @@ export function Calendar() {
         reservations.forEach((res) => {
             if (!res.occurrences || res.occurrences.length === 0) return
 
-            // Group occurrences by Reservation ID + Start Time
             const timeGroups = new Map<string, typeof res.occurrences>()
 
             res.occurrences.forEach((occ) => {
-                if (selectedResourceIds.includes(occ.resource_id)) {
+                if (activeResourceIds.includes(occ.resource_id)) {
                     const startMs = new Date(occ.start_time).getTime()
                     const endMs = new Date(occ.end_time).getTime()
                     const key = `${res.id}_${startMs}_${endMs}`
@@ -81,7 +133,6 @@ export function Calendar() {
             })
         })
 
-        // Final deduplication: Ensure no two events share the same (reservationId, startMs)
         const uniqueEvents = new Map<string, CalendarEvent>()
         events.forEach((evt) => {
             const key = `${evt.reservationId}_${evt.start.getTime()}`
@@ -91,7 +142,7 @@ export function Calendar() {
         })
 
         return Array.from(uniqueEvents.values())
-    }, [reservations, resources, selectedResourceIds])
+    }, [reservations, resources, activeResourceIds])
 
     if (loadingResources || loadingReservations) {
         return (
@@ -112,8 +163,11 @@ export function Calendar() {
 
                 <input
                     type="date"
-                    value={start.toISOString().split('T')[0]}
-                    onChange={(e) => e.target.valueAsDate && setStart(e.target.valueAsDate)}
+                    value={formatYYYYMMDD(start)}
+                    onChange={(e) =>
+                        e.target.valueAsDate &&
+                        onSearchChange({ start: formatYYYYMMDD(e.target.valueAsDate) })
+                    }
                     className="px-3 py-1.5 text-xs bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-md"
                 />
 
@@ -123,7 +177,7 @@ export function Calendar() {
 
                 <select
                     value={days}
-                    onChange={(e) => setDays(Number(e.target.value))}
+                    onChange={(e) => onSearchChange({ days: Number(e.target.value) })}
                     className="px-3 py-1.5 text-xs bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-md"
                 >
                     <option value={1}>1 päivä</option>
@@ -136,7 +190,7 @@ export function Calendar() {
             {/* Resource Filter Chips */}
             <div className="flex flex-wrap gap-1.5 shrink-0">
                 {resources?.map((res) => {
-                    const isSelected = selectedResourceIds.includes(res.id)
+                    const isSelected = activeResourceIds.includes(res.id)
                     return (
                         <ToggleChip
                             key={res.id}

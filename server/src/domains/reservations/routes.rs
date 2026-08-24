@@ -1,6 +1,6 @@
 use axum::{
     Json,
-    extract::{Path, State},
+    extract::{Path, Query, State},
     http::StatusCode,
 };
 use uuid::Uuid;
@@ -9,7 +9,7 @@ use validator::Validate;
 use super::{
     db,
     models::{
-        CreateOccurrencePayload, CreateReservationPayload, Occurrence,
+        CreateOccurrencePayload, CreateReservationPayload, ListReservationsQuery, Occurrence,
         ReservationWithOccurrences, UpdateReservationPayload,
     },
 };
@@ -24,22 +24,45 @@ use crate::{
     errors::AppError,
 };
 
+// Maximum allowed search window range in days
+const MAX_SEARCH_RANGE_DAYS: i64 = 91;
+
 #[utoipa::path(
     get,
     path = "/reservations",
     tag = "Reservations",
+    params(ListReservationsQuery),
     responses(
-        (status = 200, description = "List of active reservations", body = [ReservationWithOccurrences])
+        (status = 200, description = "List of filtered reservations", body = [ReservationWithOccurrences]),
+        (status = 400, description = "Invalid date window or range exceeds maximum limit"),
+        (status = 422, description = "Validation error")
     )
 )]
 #[tracing::instrument(skip(auth_state, opt_user))]
 pub async fn list_reservations(
     State(auth_state): State<AuthState>,
     opt_user: OptionalAuthUser,
+    Query(query): Query<ListReservationsQuery>,
 ) -> Result<Json<Vec<ReservationWithOccurrences>>, AppError> {
+    query.validate()?;
+
+    if !query.validate_range(MAX_SEARCH_RANGE_DAYS) {
+        return Err(AppError::BadRequest(format!(
+            "Invalid date range: 'start_date' must be before 'end_date' and total span must not exceed {MAX_SEARCH_RANGE_DAYS} days."
+        )));
+    }
+
     let is_admin = opt_user.0.map(|u| u.role == Role::Admin).unwrap_or(false);
 
-    let reservations = db::list_all(&auth_state.pool, is_admin).await?;
+    let reservations = db::list_filtered(
+        &auth_state.pool,
+        query.start_date,
+        query.end_date,
+        query.resource_id,
+        is_admin,
+    )
+    .await?;
+
     Ok(Json(reservations))
 }
 
@@ -119,7 +142,6 @@ pub async fn check_reservation_conflicts(
     Ok(Json(conflicts))
 }
 
-/// PATCH /reservations/{id}
 #[utoipa::path(
     patch,
     path = "/reservations/{id}",
@@ -143,7 +165,6 @@ pub async fn update_reservation(
     _auth_user: AuthUser,
     Json(payload): Json<UpdateReservationPayload>,
 ) -> Result<Json<ReservationWithOccurrences>, AppError> {
-    // <-- Updated return type
     payload.validate()?;
     let reservation = db::update(&auth_state.pool, id, payload).await?;
     Ok(Json(reservation))

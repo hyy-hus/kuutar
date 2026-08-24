@@ -8,21 +8,37 @@ export type CreateReservationPayload = components['schemas']['CreateReservationP
 export type UpdateReservationPayload = components['schemas']['UpdateReservationPayload']
 export type ReservationStatus = components['schemas']['ReservationStatus']
 
+export interface ReservationFilterParams {
+    startDate: string
+    endDate: string
+    resourceId?: string
+}
+
 export const reservationKeys = {
     all: ['reservations'] as const,
     lists: () => [...reservationKeys.all, 'list'] as const,
+    list: (params: ReservationFilterParams) => [...reservationKeys.lists(), params] as const,
     details: () => [...reservationKeys.all, 'detail'] as const,
     detail: (id: string) => [...reservationKeys.details(), id] as const,
 }
 
-export function useReservations() {
+export function useReservations(params: ReservationFilterParams) {
     return useQuery({
-        queryKey: reservationKeys.lists(),
+        queryKey: reservationKeys.list(params),
         queryFn: async () => {
-            const { data, error } = await api.GET('/reservations')
+            const { data, error } = await api.GET('/reservations', {
+                params: {
+                    query: {
+                        start_date: params.startDate,
+                        end_date: params.endDate,
+                        resource_id: params.resourceId,
+                    },
+                },
+            })
             if (error || !data) throw new Error('Varauksien hakeminen epäonnistui.')
             return data
         },
+        enabled: Boolean(params.startDate && params.endDate),
         staleTime: 1000 * 60 * 5,
     })
 }

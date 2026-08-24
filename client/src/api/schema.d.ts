@@ -116,8 +116,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** GET /groups */
         get: operations["list_groups"];
         put?: never;
+        /** POST /groups */
         post: operations["create_group"];
         delete?: never;
         options?: never;
@@ -132,12 +134,15 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** GET /groups/{id} */
         get: operations["get_group"];
         put?: never;
         post?: never;
+        /** DELETE /groups/{id} */
         delete: operations["delete_group"];
         options?: never;
         head?: never;
+        /** PATCH /groups/{id} */
         patch: operations["update_group"];
         trace?: never;
     };
@@ -186,7 +191,6 @@ export interface paths {
         delete: operations["delete_reservation"];
         options?: never;
         head?: never;
-        /** PATCH /reservations/{id} */
         patch: operations["update_reservation"];
         trace?: never;
     };
@@ -197,10 +201,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** GET /api/resources */
+        /** GET /resources */
         get: operations["list_resources"];
         put?: never;
-        /** POST /api/resources */
+        /** POST /resources */
         post: operations["create_resource"];
         delete?: never;
         options?: never;
@@ -215,15 +219,15 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** GET /api/resources/:id */
+        /** GET /resources/{id} */
         get: operations["get_resource"];
         put?: never;
         post?: never;
-        /** DELETE /api/resources/:id */
+        /** DELETE /resources/{id} */
         delete: operations["delete_resource"];
         options?: never;
         head?: never;
-        /** PATCH /api/resources/:id */
+        /** PATCH /resources/{id} */
         patch: operations["update_resource"];
         trace?: never;
     };
@@ -609,6 +613,20 @@ export interface operations {
                     "application/json": components["schemas"]["Collection"];
                 };
             };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden - Admin access required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
             /** @description Collection name conflict */
             409: {
                 headers: {
@@ -674,6 +692,20 @@ export interface operations {
                 };
                 content?: never;
             };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden - Admin access required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
             /** @description Collection not found */
             404: {
                 headers: {
@@ -707,6 +739,20 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["Collection"];
                 };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden - Admin access required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Collection not found */
             404: {
@@ -749,6 +795,13 @@ export interface operations {
                     "application/json": components["schemas"]["Group"][];
                 };
             };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
         };
     };
     create_group: {
@@ -773,8 +826,29 @@ export interface operations {
                     "application/json": components["schemas"]["Group"];
                 };
             };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden - Admin access required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
             /** @description Group name already exists */
             409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation error */
+            422: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -803,6 +877,13 @@ export interface operations {
                     "application/json": components["schemas"]["Group"];
                 };
             };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
             /** @description Group not found */
             404: {
                 headers: {
@@ -826,6 +907,20 @@ export interface operations {
         responses: {
             /** @description Group deleted */
             204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden - Admin access required */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -865,8 +960,29 @@ export interface operations {
                     "application/json": components["schemas"]["Group"];
                 };
             };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden - Admin access required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
             /** @description Group not found */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation error */
+            422: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -876,14 +992,18 @@ export interface operations {
     };
     list_reservations: {
         parameters: {
-            query?: never;
+            query: {
+                start_date: string;
+                end_date: string;
+                resource_id?: string | null;
+            };
             header?: never;
             path?: never;
             cookie?: never;
         };
         requestBody?: never;
         responses: {
-            /** @description List of active reservations */
+            /** @description List of filtered reservations */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -891,6 +1011,20 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["ReservationWithOccurrences"][];
                 };
+            };
+            /** @description Invalid date window or range exceeds maximum limit */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
@@ -1125,6 +1259,20 @@ export interface operations {
                     "application/json": components["schemas"]["Resource"];
                 };
             };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden - Admin access required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
             /** @description Resource name conflict in collection */
             409: {
                 headers: {
@@ -1190,6 +1338,20 @@ export interface operations {
                 };
                 content?: never;
             };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden - Admin access required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
             /** @description Resource not found */
             404: {
                 headers: {
@@ -1223,6 +1385,20 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["Resource"];
                 };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden - Admin access required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Resource not found */
             404: {
