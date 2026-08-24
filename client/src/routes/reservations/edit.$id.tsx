@@ -17,7 +17,6 @@ function EditReservationPage() {
 
     const firstOccurrence = reservation.occurrences?.[0]
 
-    // Convert ISO dates to local datetime-local format (YYYY-MM-DDTHH:mm)
     const formatLocalISO = (isoStr?: string) => {
         if (!isoStr) return ''
         const date = new Date(isoStr)
@@ -35,6 +34,7 @@ function EditReservationPage() {
                 status: values.status,
                 admin_notes: values.admin_notes || null,
                 rrule: values.rrule || null,
+                occurrences: values.occurrences ?? [],
             },
         })
         navigate({ to: '/reservations/$id', params: { id: reservation.id } })

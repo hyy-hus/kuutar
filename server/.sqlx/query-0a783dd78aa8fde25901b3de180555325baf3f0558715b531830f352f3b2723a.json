@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        UPDATE reservations\n        SET \n            title = COALESCE($1, title),\n            description = COALESCE($2, description),\n            admin_notes = COALESCE($3, admin_notes),\n            rrule = COALESCE($4, rrule),\n            status = COALESCE($5, status)\n        WHERE id = $6 AND group_id = $7 AND deleted_at IS NULL\n        RETURNING \n            id, group_id, user_id, title, description, admin_notes, rrule, \n            status AS \"status: ReservationStatus\", created_at, updated_at\n        ",
+  "query": "\n        UPDATE reservations\n        SET \n            title = COALESCE($1, title),\n            description = COALESCE($2, description),\n            admin_notes = COALESCE($3, admin_notes),\n            rrule = COALESCE($4, rrule),\n            status = COALESCE($5, status)\n        WHERE id = $6 AND deleted_at IS NULL\n        RETURNING \n            id, user_id, title, description, admin_notes, rrule, \n            status AS \"status: ReservationStatus\", created_at, updated_at\n        ",
   "describe": {
     "columns": [
       {
@@ -16,17 +16,6 @@
       },
       {
         "ordinal": 1,
-        "name": "group_id",
-        "type_info": "Uuid",
-        "origin": {
-          "Table": {
-            "table": "reservations",
-            "name": "group_id"
-          }
-        }
-      },
-      {
-        "ordinal": 2,
         "name": "user_id",
         "type_info": "Uuid",
         "origin": {
@@ -37,7 +26,7 @@
         }
       },
       {
-        "ordinal": 3,
+        "ordinal": 2,
         "name": "title",
         "type_info": "Text",
         "origin": {
@@ -48,7 +37,7 @@
         }
       },
       {
-        "ordinal": 4,
+        "ordinal": 3,
         "name": "description",
         "type_info": "Text",
         "origin": {
@@ -59,7 +48,7 @@
         }
       },
       {
-        "ordinal": 5,
+        "ordinal": 4,
         "name": "admin_notes",
         "type_info": "Text",
         "origin": {
@@ -70,7 +59,7 @@
         }
       },
       {
-        "ordinal": 6,
+        "ordinal": 5,
         "name": "rrule",
         "type_info": "Text",
         "origin": {
@@ -81,7 +70,7 @@
         }
       },
       {
-        "ordinal": 7,
+        "ordinal": 6,
         "name": "status: ReservationStatus",
         "type_info": {
           "Custom": {
@@ -103,7 +92,7 @@
         }
       },
       {
-        "ordinal": 8,
+        "ordinal": 7,
         "name": "created_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -114,7 +103,7 @@
         }
       },
       {
-        "ordinal": 9,
+        "ordinal": 8,
         "name": "updated_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -143,12 +132,10 @@
             }
           }
         },
-        "Uuid",
         "Uuid"
       ]
     },
     "nullable": [
-      false,
       false,
       false,
       false,
@@ -160,5 +147,5 @@
       false
     ]
   },
-  "hash": "b8d22e21dcb5cea35867c76cf768b8f4c5a078a594f81015776749e8ad801da7"
+  "hash": "0a783dd78aa8fde25901b3de180555325baf3f0558715b531830f352f3b2723a"
 }

@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        INSERT INTO reservations (group_id, user_id, title, description, admin_notes, rrule, status)\n        VALUES ($1, $2, $3, $4, $5, $6, $7)\n        RETURNING \n            id, group_id, user_id, title, description, admin_notes, rrule, \n            status AS \"status: ReservationStatus\", created_at, updated_at\n        ",
+  "query": "\n        INSERT INTO reservations (user_id, title, description, admin_notes, rrule, status)\n        VALUES ($1, $2, $3, $4, $5, $6)\n        RETURNING \n            id, user_id, title, description, admin_notes, rrule, \n            status AS \"status: ReservationStatus\", created_at, updated_at\n        ",
   "describe": {
     "columns": [
       {
@@ -16,17 +16,6 @@
       },
       {
         "ordinal": 1,
-        "name": "group_id",
-        "type_info": "Uuid",
-        "origin": {
-          "Table": {
-            "table": "reservations",
-            "name": "group_id"
-          }
-        }
-      },
-      {
-        "ordinal": 2,
         "name": "user_id",
         "type_info": "Uuid",
         "origin": {
@@ -37,7 +26,7 @@
         }
       },
       {
-        "ordinal": 3,
+        "ordinal": 2,
         "name": "title",
         "type_info": "Text",
         "origin": {
@@ -48,7 +37,7 @@
         }
       },
       {
-        "ordinal": 4,
+        "ordinal": 3,
         "name": "description",
         "type_info": "Text",
         "origin": {
@@ -59,7 +48,7 @@
         }
       },
       {
-        "ordinal": 5,
+        "ordinal": 4,
         "name": "admin_notes",
         "type_info": "Text",
         "origin": {
@@ -70,7 +59,7 @@
         }
       },
       {
-        "ordinal": 6,
+        "ordinal": 5,
         "name": "rrule",
         "type_info": "Text",
         "origin": {
@@ -81,7 +70,7 @@
         }
       },
       {
-        "ordinal": 7,
+        "ordinal": 6,
         "name": "status: ReservationStatus",
         "type_info": {
           "Custom": {
@@ -103,7 +92,7 @@
         }
       },
       {
-        "ordinal": 8,
+        "ordinal": 7,
         "name": "created_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -114,7 +103,7 @@
         }
       },
       {
-        "ordinal": 9,
+        "ordinal": 8,
         "name": "updated_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -127,7 +116,6 @@
     ],
     "parameters": {
       "Left": [
-        "Uuid",
         "Uuid",
         "Text",
         "Text",
@@ -151,7 +139,6 @@
       false,
       false,
       false,
-      false,
       true,
       true,
       true,
@@ -160,5 +147,5 @@
       false
     ]
   },
-  "hash": "c3890abe17f9082f66bc6926c7f3a3de35fc05ae34fb439da79f27f6e48375fd"
+  "hash": "b7c762ac5cf5b22ec9de0437b2e149e446bf45dc25ee2e32baadffc73f5407a5"
 }
