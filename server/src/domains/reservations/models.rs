@@ -96,12 +96,13 @@ pub struct ListReservationsQuery {
 }
 
 impl ListReservationsQuery {
-    /// Validates that start_date < end_date and the total range does not exceed max_days
+    /// Validates that start_date < end_date and total range does not exceed max_days
     pub fn validate_range(&self, max_days: i64) -> bool {
         if self.start_date >= self.end_date {
             return false;
         }
         let duration = self.end_date - self.start_date;
-        duration.num_days() <= max_days
+        // Allow up to max_days * 24 + 1 hours to comfortably cover full-day end bounds (23:59:59)
+        duration.num_hours() <= (max_days * 24 + 1)
     }
 }

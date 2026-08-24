@@ -25,7 +25,7 @@ use crate::{
 };
 
 // Maximum allowed search window range in days
-const MAX_SEARCH_RANGE_DAYS: i64 = 90;
+const MAX_SEARCH_RANGE_DAYS: i64 = 91;
 
 #[utoipa::path(
     get,
