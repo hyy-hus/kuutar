@@ -1,6 +1,6 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use utoipa::ToSchema;
+use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 use validator::Validate;
 
@@ -86,4 +86,22 @@ pub struct UpdateReservationPayload {
 
     #[validate(nested)]
     pub occurrences: Option<Vec<CreateOccurrencePayload>>,
+}
+
+#[derive(Debug, Deserialize, Validate, IntoParams)]
+pub struct ListReservationsQuery {
+    pub start_date: DateTime<Utc>,
+    pub end_date: DateTime<Utc>,
+    pub resource_id: Option<Uuid>,
+}
+
+impl ListReservationsQuery {
+    /// Validates that start_date < end_date and the total range does not exceed max_days
+    pub fn validate_range(&self, max_days: i64) -> bool {
+        if self.start_date >= self.end_date {
+            return false;
+        }
+        let duration = self.end_date - self.start_date;
+        duration.num_days() <= max_days
+    }
 }

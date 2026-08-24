@@ -1,3 +1,4 @@
+use chrono::{DateTime, Utc};
 use sqlx::PgPool;
 use uuid::Uuid;
 
@@ -7,10 +8,36 @@ use super::models::{
 };
 use crate::errors::AppError;
 
-pub async fn list_all(
+pub async fn list_filtered(
     pool: &PgPool,
+    start_date: DateTime<Utc>,
+    end_date: DateTime<Utc>,
+    resource_id: Option<Uuid>,
     is_admin: bool,
 ) -> Result<Vec<ReservationWithOccurrences>, AppError> {
+    // 1. Fetch distinct reservation IDs that have occurrences within the date/resource filter
+    let reservation_ids = sqlx::query_scalar!(
+        r#"
+        SELECT DISTINCT r.id
+        FROM reservations r
+        JOIN occurrences o ON o.reservation_id = r.id
+        WHERE r.deleted_at IS NULL
+          AND o.start_time < $2
+          AND o.end_time > $1
+          AND ($3::uuid IS NULL OR o.resource_id = $3)
+        "#,
+        start_date,
+        end_date,
+        resource_id
+    )
+    .fetch_all(pool)
+    .await?;
+
+    if reservation_ids.is_empty() {
+        return Ok(Vec::new());
+    }
+
+    // 2. Fetch the reservation metadata
     let reservations = sqlx::query_as!(
         Reservation,
         r#"
@@ -18,9 +45,10 @@ pub async fn list_all(
             id, user_id, title, description, admin_notes, rrule, 
             status AS "status: ReservationStatus", created_at, updated_at
         FROM reservations
-        WHERE deleted_at IS NULL
+        WHERE id = ANY($1) AND deleted_at IS NULL
         ORDER BY created_at DESC
-        "#
+        "#,
+        &reservation_ids
     )
     .fetch_all(pool)
     .await?;
@@ -31,7 +59,16 @@ pub async fn list_all(
         if !is_admin {
             reservation.admin_notes = None;
         }
-        let occurrences = fetch_occurrences_for_reservation(pool, reservation.id).await?;
+        // Fetch occurrences within the specified range for this reservation
+        let occurrences = fetch_occurrences_for_reservation_filtered(
+            pool,
+            reservation.id,
+            start_date,
+            end_date,
+            resource_id,
+        )
+        .await?;
+
         result.push(ReservationWithOccurrences {
             reservation,
             occurrences,
@@ -227,6 +264,35 @@ async fn fetch_occurrences_for_reservation(
         ORDER BY start_time ASC
         "#,
         reservation_id
+    )
+    .fetch_all(pool)
+    .await?;
+
+    Ok(occurrences)
+}
+
+async fn fetch_occurrences_for_reservation_filtered(
+    pool: &PgPool,
+    reservation_id: Uuid,
+    start_date: DateTime<Utc>,
+    end_date: DateTime<Utc>,
+    resource_id: Option<Uuid>,
+) -> Result<Vec<Occurrence>, AppError> {
+    let occurrences = sqlx::query_as!(
+        Occurrence,
+        r#"
+        SELECT id, reservation_id, resource_id, start_time, end_time, created_at
+        FROM occurrences
+        WHERE reservation_id = $1
+          AND start_time < $3
+          AND end_time > $2
+          AND ($4::uuid IS NULL OR resource_id = $4)
+        ORDER BY start_time ASC
+        "#,
+        reservation_id,
+        start_date,
+        end_date,
+        resource_id
     )
     .fetch_all(pool)
     .await?;
