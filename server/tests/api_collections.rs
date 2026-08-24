@@ -10,13 +10,14 @@ use tower::ServiceExt;
 
 mod common;
 
-use common::test_config;
+use common::{setup_admin_token, test_config};
 
 #[sqlx::test]
 async fn test_collections_crud_lifecycle(pool: PgPool) {
-    let app = app(pool, test_config());
+    let app = app(pool.clone(), test_config());
+    let admin_auth = setup_admin_token(&pool).await;
 
-    // 1. LIST (Starts Empty)
+    // 1. LIST (Starts Empty) - Public
     let req = Request::builder()
         .method("GET")
         .uri("/collections")
@@ -29,11 +30,24 @@ async fn test_collections_crud_lifecycle(pool: PgPool) {
     let list: Vec<Value> = serde_json::from_slice(&body).unwrap();
     assert_eq!(list.len(), 0);
 
-    // 2. CREATE
+    // 2. UNAUTHENTICATED CREATE (Fails with 401)
     let req = Request::builder()
         .method("POST")
         .uri("/collections")
         .header(header::CONTENT_TYPE, "application/json")
+        .body(Body::from(
+            json!({ "name": "Unauthorized Project" }).to_string(),
+        ))
+        .unwrap();
+    let res = app.clone().oneshot(req).await.unwrap();
+    assert_eq!(res.status(), StatusCode::UNAUTHORIZED);
+
+    // 3. CREATE (AUTHENTICATED ADMIN)
+    let req = Request::builder()
+        .method("POST")
+        .uri("/collections")
+        .header(header::CONTENT_TYPE, "application/json")
+        .header(header::AUTHORIZATION, &admin_auth)
         .body(Body::from(
             json!({ "name": "  Project Alpha  " }).to_string(),
         ))
@@ -47,7 +61,7 @@ async fn test_collections_crud_lifecycle(pool: PgPool) {
     // Verify custom Serde trimming worked
     assert_eq!(collection["name"], "Project Alpha");
 
-    // 3. GET BY ID
+    // 4. GET BY ID - Public
     let req = Request::builder()
         .method("GET")
         .uri(format!("/collections/{}", col_id))
@@ -56,11 +70,12 @@ async fn test_collections_crud_lifecycle(pool: PgPool) {
     let res = app.clone().oneshot(req).await.unwrap();
     assert_eq!(res.status(), StatusCode::OK);
 
-    // 4. PATCH (UPDATE NAME)
+    // 5. PATCH (UPDATE NAME - AUTHENTICATED ADMIN)
     let req = Request::builder()
         .method("PATCH")
         .uri(format!("/collections/{}", col_id))
         .header(header::CONTENT_TYPE, "application/json")
+        .header(header::AUTHORIZATION, &admin_auth)
         .body(Body::from(
             json!({ "name": "Project Alpha (Updated)" }).to_string(),
         ))
@@ -68,16 +83,17 @@ async fn test_collections_crud_lifecycle(pool: PgPool) {
     let res = app.clone().oneshot(req).await.unwrap();
     assert_eq!(res.status(), StatusCode::OK);
 
-    // 5. DELETE (SOFT DELETE)
+    // 6. DELETE (SOFT DELETE - AUTHENTICATED ADMIN)
     let req = Request::builder()
         .method("DELETE")
         .uri(format!("/collections/{}", col_id))
+        .header(header::AUTHORIZATION, &admin_auth)
         .body(Body::empty())
         .unwrap();
     let res = app.clone().oneshot(req).await.unwrap();
     assert_eq!(res.status(), StatusCode::NO_CONTENT);
 
-    // 6. VERIFY SOFT DELETED ITEM RETURNS 404
+    // 7. VERIFY SOFT DELETED ITEM RETURNS 404
     let req = Request::builder()
         .method("GET")
         .uri(format!("/collections/{}", col_id))
@@ -89,19 +105,21 @@ async fn test_collections_crud_lifecycle(pool: PgPool) {
 
 #[sqlx::test]
 async fn test_collections_error_handling(pool: PgPool) {
-    let app = app(pool, test_config());
+    let app = app(pool.clone(), test_config());
+    let admin_auth = setup_admin_token(&pool).await;
 
-    // 1. Validation Error: Empty Name (422)
+    // 1. Validation Error: Empty Name (422) - Admin Auth provided
     let req = Request::builder()
         .method("POST")
         .uri("/collections")
         .header(header::CONTENT_TYPE, "application/json")
+        .header(header::AUTHORIZATION, &admin_auth)
         .body(Body::from(json!({ "name": "" }).to_string()))
         .unwrap();
     let res = app.clone().oneshot(req).await.unwrap();
     assert_eq!(res.status(), StatusCode::UNPROCESSABLE_ENTITY);
 
-    // 2. Not Found Error: Unknown UUID (404)
+    // 2. Not Found Error: Unknown UUID (404) - Public GET
     let req = Request::builder()
         .method("GET")
         .uri("/collections/00000000-0000-0000-0000-000000000001")
@@ -110,10 +128,11 @@ async fn test_collections_error_handling(pool: PgPool) {
     let res = app.clone().oneshot(req).await.unwrap();
     assert_eq!(res.status(), StatusCode::NOT_FOUND);
 
-    // 3. Delete Non-Existent ID (404)
+    // 3. Delete Non-Existent ID (404) - Admin Auth provided
     let req = Request::builder()
         .method("DELETE")
         .uri("/collections/00000000-0000-0000-0000-000000000001")
+        .header(header::AUTHORIZATION, &admin_auth)
         .body(Body::empty())
         .unwrap();
     let res = app.clone().oneshot(req).await.unwrap();

@@ -1,5 +1,3 @@
-// tests/api_reservations.rs
-
 mod common;
 
 use axum::{
@@ -7,11 +5,8 @@ use axum::{
     http::{Request, StatusCode, header},
 };
 use chrono::{Duration, Utc};
-use common::test_config;
-use kuutar::{
-    app,
-    domains::{auth::jwt::encode_jwt, users::models::Role},
-};
+use common::{setup_user_token, test_config};
+use kuutar::{app, domains::users::models::Role};
 use serde_json::{Value, json};
 use sqlx::PgPool;
 use tower::ServiceExt;
@@ -19,15 +14,10 @@ use uuid::Uuid;
 
 /// Helper to seed group, collection, resource, user, and valid JWT
 async fn setup_test_environment(pool: &PgPool) -> (Uuid, Uuid, Uuid, Uuid, String) {
-    let config = test_config();
+    let (auth_header, user_id, group_id) = setup_user_token(pool, Role::User).await;
 
-    let group = sqlx::query!(
-        "INSERT INTO groups (name) VALUES ($1) RETURNING id",
-        format!("Test Group {}", Uuid::new_v4())
-    )
-    .fetch_one(pool)
-    .await
-    .unwrap();
+    // Strip "Bearer " prefix for tests that format it manually
+    let token = auth_header.trim_start_matches("Bearer ").to_string();
 
     let collection = sqlx::query!(
         "INSERT INTO collections (name) VALUES ($1) RETURNING id",
@@ -46,30 +36,7 @@ async fn setup_test_environment(pool: &PgPool) -> (Uuid, Uuid, Uuid, Uuid, Strin
     .await
     .unwrap();
 
-    let user = sqlx::query!(
-        r#"
-        INSERT INTO users (group_id, email, password_hash, role)
-        VALUES ($1, $2, $3, 'user'::user_role)
-        RETURNING id, role AS "role: Role"
-        "#,
-        group.id,
-        format!("user_{}@example.com", Uuid::new_v4()),
-        "fake_hash"
-    )
-    .fetch_one(pool)
-    .await
-    .unwrap();
-
-    let token = encode_jwt(
-        user.id,
-        group.id,
-        user.role,
-        &config.jwt_secret,
-        config.jwt_expiration_seconds,
-    )
-    .unwrap();
-
-    (group.id, user.id, resource.id, collection.id, token)
+    (group_id, user_id, resource.id, collection.id, token)
 }
 
 #[sqlx::test]
@@ -111,9 +78,15 @@ async fn test_create_and_get_reservation(pool: PgPool) {
         .await
         .unwrap();
 
-    assert_eq!(response.status(), StatusCode::CREATED);
-
+    let status = response.status();
     let body = to_bytes(response.into_body(), usize::MAX).await.unwrap();
+
+    if status != StatusCode::CREATED {
+        eprintln!("SERVER ERROR BODY: {}", String::from_utf8_lossy(&body));
+    }
+
+    assert_eq!(status, StatusCode::CREATED);
+
     let json: Value = serde_json::from_slice(&body).unwrap();
 
     let reservation_id = json["id"].as_str().unwrap();
@@ -150,6 +123,7 @@ async fn test_check_reservation_conflicts(pool: PgPool) {
     // Create an existing reservation from 10:00 to 11:00
     let payload = json!({
         "title": "Existing Booking",
+        "status": "confirmed",
         "occurrences": [
             {
                 "resource_id": resource_id,
@@ -240,6 +214,7 @@ async fn test_soft_delete_reservation(pool: PgPool) {
     let now = Utc::now();
     let payload = json!({
         "title": "To Be Deleted",
+        "status": "confirmed",
         "occurrences": [
             {
                 "resource_id": resource_id,
@@ -265,7 +240,9 @@ async fn test_soft_delete_reservation(pool: PgPool) {
 
     let body = to_bytes(create_res.into_body(), usize::MAX).await.unwrap();
     let json: Value = serde_json::from_slice(&body).unwrap();
-    let reservation_id = json["id"].as_str().unwrap();
+    let reservation_id = json["id"]
+        .as_str()
+        .expect("Response should contain reservation id");
 
     // Delete the reservation
     let delete_res = app
@@ -321,6 +298,7 @@ async fn test_list_and_update_reservation(pool: PgPool) {
     // 1. Create a reservation
     let payload = json!({
         "title": "Initial Title",
+        "status": "pending",
         "occurrences": [
             {
                 "resource_id": resource_id,
@@ -346,7 +324,9 @@ async fn test_list_and_update_reservation(pool: PgPool) {
 
     let body = to_bytes(create_res.into_body(), usize::MAX).await.unwrap();
     let created_json: Value = serde_json::from_slice(&body).unwrap();
-    let reservation_id = created_json["id"].as_str().unwrap();
+    let reservation_id = created_json["id"]
+        .as_str()
+        .expect("Response should contain reservation id");
 
     // 2. Test GET /reservations (list)
     let list_res = app
@@ -400,6 +380,7 @@ async fn test_create_reservation_invalid_times(pool: PgPool) {
     // Inverted times: start_time is AFTER end_time
     let payload = json!({
         "title": "Broken Time Reservation",
+        "status": "confirmed",
         "occurrences": [
             {
                 "resource_id": resource_id,
