@@ -39,7 +39,6 @@ export function ReservationForm({
     onSubmit,
     isSubmitting = false,
     submitLabel = 'Tallenna',
-    isCreate = false,
 }: ReservationFormProps) {
     const { data: resources, isLoading: loadingResources } = useResources()
     const checkConflicts = useCheckConflicts()
@@ -47,8 +46,17 @@ export function ReservationForm({
     // Parse initial rrule if present
     const initialRule = parseRRule(defaultValues?.rrule)
 
+    // Helper to format Date instance to YYYY-MM-DD string for input[type="date"]
+    const formatDateInput = (date?: Date | null) => {
+        if (!date) return ''
+        const year = date.getFullYear()
+        const month = String(date.getMonth() + 1).padStart(2, '0')
+        const day = String(date.getDate()).padStart(2, '0')
+        return `${year}-${month}-${day}`
+    }
+
     const [freq, setFreq] = useState<Frequency | null>(initialRule.freq)
-    const [count, setCount] = useState<number>(initialRule.count ?? 1)
+    const [untilStr, setUntilStr] = useState<string>(formatDateInput(initialRule.until))
     const [conflicts, setConflicts] = useState<Occurrence[] | null>(null)
 
     const form = useForm({
@@ -62,11 +70,12 @@ export function ReservationForm({
             end_time: defaultValues?.end_time ?? '',
         },
         onSubmit: async ({ value }) => {
+            const until = untilStr ? new Date(untilStr) : null
             const { occurrences, rruleString } = generateOccurrences(
                 value.start_time,
                 value.end_time,
                 value.resource_id,
-                { freq, count }
+                { freq, until }
             )
 
             await onSubmit({
@@ -78,11 +87,12 @@ export function ReservationForm({
     })
 
     const handleCheckConflicts = async () => {
+        const until = untilStr ? new Date(untilStr) : null
         const { occurrences } = generateOccurrences(
             form.getFieldValue('start_time'),
             form.getFieldValue('end_time'),
             form.getFieldValue('resource_id'),
-            { freq, count }
+            { freq, until }
         )
 
         if (occurrences.length === 0) return
@@ -186,7 +196,7 @@ export function ReservationForm({
                 )}
             </form.Field>
 
-            {/* Occurrence & Recurrence Section (Always visible) */}
+            {/* Occurrence & Recurrence Section */}
             <div className="pt-3 border-t-2 border-stone-800 dark:border-stone-700 space-y-3">
                 <h3 className="text-xs font-bold text-stone-900 dark:text-stone-100 uppercase tracking-wider">
                     Ajanvaraus ja Toistuvuus
@@ -305,17 +315,15 @@ export function ReservationForm({
 
                         {freq !== null && (
                             <div className="space-y-1">
-                                <label htmlFor="recurrence_count" className="text-[11px] text-stone-600 dark:text-stone-400">
-                                    Toistokerrat
+                                <label htmlFor="recurrence_until" className="text-[11px] text-stone-600 dark:text-stone-400">
+                                    Toisto päättyy
                                 </label>
                                 <Input
-                                    id="recurrence_count"
-                                    type="number"
-                                    min={1}
-                                    max={52}
-                                    value={count}
+                                    id="recurrence_until"
+                                    type="date"
+                                    value={untilStr}
                                     onChange={(e) => {
-                                        setCount(Number(e.target.value))
+                                        setUntilStr(e.target.value)
                                         setConflicts(null)
                                     }}
                                 />

@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "DELETE FROM occurrences WHERE reservation_id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "32e91a0e6f44cfb5fc29dd4cc4eb29cb2e0f99f4322c56530c87332e4fcd40a3"
+}

@@ -1,23 +1,22 @@
-// src/utils/rruleUtils.ts
 import { RRule, Frequency, rrulestr } from 'rrule'
 import type { CreateOccurrencePayload } from '#/hooks/useReservations'
 
 export interface RRuleConfig {
     freq: Frequency | null
-    count?: number
+    until?: Date | null
 }
 
 export function parseRRule(rruleStr?: string | null): RRuleConfig {
-    if (!rruleStr) return { freq: null, count: 1 }
+    if (!rruleStr) return { freq: null, until: null }
 
     try {
         const rule = rrulestr(rruleStr) as RRule
         return {
             freq: rule.options.freq ?? null,
-            count: rule.options.count ?? 1,
+            until: rule.options.until ?? null,
         }
     } catch {
-        return { freq: null, count: 1 }
+        return { freq: null, until: null }
     }
 }
 
@@ -52,10 +51,15 @@ export function generateOccurrences(
         }
     }
 
+    // Default until date to end of start date if not provided
+    const untilDate = config.until ? new Date(config.until) : new Date(start)
+    // Ensure UNTIL covers through the end of the selected day
+    untilDate.setHours(23, 59, 59, 999)
+
     const rule = new RRule({
         freq: config.freq,
         dtstart: start,
-        count: Math.max(1, config.count ?? 1),
+        until: untilDate,
     })
 
     const dates = rule.all()
