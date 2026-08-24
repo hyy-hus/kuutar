@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useForm } from '@tanstack/react-form'
 import { Frequency } from 'rrule'
 import { AlertTriangle, CheckCircle2, Loader2, RefreshCw, Save } from 'lucide-react'
@@ -19,7 +19,7 @@ export interface ReservationFormValues {
     description?: string
     status?: ReservationStatus
     admin_notes?: string
-    resource_id?: string
+    resource_ids?: string[]
     start_time?: string
     end_time?: string
     rrule?: string | null
@@ -27,7 +27,7 @@ export interface ReservationFormValues {
 }
 
 interface ReservationFormProps {
-    defaultValues?: Partial<ReservationFormValues>
+    defaultValues?: Partial<ReservationFormValues> & { resource_id?: string }
     onSubmit: (values: ReservationFormValues) => Promise<void>
     isSubmitting?: boolean
     submitLabel?: string
@@ -59,42 +59,71 @@ export function ReservationForm({
     const [untilStr, setUntilStr] = useState<string>(formatDateInput(initialRule.until))
     const [conflicts, setConflicts] = useState<Occurrence[] | null>(null)
 
+    // Extract unique resource IDs from defaultValues.occurrences, resource_ids array, or fallback resource_id
+    const initialResourceIds = useMemo(() => {
+        if (defaultValues?.resource_ids && defaultValues.resource_ids.length > 0) {
+            return defaultValues.resource_ids
+        }
+        if (defaultValues?.occurrences && defaultValues.occurrences.length > 0) {
+            return Array.from(new Set(defaultValues.occurrences.map((occ) => occ.resource_id)))
+        }
+        if (defaultValues?.resource_id) {
+            return [defaultValues.resource_id]
+        }
+        return []
+    }, [defaultValues])
+
     const form = useForm({
         defaultValues: {
             title: defaultValues?.title ?? '',
             description: defaultValues?.description ?? '',
             status: defaultValues?.status ?? ('confirmed' as ReservationStatus),
             admin_notes: defaultValues?.admin_notes ?? '',
-            resource_id: defaultValues?.resource_id ?? '',
+            resource_ids: initialResourceIds,
             start_time: defaultValues?.start_time ?? '',
             end_time: defaultValues?.end_time ?? '',
         },
         onSubmit: async ({ value }) => {
             const until = untilStr ? new Date(untilStr) : null
-            const { occurrences, rruleString } = generateOccurrences(
-                value.start_time,
-                value.end_time,
-                value.resource_id,
-                { freq, until }
-            )
+            let allOccurrences: CreateOccurrencePayload[] = []
+            let rruleString: string | null = null
+
+            // Generate occurrences for EVERY selected resource
+            for (const resourceId of value.resource_ids) {
+                const { occurrences, rruleString: generatedRrule } = generateOccurrences(
+                    value.start_time,
+                    value.end_time,
+                    resourceId,
+                    { freq, until }
+                )
+                allOccurrences = [...allOccurrences, ...occurrences]
+                if (generatedRrule) rruleString = generatedRrule
+            }
 
             await onSubmit({
                 ...value,
                 rrule: rruleString,
-                occurrences,
+                occurrences: allOccurrences,
             })
         },
     })
 
-    const handleCheckConflicts = async () => {
+    const generateAllOccurrences = () => {
         const until = untilStr ? new Date(untilStr) : null
-        const { occurrences } = generateOccurrences(
-            form.getFieldValue('start_time'),
-            form.getFieldValue('end_time'),
-            form.getFieldValue('resource_id'),
-            { freq, until }
-        )
+        const selectedResourceIds = form.getFieldValue('resource_ids') || []
+        const startTime = form.getFieldValue('start_time')
+        const endTime = form.getFieldValue('end_time')
 
+        let allOccurrences: CreateOccurrencePayload[] = []
+        for (const resourceId of selectedResourceIds) {
+            const { occurrences } = generateOccurrences(startTime, endTime, resourceId, { freq, until })
+            allOccurrences = [...allOccurrences, ...occurrences]
+        }
+        return allOccurrences
+    }
+
+    const handleCheckConflicts = async () => {
+        const occurrences = generateAllOccurrences()
         if (occurrences.length === 0) return
 
         const results = await checkConflicts.mutateAsync(occurrences)
@@ -196,45 +225,56 @@ export function ReservationForm({
                 )}
             </form.Field>
 
-            {/* Occurrence & Recurrence Section */}
+            {/* Occurrence & Multi-Resource Selection Section */}
             <div className="pt-3 border-t-2 border-stone-800 dark:border-stone-700 space-y-3">
                 <h3 className="text-xs font-bold text-stone-900 dark:text-stone-100 uppercase tracking-wider">
-                    Ajanvaraus ja Toistuvuus
+                    Ajanvaraus ja Resurssit
                 </h3>
 
+                {/* Multi-Resource Selector */}
                 <form.Field
-                    name="resource_id"
+                    name="resource_ids"
                     validators={{
-                        onChange: ({ value }) => (!value ? 'Valitse resurssi' : undefined),
+                        onChange: ({ value }) => (!value || value.length === 0 ? 'Valitse vähintään yksi resurssi' : undefined),
                     }}
                 >
                     {(field) => {
                         const hasError = Boolean(field.state.meta.errors.length)
                         return (
                             <div className="space-y-1">
-                                <label htmlFor={field.name} className="text-xs font-medium text-stone-700 dark:text-stone-300">
-                                    Resurssi
+                                <label className="text-xs font-medium text-stone-700 dark:text-stone-300">
+                                    Resurssit (Valitse yksi tai useampi)
                                 </label>
-                                <select
-                                    id={field.name}
-                                    value={field.state.value}
-                                    onChange={(e) => {
-                                        field.handleChange(e.target.value)
-                                        setConflicts(null)
-                                    }}
-                                    onBlur={field.handleBlur}
-                                    disabled={loadingResources}
-                                    className="w-full px-3 py-2 text-sm bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                                >
-                                    <option value="" disabled>
-                                        {loadingResources ? 'Ladataan resursseja...' : 'Valitse resurssi...'}
-                                    </option>
-                                    {resources?.map((res) => (
-                                        <option key={res.id} value={res.id}>
-                                            {res.name}
-                                        </option>
-                                    ))}
-                                </select>
+
+                                {loadingResources ? (
+                                    <div className="text-xs text-stone-500 py-2">Ladataan resursseja...</div>
+                                ) : (
+                                    <div className="flex flex-wrap gap-2 p-2 bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-md max-h-36 overflow-y-auto">
+                                        {resources?.map((res) => {
+                                            const isChecked = field.state.value.includes(res.id)
+                                            return (
+                                                <button
+                                                    key={res.id}
+                                                    type="button"
+                                                    onClick={() => {
+                                                        const nextValue = isChecked
+                                                            ? field.state.value.filter((id) => id !== res.id)
+                                                            : [...field.state.value, res.id]
+                                                        field.handleChange(nextValue)
+                                                        setConflicts(null)
+                                                    }}
+                                                    className={`px-3 py-1.5 text-xs font-medium rounded-md border transition-colors flex items-center gap-1.5 ${isChecked
+                                                        ? 'bg-purple-600 text-white border-purple-600 dark:bg-purple-500 dark:border-purple-500'
+                                                        : 'bg-white dark:bg-stone-800 text-stone-700 dark:text-stone-300 border-stone-300 dark:border-stone-700 hover:bg-stone-100 dark:hover:bg-stone-700'
+                                                        }`}
+                                                >
+                                                    <span className={`w-2 h-2 rounded-full ${isChecked ? 'bg-white' : 'bg-stone-400'}`} />
+                                                    {res.name}
+                                                </button>
+                                            )
+                                        })}
+                                    </div>
+                                )}
                                 {hasError && <p className="text-[11px] text-red-500">{field.state.meta.errors.join(', ')}</p>}
                             </div>
                         )

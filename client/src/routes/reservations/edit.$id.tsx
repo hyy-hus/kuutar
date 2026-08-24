@@ -17,6 +17,11 @@ function EditReservationPage() {
 
     const firstOccurrence = reservation.occurrences?.[0]
 
+    // Extract all unique resource IDs across occurrences
+    const resourceIds = Array.from(
+        new Set(reservation.occurrences?.map((occ) => occ.resource_id) || [])
+    )
+
     const formatLocalISO = (isoStr?: string) => {
         if (!isoStr) return ''
         const date = new Date(isoStr)
@@ -50,9 +55,10 @@ function EditReservationPage() {
                     status: reservation.status,
                     admin_notes: reservation.admin_notes ?? '',
                     rrule: reservation.rrule,
-                    resource_id: firstOccurrence?.resource_id ?? '',
+                    resource_ids: resourceIds,
                     start_time: formatLocalISO(firstOccurrence?.start_time),
                     end_time: formatLocalISO(firstOccurrence?.end_time),
+                    occurrences: reservation.occurrences,
                 }}
                 onSubmit={handleSubmit}
                 isSubmitting={updateReservation.isPending}
