@@ -148,10 +148,8 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** GET /reservations (PUBLIC) */
         get: operations["list_reservations"];
         put?: never;
-        /** POST /reservations */
         post: operations["create_reservation"];
         delete?: never;
         options?: never;
@@ -168,7 +166,6 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** POST /reservations/check-conflicts */
         post: operations["check_reservation_conflicts"];
         delete?: never;
         options?: never;
@@ -183,11 +180,9 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** GET /reservations/{id} (PUBLIC) */
         get: operations["get_reservation"];
         put?: never;
         post?: never;
-        /** DELETE /reservations/{id} */
         delete: operations["delete_reservation"];
         options?: never;
         head?: never;
@@ -377,8 +372,6 @@ export interface components {
             created_at: string;
             description?: string | null;
             /** Format: uuid */
-            group_id: string;
-            /** Format: uuid */
             id: string;
             rrule?: string | null;
             status: components["schemas"]["ReservationStatus"];
@@ -417,6 +410,7 @@ export interface components {
         UpdateReservationPayload: {
             admin_notes?: string | null;
             description?: string | null;
+            occurrences?: components["schemas"]["CreateOccurrencePayload"][] | null;
             rrule?: string | null;
             status?: null | components["schemas"]["ReservationStatus"];
             title?: string | null;
@@ -1063,7 +1057,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Reservation"];
+                    "application/json": components["schemas"]["ReservationWithOccurrences"];
                 };
             };
             /** @description Unauthorized */

@@ -83,4 +83,7 @@ pub struct UpdateReservationPayload {
     pub admin_notes: Option<String>,
     pub rrule: Option<String>,
     pub status: Option<ReservationStatus>,
+
+    #[validate(nested)]
+    pub occurrences: Option<Vec<CreateOccurrencePayload>>,
 }

@@ -119,6 +119,7 @@ pub async fn check_reservation_conflicts(
     Ok(Json(conflicts))
 }
 
+/// PATCH /reservations/{id}
 #[utoipa::path(
     patch,
     path = "/reservations/{id}",
@@ -129,7 +130,7 @@ pub async fn check_reservation_conflicts(
     ),
     request_body = UpdateReservationPayload,
     responses(
-        (status = 200, description = "Reservation updated successfully", body = Reservation),
+        (status = 200, description = "Reservation updated successfully", body = ReservationWithOccurrences),
         (status = 401, description = "Unauthorized"),
         (status = 404, description = "Reservation not found"),
         (status = 422, description = "Validation error")
@@ -141,7 +142,8 @@ pub async fn update_reservation(
     Path(id): Path<Uuid>,
     _auth_user: AuthUser,
     Json(payload): Json<UpdateReservationPayload>,
-) -> Result<Json<Reservation>, AppError> {
+) -> Result<Json<ReservationWithOccurrences>, AppError> {
+    // <-- Updated return type
     payload.validate()?;
     let reservation = db::update(&auth_state.pool, id, payload).await?;
     Ok(Json(reservation))

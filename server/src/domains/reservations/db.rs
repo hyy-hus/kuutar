@@ -134,7 +134,10 @@ pub async fn update(
     pool: &PgPool,
     id: Uuid,
     dto: UpdateReservationPayload,
-) -> Result<Reservation, AppError> {
+) -> Result<ReservationWithOccurrences, AppError> {
+    let mut tx = pool.begin().await?;
+
+    // 1. Update reservation metadata
     let reservation = sqlx::query_as!(
         Reservation,
         r#"
@@ -157,11 +160,39 @@ pub async fn update(
         dto.status as Option<ReservationStatus>,
         id
     )
-    .fetch_optional(pool)
+    .fetch_optional(&mut *tx)
     .await?
     .ok_or(AppError::NotFound)?;
 
-    Ok(reservation)
+    if let Some(new_occurrences) = dto.occurrences {
+        sqlx::query!(r#"DELETE FROM occurrences WHERE reservation_id = $1"#, id)
+            .execute(&mut *tx)
+            .await?;
+
+        for occ in new_occurrences {
+            sqlx::query!(
+                r#"
+                INSERT INTO occurrences (reservation_id, resource_id, start_time, end_time)
+                VALUES ($1, $2, $3, $4)
+                "#,
+                id,
+                occ.resource_id,
+                occ.start_time,
+                occ.end_time
+            )
+            .execute(&mut *tx)
+            .await?;
+        }
+    }
+
+    tx.commit().await?;
+
+    let occurrences = fetch_occurrences_for_reservation(pool, id).await?;
+
+    Ok(ReservationWithOccurrences {
+        reservation,
+        occurrences,
+    })
 }
 
 pub async fn soft_delete(pool: &PgPool, id: Uuid) -> Result<(), AppError> {
