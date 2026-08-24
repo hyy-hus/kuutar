@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useForm } from '@tanstack/react-form'
 import { Frequency } from 'rrule'
 import { AlertTriangle, CheckCircle2, Loader2, RefreshCw, Save } from 'lucide-react'
@@ -59,12 +59,19 @@ export function ReservationForm({
     const [untilStr, setUntilStr] = useState<string>(formatDateInput(initialRule.until))
     const [conflicts, setConflicts] = useState<Occurrence[] | null>(null)
 
-    // Fallback support for single default resource_id or initial resource_ids array
-    const initialResourceIds = defaultValues?.resource_ids
-        ? defaultValues.resource_ids
-        : defaultValues?.resource_id
-            ? [defaultValues.resource_id]
-            : []
+    // Extract unique resource IDs from defaultValues.occurrences, resource_ids array, or fallback resource_id
+    const initialResourceIds = useMemo(() => {
+        if (defaultValues?.resource_ids && defaultValues.resource_ids.length > 0) {
+            return defaultValues.resource_ids
+        }
+        if (defaultValues?.occurrences && defaultValues.occurrences.length > 0) {
+            return Array.from(new Set(defaultValues.occurrences.map((occ) => occ.resource_id)))
+        }
+        if (defaultValues?.resource_id) {
+            return [defaultValues.resource_id]
+        }
+        return []
+    }, [defaultValues])
 
     const form = useForm({
         defaultValues: {
@@ -257,8 +264,8 @@ export function ReservationForm({
                                                         setConflicts(null)
                                                     }}
                                                     className={`px-3 py-1.5 text-xs font-medium rounded-md border transition-colors flex items-center gap-1.5 ${isChecked
-                                                            ? 'bg-purple-600 text-white border-purple-600 dark:bg-purple-500 dark:border-purple-500'
-                                                            : 'bg-white dark:bg-stone-800 text-stone-700 dark:text-stone-300 border-stone-300 dark:border-stone-700 hover:bg-stone-100 dark:hover:bg-stone-700'
+                                                        ? 'bg-purple-600 text-white border-purple-600 dark:bg-purple-500 dark:border-purple-500'
+                                                        : 'bg-white dark:bg-stone-800 text-stone-700 dark:text-stone-300 border-stone-300 dark:border-stone-700 hover:bg-stone-100 dark:hover:bg-stone-700'
                                                         }`}
                                                 >
                                                     <span className={`w-2 h-2 rounded-full ${isChecked ? 'bg-white' : 'bg-stone-400'}`} />
