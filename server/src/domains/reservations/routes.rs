@@ -9,7 +9,7 @@ use validator::Validate;
 use super::{
     db,
     models::{
-        CreateOccurrencePayload, CreateReservationPayload, Occurrence, Reservation,
+        CreateOccurrencePayload, CreateReservationPayload, Occurrence,
         ReservationWithOccurrences, UpdateReservationPayload,
     },
 };

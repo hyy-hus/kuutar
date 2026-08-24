@@ -3,9 +3,10 @@ pub mod models;
 pub mod routes;
 
 use axum::{Router, routing::get};
-use sqlx::PgPool;
 
-pub fn router(pool: PgPool) -> Router {
+use crate::domains::auth::AuthState;
+
+pub fn router(state: AuthState) -> Router {
     Router::new()
         .route(
             "/",
@@ -17,5 +18,5 @@ pub fn router(pool: PgPool) -> Router {
                 .patch(routes::update_collection)
                 .delete(routes::delete_collection),
         )
-        .with_state(pool)
+        .with_state(state)
 }

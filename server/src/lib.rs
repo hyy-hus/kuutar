@@ -28,10 +28,10 @@ pub fn app(pool: PgPool, config: Config) -> Router {
         .route("/health", get(health_check))
         .nest("/auth", auth::router(auth_state.clone()))
         .nest("/users", users::router(auth_state.clone()))
-        .nest("/groups", groups::router(pool.clone()))
-        .nest("/collections", collections::router(pool.clone()))
+        .nest("/groups", groups::router(auth_state.clone()))
+        .nest("/collections", collections::router(auth_state.clone()))
         .nest("/reservations", reservations::router(auth_state.clone()))
-        .nest("/resources", resources::router(pool))
+        .nest("/resources", resources::router(auth_state))
 }
 
 async fn health_check() -> &'static str {
