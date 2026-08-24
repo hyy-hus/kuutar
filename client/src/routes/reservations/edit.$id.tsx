@@ -1,4 +1,3 @@
-// src/routes/reservations/edit/$id.tsx
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { ReservationForm, type ReservationFormValues } from '#/components/ReservationForm'
 import { useReservation, useUpdateReservation } from '#/hooks/useReservations'
@@ -35,7 +34,6 @@ function EditReservationPage() {
                 status: values.status,
                 admin_notes: values.admin_notes || null,
                 rrule: values.rrule || null,
-                // Pass the fully expanded array calculated by ReservationForm
                 occurrences: values.occurrences ?? [],
             },
         })
