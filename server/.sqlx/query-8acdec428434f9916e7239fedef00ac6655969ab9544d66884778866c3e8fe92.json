@@ -1,0 +1,88 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT id, reservation_id, resource_id, start_time, end_time, created_at\n        FROM occurrences\n        WHERE reservation_id = $1\n        ORDER BY start_time ASC\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "occurrences",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "reservation_id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "occurrences",
+            "name": "reservation_id"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "resource_id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "occurrences",
+            "name": "resource_id"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "start_time",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "occurrences",
+            "name": "start_time"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "end_time",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "occurrences",
+            "name": "end_time"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "created_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "occurrences",
+            "name": "created_at"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "8acdec428434f9916e7239fedef00ac6655969ab9544d66884778866c3e8fe92"
+}

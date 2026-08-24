@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        UPDATE reservations\n        SET deleted_at = NOW()\n        WHERE id = $1 AND group_id = $2 AND deleted_at IS NULL\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "1c51bbfcf2aac28dbda72ffba385379daa253849e773f44937cc178def8c5a94"
+}
