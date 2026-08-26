@@ -13,6 +13,7 @@ import {
 } from '#/hooks/useReservations'
 import { generateOccurrences, parseRRule } from '#/utils/rruleUtils'
 import { formatDate } from '#/utils/date'
+import { useIsAdmin } from '#/hooks/useAuth'
 
 export interface ReservationFormValues {
     title: string
@@ -41,7 +42,9 @@ export function ReservationForm({
     submitLabel = 'Tallenna',
 }: ReservationFormProps) {
     const { data: resources, isLoading: loadingResources } = useResources()
+
     const checkConflicts = useCheckConflicts()
+    const { isAdmin } = useIsAdmin()
 
     // Parse initial rrule if present
     const initialRule = parseRRule(defaultValues?.rrule)
@@ -186,26 +189,28 @@ export function ReservationForm({
             </form.Field>
 
             {/* Status */}
-            <form.Field name="status">
-                {(field) => (
-                    <div className="space-y-1">
-                        <label htmlFor={field.name} className="text-xs font-medium text-stone-700 dark:text-stone-300">
-                            Tila
-                        </label>
-                        <select
-                            id={field.name}
-                            value={field.state.value}
-                            onChange={(e) => field.handleChange(e.target.value as ReservationStatus)}
-                            onBlur={field.handleBlur}
-                            className="w-full px-3 py-2 text-sm bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                        >
-                            <option value="confirmed">Vahvistettu</option>
-                            <option value="pending">Odottaa</option>
-                            <option value="cancelled">Peruttu</option>
-                        </select>
-                    </div>
-                )}
-            </form.Field>
+            {isAdmin && (
+                <form.Field name="status">
+                    {(field) => (
+                        <div className="space-y-1">
+                            <label htmlFor={field.name} className="text-xs font-medium text-stone-700 dark:text-stone-300">
+                                Tila
+                            </label>
+                            <select
+                                id={field.name}
+                                value={field.state.value}
+                                onChange={(e) => field.handleChange(e.target.value as ReservationStatus)}
+                                onBlur={field.handleBlur}
+                                className="w-full px-3 py-2 text-sm bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                            >
+                                <option value="confirmed">Vahvistettu</option>
+                                <option value="pending">Odottaa</option>
+                                <option value="cancelled">Peruttu</option>
+                            </select>
+                        </div>
+                    )}
+                </form.Field>
+            )}
 
             {/* Admin Notes */}
             <form.Field name="admin_notes">
