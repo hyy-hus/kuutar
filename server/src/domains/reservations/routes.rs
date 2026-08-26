@@ -59,6 +59,7 @@ pub async fn list_reservations(
         query.start_date,
         query.end_date,
         query.resource_id,
+        query.status,
         is_admin,
     )
     .await?;
