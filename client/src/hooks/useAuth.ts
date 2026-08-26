@@ -30,6 +30,18 @@ export function useMe() {
 }
 
 /**
+ * Hook to check wether the current user is an admin.
+ */
+export function useIsAdmin(): { isAdmin: boolean; isLoading: boolean } {
+    const { data: user, isLoading } = useMe()
+
+    return {
+        isAdmin: user?.role === 'admin',
+        isLoading,
+    }
+}
+
+/**
  * Primary authentication hook providing login, register, logout, and current user state.
  */
 export function useAuth() {
