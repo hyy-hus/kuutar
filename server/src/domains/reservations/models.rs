@@ -93,6 +93,7 @@ pub struct ListReservationsQuery {
     pub start_date: DateTime<Utc>,
     pub end_date: DateTime<Utc>,
     pub resource_id: Option<Uuid>,
+    pub status: Option<ReservationStatus>,
 }
 
 impl ListReservationsQuery {

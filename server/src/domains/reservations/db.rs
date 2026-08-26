@@ -13,6 +13,7 @@ pub async fn list_filtered(
     start_date: DateTime<Utc>,
     end_date: DateTime<Utc>,
     resource_id: Option<Uuid>,
+    status: Option<ReservationStatus>,
     is_admin: bool,
 ) -> Result<Vec<ReservationWithOccurrences>, AppError> {
     // 1. Fetch distinct reservation IDs that have occurrences within the date/resource filter
@@ -25,10 +26,12 @@ pub async fn list_filtered(
           AND o.start_time < $2
           AND o.end_time > $1
           AND ($3::uuid IS NULL OR o.resource_id = $3)
+          AND ($4::reservation_status IS NULL OR r.status = $4)
         "#,
         start_date,
         end_date,
-        resource_id
+        resource_id,
+        status as Option<ReservationStatus> // Type annotation for sqlx custom enum
     )
     .fetch_all(pool)
     .await?;
