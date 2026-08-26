@@ -12,6 +12,7 @@ export interface ReservationFilterParams {
     startDate: string
     endDate: string
     resourceId?: string
+    status?: ReservationStatus
 }
 
 export const reservationKeys = {
@@ -32,6 +33,7 @@ export function useReservations(params: ReservationFilterParams) {
                         start_date: params.startDate,
                         end_date: params.endDate,
                         resource_id: params.resourceId,
+                        status: params.status,
                     },
                 },
             })
