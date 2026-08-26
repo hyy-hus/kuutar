@@ -107,9 +107,13 @@ pub async fn get_reservation(
 pub async fn create_reservation(
     State(auth_state): State<AuthState>,
     auth_user: AuthUser,
-    Json(payload): Json<CreateReservationPayload>,
+    Json(mut payload): Json<CreateReservationPayload>,
 ) -> Result<(StatusCode, Json<ReservationWithOccurrences>), AppError> {
     payload.validate()?;
+
+    if auth_user.role != Role::Admin {
+        payload.status = Some(super::models::ReservationStatus::Pending);
+    }
 
     if !payload.validate_occurrence_times() {
         return Err(AppError::BadRequest(
