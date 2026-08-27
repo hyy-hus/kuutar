@@ -2,8 +2,15 @@
 import createClient, { type Middleware } from 'openapi-fetch'
 import type { paths } from './schema'
 
+const getBaseUrl = () => {
+    if (typeof window !== 'undefined' && window.location?.origin) {
+        return `${window.location.origin}/api`
+    }
+    return 'http://127.0.0.1:3000/api'
+}
+
 export const api = createClient<paths>({
-    baseUrl: '/api',
+    baseUrl: getBaseUrl(),
 })
 
 const authMiddleware: Middleware = {
@@ -36,10 +43,22 @@ const authMiddleware: Middleware = {
                         localStorage.setItem('access_token', data.access_token)
                         localStorage.setItem('refresh_token', data.refresh_token)
 
-                        // Retry original request with new token
-                        const newRequest = new Request(request)
-                        newRequest.headers.set('Authorization', `Bearer ${data.access_token}`)
-                        return fetch(newRequest)
+                        // Reconstruct absolute URL to prevent native fetch relative URL parse errors
+                        const targetUrl = request.url.startsWith('http')
+                            ? request.url
+                            : new URL(request.url, window.location.origin).toString()
+
+                        const headers = new Headers(request.headers)
+                        headers.set('Authorization', `Bearer ${data.access_token}`)
+
+                        // Retry original request with updated auth header
+                        return fetch(targetUrl, {
+                            method: request.method,
+                            headers,
+                            body: request.body,
+                            // @ts-expect-error duplex required for streaming request bodies in modern fetch specs
+                            duplex: 'half',
+                        })
                     }
                 } catch {
                     // Refresh failed, purge tokens

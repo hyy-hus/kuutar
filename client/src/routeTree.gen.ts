@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SandboxRouteImport } from './routes/sandbox'
+import { Route as AdminDashboardRouteImport } from './routes/admin/dashboard'
 import { Route as CalendarIndexRouteImport } from './routes/calendar/index'
 import { Route as CollectionsIndexRouteImport } from './routes/collections/index'
 import { Route as CollectionsIdRouteImport } from './routes/collections/$id'
@@ -41,6 +42,11 @@ const IndexRoute = IndexRouteImport.update({
 const SandboxRoute = SandboxRouteImport.update({
   id: '/sandbox',
   path: '/sandbox',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminDashboardRoute = AdminDashboardRouteImport.update({
+  id: '/admin/dashboard',
+  path: '/admin/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CalendarIndexRoute = CalendarIndexRouteImport.update({
@@ -152,6 +158,7 @@ const UsersEditIdRoute = UsersEditIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/sandbox': typeof SandboxRoute
+  '/admin/dashboard': typeof AdminDashboardRoute
   '/collections/$id': typeof CollectionsIdRoute
   '/collections/create': typeof CollectionsCreateRoute
   '/groups/$id': typeof GroupsIdRoute
@@ -177,6 +184,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/sandbox': typeof SandboxRoute
+  '/admin/dashboard': typeof AdminDashboardRoute
   '/collections/$id': typeof CollectionsIdRoute
   '/collections/create': typeof CollectionsCreateRoute
   '/groups/$id': typeof GroupsIdRoute
@@ -203,6 +211,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/sandbox': typeof SandboxRoute
+  '/admin/dashboard': typeof AdminDashboardRoute
   '/collections/$id': typeof CollectionsIdRoute
   '/collections/create': typeof CollectionsCreateRoute
   '/groups/$id': typeof GroupsIdRoute
@@ -230,6 +239,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/sandbox'
+    | '/admin/dashboard'
     | '/collections/$id'
     | '/collections/create'
     | '/groups/$id'
@@ -255,6 +265,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/sandbox'
+    | '/admin/dashboard'
     | '/collections/$id'
     | '/collections/create'
     | '/groups/$id'
@@ -280,6 +291,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/sandbox'
+    | '/admin/dashboard'
     | '/collections/$id'
     | '/collections/create'
     | '/groups/$id'
@@ -306,6 +318,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   SandboxRoute: typeof SandboxRoute
+  AdminDashboardRoute: typeof AdminDashboardRoute
   CollectionsIdRoute: typeof CollectionsIdRoute
   CollectionsCreateRoute: typeof CollectionsCreateRoute
   GroupsIdRoute: typeof GroupsIdRoute
@@ -343,6 +356,13 @@ declare module '@tanstack/react-router' {
       path: '/sandbox'
       fullPath: '/sandbox'
       preLoaderRoute: typeof SandboxRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/dashboard': {
+      id: '/admin/dashboard'
+      path: '/admin/dashboard'
+      fullPath: '/admin/dashboard'
+      preLoaderRoute: typeof AdminDashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/calendar/': {
@@ -498,6 +518,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   SandboxRoute: SandboxRoute,
+  AdminDashboardRoute: AdminDashboardRoute,
   CollectionsIdRoute: CollectionsIdRoute,
   CollectionsCreateRoute: CollectionsCreateRoute,
   GroupsIdRoute: GroupsIdRoute,

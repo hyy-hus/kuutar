@@ -23,8 +23,12 @@ pub fn app(pool: PgPool, config: Config) -> Router {
         config: config.clone(),
     };
 
+    let swagger_router: Router = SwaggerUi::new("/swagger-ui")
+        .url("/api-docs/openapi.json", ApiDoc::openapi())
+        .into();
+
     Router::new()
-        .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", ApiDoc::openapi()))
+        .merge(swagger_router)
         .route("/health", get(health_check))
         .nest("/auth", auth::router(auth_state.clone()))
         .nest("/users", users::router(auth_state.clone()))

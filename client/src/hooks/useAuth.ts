@@ -11,22 +11,36 @@ export const authKeys = {
     me: () => [...authKeys.all, 'me'] as const,
 }
 
+export async function fetchMe() {
+    const { data, error } = await api.GET('/users/me')
+
+    if (error || !data) return null
+
+    return data
+}
+
 /**
  * Hook to retrieve and cache the currently authenticated user profile.
  */
 export function useMe() {
     return useQuery({
         queryKey: authKeys.me(),
-        queryFn: async () => {
-            const { data, error } = await api.GET('/users/me')
-
-            if (error || !data) return null
-
-            return data
-        },
+        queryFn: fetchMe,
         retry: false,
         staleTime: 1000 * 60 * 5,
     })
+}
+
+/**
+ * Hook to check wether the current user is an admin.
+ */
+export function useIsAdmin(): { isAdmin: boolean; isLoading: boolean } {
+    const { data: user, isLoading } = useMe()
+
+    return {
+        isAdmin: user?.role === 'admin',
+        isLoading,
+    }
 }
 
 /**
