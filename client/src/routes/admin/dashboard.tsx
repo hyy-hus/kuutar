@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { createFileRoute, Link } from '@tanstack/react-router'
+import { createFileRoute, Link, redirect } from '@tanstack/react-router'
 import {
     Loader2,
     Calendar,
@@ -24,6 +24,8 @@ import { startOfCurrentWeek } from '#/utils/calendarUtils'
 import { cn } from '#/utils/cn'
 import { readable_uuid } from '#/utils/uuid'
 import { formatDate } from '#/utils/date'
+import { api } from '#/api/client'
+import { authKeys, fetchMe } from '#/hooks/useAuth'
 
 export interface AdminDashboardSearch {
     start_date?: string
@@ -49,6 +51,20 @@ export const Route = createFileRoute('/admin/dashboard')({
             start_date: typeof search.start_date === 'string' ? search.start_date : undefined,
             days: typeof search.days === 'number' ? search.days : undefined,
             resource_id: typeof search.resource_id === 'string' ? search.resource_id : undefined,
+        }
+    },
+    beforeLoad: async ({ context }) => {
+        const user = await context.queryClient.ensureQueryData({
+            queryKey: authKeys.me(),
+            queryFn: fetchMe,
+            staleTime: 1000 * 60 * 5,
+        })
+
+        if (!user || user.role !== 'admin') {
+            throw redirect({
+                to: '/reservations',
+                replace: true,
+            })
         }
     },
     component: AdminDashboardPage,
