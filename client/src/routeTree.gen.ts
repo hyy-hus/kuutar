@@ -16,6 +16,7 @@ import { Route as CalendarIndexRouteImport } from './routes/calendar/index'
 import { Route as CollectionsIndexRouteImport } from './routes/collections/index'
 import { Route as CollectionsIdRouteImport } from './routes/collections/$id'
 import { Route as CollectionsCreateRouteImport } from './routes/collections/create'
+import { Route as ContractsIndexRouteImport } from './routes/contracts/index'
 import { Route as GroupsIndexRouteImport } from './routes/groups/index'
 import { Route as GroupsIdRouteImport } from './routes/groups/$id'
 import { Route as GroupsCreateRouteImport } from './routes/groups/create'
@@ -67,6 +68,11 @@ const CollectionsIdRoute = CollectionsIdRouteImport.update({
 const CollectionsCreateRoute = CollectionsCreateRouteImport.update({
   id: '/collections/create',
   path: '/collections/create',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ContractsIndexRoute = ContractsIndexRouteImport.update({
+  id: '/contracts/',
+  path: '/contracts/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const GroupsIndexRoute = GroupsIndexRouteImport.update({
@@ -171,6 +177,7 @@ export interface FileRoutesByFullPath {
   '/users/create': typeof UsersCreateRoute
   '/calendar/': typeof CalendarIndexRoute
   '/collections/': typeof CollectionsIndexRoute
+  '/contracts/': typeof ContractsIndexRoute
   '/groups/': typeof GroupsIndexRoute
   '/reservations/': typeof ReservationsIndexRoute
   '/resources/': typeof ResourcesIndexRoute
@@ -197,6 +204,7 @@ export interface FileRoutesByTo {
   '/users/create': typeof UsersCreateRoute
   '/calendar': typeof CalendarIndexRoute
   '/collections': typeof CollectionsIndexRoute
+  '/contracts': typeof ContractsIndexRoute
   '/groups': typeof GroupsIndexRoute
   '/reservations': typeof ReservationsIndexRoute
   '/resources': typeof ResourcesIndexRoute
@@ -224,6 +232,7 @@ export interface FileRoutesById {
   '/users/create': typeof UsersCreateRoute
   '/calendar/': typeof CalendarIndexRoute
   '/collections/': typeof CollectionsIndexRoute
+  '/contracts/': typeof ContractsIndexRoute
   '/groups/': typeof GroupsIndexRoute
   '/reservations/': typeof ReservationsIndexRoute
   '/resources/': typeof ResourcesIndexRoute
@@ -252,6 +261,7 @@ export interface FileRouteTypes {
     | '/users/create'
     | '/calendar/'
     | '/collections/'
+    | '/contracts/'
     | '/groups/'
     | '/reservations/'
     | '/resources/'
@@ -278,6 +288,7 @@ export interface FileRouteTypes {
     | '/users/create'
     | '/calendar'
     | '/collections'
+    | '/contracts'
     | '/groups'
     | '/reservations'
     | '/resources'
@@ -304,6 +315,7 @@ export interface FileRouteTypes {
     | '/users/create'
     | '/calendar/'
     | '/collections/'
+    | '/contracts/'
     | '/groups/'
     | '/reservations/'
     | '/resources/'
@@ -331,6 +343,7 @@ export interface RootRouteChildren {
   UsersCreateRoute: typeof UsersCreateRoute
   CalendarIndexRoute: typeof CalendarIndexRoute
   CollectionsIndexRoute: typeof CollectionsIndexRoute
+  ContractsIndexRoute: typeof ContractsIndexRoute
   GroupsIndexRoute: typeof GroupsIndexRoute
   ReservationsIndexRoute: typeof ReservationsIndexRoute
   ResourcesIndexRoute: typeof ResourcesIndexRoute
@@ -391,6 +404,13 @@ declare module '@tanstack/react-router' {
       path: '/collections/create'
       fullPath: '/collections/create'
       preLoaderRoute: typeof CollectionsCreateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/contracts/': {
+      id: '/contracts/'
+      path: '/contracts'
+      fullPath: '/contracts/'
+      preLoaderRoute: typeof ContractsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/groups/': {
@@ -531,6 +551,7 @@ const rootRouteChildren: RootRouteChildren = {
   UsersCreateRoute: UsersCreateRoute,
   CalendarIndexRoute: CalendarIndexRoute,
   CollectionsIndexRoute: CollectionsIndexRoute,
+  ContractsIndexRoute: ContractsIndexRoute,
   GroupsIndexRoute: GroupsIndexRoute,
   ReservationsIndexRoute: ReservationsIndexRoute,
   ResourcesIndexRoute: ResourcesIndexRoute,

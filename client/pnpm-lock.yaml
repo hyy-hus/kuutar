@@ -50,6 +50,9 @@ importers:
       '@tanstack/react-table':
         specifier: latest
         version: 9.1.2(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      '@tiptap/extension-mention':
+        specifier: ^3.30.5
+        version: 3.30.5(@tiptap/core@3.30.5(@tiptap/pm@3.30.5))(@tiptap/pm@3.30.5)(@tiptap/suggestion@3.30.5(@floating-ui/dom@1.8.0)(@tiptap/core@3.30.5(@tiptap/pm@3.30.5))(@tiptap/pm@3.30.5))
       '@tiptap/pm':
         specifier: ^3.30.5
         version: 3.30.5
@@ -2469,6 +2472,13 @@ packages:
       '@tiptap/core': 3.30.5
       '@tiptap/pm': 3.30.5
 
+  '@tiptap/extension-mention@3.30.5':
+    resolution: {integrity: sha512-UFLZbue+GanPQgdDFbLWKnzd+ivWSSsfaFQGI2jj5jS6SNaMk0yAr5djiAmZEDMVfP3HmHpDwim9ZGzShYQPiQ==}
+    peerDependencies:
+      '@tiptap/core': 3.30.5
+      '@tiptap/pm': 3.30.5
+      '@tiptap/suggestion': 3.30.5
+
   '@tiptap/extension-ordered-list@3.30.5':
     resolution: {integrity: sha512-bUGUnSAgjZhoUWBtr+1wRJHF3NnNvuKQr6sQ8le1tJ2yvLq448ZsSZjZGvTNeLsy3GDKBoMJ0rqLUK34+nM3hg==}
     peerDependencies:
@@ -2515,6 +2525,13 @@ packages:
 
   '@tiptap/starter-kit@3.30.5':
     resolution: {integrity: sha512-cmDRvukpoqjQjhE96q+l3tCLNZZcJKehxK+00Sp9F4XbKecfM2QpZ2TRHh3vi8qhCeDQNyMoCqfNaqznIjLjIQ==}
+
+  '@tiptap/suggestion@3.30.5':
+    resolution: {integrity: sha512-kXlsY2GyXlVpYKp6uSedvvfACC4Phd0I8/Gp1/7ts8fYLlkVfGco6kgqOKHxT6HcUF1pGshxkDh9lfRCakkQEA==}
+    peerDependencies:
+      '@floating-ui/dom': ^1.0.0
+      '@tiptap/core': 3.30.5
+      '@tiptap/pm': 3.30.5
 
   '@tybys/wasm-util@0.10.3':
     resolution: {integrity: sha512-F3fo1MYrRJYL3zER0OUOmkutjr1Vp23m7OsSgp7nq4SP6OqX6C/56XFIPAl5bt3zaBRjmW7SGz3u/6LwFpYcOg==}
@@ -6371,6 +6388,12 @@ snapshots:
       '@tiptap/core': 3.30.5(@tiptap/pm@3.30.5)
       '@tiptap/pm': 3.30.5
 
+  '@tiptap/extension-mention@3.30.5(@tiptap/core@3.30.5(@tiptap/pm@3.30.5))(@tiptap/pm@3.30.5)(@tiptap/suggestion@3.30.5(@floating-ui/dom@1.8.0)(@tiptap/core@3.30.5(@tiptap/pm@3.30.5))(@tiptap/pm@3.30.5))':
+    dependencies:
+      '@tiptap/core': 3.30.5(@tiptap/pm@3.30.5)
+      '@tiptap/pm': 3.30.5
+      '@tiptap/suggestion': 3.30.5(@floating-ui/dom@1.8.0)(@tiptap/core@3.30.5(@tiptap/pm@3.30.5))(@tiptap/pm@3.30.5)
+
   '@tiptap/extension-ordered-list@3.30.5(@tiptap/extension-list@3.30.5(@tiptap/core@3.30.5(@tiptap/pm@3.30.5))(@tiptap/pm@3.30.5))':
     dependencies:
       '@tiptap/extension-list': 3.30.5(@tiptap/core@3.30.5(@tiptap/pm@3.30.5))(@tiptap/pm@3.30.5)
@@ -6454,6 +6477,12 @@ snapshots:
       '@tiptap/extension-text': 3.30.5(@tiptap/core@3.30.5(@tiptap/pm@3.30.5))
       '@tiptap/extension-underline': 3.30.5(@tiptap/core@3.30.5(@tiptap/pm@3.30.5))
       '@tiptap/extensions': 3.30.5(@tiptap/core@3.30.5(@tiptap/pm@3.30.5))(@tiptap/pm@3.30.5)
+      '@tiptap/pm': 3.30.5
+
+  '@tiptap/suggestion@3.30.5(@floating-ui/dom@1.8.0)(@tiptap/core@3.30.5(@tiptap/pm@3.30.5))(@tiptap/pm@3.30.5)':
+    dependencies:
+      '@floating-ui/dom': 1.8.0
+      '@tiptap/core': 3.30.5(@tiptap/pm@3.30.5)
       '@tiptap/pm': 3.30.5
 
   '@tybys/wasm-util@0.10.3':
