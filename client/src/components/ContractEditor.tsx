@@ -3,6 +3,7 @@ import StarterKit from '@tiptap/starter-kit'
 import Mention from '@tiptap/extension-mention'
 import { Bold, Italic, List, ListOrdered, Heading2 } from 'lucide-react'
 import { cn } from '#/utils/cn'
+import { mentionSuggestion } from './MentionSuggestion'
 
 export interface ContractPlaceholder {
     id: string
@@ -69,17 +70,9 @@ export function ContractEditor({ value, onChange }: ContractEditorProps) {
                     class:
                         'inline-flex items-center px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-950/80 text-amber-900 dark:text-amber-200 text-xs font-mono font-semibold border border-amber-300 dark:border-amber-700 select-none',
                 },
-                suggestion: {
-                    char: '@',
-                    items: ({ query }) => {
-                        return CONTRACT_PLACEHOLDERS.filter((item) =>
-                            item.label.toLowerCase().includes(query.toLowerCase()) ||
-                            item.id.toLowerCase().includes(query.toLowerCase())
-                        )
-                    },
-                },
+                suggestion: mentionSuggestion,
                 renderText({ node }) {
-                    return `${node.attrs.id}`
+                    return `[[${node.attrs.id}]]`
                 },
                 renderHTML({ node }) {
                     return [
@@ -90,10 +83,10 @@ export function ContractEditor({ value, onChange }: ContractEditorProps) {
                             class:
                                 'inline-flex items-center px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-950/80 text-amber-900 dark:text-amber-200 text-xs font-mono font-semibold border border-amber-300 dark:border-amber-700 select-none',
                         },
-                        `${node.attrs.id}`,
+                        `[[${node.attrs.id}]]`,
                     ]
                 },
-            }),
+            })
         ],
         content: value,
         onUpdate: ({ editor }) => {

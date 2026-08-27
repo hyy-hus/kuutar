@@ -48,6 +48,7 @@
         "rrule": "^2.8.1",
         "tailwind-merge": "^3.6.0",
         "tailwindcss": "^4.1.18",
+        "tippy.js": "^6.3.7",
         "zod": "^4.3.6"
     },
     "devDependencies": {
