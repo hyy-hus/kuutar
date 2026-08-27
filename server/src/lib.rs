@@ -8,7 +8,7 @@ use axum::{Router, routing::get};
 use config::Config;
 use domains::{
     auth::{self, AuthState},
-    collections, groups, reservations, resources,
+    collections, contracts, groups, reservations, resources,
 };
 use openapi::ApiDoc;
 use sqlx::PgPool;
@@ -35,6 +35,7 @@ pub fn app(pool: PgPool, config: Config) -> Router {
         .nest("/groups", groups::router(auth_state.clone()))
         .nest("/collections", collections::router(auth_state.clone()))
         .nest("/reservations", reservations::router(auth_state.clone()))
+        .nest("/contracts", contracts::router(auth_state.clone()))
         .nest("/resources", resources::router(auth_state))
 }
 

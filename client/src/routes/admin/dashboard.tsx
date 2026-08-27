@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { createFileRoute, Link, redirect } from '@tanstack/react-router'
 import {
     Loader2,
@@ -10,6 +10,7 @@ import {
     Clock,
     CheckCircle2,
     XCircle,
+    FileText,
 } from 'lucide-react'
 import { Button } from '#/components/Button'
 import { Chip } from '#/components/Chip'
@@ -24,8 +25,8 @@ import { startOfCurrentWeek } from '#/utils/calendarUtils'
 import { cn } from '#/utils/cn'
 import { readable_uuid } from '#/utils/uuid'
 import { formatDate } from '#/utils/date'
-import { api } from '#/api/client'
 import { authKeys, fetchMe } from '#/hooks/useAuth'
+import { ContractPrintModal } from '#/components/ContractPrintModal'
 
 export interface AdminDashboardSearch {
     start_date?: string
@@ -54,13 +55,30 @@ export const Route = createFileRoute('/admin/dashboard')({
         }
     },
     beforeLoad: async ({ context }) => {
-        const user = await context.queryClient.ensureQueryData({
-            queryKey: authKeys.me(),
-            queryFn: fetchMe,
-            staleTime: 1000 * 60 * 5,
-        })
+        // Skip auth check during SSR pre-rendering if running on Node/Server context
+        if (typeof window === 'undefined') {
+            return
+        }
 
-        if (!user || user.role !== 'admin') {
+        try {
+            const user = await context.queryClient.ensureQueryData({
+                queryKey: authKeys.me(),
+                queryFn: fetchMe,
+                staleTime: 1000 * 60 * 5,
+            })
+
+            if (!user || user.role !== 'admin') {
+                throw redirect({
+                    to: '/reservations',
+                    replace: true,
+                })
+            }
+        } catch (err) {
+            if (err && typeof err === 'object' && 'to' in err) {
+                throw err
+            }
+
+            console.error('Error in beforeLoad guard:', err)
             throw redirect({
                 to: '/reservations',
                 replace: true,
@@ -69,7 +87,6 @@ export const Route = createFileRoute('/admin/dashboard')({
     },
     component: AdminDashboardPage,
 })
-
 function AdminReservationCard({
     reservation,
     onStatusChange,
@@ -79,82 +96,104 @@ function AdminReservationCard({
     onStatusChange: (status: ReservationStatus) => void
     isUpdating: boolean
 }) {
+    const [showContractModal, setShowContractModal] = useState(false)
     const firstOccurrence = reservation.occurrences?.[0]
     const isPending = reservation.status === 'pending'
     const isCancelled = reservation.status === 'cancelled'
 
     return (
-        <li
-            className={cn(
-                'p-3 border-2 flex flex-col gap-2 rounded-sm bg-stone-50 dark:bg-stone-900 transition-colors',
-                isPending
-                    ? 'border-amber-400 dark:border-amber-600'
-                    : isCancelled
-                        ? 'border-rose-300 dark:border-rose-900/60 opacity-80'
-                        : 'border-stone-200 dark:border-stone-700'
-            )}
-        >
-            <div className="flex items-center gap-2 min-w-0">
-                <Link
-                    to="/reservations/$id"
-                    params={{ id: reservation.id }}
-                    className="font-bold truncate hover:underline text-stone-900 dark:text-stone-100 flex-1"
-                >
-                    {reservation.title}
-                </Link>
-                <Chip>{readable_uuid(reservation.id)}</Chip>
-            </div>
-
-            {firstOccurrence ? (
-                <div className="flex items-center gap-1 text-xs text-stone-500 dark:text-stone-400">
-                    <Calendar size={14} />
-                    <span>{formatDate(firstOccurrence.start_time)}</span>
+        <>
+            <li
+                className={cn(
+                    'p-3 border-2 flex flex-col gap-2 rounded-sm bg-stone-50 dark:bg-stone-900 transition-colors',
+                    isPending
+                        ? 'border-amber-400 dark:border-amber-600'
+                        : isCancelled
+                            ? 'border-rose-300 dark:border-rose-900/60 opacity-80'
+                            : 'border-stone-200 dark:border-stone-700'
+                )}
+            >
+                <div className="flex items-center gap-2 min-w-0">
+                    <Link
+                        to="/reservations/$id"
+                        params={{ id: reservation.id }}
+                        className="font-bold truncate hover:underline text-stone-900 dark:text-stone-100 flex-1"
+                    >
+                        {reservation.title}
+                    </Link>
+                    <Chip>{readable_uuid(reservation.id)}</Chip>
                 </div>
-            ) : (
-                <span className="text-xs text-stone-400">Ei tiettyjä aikoja</span>
-            )}
 
-            {/* Action Buttons Row */}
-            <div className="flex items-center justify-end pt-2 border-t border-stone-200 dark:border-stone-800 gap-1.5">
-                {isPending ? (
-                    <>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            disabled={isUpdating}
-                            onClick={() => onStatusChange('cancelled' as ReservationStatus)}
-                            className="text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/50 text-xs px-2.5 py-1"
-                        >
-                            <X size={14} />
-                            <span>Hylkää</span>
-                        </Button>
-                        <Button
-                            size="sm"
-                            disabled={isUpdating}
-                            onClick={() => onStatusChange('confirmed' as ReservationStatus)}
-                            className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-2.5 py-1"
-                        >
-                            <Check size={14} />
-                            <span>Hyväksy</span>
-                        </Button>
-                    </>
+                {firstOccurrence ? (
+                    <div className="flex items-center gap-1 text-xs text-stone-500 dark:text-stone-400">
+                        <Calendar size={14} />
+                        <span>{formatDate(firstOccurrence.start_time)}</span>
+                    </div>
                 ) : (
+                    <span className="text-xs text-stone-400">Ei tiettyjä aikoja</span>
+                )}
+
+                {/* Action Buttons Row */}
+                <div className="flex items-center justify-between pt-2 border-t border-stone-200 dark:border-stone-800 gap-1.5">
+                    {/* Contract Action */}
                     <Button
                         variant="outline"
                         size="sm"
-                        disabled={isUpdating}
-                        onClick={() => onStatusChange('pending' as ReservationStatus)}
-                        className="text-stone-600 dark:text-stone-400 text-xs px-2.5 py-1"
+                        onClick={() => setShowContractModal(true)}
+                        className="text-stone-700 dark:text-stone-300 text-xs px-2 py-1 gap-1"
                     >
-                        <Clock size={14} />
-                        <span>Palauta odottavaksi</span>
+                        <FileText size={14} className="text-amber-600 dark:text-amber-500" />
+                        <span>Sopimus</span>
                     </Button>
-                )}
-            </div>
-        </li>
+
+                    <div className="flex items-center gap-1.5">
+                        {isPending ? (
+                            <>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    disabled={isUpdating}
+                                    onClick={() => onStatusChange('cancelled' as ReservationStatus)}
+                                    className="text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/50 text-xs px-2.5 py-1"
+                                >
+                                    <X size={14} />
+                                    <span>Hylkää</span>
+                                </Button>
+                                <Button
+                                    size="sm"
+                                    disabled={isUpdating}
+                                    onClick={() => onStatusChange('confirmed' as ReservationStatus)}
+                                    className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-2.5 py-1"
+                                >
+                                    <Check size={14} />
+                                    <span>Hyväksy</span>
+                                </Button>
+                            </>
+                        ) : (
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                disabled={isUpdating}
+                                onClick={() => onStatusChange('pending' as ReservationStatus)}
+                                className="text-stone-600 dark:text-stone-400 text-xs px-2.5 py-1"
+                            >
+                                <Clock size={14} />
+                                <span>Palauta odottavaksi</span>
+                            </Button>
+                        )}
+                    </div>
+                </div>
+            </li>
+
+            {showContractModal && (
+                <ContractPrintModal
+                    reservation={reservation}
+                    onClose={() => setShowContractModal(false)}
+                />
+            )}
+        </>
     )
 }
-
 function AdminDashboardPage() {
     const search = Route.useSearch()
     const navigate = Route.useNavigate()

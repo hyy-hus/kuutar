@@ -109,6 +109,43 @@ export interface paths {
         patch: operations["update_collection"];
         trace?: never;
     };
+    "/contracts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** GET /contracts */
+        get: operations["list_contracts"];
+        put?: never;
+        /** POST /contracts */
+        post: operations["create_contract"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/contracts/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** GET /contracts/{id} */
+        get: operations["get_contract"];
+        put?: never;
+        post?: never;
+        /** DELETE /contracts/{id} */
+        delete: operations["delete_contract"];
+        options?: never;
+        head?: never;
+        /** PATCH /contracts/{id} */
+        patch: operations["update_contract"];
+        trace?: never;
+    };
     "/groups": {
         parameters: {
             query?: never;
@@ -301,7 +338,24 @@ export interface components {
             /** Format: date-time */
             updated_at: string;
         };
+        Contract: {
+            body: unknown;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            deleted_at?: string | null;
+            /** Format: uuid */
+            id: string;
+            name: string;
+            /** Format: date-time */
+            updated_at: string;
+        };
         CreateCollection: {
+            name: string;
+        };
+        CreateContract: {
+            /** @description Tiptap ProseMirror JSON representation */
+            body: unknown;
             name: string;
         };
         CreateGroup: {
@@ -406,6 +460,10 @@ export interface components {
         /** @enum {string} */
         Role: "admin" | "user";
         UpdateCollection: {
+            name?: string | null;
+        };
+        UpdateContract: {
+            body?: unknown;
             name?: string | null;
         };
         UpdateGroup: {
@@ -777,6 +835,212 @@ export interface operations {
             };
         };
     };
+    list_contracts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description List of active contracts */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Contract"][];
+                };
+            };
+        };
+    };
+    create_contract: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateContract"];
+            };
+        };
+        responses: {
+            /** @description Contract created successfully */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Contract"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden - Admin access required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Contract name conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_contract: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Contract UUID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Contract details */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Contract"];
+                };
+            };
+            /** @description Contract not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    delete_contract: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Contract UUID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Contract soft-deleted successfully */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden - Admin access required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Contract not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    update_contract: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Contract UUID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateContract"];
+            };
+        };
+        responses: {
+            /** @description Contract updated successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Contract"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden - Admin access required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Contract not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Contract name conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     list_groups: {
         parameters: {
             query?: never;
@@ -996,6 +1260,7 @@ export interface operations {
                 start_date: string;
                 end_date: string;
                 resource_id?: string | null;
+                status?: null | components["schemas"]["ReservationStatus"];
             };
             header?: never;
             path?: never;
@@ -1196,6 +1461,13 @@ export interface operations {
             };
             /** @description Unauthorized */
             401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden - Admin role required */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
