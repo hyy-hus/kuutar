@@ -33,6 +33,7 @@
         "@tanstack/react-router-ssr-query": "latest",
         "@tanstack/react-start": "latest",
         "@tanstack/react-table": "latest",
+        "@tiptap/extension-link": "^3.30.5",
         "@tiptap/extension-mention": "^3.30.5",
         "@tiptap/pm": "^3.30.5",
         "@tiptap/react": "^3.30.5",
