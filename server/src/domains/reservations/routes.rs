@@ -159,18 +159,27 @@ pub async fn check_reservation_conflicts(
     responses(
         (status = 200, description = "Reservation updated successfully", body = ReservationWithOccurrences),
         (status = 401, description = "Unauthorized"),
+        (status = 403, description = "Forbidden - Admin role required"),
         (status = 404, description = "Reservation not found"),
         (status = 422, description = "Validation error")
     )
 )]
-#[tracing::instrument(skip(auth_state, _auth_user))]
+#[tracing::instrument(skip(auth_state, auth_user))]
 pub async fn update_reservation(
     State(auth_state): State<AuthState>,
     Path(id): Path<Uuid>,
-    _auth_user: AuthUser,
+    auth_user: AuthUser,
     Json(payload): Json<UpdateReservationPayload>,
 ) -> Result<Json<ReservationWithOccurrences>, AppError> {
     payload.validate()?;
+
+    // Non-admins cannot update reservation status or edit existing bookings
+    if auth_user.role != Role::Admin {
+        return Err(AppError::Forbidden(
+            "Only administrators can edit reservations or change statuses.".to_string(),
+        ));
+    }
+
     let reservation = db::update(&auth_state.pool, id, payload).await?;
     Ok(Json(reservation))
 }
