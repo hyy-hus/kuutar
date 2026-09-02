@@ -4,10 +4,10 @@ import { useQuery } from '@tanstack/react-query'
 import { api } from '#/api/client'
 import { useContracts } from '#/hooks/useContracts'
 import { useResources } from '#/hooks/useResorces'
+import { type ReservationWithOccurrences } from '#/hooks/useReservations'
 import { formatDate } from '#/utils/date'
 import { generateHTML } from '@tiptap/core'
 import StarterKit from '@tiptap/starter-kit'
-import Mention from '@tiptap/extension-mention'
 import Link from '@tiptap/extension-link'
 
 export interface BatchPrintSearch {
@@ -34,8 +34,8 @@ function BatchPrintPage() {
     const { data: contracts, isLoading: loadingContracts } = useContracts()
     const { data: resources, isLoading: loadingResources } = useResources()
 
-    // Fetch exact reservations concurrently by ID
-    const { data: activeReservations, isLoading: loadingReservations, isError } = useQuery({
+    // Fetch exact reservations concurrently by ID with explicit return typing
+    const { data: activeReservations, isLoading: loadingReservations, isError } = useQuery<ReservationWithOccurrences[]>({
         queryKey: ['reservations', 'batch', reservation_ids],
         queryFn: async () => {
             if (reservation_ids.length === 0) return []
@@ -46,11 +46,11 @@ function BatchPrintPage() {
                         params: { path: { id } },
                     })
                     if (error || !data) return null
-                    return data
+                    return data as unknown as ReservationWithOccurrences
                 })
             )
 
-            return results.filter((item): item is NonNullable<typeof item> => Boolean(item))
+            return results.filter((item): item is ReservationWithOccurrences => Boolean(item))
         },
         enabled: reservation_ids.length > 0,
     })
@@ -95,7 +95,7 @@ function BatchPrintPage() {
         rawHtml =
             typeof selectedContract.body === 'string'
                 ? JSON.parse(selectedContract.body)
-                : generateHTML(selectedContract.body as any, [StarterKit, Link, Mention])
+                : generateHTML(selectedContract.body as any, [StarterKit, Link])
     } catch {
         rawHtml = String(selectedContract.body || '')
     }
@@ -108,7 +108,8 @@ function BatchPrintPage() {
             {activeReservations.map((item, index) => {
                 if (!item) return null
 
-                const res = 'reservation' in item && item.reservation ? item.reservation : item
+                // Handle flattened reservation fields directly
+                const res = item
                 const occurrences = item.occurrences || []
 
                 // Extract unique resource names for this reservation
