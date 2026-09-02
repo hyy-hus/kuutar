@@ -12,13 +12,15 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as AppIndexRouteImport } from './routes/_app/index'
 import { Route as AppSandboxRouteImport } from './routes/_app/sandbox'
-import { Route as ContractsIndexRouteImport } from './routes/contracts/index'
 import { Route as ContractsBatchPrintRouteImport } from './routes/contracts/batch-print'
 import { Route as AppAdminDashboardRouteImport } from './routes/_app/admin/dashboard'
 import { Route as AppCalendarIndexRouteImport } from './routes/_app/calendar/index'
 import { Route as AppCollectionsIndexRouteImport } from './routes/_app/collections/index'
 import { Route as AppCollectionsIdRouteImport } from './routes/_app/collections/$id'
 import { Route as AppCollectionsCreateRouteImport } from './routes/_app/collections/create'
+import { Route as AppContractsIndexRouteImport } from './routes/_app/contracts/index'
+import { Route as AppContractsIdRouteImport } from './routes/_app/contracts/$id'
+import { Route as AppContractsCreateRouteImport } from './routes/_app/contracts/create'
 import { Route as AppGroupsIndexRouteImport } from './routes/_app/groups/index'
 import { Route as AppGroupsIdRouteImport } from './routes/_app/groups/$id'
 import { Route as AppGroupsCreateRouteImport } from './routes/_app/groups/create'
@@ -51,11 +53,6 @@ const AppSandboxRoute = AppSandboxRouteImport.update({
   path: '/sandbox',
   getParentRoute: () => AppRoute,
 } as any)
-const ContractsIndexRoute = ContractsIndexRouteImport.update({
-  id: '/contracts/',
-  path: '/contracts/',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ContractsBatchPrintRoute = ContractsBatchPrintRouteImport.update({
   id: '/contracts/batch-print',
   path: '/contracts/batch-print',
@@ -84,6 +81,21 @@ const AppCollectionsIdRoute = AppCollectionsIdRouteImport.update({
 const AppCollectionsCreateRoute = AppCollectionsCreateRouteImport.update({
   id: '/collections/create',
   path: '/collections/create',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppContractsIndexRoute = AppContractsIndexRouteImport.update({
+  id: '/contracts/',
+  path: '/contracts/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppContractsIdRoute = AppContractsIdRouteImport.update({
+  id: '/contracts/$id',
+  path: '/contracts/$id',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppContractsCreateRoute = AppContractsCreateRouteImport.update({
+  id: '/contracts/create',
+  path: '/contracts/create',
   getParentRoute: () => AppRoute,
 } as any)
 const AppGroupsIndexRoute = AppGroupsIndexRouteImport.update({
@@ -176,10 +188,11 @@ export interface FileRoutesByFullPath {
   '/': typeof AppIndexRoute
   '/sandbox': typeof AppSandboxRoute
   '/contracts/batch-print': typeof ContractsBatchPrintRoute
-  '/contracts/': typeof ContractsIndexRoute
   '/admin/dashboard': typeof AppAdminDashboardRoute
   '/collections/$id': typeof AppCollectionsIdRoute
   '/collections/create': typeof AppCollectionsCreateRoute
+  '/contracts/$id': typeof AppContractsIdRoute
+  '/contracts/create': typeof AppContractsCreateRoute
   '/groups/$id': typeof AppGroupsIdRoute
   '/groups/create': typeof AppGroupsCreateRoute
   '/reservations/$id': typeof AppReservationsIdRoute
@@ -190,6 +203,7 @@ export interface FileRoutesByFullPath {
   '/users/create': typeof AppUsersCreateRoute
   '/calendar/': typeof AppCalendarIndexRoute
   '/collections/': typeof AppCollectionsIndexRoute
+  '/contracts/': typeof AppContractsIndexRoute
   '/groups/': typeof AppGroupsIndexRoute
   '/reservations/': typeof AppReservationsIndexRoute
   '/resources/': typeof AppResourcesIndexRoute
@@ -204,10 +218,11 @@ export interface FileRoutesByTo {
   '/sandbox': typeof AppSandboxRoute
   '/contracts/batch-print': typeof ContractsBatchPrintRoute
   '/': typeof AppIndexRoute
-  '/contracts': typeof ContractsIndexRoute
   '/admin/dashboard': typeof AppAdminDashboardRoute
   '/collections/$id': typeof AppCollectionsIdRoute
   '/collections/create': typeof AppCollectionsCreateRoute
+  '/contracts/$id': typeof AppContractsIdRoute
+  '/contracts/create': typeof AppContractsCreateRoute
   '/groups/$id': typeof AppGroupsIdRoute
   '/groups/create': typeof AppGroupsCreateRoute
   '/reservations/$id': typeof AppReservationsIdRoute
@@ -218,6 +233,7 @@ export interface FileRoutesByTo {
   '/users/create': typeof AppUsersCreateRoute
   '/calendar': typeof AppCalendarIndexRoute
   '/collections': typeof AppCollectionsIndexRoute
+  '/contracts': typeof AppContractsIndexRoute
   '/groups': typeof AppGroupsIndexRoute
   '/reservations': typeof AppReservationsIndexRoute
   '/resources': typeof AppResourcesIndexRoute
@@ -234,10 +250,11 @@ export interface FileRoutesById {
   '/_app/sandbox': typeof AppSandboxRoute
   '/contracts/batch-print': typeof ContractsBatchPrintRoute
   '/_app/': typeof AppIndexRoute
-  '/contracts/': typeof ContractsIndexRoute
   '/_app/admin/dashboard': typeof AppAdminDashboardRoute
   '/_app/collections/$id': typeof AppCollectionsIdRoute
   '/_app/collections/create': typeof AppCollectionsCreateRoute
+  '/_app/contracts/$id': typeof AppContractsIdRoute
+  '/_app/contracts/create': typeof AppContractsCreateRoute
   '/_app/groups/$id': typeof AppGroupsIdRoute
   '/_app/groups/create': typeof AppGroupsCreateRoute
   '/_app/reservations/$id': typeof AppReservationsIdRoute
@@ -248,6 +265,7 @@ export interface FileRoutesById {
   '/_app/users/create': typeof AppUsersCreateRoute
   '/_app/calendar/': typeof AppCalendarIndexRoute
   '/_app/collections/': typeof AppCollectionsIndexRoute
+  '/_app/contracts/': typeof AppContractsIndexRoute
   '/_app/groups/': typeof AppGroupsIndexRoute
   '/_app/reservations/': typeof AppReservationsIndexRoute
   '/_app/resources/': typeof AppResourcesIndexRoute
@@ -264,10 +282,11 @@ export interface FileRouteTypes {
     | '/'
     | '/sandbox'
     | '/contracts/batch-print'
-    | '/contracts/'
     | '/admin/dashboard'
     | '/collections/$id'
     | '/collections/create'
+    | '/contracts/$id'
+    | '/contracts/create'
     | '/groups/$id'
     | '/groups/create'
     | '/reservations/$id'
@@ -278,6 +297,7 @@ export interface FileRouteTypes {
     | '/users/create'
     | '/calendar/'
     | '/collections/'
+    | '/contracts/'
     | '/groups/'
     | '/reservations/'
     | '/resources/'
@@ -292,10 +312,11 @@ export interface FileRouteTypes {
     | '/sandbox'
     | '/contracts/batch-print'
     | '/'
-    | '/contracts'
     | '/admin/dashboard'
     | '/collections/$id'
     | '/collections/create'
+    | '/contracts/$id'
+    | '/contracts/create'
     | '/groups/$id'
     | '/groups/create'
     | '/reservations/$id'
@@ -306,6 +327,7 @@ export interface FileRouteTypes {
     | '/users/create'
     | '/calendar'
     | '/collections'
+    | '/contracts'
     | '/groups'
     | '/reservations'
     | '/resources'
@@ -321,10 +343,11 @@ export interface FileRouteTypes {
     | '/_app/sandbox'
     | '/contracts/batch-print'
     | '/_app/'
-    | '/contracts/'
     | '/_app/admin/dashboard'
     | '/_app/collections/$id'
     | '/_app/collections/create'
+    | '/_app/contracts/$id'
+    | '/_app/contracts/create'
     | '/_app/groups/$id'
     | '/_app/groups/create'
     | '/_app/reservations/$id'
@@ -335,6 +358,7 @@ export interface FileRouteTypes {
     | '/_app/users/create'
     | '/_app/calendar/'
     | '/_app/collections/'
+    | '/_app/contracts/'
     | '/_app/groups/'
     | '/_app/reservations/'
     | '/_app/resources/'
@@ -349,7 +373,6 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   AppRoute: typeof AppRouteWithChildren
   ContractsBatchPrintRoute: typeof ContractsBatchPrintRoute
-  ContractsIndexRoute: typeof ContractsIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -374,13 +397,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/sandbox'
       preLoaderRoute: typeof AppSandboxRouteImport
       parentRoute: typeof AppRoute
-    }
-    '/contracts/': {
-      id: '/contracts/'
-      path: '/contracts'
-      fullPath: '/contracts/'
-      preLoaderRoute: typeof ContractsIndexRouteImport
-      parentRoute: typeof rootRouteImport
     }
     '/contracts/batch-print': {
       id: '/contracts/batch-print'
@@ -422,6 +438,27 @@ declare module '@tanstack/react-router' {
       path: '/collections/create'
       fullPath: '/collections/create'
       preLoaderRoute: typeof AppCollectionsCreateRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/contracts/': {
+      id: '/_app/contracts/'
+      path: '/contracts'
+      fullPath: '/contracts/'
+      preLoaderRoute: typeof AppContractsIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/contracts/$id': {
+      id: '/_app/contracts/$id'
+      path: '/contracts/$id'
+      fullPath: '/contracts/$id'
+      preLoaderRoute: typeof AppContractsIdRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/contracts/create': {
+      id: '/_app/contracts/create'
+      path: '/contracts/create'
+      fullPath: '/contracts/create'
+      preLoaderRoute: typeof AppContractsCreateRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/groups/': {
@@ -552,6 +589,8 @@ interface AppRouteChildren {
   AppAdminDashboardRoute: typeof AppAdminDashboardRoute
   AppCollectionsIdRoute: typeof AppCollectionsIdRoute
   AppCollectionsCreateRoute: typeof AppCollectionsCreateRoute
+  AppContractsIdRoute: typeof AppContractsIdRoute
+  AppContractsCreateRoute: typeof AppContractsCreateRoute
   AppGroupsIdRoute: typeof AppGroupsIdRoute
   AppGroupsCreateRoute: typeof AppGroupsCreateRoute
   AppReservationsIdRoute: typeof AppReservationsIdRoute
@@ -562,6 +601,7 @@ interface AppRouteChildren {
   AppUsersCreateRoute: typeof AppUsersCreateRoute
   AppCalendarIndexRoute: typeof AppCalendarIndexRoute
   AppCollectionsIndexRoute: typeof AppCollectionsIndexRoute
+  AppContractsIndexRoute: typeof AppContractsIndexRoute
   AppGroupsIndexRoute: typeof AppGroupsIndexRoute
   AppReservationsIndexRoute: typeof AppReservationsIndexRoute
   AppResourcesIndexRoute: typeof AppResourcesIndexRoute
@@ -579,6 +619,8 @@ const AppRouteChildren: AppRouteChildren = {
   AppAdminDashboardRoute: AppAdminDashboardRoute,
   AppCollectionsIdRoute: AppCollectionsIdRoute,
   AppCollectionsCreateRoute: AppCollectionsCreateRoute,
+  AppContractsIdRoute: AppContractsIdRoute,
+  AppContractsCreateRoute: AppContractsCreateRoute,
   AppGroupsIdRoute: AppGroupsIdRoute,
   AppGroupsCreateRoute: AppGroupsCreateRoute,
   AppReservationsIdRoute: AppReservationsIdRoute,
@@ -589,6 +631,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppUsersCreateRoute: AppUsersCreateRoute,
   AppCalendarIndexRoute: AppCalendarIndexRoute,
   AppCollectionsIndexRoute: AppCollectionsIndexRoute,
+  AppContractsIndexRoute: AppContractsIndexRoute,
   AppGroupsIndexRoute: AppGroupsIndexRoute,
   AppReservationsIndexRoute: AppReservationsIndexRoute,
   AppResourcesIndexRoute: AppResourcesIndexRoute,
@@ -605,7 +648,6 @@ const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   AppRoute: AppRouteWithChildren,
   ContractsBatchPrintRoute: ContractsBatchPrintRoute,
-  ContractsIndexRoute: ContractsIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -3,8 +3,8 @@ import { api } from '#/api/client'
 import type { components } from '#/api/schema'
 
 export type Contract = components['schemas']['Contract']
-export type CreateContractPayload = components['schemas']['CreateContractPayload']
-export type UpdateContractPayload = components['schemas']['UpdateContractPayload']
+export type CreateContractPayload = components['schemas']['CreateContract']
+export type UpdateContractPayload = components['schemas']['UpdateContract']
 
 export const contractKeys = {
     all: ['contracts'] as const,
@@ -54,21 +54,29 @@ export function useCreateContract() {
     })
 }
 
+// Inside src/hooks/useContracts.ts
+
 export function useUpdateContract() {
     const queryClient = useQueryClient()
 
     return useMutation({
-        mutationFn: async ({ id, payload }: { id: string; payload: UpdateContractPayload }) => {
+        mutationFn: async ({
+            id,
+            payload,
+        }: {
+            id: string
+            payload: components['schemas']['UpdateContract']
+        }) => {
             const { data, error } = await api.PATCH('/contracts/{id}', {
                 params: { path: { id } },
                 body: payload,
             })
-            if (error || !data) throw new Error('Sopimuspohjan päivitys epäonnistui.')
+
+            if (error) throw new Error('Sopimuspohjan päivitys epäonnistui.')
             return data
         },
-        onSuccess: (updatedContract) => {
-            queryClient.setQueryData(contractKeys.detail(updatedContract.id), updatedContract)
-            queryClient.invalidateQueries({ queryKey: contractKeys.lists() })
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['contracts'] })
         },
     })
 }

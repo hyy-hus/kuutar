@@ -1,15 +1,16 @@
 import { useState } from 'react'
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { FileText, Save, Loader2, CheckCircle2 } from 'lucide-react'
 import { Button } from '#/components/Button'
 import { ContractEditor } from '#/components/ContractEditor'
 import { useCreateContract } from '#/hooks/useContracts'
 
-export const Route = createFileRoute('/contracts/')({
-    component: RouteComponent,
+export const Route = createFileRoute('/_app/contracts/create')({
+    component: CreateContractPage,
 })
 
-function RouteComponent() {
+function CreateContractPage() {
+    const navigate = useNavigate()
     const [title, setTitle] = useState('')
     const [contentHtml, setContentHtml] = useState('')
     const [successMessage, setSuccessMessage] = useState<string | null>(null)
@@ -24,17 +25,13 @@ function RouteComponent() {
         try {
             await createContract.mutateAsync({
                 name: title.trim(),
-                // Pass content as a valid JSON string value for the JSONB backend field
                 body: JSON.stringify(contentHtml),
             })
 
             setSuccessMessage('Sopimuspohja tallennettu onnistuneesti!')
-            setTitle('')
-            setContentHtml('')
-
             setTimeout(() => {
-                setSuccessMessage(null)
-            }, 3000)
+                navigate({ to: '/contracts' })
+            }, 1000)
         } catch (err) {
             console.error('Sopimuspohjan tallennus epäonnistui:', err)
         }
@@ -42,7 +39,6 @@ function RouteComponent() {
 
     return (
         <form onSubmit={handleSave} className="flex flex-col gap-4 p-4 max-w-4xl mx-auto flex-1 w-full">
-            {/* Header / Title Row */}
             <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-2">
                     <FileText className="text-amber-600 dark:text-amber-500" size={24} />
@@ -65,7 +61,6 @@ function RouteComponent() {
                 </Button>
             </div>
 
-            {/* Feedback Banners */}
             {successMessage && (
                 <div className="flex items-center gap-2 p-3 text-sm text-emerald-700 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-md">
                     <CheckCircle2 size={16} />
@@ -73,13 +68,6 @@ function RouteComponent() {
                 </div>
             )}
 
-            {createContract.isError && (
-                <div className="p-3 text-sm text-rose-600 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 rounded-md">
-                    {createContract.error.message || 'Sopimuspohjan tallennus epäonnistui.'}
-                </div>
-            )}
-
-            {/* Template Title Input */}
             <div className="flex flex-col gap-1.5">
                 <label htmlFor="contract-title" className="text-xs font-semibold text-stone-700 dark:text-stone-300">
                     Sopimuspohjan nimi
@@ -95,7 +83,6 @@ function RouteComponent() {
                 />
             </div>
 
-            {/* Tiptap Editor */}
             <div className="flex flex-col gap-1.5">
                 <label className="text-xs font-semibold text-stone-700 dark:text-stone-300">
                     Sopimuksen sisältö
