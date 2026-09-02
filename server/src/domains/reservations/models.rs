@@ -25,6 +25,10 @@ pub struct Reservation {
 
     pub rrule: Option<String>,
     pub status: ReservationStatus,
+
+    pub contract_id: Option<Uuid>,
+    pub contract_printed_at: Option<DateTime<Utc>>,
+
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -62,6 +66,8 @@ pub struct CreateReservationPayload {
     pub rrule: Option<String>,
     pub status: Option<ReservationStatus>,
 
+    pub contract_id: Option<Uuid>,
+
     #[validate(length(min = 1, message = "At least one occurrence must be provided"))]
     #[validate(nested)]
     pub occurrences: Vec<CreateOccurrencePayload>,
@@ -83,6 +89,10 @@ pub struct UpdateReservationPayload {
     pub admin_notes: Option<String>,
     pub rrule: Option<String>,
     pub status: Option<ReservationStatus>,
+
+    pub contract_id: Option<Uuid>,
+    /// When set to true, automatically sets `contract_printed_at` to `NOW()`
+    pub mark_printed: Option<bool>,
 
     #[validate(nested)]
     pub occurrences: Option<Vec<CreateOccurrencePayload>>,

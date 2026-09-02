@@ -3,6 +3,7 @@ use utoipa::{Modify, OpenApi};
 
 use crate::domains::auth;
 use crate::domains::collections;
+use crate::domains::contracts;
 use crate::domains::groups;
 use crate::domains::reservations;
 use crate::domains::resources;
@@ -73,6 +74,13 @@ impl Modify for SecurityAddon {
         reservations::routes::check_reservation_conflicts,
         reservations::routes::update_reservation,
         reservations::routes::delete_reservation,
+
+        // Contracts
+        contracts::routes::list_contracts,
+        contracts::routes::get_contract,
+        contracts::routes::create_contract,
+        contracts::routes::update_contract,
+        contracts::routes::delete_contract,
     ),
     components(
         schemas(
@@ -99,6 +107,9 @@ impl Modify for SecurityAddon {
             reservations::models::CreateReservationPayload,
             reservations::models::CreateOccurrencePayload,
             reservations::models::UpdateReservationPayload,
+            contracts::models::Contract,
+            contracts::models::CreateContract,
+            contracts::models::UpdateContract,
         )
     ),
     tags(
@@ -107,7 +118,8 @@ impl Modify for SecurityAddon {
         (name = "Collections", description = "Collection management endpoints"),
         (name = "Resources", description = "Resource management endpoints"),
         (name = "Groups", description = "Group management endpoints"),
-        (name = "Reservations", description = "Reservation and occurrence management endpoints")
+        (name = "Reservations", description = "Reservation and occurrence management endpoints"),
+        (name = "Contracts", description = "Contract template management endpoints")
     ),
     modifiers(&SecurityAddon)
 )]

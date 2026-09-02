@@ -46,7 +46,9 @@ pub async fn list_filtered(
         r#"
         SELECT 
             id, user_id, title, description, admin_notes, rrule, 
-            status AS "status: ReservationStatus", created_at, updated_at
+            status AS "status: ReservationStatus",
+            contract_id, contract_printed_at,
+            created_at, updated_at
         FROM reservations
         WHERE id = ANY($1) AND deleted_at IS NULL
         ORDER BY created_at DESC
@@ -91,7 +93,9 @@ pub async fn find_by_id(
         r#"
         SELECT 
             id, user_id, title, description, admin_notes, rrule, 
-            status AS "status: ReservationStatus", created_at, updated_at
+            status AS "status: ReservationStatus",
+            contract_id, contract_printed_at,
+            created_at, updated_at
         FROM reservations
         WHERE id = $1 AND deleted_at IS NULL
         "#,
@@ -125,18 +129,21 @@ pub async fn create(
     let reservation = sqlx::query_as!(
         Reservation,
         r#"
-        INSERT INTO reservations (user_id, title, description, admin_notes, rrule, status)
-        VALUES ($1, $2, $3, $4, $5, $6)
+        INSERT INTO reservations (user_id, title, description, admin_notes, rrule, status, contract_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
         RETURNING 
             id, user_id, title, description, admin_notes, rrule, 
-            status AS "status: ReservationStatus", created_at, updated_at
+            status AS "status: ReservationStatus",
+            contract_id, contract_printed_at,
+            created_at, updated_at
         "#,
         user_id,
         dto.title,
         dto.description,
         dto.admin_notes,
         dto.rrule,
-        initial_status as ReservationStatus
+        initial_status as ReservationStatus,
+        dto.contract_id
     )
     .fetch_one(&mut *tx)
     .await?;
@@ -187,17 +194,27 @@ pub async fn update(
             description = COALESCE($2, description),
             admin_notes = COALESCE($3, admin_notes),
             rrule = COALESCE($4, rrule),
-            status = COALESCE($5, status)
-        WHERE id = $6 AND deleted_at IS NULL
+            status = COALESCE($5, status),
+            contract_id = COALESCE($6, contract_id),
+            contract_printed_at = CASE 
+                WHEN $7 = TRUE THEN NOW() 
+                ELSE contract_printed_at 
+            END,
+            updated_at = NOW()
+        WHERE id = $8 AND deleted_at IS NULL
         RETURNING 
             id, user_id, title, description, admin_notes, rrule, 
-            status AS "status: ReservationStatus", created_at, updated_at
+            status AS "status: ReservationStatus",
+            contract_id, contract_printed_at,
+            created_at, updated_at
         "#,
         dto.title,
         dto.description,
         dto.admin_notes,
         dto.rrule,
         dto.status as Option<ReservationStatus>,
+        dto.contract_id,
+        dto.mark_printed,
         id
     )
     .fetch_optional(&mut *tx)

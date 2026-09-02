@@ -1,5 +1,6 @@
 
 @import "tailwindcss";
+@plugin "@tailwindcss/typography";
 
 @custom-variant dark (&:where(.dark, .dark *));
 
@@ -17,3 +18,27 @@ body {
   margin: 0;
 }
 
+@media print {
+  /* Set standard A4 document layout */
+  @page {
+    margin: 1.5cm;
+    size: A4 portrait;
+  }
+
+  /* Reset body and root constraints */
+  html, body, #root {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: white !important;
+    color: black !important;
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  /* Ensure page breaks execute correctly between batched items */
+  .print\:break-after-page {
+    page-break-after: always !important;
+    break-after: page !important;
+  }
+}

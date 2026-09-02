@@ -9,239 +9,284 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
-import { Route as SandboxRouteImport } from './routes/sandbox'
-import { Route as AdminDashboardRouteImport } from './routes/admin/dashboard'
-import { Route as CalendarIndexRouteImport } from './routes/calendar/index'
-import { Route as CollectionsIndexRouteImport } from './routes/collections/index'
-import { Route as CollectionsIdRouteImport } from './routes/collections/$id'
-import { Route as CollectionsCreateRouteImport } from './routes/collections/create'
-import { Route as GroupsIndexRouteImport } from './routes/groups/index'
-import { Route as GroupsIdRouteImport } from './routes/groups/$id'
-import { Route as GroupsCreateRouteImport } from './routes/groups/create'
-import { Route as ReservationsIndexRouteImport } from './routes/reservations/index'
-import { Route as ReservationsIdRouteImport } from './routes/reservations/$id'
-import { Route as ReservationsCreateRouteImport } from './routes/reservations/create'
-import { Route as ResourcesIndexRouteImport } from './routes/resources/index'
-import { Route as ResourcesIdRouteImport } from './routes/resources/$id'
-import { Route as ResourcesCreateRouteImport } from './routes/resources/create'
-import { Route as UsersIndexRouteImport } from './routes/users/index'
-import { Route as UsersIdRouteImport } from './routes/users/$id'
-import { Route as UsersCreateRouteImport } from './routes/users/create'
-import { Route as CollectionsEditIdRouteImport } from './routes/collections/edit.$id'
-import { Route as GroupsEditIdRouteImport } from './routes/groups/edit.$id'
-import { Route as ReservationsEditIdRouteImport } from './routes/reservations/edit.$id'
-import { Route as ResourcesEditIdRouteImport } from './routes/resources/edit/$id'
-import { Route as UsersEditIdRouteImport } from './routes/users/edit.$id'
+import { Route as AppRouteImport } from './routes/_app'
+import { Route as AppIndexRouteImport } from './routes/_app/index'
+import { Route as AppSandboxRouteImport } from './routes/_app/sandbox'
+import { Route as ContractsBatchPrintRouteImport } from './routes/contracts/batch-print'
+import { Route as AppAdminDashboardRouteImport } from './routes/_app/admin/dashboard'
+import { Route as AppCalendarIndexRouteImport } from './routes/_app/calendar/index'
+import { Route as AppCollectionsIndexRouteImport } from './routes/_app/collections/index'
+import { Route as AppCollectionsIdRouteImport } from './routes/_app/collections/$id'
+import { Route as AppCollectionsCreateRouteImport } from './routes/_app/collections/create'
+import { Route as AppContractsIndexRouteImport } from './routes/_app/contracts/index'
+import { Route as AppContractsIdRouteImport } from './routes/_app/contracts/$id'
+import { Route as AppContractsCreateRouteImport } from './routes/_app/contracts/create'
+import { Route as AppGroupsIndexRouteImport } from './routes/_app/groups/index'
+import { Route as AppGroupsIdRouteImport } from './routes/_app/groups/$id'
+import { Route as AppGroupsCreateRouteImport } from './routes/_app/groups/create'
+import { Route as AppReservationsIndexRouteImport } from './routes/_app/reservations/index'
+import { Route as AppReservationsIdRouteImport } from './routes/_app/reservations/$id'
+import { Route as AppReservationsCreateRouteImport } from './routes/_app/reservations/create'
+import { Route as AppResourcesIndexRouteImport } from './routes/_app/resources/index'
+import { Route as AppResourcesIdRouteImport } from './routes/_app/resources/$id'
+import { Route as AppResourcesCreateRouteImport } from './routes/_app/resources/create'
+import { Route as AppUsersIndexRouteImport } from './routes/_app/users/index'
+import { Route as AppUsersIdRouteImport } from './routes/_app/users/$id'
+import { Route as AppUsersCreateRouteImport } from './routes/_app/users/create'
+import { Route as AppCollectionsEditIdRouteImport } from './routes/_app/collections/edit.$id'
+import { Route as AppGroupsEditIdRouteImport } from './routes/_app/groups/edit.$id'
+import { Route as AppReservationsEditIdRouteImport } from './routes/_app/reservations/edit.$id'
+import { Route as AppResourcesEditIdRouteImport } from './routes/_app/resources/edit/$id'
+import { Route as AppUsersEditIdRouteImport } from './routes/_app/users/edit.$id'
 
-const IndexRoute = IndexRouteImport.update({
+const AppRoute = AppRouteImport.update({
+  id: '/_app',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppIndexRoute = AppIndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AppRoute,
 } as any)
-const SandboxRoute = SandboxRouteImport.update({
+const AppSandboxRoute = AppSandboxRouteImport.update({
   id: '/sandbox',
   path: '/sandbox',
+  getParentRoute: () => AppRoute,
+} as any)
+const ContractsBatchPrintRoute = ContractsBatchPrintRouteImport.update({
+  id: '/contracts/batch-print',
+  path: '/contracts/batch-print',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AdminDashboardRoute = AdminDashboardRouteImport.update({
+const AppAdminDashboardRoute = AppAdminDashboardRouteImport.update({
   id: '/admin/dashboard',
   path: '/admin/dashboard',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AppRoute,
 } as any)
-const CalendarIndexRoute = CalendarIndexRouteImport.update({
+const AppCalendarIndexRoute = AppCalendarIndexRouteImport.update({
   id: '/calendar/',
   path: '/calendar/',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AppRoute,
 } as any)
-const CollectionsIndexRoute = CollectionsIndexRouteImport.update({
+const AppCollectionsIndexRoute = AppCollectionsIndexRouteImport.update({
   id: '/collections/',
   path: '/collections/',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AppRoute,
 } as any)
-const CollectionsIdRoute = CollectionsIdRouteImport.update({
+const AppCollectionsIdRoute = AppCollectionsIdRouteImport.update({
   id: '/collections/$id',
   path: '/collections/$id',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AppRoute,
 } as any)
-const CollectionsCreateRoute = CollectionsCreateRouteImport.update({
+const AppCollectionsCreateRoute = AppCollectionsCreateRouteImport.update({
   id: '/collections/create',
   path: '/collections/create',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AppRoute,
 } as any)
-const GroupsIndexRoute = GroupsIndexRouteImport.update({
+const AppContractsIndexRoute = AppContractsIndexRouteImport.update({
+  id: '/contracts/',
+  path: '/contracts/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppContractsIdRoute = AppContractsIdRouteImport.update({
+  id: '/contracts/$id',
+  path: '/contracts/$id',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppContractsCreateRoute = AppContractsCreateRouteImport.update({
+  id: '/contracts/create',
+  path: '/contracts/create',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppGroupsIndexRoute = AppGroupsIndexRouteImport.update({
   id: '/groups/',
   path: '/groups/',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AppRoute,
 } as any)
-const GroupsIdRoute = GroupsIdRouteImport.update({
+const AppGroupsIdRoute = AppGroupsIdRouteImport.update({
   id: '/groups/$id',
   path: '/groups/$id',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AppRoute,
 } as any)
-const GroupsCreateRoute = GroupsCreateRouteImport.update({
+const AppGroupsCreateRoute = AppGroupsCreateRouteImport.update({
   id: '/groups/create',
   path: '/groups/create',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AppRoute,
 } as any)
-const ReservationsIndexRoute = ReservationsIndexRouteImport.update({
+const AppReservationsIndexRoute = AppReservationsIndexRouteImport.update({
   id: '/reservations/',
   path: '/reservations/',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AppRoute,
 } as any)
-const ReservationsIdRoute = ReservationsIdRouteImport.update({
+const AppReservationsIdRoute = AppReservationsIdRouteImport.update({
   id: '/reservations/$id',
   path: '/reservations/$id',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AppRoute,
 } as any)
-const ReservationsCreateRoute = ReservationsCreateRouteImport.update({
+const AppReservationsCreateRoute = AppReservationsCreateRouteImport.update({
   id: '/reservations/create',
   path: '/reservations/create',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AppRoute,
 } as any)
-const ResourcesIndexRoute = ResourcesIndexRouteImport.update({
+const AppResourcesIndexRoute = AppResourcesIndexRouteImport.update({
   id: '/resources/',
   path: '/resources/',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AppRoute,
 } as any)
-const ResourcesIdRoute = ResourcesIdRouteImport.update({
+const AppResourcesIdRoute = AppResourcesIdRouteImport.update({
   id: '/resources/$id',
   path: '/resources/$id',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AppRoute,
 } as any)
-const ResourcesCreateRoute = ResourcesCreateRouteImport.update({
+const AppResourcesCreateRoute = AppResourcesCreateRouteImport.update({
   id: '/resources/create',
   path: '/resources/create',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AppRoute,
 } as any)
-const UsersIndexRoute = UsersIndexRouteImport.update({
+const AppUsersIndexRoute = AppUsersIndexRouteImport.update({
   id: '/users/',
   path: '/users/',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AppRoute,
 } as any)
-const UsersIdRoute = UsersIdRouteImport.update({
+const AppUsersIdRoute = AppUsersIdRouteImport.update({
   id: '/users/$id',
   path: '/users/$id',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AppRoute,
 } as any)
-const UsersCreateRoute = UsersCreateRouteImport.update({
+const AppUsersCreateRoute = AppUsersCreateRouteImport.update({
   id: '/users/create',
   path: '/users/create',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AppRoute,
 } as any)
-const CollectionsEditIdRoute = CollectionsEditIdRouteImport.update({
+const AppCollectionsEditIdRoute = AppCollectionsEditIdRouteImport.update({
   id: '/collections/edit/$id',
   path: '/collections/edit/$id',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AppRoute,
 } as any)
-const GroupsEditIdRoute = GroupsEditIdRouteImport.update({
+const AppGroupsEditIdRoute = AppGroupsEditIdRouteImport.update({
   id: '/groups/edit/$id',
   path: '/groups/edit/$id',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AppRoute,
 } as any)
-const ReservationsEditIdRoute = ReservationsEditIdRouteImport.update({
+const AppReservationsEditIdRoute = AppReservationsEditIdRouteImport.update({
   id: '/reservations/edit/$id',
   path: '/reservations/edit/$id',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AppRoute,
 } as any)
-const ResourcesEditIdRoute = ResourcesEditIdRouteImport.update({
+const AppResourcesEditIdRoute = AppResourcesEditIdRouteImport.update({
   id: '/resources/edit/$id',
   path: '/resources/edit/$id',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AppRoute,
 } as any)
-const UsersEditIdRoute = UsersEditIdRouteImport.update({
+const AppUsersEditIdRoute = AppUsersEditIdRouteImport.update({
   id: '/users/edit/$id',
   path: '/users/edit/$id',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AppRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
-  '/sandbox': typeof SandboxRoute
-  '/admin/dashboard': typeof AdminDashboardRoute
-  '/collections/$id': typeof CollectionsIdRoute
-  '/collections/create': typeof CollectionsCreateRoute
-  '/groups/$id': typeof GroupsIdRoute
-  '/groups/create': typeof GroupsCreateRoute
-  '/reservations/$id': typeof ReservationsIdRoute
-  '/reservations/create': typeof ReservationsCreateRoute
-  '/resources/$id': typeof ResourcesIdRoute
-  '/resources/create': typeof ResourcesCreateRoute
-  '/users/$id': typeof UsersIdRoute
-  '/users/create': typeof UsersCreateRoute
-  '/calendar/': typeof CalendarIndexRoute
-  '/collections/': typeof CollectionsIndexRoute
-  '/groups/': typeof GroupsIndexRoute
-  '/reservations/': typeof ReservationsIndexRoute
-  '/resources/': typeof ResourcesIndexRoute
-  '/users/': typeof UsersIndexRoute
-  '/collections/edit/$id': typeof CollectionsEditIdRoute
-  '/groups/edit/$id': typeof GroupsEditIdRoute
-  '/reservations/edit/$id': typeof ReservationsEditIdRoute
-  '/resources/edit/$id': typeof ResourcesEditIdRoute
-  '/users/edit/$id': typeof UsersEditIdRoute
+  '/': typeof AppIndexRoute
+  '/sandbox': typeof AppSandboxRoute
+  '/contracts/batch-print': typeof ContractsBatchPrintRoute
+  '/admin/dashboard': typeof AppAdminDashboardRoute
+  '/collections/$id': typeof AppCollectionsIdRoute
+  '/collections/create': typeof AppCollectionsCreateRoute
+  '/contracts/$id': typeof AppContractsIdRoute
+  '/contracts/create': typeof AppContractsCreateRoute
+  '/groups/$id': typeof AppGroupsIdRoute
+  '/groups/create': typeof AppGroupsCreateRoute
+  '/reservations/$id': typeof AppReservationsIdRoute
+  '/reservations/create': typeof AppReservationsCreateRoute
+  '/resources/$id': typeof AppResourcesIdRoute
+  '/resources/create': typeof AppResourcesCreateRoute
+  '/users/$id': typeof AppUsersIdRoute
+  '/users/create': typeof AppUsersCreateRoute
+  '/calendar/': typeof AppCalendarIndexRoute
+  '/collections/': typeof AppCollectionsIndexRoute
+  '/contracts/': typeof AppContractsIndexRoute
+  '/groups/': typeof AppGroupsIndexRoute
+  '/reservations/': typeof AppReservationsIndexRoute
+  '/resources/': typeof AppResourcesIndexRoute
+  '/users/': typeof AppUsersIndexRoute
+  '/collections/edit/$id': typeof AppCollectionsEditIdRoute
+  '/groups/edit/$id': typeof AppGroupsEditIdRoute
+  '/reservations/edit/$id': typeof AppReservationsEditIdRoute
+  '/resources/edit/$id': typeof AppResourcesEditIdRoute
+  '/users/edit/$id': typeof AppUsersEditIdRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
-  '/sandbox': typeof SandboxRoute
-  '/admin/dashboard': typeof AdminDashboardRoute
-  '/collections/$id': typeof CollectionsIdRoute
-  '/collections/create': typeof CollectionsCreateRoute
-  '/groups/$id': typeof GroupsIdRoute
-  '/groups/create': typeof GroupsCreateRoute
-  '/reservations/$id': typeof ReservationsIdRoute
-  '/reservations/create': typeof ReservationsCreateRoute
-  '/resources/$id': typeof ResourcesIdRoute
-  '/resources/create': typeof ResourcesCreateRoute
-  '/users/$id': typeof UsersIdRoute
-  '/users/create': typeof UsersCreateRoute
-  '/calendar': typeof CalendarIndexRoute
-  '/collections': typeof CollectionsIndexRoute
-  '/groups': typeof GroupsIndexRoute
-  '/reservations': typeof ReservationsIndexRoute
-  '/resources': typeof ResourcesIndexRoute
-  '/users': typeof UsersIndexRoute
-  '/collections/edit/$id': typeof CollectionsEditIdRoute
-  '/groups/edit/$id': typeof GroupsEditIdRoute
-  '/reservations/edit/$id': typeof ReservationsEditIdRoute
-  '/resources/edit/$id': typeof ResourcesEditIdRoute
-  '/users/edit/$id': typeof UsersEditIdRoute
+  '/sandbox': typeof AppSandboxRoute
+  '/contracts/batch-print': typeof ContractsBatchPrintRoute
+  '/': typeof AppIndexRoute
+  '/admin/dashboard': typeof AppAdminDashboardRoute
+  '/collections/$id': typeof AppCollectionsIdRoute
+  '/collections/create': typeof AppCollectionsCreateRoute
+  '/contracts/$id': typeof AppContractsIdRoute
+  '/contracts/create': typeof AppContractsCreateRoute
+  '/groups/$id': typeof AppGroupsIdRoute
+  '/groups/create': typeof AppGroupsCreateRoute
+  '/reservations/$id': typeof AppReservationsIdRoute
+  '/reservations/create': typeof AppReservationsCreateRoute
+  '/resources/$id': typeof AppResourcesIdRoute
+  '/resources/create': typeof AppResourcesCreateRoute
+  '/users/$id': typeof AppUsersIdRoute
+  '/users/create': typeof AppUsersCreateRoute
+  '/calendar': typeof AppCalendarIndexRoute
+  '/collections': typeof AppCollectionsIndexRoute
+  '/contracts': typeof AppContractsIndexRoute
+  '/groups': typeof AppGroupsIndexRoute
+  '/reservations': typeof AppReservationsIndexRoute
+  '/resources': typeof AppResourcesIndexRoute
+  '/users': typeof AppUsersIndexRoute
+  '/collections/edit/$id': typeof AppCollectionsEditIdRoute
+  '/groups/edit/$id': typeof AppGroupsEditIdRoute
+  '/reservations/edit/$id': typeof AppReservationsEditIdRoute
+  '/resources/edit/$id': typeof AppResourcesEditIdRoute
+  '/users/edit/$id': typeof AppUsersEditIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
-  '/sandbox': typeof SandboxRoute
-  '/admin/dashboard': typeof AdminDashboardRoute
-  '/collections/$id': typeof CollectionsIdRoute
-  '/collections/create': typeof CollectionsCreateRoute
-  '/groups/$id': typeof GroupsIdRoute
-  '/groups/create': typeof GroupsCreateRoute
-  '/reservations/$id': typeof ReservationsIdRoute
-  '/reservations/create': typeof ReservationsCreateRoute
-  '/resources/$id': typeof ResourcesIdRoute
-  '/resources/create': typeof ResourcesCreateRoute
-  '/users/$id': typeof UsersIdRoute
-  '/users/create': typeof UsersCreateRoute
-  '/calendar/': typeof CalendarIndexRoute
-  '/collections/': typeof CollectionsIndexRoute
-  '/groups/': typeof GroupsIndexRoute
-  '/reservations/': typeof ReservationsIndexRoute
-  '/resources/': typeof ResourcesIndexRoute
-  '/users/': typeof UsersIndexRoute
-  '/collections/edit/$id': typeof CollectionsEditIdRoute
-  '/groups/edit/$id': typeof GroupsEditIdRoute
-  '/reservations/edit/$id': typeof ReservationsEditIdRoute
-  '/resources/edit/$id': typeof ResourcesEditIdRoute
-  '/users/edit/$id': typeof UsersEditIdRoute
+  '/_app': typeof AppRouteWithChildren
+  '/_app/sandbox': typeof AppSandboxRoute
+  '/contracts/batch-print': typeof ContractsBatchPrintRoute
+  '/_app/': typeof AppIndexRoute
+  '/_app/admin/dashboard': typeof AppAdminDashboardRoute
+  '/_app/collections/$id': typeof AppCollectionsIdRoute
+  '/_app/collections/create': typeof AppCollectionsCreateRoute
+  '/_app/contracts/$id': typeof AppContractsIdRoute
+  '/_app/contracts/create': typeof AppContractsCreateRoute
+  '/_app/groups/$id': typeof AppGroupsIdRoute
+  '/_app/groups/create': typeof AppGroupsCreateRoute
+  '/_app/reservations/$id': typeof AppReservationsIdRoute
+  '/_app/reservations/create': typeof AppReservationsCreateRoute
+  '/_app/resources/$id': typeof AppResourcesIdRoute
+  '/_app/resources/create': typeof AppResourcesCreateRoute
+  '/_app/users/$id': typeof AppUsersIdRoute
+  '/_app/users/create': typeof AppUsersCreateRoute
+  '/_app/calendar/': typeof AppCalendarIndexRoute
+  '/_app/collections/': typeof AppCollectionsIndexRoute
+  '/_app/contracts/': typeof AppContractsIndexRoute
+  '/_app/groups/': typeof AppGroupsIndexRoute
+  '/_app/reservations/': typeof AppReservationsIndexRoute
+  '/_app/resources/': typeof AppResourcesIndexRoute
+  '/_app/users/': typeof AppUsersIndexRoute
+  '/_app/collections/edit/$id': typeof AppCollectionsEditIdRoute
+  '/_app/groups/edit/$id': typeof AppGroupsEditIdRoute
+  '/_app/reservations/edit/$id': typeof AppReservationsEditIdRoute
+  '/_app/resources/edit/$id': typeof AppResourcesEditIdRoute
+  '/_app/users/edit/$id': typeof AppUsersEditIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
     | '/sandbox'
+    | '/contracts/batch-print'
     | '/admin/dashboard'
     | '/collections/$id'
     | '/collections/create'
+    | '/contracts/$id'
+    | '/contracts/create'
     | '/groups/$id'
     | '/groups/create'
     | '/reservations/$id'
@@ -252,6 +297,7 @@ export interface FileRouteTypes {
     | '/users/create'
     | '/calendar/'
     | '/collections/'
+    | '/contracts/'
     | '/groups/'
     | '/reservations/'
     | '/resources/'
@@ -263,11 +309,14 @@ export interface FileRouteTypes {
     | '/users/edit/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
-    | '/'
     | '/sandbox'
+    | '/contracts/batch-print'
+    | '/'
     | '/admin/dashboard'
     | '/collections/$id'
     | '/collections/create'
+    | '/contracts/$id'
+    | '/contracts/create'
     | '/groups/$id'
     | '/groups/create'
     | '/reservations/$id'
@@ -278,6 +327,7 @@ export interface FileRouteTypes {
     | '/users/create'
     | '/calendar'
     | '/collections'
+    | '/contracts'
     | '/groups'
     | '/reservations'
     | '/resources'
@@ -289,257 +339,315 @@ export interface FileRouteTypes {
     | '/users/edit/$id'
   id:
     | '__root__'
-    | '/'
-    | '/sandbox'
-    | '/admin/dashboard'
-    | '/collections/$id'
-    | '/collections/create'
-    | '/groups/$id'
-    | '/groups/create'
-    | '/reservations/$id'
-    | '/reservations/create'
-    | '/resources/$id'
-    | '/resources/create'
-    | '/users/$id'
-    | '/users/create'
-    | '/calendar/'
-    | '/collections/'
-    | '/groups/'
-    | '/reservations/'
-    | '/resources/'
-    | '/users/'
-    | '/collections/edit/$id'
-    | '/groups/edit/$id'
-    | '/reservations/edit/$id'
-    | '/resources/edit/$id'
-    | '/users/edit/$id'
+    | '/_app'
+    | '/_app/sandbox'
+    | '/contracts/batch-print'
+    | '/_app/'
+    | '/_app/admin/dashboard'
+    | '/_app/collections/$id'
+    | '/_app/collections/create'
+    | '/_app/contracts/$id'
+    | '/_app/contracts/create'
+    | '/_app/groups/$id'
+    | '/_app/groups/create'
+    | '/_app/reservations/$id'
+    | '/_app/reservations/create'
+    | '/_app/resources/$id'
+    | '/_app/resources/create'
+    | '/_app/users/$id'
+    | '/_app/users/create'
+    | '/_app/calendar/'
+    | '/_app/collections/'
+    | '/_app/contracts/'
+    | '/_app/groups/'
+    | '/_app/reservations/'
+    | '/_app/resources/'
+    | '/_app/users/'
+    | '/_app/collections/edit/$id'
+    | '/_app/groups/edit/$id'
+    | '/_app/reservations/edit/$id'
+    | '/_app/resources/edit/$id'
+    | '/_app/users/edit/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
-  SandboxRoute: typeof SandboxRoute
-  AdminDashboardRoute: typeof AdminDashboardRoute
-  CollectionsIdRoute: typeof CollectionsIdRoute
-  CollectionsCreateRoute: typeof CollectionsCreateRoute
-  GroupsIdRoute: typeof GroupsIdRoute
-  GroupsCreateRoute: typeof GroupsCreateRoute
-  ReservationsIdRoute: typeof ReservationsIdRoute
-  ReservationsCreateRoute: typeof ReservationsCreateRoute
-  ResourcesIdRoute: typeof ResourcesIdRoute
-  ResourcesCreateRoute: typeof ResourcesCreateRoute
-  UsersIdRoute: typeof UsersIdRoute
-  UsersCreateRoute: typeof UsersCreateRoute
-  CalendarIndexRoute: typeof CalendarIndexRoute
-  CollectionsIndexRoute: typeof CollectionsIndexRoute
-  GroupsIndexRoute: typeof GroupsIndexRoute
-  ReservationsIndexRoute: typeof ReservationsIndexRoute
-  ResourcesIndexRoute: typeof ResourcesIndexRoute
-  UsersIndexRoute: typeof UsersIndexRoute
-  CollectionsEditIdRoute: typeof CollectionsEditIdRoute
-  GroupsEditIdRoute: typeof GroupsEditIdRoute
-  ReservationsEditIdRoute: typeof ReservationsEditIdRoute
-  ResourcesEditIdRoute: typeof ResourcesEditIdRoute
-  UsersEditIdRoute: typeof UsersEditIdRoute
+  AppRoute: typeof AppRouteWithChildren
+  ContractsBatchPrintRoute: typeof ContractsBatchPrintRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
+    '/_app': {
+      id: '/_app'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AppRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_app/': {
+      id: '/_app/'
       path: '/'
       fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AppIndexRouteImport
+      parentRoute: typeof AppRoute
     }
-    '/sandbox': {
-      id: '/sandbox'
+    '/_app/sandbox': {
+      id: '/_app/sandbox'
       path: '/sandbox'
       fullPath: '/sandbox'
-      preLoaderRoute: typeof SandboxRouteImport
+      preLoaderRoute: typeof AppSandboxRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/contracts/batch-print': {
+      id: '/contracts/batch-print'
+      path: '/contracts/batch-print'
+      fullPath: '/contracts/batch-print'
+      preLoaderRoute: typeof ContractsBatchPrintRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/admin/dashboard': {
-      id: '/admin/dashboard'
+    '/_app/admin/dashboard': {
+      id: '/_app/admin/dashboard'
       path: '/admin/dashboard'
       fullPath: '/admin/dashboard'
-      preLoaderRoute: typeof AdminDashboardRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AppAdminDashboardRouteImport
+      parentRoute: typeof AppRoute
     }
-    '/calendar/': {
-      id: '/calendar/'
+    '/_app/calendar/': {
+      id: '/_app/calendar/'
       path: '/calendar'
       fullPath: '/calendar/'
-      preLoaderRoute: typeof CalendarIndexRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AppCalendarIndexRouteImport
+      parentRoute: typeof AppRoute
     }
-    '/collections/': {
-      id: '/collections/'
+    '/_app/collections/': {
+      id: '/_app/collections/'
       path: '/collections'
       fullPath: '/collections/'
-      preLoaderRoute: typeof CollectionsIndexRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AppCollectionsIndexRouteImport
+      parentRoute: typeof AppRoute
     }
-    '/collections/$id': {
-      id: '/collections/$id'
+    '/_app/collections/$id': {
+      id: '/_app/collections/$id'
       path: '/collections/$id'
       fullPath: '/collections/$id'
-      preLoaderRoute: typeof CollectionsIdRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AppCollectionsIdRouteImport
+      parentRoute: typeof AppRoute
     }
-    '/collections/create': {
-      id: '/collections/create'
+    '/_app/collections/create': {
+      id: '/_app/collections/create'
       path: '/collections/create'
       fullPath: '/collections/create'
-      preLoaderRoute: typeof CollectionsCreateRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AppCollectionsCreateRouteImport
+      parentRoute: typeof AppRoute
     }
-    '/groups/': {
-      id: '/groups/'
+    '/_app/contracts/': {
+      id: '/_app/contracts/'
+      path: '/contracts'
+      fullPath: '/contracts/'
+      preLoaderRoute: typeof AppContractsIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/contracts/$id': {
+      id: '/_app/contracts/$id'
+      path: '/contracts/$id'
+      fullPath: '/contracts/$id'
+      preLoaderRoute: typeof AppContractsIdRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/contracts/create': {
+      id: '/_app/contracts/create'
+      path: '/contracts/create'
+      fullPath: '/contracts/create'
+      preLoaderRoute: typeof AppContractsCreateRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/groups/': {
+      id: '/_app/groups/'
       path: '/groups'
       fullPath: '/groups/'
-      preLoaderRoute: typeof GroupsIndexRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AppGroupsIndexRouteImport
+      parentRoute: typeof AppRoute
     }
-    '/groups/$id': {
-      id: '/groups/$id'
+    '/_app/groups/$id': {
+      id: '/_app/groups/$id'
       path: '/groups/$id'
       fullPath: '/groups/$id'
-      preLoaderRoute: typeof GroupsIdRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AppGroupsIdRouteImport
+      parentRoute: typeof AppRoute
     }
-    '/groups/create': {
-      id: '/groups/create'
+    '/_app/groups/create': {
+      id: '/_app/groups/create'
       path: '/groups/create'
       fullPath: '/groups/create'
-      preLoaderRoute: typeof GroupsCreateRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AppGroupsCreateRouteImport
+      parentRoute: typeof AppRoute
     }
-    '/reservations/': {
-      id: '/reservations/'
+    '/_app/reservations/': {
+      id: '/_app/reservations/'
       path: '/reservations'
       fullPath: '/reservations/'
-      preLoaderRoute: typeof ReservationsIndexRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AppReservationsIndexRouteImport
+      parentRoute: typeof AppRoute
     }
-    '/reservations/$id': {
-      id: '/reservations/$id'
+    '/_app/reservations/$id': {
+      id: '/_app/reservations/$id'
       path: '/reservations/$id'
       fullPath: '/reservations/$id'
-      preLoaderRoute: typeof ReservationsIdRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AppReservationsIdRouteImport
+      parentRoute: typeof AppRoute
     }
-    '/reservations/create': {
-      id: '/reservations/create'
+    '/_app/reservations/create': {
+      id: '/_app/reservations/create'
       path: '/reservations/create'
       fullPath: '/reservations/create'
-      preLoaderRoute: typeof ReservationsCreateRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AppReservationsCreateRouteImport
+      parentRoute: typeof AppRoute
     }
-    '/resources/': {
-      id: '/resources/'
+    '/_app/resources/': {
+      id: '/_app/resources/'
       path: '/resources'
       fullPath: '/resources/'
-      preLoaderRoute: typeof ResourcesIndexRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AppResourcesIndexRouteImport
+      parentRoute: typeof AppRoute
     }
-    '/resources/$id': {
-      id: '/resources/$id'
+    '/_app/resources/$id': {
+      id: '/_app/resources/$id'
       path: '/resources/$id'
       fullPath: '/resources/$id'
-      preLoaderRoute: typeof ResourcesIdRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AppResourcesIdRouteImport
+      parentRoute: typeof AppRoute
     }
-    '/resources/create': {
-      id: '/resources/create'
+    '/_app/resources/create': {
+      id: '/_app/resources/create'
       path: '/resources/create'
       fullPath: '/resources/create'
-      preLoaderRoute: typeof ResourcesCreateRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AppResourcesCreateRouteImport
+      parentRoute: typeof AppRoute
     }
-    '/users/': {
-      id: '/users/'
+    '/_app/users/': {
+      id: '/_app/users/'
       path: '/users'
       fullPath: '/users/'
-      preLoaderRoute: typeof UsersIndexRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AppUsersIndexRouteImport
+      parentRoute: typeof AppRoute
     }
-    '/users/$id': {
-      id: '/users/$id'
+    '/_app/users/$id': {
+      id: '/_app/users/$id'
       path: '/users/$id'
       fullPath: '/users/$id'
-      preLoaderRoute: typeof UsersIdRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AppUsersIdRouteImport
+      parentRoute: typeof AppRoute
     }
-    '/users/create': {
-      id: '/users/create'
+    '/_app/users/create': {
+      id: '/_app/users/create'
       path: '/users/create'
       fullPath: '/users/create'
-      preLoaderRoute: typeof UsersCreateRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AppUsersCreateRouteImport
+      parentRoute: typeof AppRoute
     }
-    '/collections/edit/$id': {
-      id: '/collections/edit/$id'
+    '/_app/collections/edit/$id': {
+      id: '/_app/collections/edit/$id'
       path: '/collections/edit/$id'
       fullPath: '/collections/edit/$id'
-      preLoaderRoute: typeof CollectionsEditIdRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AppCollectionsEditIdRouteImport
+      parentRoute: typeof AppRoute
     }
-    '/groups/edit/$id': {
-      id: '/groups/edit/$id'
+    '/_app/groups/edit/$id': {
+      id: '/_app/groups/edit/$id'
       path: '/groups/edit/$id'
       fullPath: '/groups/edit/$id'
-      preLoaderRoute: typeof GroupsEditIdRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AppGroupsEditIdRouteImport
+      parentRoute: typeof AppRoute
     }
-    '/reservations/edit/$id': {
-      id: '/reservations/edit/$id'
+    '/_app/reservations/edit/$id': {
+      id: '/_app/reservations/edit/$id'
       path: '/reservations/edit/$id'
       fullPath: '/reservations/edit/$id'
-      preLoaderRoute: typeof ReservationsEditIdRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AppReservationsEditIdRouteImport
+      parentRoute: typeof AppRoute
     }
-    '/resources/edit/$id': {
-      id: '/resources/edit/$id'
+    '/_app/resources/edit/$id': {
+      id: '/_app/resources/edit/$id'
       path: '/resources/edit/$id'
       fullPath: '/resources/edit/$id'
-      preLoaderRoute: typeof ResourcesEditIdRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AppResourcesEditIdRouteImport
+      parentRoute: typeof AppRoute
     }
-    '/users/edit/$id': {
-      id: '/users/edit/$id'
+    '/_app/users/edit/$id': {
+      id: '/_app/users/edit/$id'
       path: '/users/edit/$id'
       fullPath: '/users/edit/$id'
-      preLoaderRoute: typeof UsersEditIdRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AppUsersEditIdRouteImport
+      parentRoute: typeof AppRoute
     }
   }
 }
 
+interface AppRouteChildren {
+  AppSandboxRoute: typeof AppSandboxRoute
+  AppIndexRoute: typeof AppIndexRoute
+  AppAdminDashboardRoute: typeof AppAdminDashboardRoute
+  AppCollectionsIdRoute: typeof AppCollectionsIdRoute
+  AppCollectionsCreateRoute: typeof AppCollectionsCreateRoute
+  AppContractsIdRoute: typeof AppContractsIdRoute
+  AppContractsCreateRoute: typeof AppContractsCreateRoute
+  AppGroupsIdRoute: typeof AppGroupsIdRoute
+  AppGroupsCreateRoute: typeof AppGroupsCreateRoute
+  AppReservationsIdRoute: typeof AppReservationsIdRoute
+  AppReservationsCreateRoute: typeof AppReservationsCreateRoute
+  AppResourcesIdRoute: typeof AppResourcesIdRoute
+  AppResourcesCreateRoute: typeof AppResourcesCreateRoute
+  AppUsersIdRoute: typeof AppUsersIdRoute
+  AppUsersCreateRoute: typeof AppUsersCreateRoute
+  AppCalendarIndexRoute: typeof AppCalendarIndexRoute
+  AppCollectionsIndexRoute: typeof AppCollectionsIndexRoute
+  AppContractsIndexRoute: typeof AppContractsIndexRoute
+  AppGroupsIndexRoute: typeof AppGroupsIndexRoute
+  AppReservationsIndexRoute: typeof AppReservationsIndexRoute
+  AppResourcesIndexRoute: typeof AppResourcesIndexRoute
+  AppUsersIndexRoute: typeof AppUsersIndexRoute
+  AppCollectionsEditIdRoute: typeof AppCollectionsEditIdRoute
+  AppGroupsEditIdRoute: typeof AppGroupsEditIdRoute
+  AppReservationsEditIdRoute: typeof AppReservationsEditIdRoute
+  AppResourcesEditIdRoute: typeof AppResourcesEditIdRoute
+  AppUsersEditIdRoute: typeof AppUsersEditIdRoute
+}
+
+const AppRouteChildren: AppRouteChildren = {
+  AppSandboxRoute: AppSandboxRoute,
+  AppIndexRoute: AppIndexRoute,
+  AppAdminDashboardRoute: AppAdminDashboardRoute,
+  AppCollectionsIdRoute: AppCollectionsIdRoute,
+  AppCollectionsCreateRoute: AppCollectionsCreateRoute,
+  AppContractsIdRoute: AppContractsIdRoute,
+  AppContractsCreateRoute: AppContractsCreateRoute,
+  AppGroupsIdRoute: AppGroupsIdRoute,
+  AppGroupsCreateRoute: AppGroupsCreateRoute,
+  AppReservationsIdRoute: AppReservationsIdRoute,
+  AppReservationsCreateRoute: AppReservationsCreateRoute,
+  AppResourcesIdRoute: AppResourcesIdRoute,
+  AppResourcesCreateRoute: AppResourcesCreateRoute,
+  AppUsersIdRoute: AppUsersIdRoute,
+  AppUsersCreateRoute: AppUsersCreateRoute,
+  AppCalendarIndexRoute: AppCalendarIndexRoute,
+  AppCollectionsIndexRoute: AppCollectionsIndexRoute,
+  AppContractsIndexRoute: AppContractsIndexRoute,
+  AppGroupsIndexRoute: AppGroupsIndexRoute,
+  AppReservationsIndexRoute: AppReservationsIndexRoute,
+  AppResourcesIndexRoute: AppResourcesIndexRoute,
+  AppUsersIndexRoute: AppUsersIndexRoute,
+  AppCollectionsEditIdRoute: AppCollectionsEditIdRoute,
+  AppGroupsEditIdRoute: AppGroupsEditIdRoute,
+  AppReservationsEditIdRoute: AppReservationsEditIdRoute,
+  AppResourcesEditIdRoute: AppResourcesEditIdRoute,
+  AppUsersEditIdRoute: AppUsersEditIdRoute,
+}
+
+const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
-  SandboxRoute: SandboxRoute,
-  AdminDashboardRoute: AdminDashboardRoute,
-  CollectionsIdRoute: CollectionsIdRoute,
-  CollectionsCreateRoute: CollectionsCreateRoute,
-  GroupsIdRoute: GroupsIdRoute,
-  GroupsCreateRoute: GroupsCreateRoute,
-  ReservationsIdRoute: ReservationsIdRoute,
-  ReservationsCreateRoute: ReservationsCreateRoute,
-  ResourcesIdRoute: ResourcesIdRoute,
-  ResourcesCreateRoute: ResourcesCreateRoute,
-  UsersIdRoute: UsersIdRoute,
-  UsersCreateRoute: UsersCreateRoute,
-  CalendarIndexRoute: CalendarIndexRoute,
-  CollectionsIndexRoute: CollectionsIndexRoute,
-  GroupsIndexRoute: GroupsIndexRoute,
-  ReservationsIndexRoute: ReservationsIndexRoute,
-  ResourcesIndexRoute: ResourcesIndexRoute,
-  UsersIndexRoute: UsersIndexRoute,
-  CollectionsEditIdRoute: CollectionsEditIdRoute,
-  GroupsEditIdRoute: GroupsEditIdRoute,
-  ReservationsEditIdRoute: ReservationsEditIdRoute,
-  ResourcesEditIdRoute: ResourcesEditIdRoute,
-  UsersEditIdRoute: UsersEditIdRoute,
+  AppRoute: AppRouteWithChildren,
+  ContractsBatchPrintRoute: ContractsBatchPrintRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

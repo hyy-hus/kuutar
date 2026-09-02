@@ -14,7 +14,11 @@ export const authKeys = {
 export async function fetchMe() {
     const { data, error } = await api.GET('/users/me')
 
-    if (error || !data) return null
+    if (error || !data) {
+        throw new Error('Unauthenticated')
+    }
+
+    console.log("user:", data);
 
     return data
 }
@@ -32,7 +36,7 @@ export function useMe() {
 }
 
 /**
- * Hook to check wether the current user is an admin.
+ * Hook to check whether the current user is an admin.
  */
 export function useIsAdmin(): { isAdmin: boolean; isLoading: boolean } {
     const { data: user, isLoading } = useMe()
@@ -123,5 +127,4 @@ export function useAuth() {
         loginError: loginMutation.error?.message,
         registerError: registerMutation.error?.message,
     }
-
 }
