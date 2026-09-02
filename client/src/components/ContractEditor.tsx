@@ -1,24 +1,8 @@
 import { useEditor, EditorContent, useEditorState } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
-import Mention from '@tiptap/extension-mention'
 import Link from '@tiptap/extension-link'
 import { Bold, Italic, List, ListOrdered, Link as LinkIcon, Unlink } from 'lucide-react'
 import { cn } from '#/utils/cn'
-import { mentionSuggestion } from './MentionSuggestion'
-
-export interface ContractPlaceholder {
-    id: string
-    label: string
-}
-
-export const CONTRACT_PLACEHOLDERS: ContractPlaceholder[] = [
-    { id: 'reserver_name', label: 'Varaajan nimi' },
-    { id: 'reserver_email', label: 'Varaajan sähköposti' },
-    { id: 'resource_name', label: 'Resurssin nimi' },
-    { id: 'start_time', label: 'Varausalkuaika' },
-    { id: 'end_time', label: 'Varausloppuaika' },
-    { id: 'total_price', label: 'Hinta yhteensä' },
-]
 
 interface ContractEditorProps {
     value: string
@@ -72,28 +56,6 @@ export function ContractEditor({ value, onChange }: ContractEditorProps) {
                     class: 'text-amber-600 dark:text-amber-400 underline font-medium hover:text-amber-700 dark:hover:text-amber-300',
                 },
             }),
-            Mention.configure({
-                HTMLAttributes: {
-                    class:
-                        'inline-flex items-center px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-950/80 text-amber-900 dark:text-amber-200 text-xs font-mono font-semibold border border-amber-300 dark:border-amber-700 select-none',
-                },
-                suggestion: mentionSuggestion,
-                renderText({ node }) {
-                    return `[[${node.attrs.id}]]`
-                },
-                renderHTML({ node }) {
-                    return [
-                        'span',
-                        {
-                            'data-type': 'mention',
-                            'data-id': node.attrs.id,
-                            class:
-                                'inline-flex items-center px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-950/80 text-amber-900 dark:text-amber-200 text-xs font-mono font-semibold border border-amber-300 dark:border-amber-700 select-none',
-                        },
-                        `[[${node.attrs.id}]]`,
-                    ]
-                },
-            }),
         ],
         content: value,
         onUpdate: ({ editor }) => {
@@ -141,17 +103,6 @@ export function ContractEditor({ value, onChange }: ContractEditorProps) {
 
     if (!editor) {
         return null
-    }
-
-    const insertPlaceholder = (id: string) => {
-        editor
-            .chain()
-            .focus()
-            .insertContent({
-                type: 'mention',
-                attrs: { id },
-            })
-            .run()
     }
 
     const handleHeadingChange = (value: string) => {
@@ -245,29 +196,6 @@ export function ContractEditor({ value, onChange }: ContractEditorProps) {
                 >
                     <ListOrdered size={16} />
                 </EditorButton>
-
-                {/* Placeholder Variable Selector */}
-                <div className="ml-auto flex items-center gap-1.5">
-                    <select
-                        defaultValue=""
-                        onChange={(e) => {
-                            if (e.target.value) {
-                                insertPlaceholder(e.target.value)
-                                e.target.value = ''
-                            }
-                        }}
-                        className="px-2 py-1 text-xs bg-stone-50 dark:bg-stone-900 border border-stone-300 dark:border-stone-700 rounded-md text-stone-900 dark:text-stone-100"
-                    >
-                        <option value="" disabled>
-                            Lisää yhdistetty kenttä
-                        </option>
-                        {CONTRACT_PLACEHOLDERS.map((ph) => (
-                            <option key={ph.id} value={ph.id}>
-                                {ph.label} ({`[[${ph.id}]]`})
-                            </option>
-                        ))}
-                    </select>
-                </div>
             </div>
 
             {/* Editor Content Area */}

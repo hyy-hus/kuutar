@@ -371,6 +371,8 @@ export interface components {
         };
         CreateReservationPayload: {
             admin_notes?: string | null;
+            /** Format: uuid */
+            contract_id?: string | null;
             description?: string | null;
             occurrences: components["schemas"]["CreateOccurrencePayload"][];
             rrule?: string | null;
@@ -426,6 +428,10 @@ export interface components {
         };
         Reservation: {
             admin_notes?: string | null;
+            /** Format: uuid */
+            contract_id?: string | null;
+            /** Format: date-time */
+            contract_printed_at?: string | null;
             /** Format: date-time */
             created_at: string;
             description?: string | null;
@@ -471,7 +477,11 @@ export interface components {
         };
         UpdateReservationPayload: {
             admin_notes?: string | null;
+            /** Format: uuid */
+            contract_id?: string | null;
             description?: string | null;
+            /** @description When set to true, automatically sets `contract_printed_at` to `NOW()` */
+            mark_printed?: boolean | null;
             occurrences?: components["schemas"]["CreateOccurrencePayload"][] | null;
             rrule?: string | null;
             status?: null | components["schemas"]["ReservationStatus"];

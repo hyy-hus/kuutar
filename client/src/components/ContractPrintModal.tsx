@@ -68,7 +68,7 @@ export function ContractPrintModal({ reservation, onClose }: ContractPrintModalP
     }
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-stone-950/60 p-4 backdrop-blur-sm print:p-0 print:bg-white print:static">
+        <div className="printable-contract-modal fixed inset-0 z-50 flex items-center justify-center bg-stone-950/60 p-4 backdrop-blur-sm print:p-0 print:bg-white print:static">
             <div className="flex flex-col w-full max-w-3xl max-h-[90vh] bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-lg shadow-2xl overflow-hidden print:max-w-none print:max-h-none print:border-none print:shadow-none print:rounded-none print:bg-white print:text-black">
                 {/* Modal Header (Hidden during print) */}
                 <div className="flex items-center justify-between p-4 border-b border-stone-200 dark:border-stone-800 print:hidden bg-stone-100 dark:bg-stone-950">
@@ -112,16 +112,15 @@ export function ContractPrintModal({ reservation, onClose }: ContractPrintModalP
                         <span>Tulosta</span>
                     </Button>
                 </div>
-
                 {/* Printable Document Body */}
-                <div className="flex-1 overflow-y-auto p-6 bg-white text-stone-900 print:overflow-visible print:p-0">
+                <div className="printable-contract flex-1 overflow-y-auto p-6 bg-white text-stone-900 print:overflow-visible print:p-0">
                     {isLoading ? (
                         <div className="p-8 flex items-center justify-center gap-2 text-stone-500">
                             <Loader2 className="animate-spin" size={18} />
                             <span>Haetaan sopimuspohjia...</span>
                         </div>
                     ) : !selectedContract ? (
-                        <div className="p-8 text-center text-sm text-stone-400 border border-dashed border-stone-300 rounded-md">
+                        <div className="p-8 text-center text-sm text-stone-400 border border-dashed border-stone-300 rounded-md print:hidden">
                             Valitse sopimuspohja valikosta esikatsellaksesi täytettyä asiakirjaa.
                         </div>
                     ) : (
@@ -132,8 +131,8 @@ export function ContractPrintModal({ reservation, onClose }: ContractPrintModalP
                                 dangerouslySetInnerHTML={{ __html: renderedHtml }}
                             />
 
-                            {/* Signature Block (Appears at bottom of contract) */}
-                            <div className="pt-12 mt-12 border-t border-stone-300 grid grid-cols-2 gap-8 print:pt-16">
+                            {/* Signature Block */}
+                            <div className="pt-12 mt-12 border-t border-stone-300 grid grid-cols-2 gap-8 print:pt-16 print:mt-16 print:break-inside-avoid">
                                 <div className="space-y-12">
                                     <div className="border-b border-stone-400 h-8" />
                                     <div className="text-xs text-stone-600">
