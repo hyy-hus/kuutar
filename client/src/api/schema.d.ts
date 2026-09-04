@@ -215,6 +215,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/reservations/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_my_reservations"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/reservations/{id}": {
         parameters: {
             query?: never;
@@ -1278,7 +1294,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description List of filtered reservations */
+            /** @description Public calendar reservations */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -1368,6 +1384,38 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Occurrence"][];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    list_my_reservations: {
+        parameters: {
+            query: {
+                start_date: string;
+                end_date: string;
+                resource_id?: string | null;
+                status?: null | components["schemas"]["ReservationStatus"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Current user's own reservations */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReservationWithOccurrences"][];
                 };
             };
             /** @description Unauthorized */
@@ -1476,7 +1524,7 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description Forbidden - Admin role required */
+            /** @description Forbidden - Admin access required */
             403: {
                 headers: {
                     [name: string]: unknown;

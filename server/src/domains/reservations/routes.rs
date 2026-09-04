@@ -24,7 +24,6 @@ use crate::{
     errors::AppError,
 };
 
-// Maximum allowed search window range in days
 const MAX_SEARCH_RANGE_DAYS: i64 = 91;
 
 #[utoipa::path(
@@ -33,7 +32,7 @@ const MAX_SEARCH_RANGE_DAYS: i64 = 91;
     tag = "Reservations",
     params(ListReservationsQuery),
     responses(
-        (status = 200, description = "List of filtered reservations", body = [ReservationWithOccurrences]),
+        (status = 200, description = "Public calendar reservations", body = [ReservationWithOccurrences]),
         (status = 400, description = "Invalid date window or range exceeds maximum limit"),
         (status = 422, description = "Validation error")
     )
@@ -48,16 +47,11 @@ pub async fn list_reservations(
 
     if !query.validate_range(MAX_SEARCH_RANGE_DAYS) {
         return Err(AppError::BadRequest(format!(
-            "Invalid date range: 'start_date' must be before 'end_date' and total span must not exceed {MAX_SEARCH_RANGE_DAYS} days."
+            "Invalid date range: max span is {MAX_SEARCH_RANGE_DAYS} days."
         )));
     }
 
-    let is_admin = opt_user
-        .0
-        .as_ref()
-        .map(|u| u.role == Role::Admin)
-        .unwrap_or(false);
-    let current_user_id = opt_user.0.as_ref().map(|u| u.id);
+    let is_admin = opt_user.0.map(|u| u.role == Role::Admin).unwrap_or(false);
 
     let reservations = db::list_filtered(
         &auth_state.pool,
@@ -66,7 +60,48 @@ pub async fn list_reservations(
         query.resource_id,
         query.status,
         is_admin,
-        current_user_id,
+        None,
+    )
+    .await?;
+
+    Ok(Json(reservations))
+}
+
+#[utoipa::path(
+    get,
+    path = "/reservations/me",
+    tag = "Reservations",
+    security(("bearer_auth" = [])),
+    params(ListReservationsQuery),
+    responses(
+        (status = 200, description = "Current user's own reservations", body = [ReservationWithOccurrences]),
+        (status = 401, description = "Unauthorized")
+    )
+)]
+#[tracing::instrument(skip(auth_state, auth_user))]
+pub async fn list_my_reservations(
+    State(auth_state): State<AuthState>,
+    auth_user: AuthUser,
+    Query(query): Query<ListReservationsQuery>,
+) -> Result<Json<Vec<ReservationWithOccurrences>>, AppError> {
+    query.validate()?;
+
+    if !query.validate_range(MAX_SEARCH_RANGE_DAYS) {
+        return Err(AppError::BadRequest(format!(
+            "Invalid date range: max span is {MAX_SEARCH_RANGE_DAYS} days."
+        )));
+    }
+
+    let is_admin = auth_user.role == Role::Admin;
+
+    let reservations = db::list_filtered(
+        &auth_state.pool,
+        query.start_date,
+        query.end_date,
+        query.resource_id,
+        query.status,
+        is_admin,
+        Some(auth_user.id),
     )
     .await?;
 
@@ -165,7 +200,7 @@ pub async fn check_reservation_conflicts(
     responses(
         (status = 200, description = "Reservation updated successfully", body = ReservationWithOccurrences),
         (status = 401, description = "Unauthorized"),
-        (status = 403, description = "Forbidden - Admin role required"),
+        (status = 403, description = "Forbidden - Admin access required"),
         (status = 404, description = "Reservation not found"),
         (status = 422, description = "Validation error")
     )
@@ -177,106 +212,34 @@ pub async fn update_reservation(
     auth_user: AuthUser,
     Json(mut payload): Json<UpdateReservationPayload>,
 ) -> Result<Json<ReservationWithOccurrences>, AppError> {
-    tracing::info!(
-        reservation_id = %id,
-        user_id = %auth_user.id,
-        user_role = ?auth_user.role,
-        "Attempting reservation update"
-    );
-
     payload.validate()?;
 
-    // Fetch existing reservation using system/admin flag to get user_id safely
-    let existing = match db::find_by_id(&auth_state.pool, id, true).await {
-        Ok(res) => res,
-        Err(err) => {
-            tracing::error!(reservation_id = %id, error = ?err, "Failed to find existing reservation in DB");
-            return Err(err);
-        }
-    };
-
-    tracing::info!(
-        reservation_id = %id,
-        existing_owner_id = %existing.reservation.user_id,
-        request_user_id = %auth_user.id,
-        existing_status = ?existing.reservation.status,
-        payload_status = ?payload.status,
-        "Found existing reservation"
-    );
+    let existing = db::find_by_id(&auth_state.pool, id, true).await?;
 
     if auth_user.role != Role::Admin {
-        // 1. Verify ownership
-        let is_owner = existing.reservation.user_id == auth_user.id;
-        tracing::info!(
-            reservation_id = %id,
-            is_owner = %is_owner,
-            "Evaluating ownership check"
-        );
-
-        if !is_owner {
-            tracing::warn!(
-                reservation_id = %id,
-                existing_owner_id = %existing.reservation.user_id,
-                request_user_id = %auth_user.id,
-                "FORBIDDEN: User does not own this reservation"
-            );
+        if existing.reservation.user_id != auth_user.id {
             return Err(AppError::Forbidden(
                 "Et voi muokata toisen käyttäjän varausta.".to_string(),
             ));
         }
 
-        // 2. Determine if this request is ONLY trying to cancel
-        let has_title_edit = payload.title.is_some();
-        let has_description_edit = payload.description.is_some();
-        let has_occurrences_edit = payload.occurrences.is_some();
-        let has_rrule_edit = payload.rrule.is_some();
-        let is_status_cancelled =
-            payload.status == Some(super::models::ReservationStatus::Cancelled);
+        let is_cancelling = payload.status == Some(super::models::ReservationStatus::Cancelled)
+            && payload.title.is_none()
+            && payload.description.is_none()
+            && payload.occurrences.is_none()
+            && payload.rrule.is_none();
 
-        let is_pure_cancellation = is_status_cancelled
-            && !has_title_edit
-            && !has_description_edit
-            && !has_occurrences_edit
-            && !has_rrule_edit;
-
-        tracing::info!(
-            reservation_id = %id,
-            is_pure_cancellation = %is_pure_cancellation,
-            has_title_edit = %has_title_edit,
-            has_description_edit = %has_description_edit,
-            has_occurrences_edit = %has_occurrences_edit,
-            has_rrule_edit = %has_rrule_edit,
-            is_status_cancelled = %is_status_cancelled,
-            "Evaluated non-admin edit permissions"
-        );
-
-        if is_pure_cancellation {
-            tracing::info!(reservation_id = %id, "Processing pure cancellation request for non-admin owner");
+        if is_cancelling {
             payload.status = Some(super::models::ReservationStatus::Cancelled);
         } else {
-            tracing::info!(
-                reservation_id = %id,
-                "Processing content/time edits by non-admin owner: forcing status to Pending & clearing print status"
-            );
             payload.status = Some(super::models::ReservationStatus::Pending);
             payload.mark_printed = Some(false);
         }
 
-        // Always block non-admins from modifying admin_notes
         payload.admin_notes = None;
-    } else {
-        tracing::info!(reservation_id = %id, "Executing update as Admin");
     }
 
-    let reservation = match db::update(&auth_state.pool, id, payload).await {
-        Ok(res) => res,
-        Err(err) => {
-            tracing::error!(reservation_id = %id, error = ?err, "DB update failed");
-            return Err(err);
-        }
-    };
-
-    tracing::info!(reservation_id = %id, "Reservation successfully updated");
+    let reservation = db::update(&auth_state.pool, id, payload).await?;
     Ok(Json(reservation))
 }
 

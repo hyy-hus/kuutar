@@ -10,12 +10,13 @@ import {
     XCircle,
     X,
     Eye,
+    RotateCcw,
 } from 'lucide-react'
 import { Button } from '#/components/Button'
 import { Chip } from '#/components/Chip'
 import { useResources } from '#/hooks/useResorces'
 import {
-    useReservations,
+    useMyReservations,
     useUpdateReservation,
     type ReservationWithOccurrences,
     type ReservationStatus,
@@ -80,11 +81,11 @@ export const Route = createFileRoute('/_app/reservations/')({
 
 function UserReservationCard({
     reservationWithOcc,
-    onCancel,
+    onStatusToggle,
     isUpdating,
 }: {
     reservationWithOcc: ReservationWithOccurrences
-    onCancel: (id: string) => void
+    onStatusToggle: (id: string, nextStatus: ReservationStatus) => void
     isUpdating: boolean
 }) {
     const firstOccurrence = reservationWithOcc.occurrences?.[0]
@@ -102,7 +103,6 @@ function UserReservationCard({
                         : 'border-stone-200 dark:border-stone-700'
             )}
         >
-            {/* Header / Title */}
             <div className="flex items-start justify-between gap-2 min-w-0">
                 <Link
                     to="/reservations/$id"
@@ -114,7 +114,6 @@ function UserReservationCard({
                 <Chip>{readable_uuid(reservationWithOcc.id)}</Chip>
             </div>
 
-            {/* Date / Time */}
             <div className="flex flex-wrap items-center justify-between gap-2 min-w-0">
                 {firstOccurrence ? (
                     <div className="flex items-center gap-1 text-xs text-stone-500 dark:text-stone-400">
@@ -126,7 +125,6 @@ function UserReservationCard({
                 )}
             </div>
 
-            {/* User Action Row */}
             <div className="flex items-center justify-between gap-2 pt-2 border-t border-stone-200 dark:border-stone-800">
                 <Button variant="secondary" size="sm" asChild>
                     <Link
@@ -139,12 +137,23 @@ function UserReservationCard({
                     </Link>
                 </Button>
 
-                {!isCancelled && (
+                {isCancelled ? (
                     <Button
                         variant="outline"
                         size="sm"
                         disabled={isUpdating}
-                        onClick={() => onCancel(reservationWithOcc.id)}
+                        onClick={() => onStatusToggle(reservationWithOcc.id, 'pending' as ReservationStatus)}
+                        className="text-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/50 text-xs px-2.5 py-1 gap-1"
+                    >
+                        <RotateCcw size={14} />
+                        <span>Palauta odottavaksi</span>
+                    </Button>
+                ) : (
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={isUpdating}
+                        onClick={() => onStatusToggle(reservationWithOcc.id, 'cancelled' as ReservationStatus)}
                         className="text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/50 text-xs px-2.5 py-1 gap-1"
                     >
                         <X size={14} />
@@ -184,7 +193,8 @@ function UserDashboardPage() {
         }
     }, [start, days])
 
-    const { data: reservations, isLoading, isError } = useReservations({
+    // Strictly fetch personal reservations via /reservations/me
+    const { data: reservations, isLoading, isError } = useMyReservations({
         startDate: startDateISO,
         endDate: endDateISO,
         resourceId,
@@ -219,23 +229,21 @@ function UserDashboardPage() {
         updateSearch({ start_date: formatYYYYMMDD(next) })
     }
 
-    const handleCancelReservation = async (id: string) => {
+    const handleStatusToggle = async (id: string, nextStatus: ReservationStatus) => {
         await updateReservation.mutateAsync({
             id,
-            payload: { status: 'cancelled' as ReservationStatus },
+            payload: { status: nextStatus },
         })
     }
 
     return (
         <div className="flex flex-col gap-6 p-4 flex-1 min-h-0">
-            {/* Header */}
             <div className="flex items-center justify-between gap-4 shrink-0">
                 <h1 className="text-xl font-bold text-stone-900 dark:text-stone-100">
                     Omat varaukset
                 </h1>
             </div>
 
-            {/* Time-Range and Resource Selectors */}
             <div className="flex flex-wrap items-center gap-2 shrink-0 p-2 bg-stone-100 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-md">
                 <Button variant="secondary" size="sm" onClick={() => moveStart(-days)}>
                     <ChevronLeft size={18} />
@@ -305,7 +313,7 @@ function UserDashboardPage() {
                                     <UserReservationCard
                                         key={res.id}
                                         reservationWithOcc={res}
-                                        onCancel={handleCancelReservation}
+                                        onStatusToggle={handleStatusToggle}
                                         isUpdating={updateReservation.isPending}
                                     />
                                 ))}
@@ -330,7 +338,7 @@ function UserDashboardPage() {
                                     <UserReservationCard
                                         key={res.id}
                                         reservationWithOcc={res}
-                                        onCancel={handleCancelReservation}
+                                        onStatusToggle={handleStatusToggle}
                                         isUpdating={updateReservation.isPending}
                                     />
                                 ))}
@@ -355,7 +363,7 @@ function UserDashboardPage() {
                                     <UserReservationCard
                                         key={res.id}
                                         reservationWithOcc={res}
-                                        onCancel={handleCancelReservation}
+                                        onStatusToggle={handleStatusToggle}
                                         isUpdating={updateReservation.isPending}
                                     />
                                 ))}

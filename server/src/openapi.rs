@@ -1,4 +1,5 @@
 use utoipa::openapi::security::{HttpAuthScheme, HttpBuilder, SecurityScheme};
+
 use utoipa::{Modify, OpenApi};
 
 use crate::domains::auth;
@@ -69,6 +70,7 @@ impl Modify for SecurityAddon {
 
         // Reservations
         reservations::routes::list_reservations,
+        reservations::routes::list_my_reservations,
         reservations::routes::get_reservation,
         reservations::routes::create_reservation,
         reservations::routes::check_reservation_conflicts,

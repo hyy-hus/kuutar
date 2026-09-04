@@ -15,7 +15,7 @@ pub async fn list_filtered(
     resource_id: Option<Uuid>,
     status: Option<ReservationStatus>,
     is_admin: bool,
-    current_user_id: Option<Uuid>, // Added parameter
+    target_user_id: Option<Uuid>,
 ) -> Result<Vec<ReservationWithOccurrences>, AppError> {
     let reservation_ids = sqlx::query_scalar!(
         r#"
@@ -27,14 +27,14 @@ pub async fn list_filtered(
           AND o.end_time > $1
           AND ($3::uuid IS NULL OR o.resource_id = $3)
           AND ($4::reservation_status IS NULL OR r.status = $4)
-          AND ($5::boolean = TRUE OR r.user_id = $6)
+          -- Filter by target_user_id if provided (mandatory for non-admins)
+          AND ($5::uuid IS NULL OR r.user_id = $5)
         "#,
         start_date,
         end_date,
         resource_id,
         status as Option<ReservationStatus>,
-        is_admin,
-        current_user_id
+        target_user_id
     )
     .fetch_all(pool)
     .await?;

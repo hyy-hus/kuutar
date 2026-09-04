@@ -19,10 +19,13 @@ export const reservationKeys = {
     all: ['reservations'] as const,
     lists: () => [...reservationKeys.all, 'list'] as const,
     list: (params: ReservationFilterParams) => [...reservationKeys.lists(), params] as const,
+    myLists: () => [...reservationKeys.all, 'my-list'] as const,
+    myList: (params: ReservationFilterParams) => [...reservationKeys.myLists(), params] as const,
     details: () => [...reservationKeys.all, 'detail'] as const,
     detail: (id: string) => [...reservationKeys.details(), id] as const,
 }
 
+/** Fetches all active reservations within date/resource filters (Public calendar or Admin dashboard) */
 export function useReservations(params: ReservationFilterParams) {
     return useQuery({
         queryKey: reservationKeys.list(params),
@@ -38,6 +41,29 @@ export function useReservations(params: ReservationFilterParams) {
                 },
             })
             if (error || !data) throw new Error('Varauksien hakeminen epäonnistui.')
+            return data
+        },
+        enabled: Boolean(params.startDate && params.endDate),
+        staleTime: 1000 * 60 * 5,
+    })
+}
+
+/** Strictly fetches ONLY the authenticated user's own reservations */
+export function useMyReservations(params: ReservationFilterParams) {
+    return useQuery({
+        queryKey: reservationKeys.myList(params),
+        queryFn: async () => {
+            const { data, error } = await api.GET('/reservations/me', {
+                params: {
+                    query: {
+                        start_date: params.startDate,
+                        end_date: params.endDate,
+                        resource_id: params.resourceId,
+                        status: params.status,
+                    },
+                },
+            })
+            if (error || !data) throw new Error('Omien varausten hakeminen epäonnistui.')
             return data
         },
         enabled: Boolean(params.startDate && params.endDate),
