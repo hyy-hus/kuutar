@@ -7,11 +7,8 @@ import babel from '@rolldown/plugin-babel';
 import tailwindcss from '@tailwindcss/vite';
 import { nitro } from 'nitro/vite';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { storybookTest } from '@storybook/addon-vitest/vitest-plugin';
 import { playwright } from '@vitest/browser-playwright';
-
-const dirname = typeof __dirname !== 'undefined' ? __dirname : path.dirname(fileURLToPath(import.meta.url));
 
 const config = defineConfig({
     resolve: {
@@ -25,15 +22,11 @@ const config = defineConfig({
             strategy: ['url', 'baseLocale']
         }),
         nitro({
-            // Tells Nitro to generate static HTML files when building for production
-            preset: process.env.NODE_ENV === 'production' ? 'static' : 'node-server',
-            prerender: {
-                routes: ['/']
-            },
+            preset: 'static',
             routeRules: {
                 '/api/**': {
                     proxy: 'http://127.0.0.1:3000/**',
-                }
+                },
             },
             rollupConfig: {
                 external: [/^@sentry\//]
@@ -51,7 +44,7 @@ const config = defineConfig({
             extends: true,
             plugins: [
                 storybookTest({
-                    configDir: path.join(dirname, '.storybook')
+                    configDir: path.join(import.meta.dirname, '.storybook')
                 })
             ],
             test: {
