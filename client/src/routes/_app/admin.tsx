@@ -4,7 +4,6 @@ import { useAuth } from '#/hooks/useAuth'
 
 export const Route = createFileRoute('/_app/admin')({
     beforeLoad: async ({ context }) => {
-        // Skip check during SSR pass so client localStorage token can be evaluated during hydration
         if (typeof window === 'undefined') return
 
         if (!context.auth?.isAuthenticated || !context.auth?.isAdmin) {
