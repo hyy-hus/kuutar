@@ -69,7 +69,7 @@ export function useCreateReservation() {
             return data
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: reservationKeys.lists() })
+            queryClient.invalidateQueries({ queryKey: reservationKeys.all })
         },
     })
 }
@@ -87,8 +87,11 @@ export function useUpdateReservation() {
             return data
         },
         onSuccess: (updatedReservation) => {
-            queryClient.setQueryData(reservationKeys.detail(updatedReservation.id), updatedReservation)
-            queryClient.invalidateQueries({ queryKey: reservationKeys.lists() })
+            queryClient.setQueryData(
+                reservationKeys.detail(updatedReservation.id),
+                updatedReservation
+            )
+            queryClient.invalidateQueries({ queryKey: reservationKeys.all })
         },
     })
 }
@@ -106,7 +109,7 @@ export function useDeleteReservation() {
         },
         onSuccess: (deletedId) => {
             queryClient.removeQueries({ queryKey: reservationKeys.detail(deletedId) })
-            queryClient.invalidateQueries({ queryKey: reservationKeys.lists() })
+            queryClient.invalidateQueries({ queryKey: reservationKeys.all })
         },
     })
 }

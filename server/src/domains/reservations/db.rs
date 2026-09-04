@@ -18,16 +18,16 @@ pub async fn list_filtered(
 ) -> Result<Vec<ReservationWithOccurrences>, AppError> {
     // 1. Fetch distinct reservation IDs that have occurrences within the date/resource filter
     let reservation_ids = sqlx::query_scalar!(
-        r#"
-        SELECT DISTINCT r.id
-        FROM reservations r
-        JOIN occurrences o ON o.reservation_id = r.id
-        WHERE r.deleted_at IS NULL
-          AND o.start_time < $2
-          AND o.end_time > $1
-          AND ($3::uuid IS NULL OR o.resource_id = $3)
-          AND ($4::reservation_status IS NULL OR r.status = $4)
-        "#,
+        r#"SELECT DISTINCT r.id
+FROM reservations r
+LEFT JOIN occurrences o ON o.reservation_id = r.id
+WHERE r.deleted_at IS NULL
+  AND (
+    o.id IS NULL 
+    OR (o.start_time < $2 AND o.end_time > $1)
+  )
+  AND ($3::uuid IS NULL OR o.resource_id = $3)
+  AND ($4::reservation_status IS NULL OR r.status = $4)"#,
         start_date,
         end_date,
         resource_id,
