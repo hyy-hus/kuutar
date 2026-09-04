@@ -52,7 +52,12 @@ pub async fn list_reservations(
         )));
     }
 
-    let is_admin = opt_user.0.map(|u| u.role == Role::Admin).unwrap_or(false);
+    let is_admin = opt_user
+        .0
+        .as_ref()
+        .map(|u| u.role == Role::Admin)
+        .unwrap_or(false);
+    let current_user_id = opt_user.0.as_ref().map(|u| u.id);
 
     let reservations = db::list_filtered(
         &auth_state.pool,
@@ -61,6 +66,7 @@ pub async fn list_reservations(
         query.resource_id,
         query.status,
         is_admin,
+        current_user_id,
     )
     .await?;
 
@@ -169,18 +175,108 @@ pub async fn update_reservation(
     State(auth_state): State<AuthState>,
     Path(id): Path<Uuid>,
     auth_user: AuthUser,
-    Json(payload): Json<UpdateReservationPayload>,
+    Json(mut payload): Json<UpdateReservationPayload>,
 ) -> Result<Json<ReservationWithOccurrences>, AppError> {
+    tracing::info!(
+        reservation_id = %id,
+        user_id = %auth_user.id,
+        user_role = ?auth_user.role,
+        "Attempting reservation update"
+    );
+
     payload.validate()?;
 
-    // Non-admins cannot update reservation status or edit existing bookings
+    // Fetch existing reservation using system/admin flag to get user_id safely
+    let existing = match db::find_by_id(&auth_state.pool, id, true).await {
+        Ok(res) => res,
+        Err(err) => {
+            tracing::error!(reservation_id = %id, error = ?err, "Failed to find existing reservation in DB");
+            return Err(err);
+        }
+    };
+
+    tracing::info!(
+        reservation_id = %id,
+        existing_owner_id = %existing.reservation.user_id,
+        request_user_id = %auth_user.id,
+        existing_status = ?existing.reservation.status,
+        payload_status = ?payload.status,
+        "Found existing reservation"
+    );
+
     if auth_user.role != Role::Admin {
-        return Err(AppError::Forbidden(
-            "Only administrators can edit reservations or change statuses.".to_string(),
-        ));
+        // 1. Verify ownership
+        let is_owner = existing.reservation.user_id == auth_user.id;
+        tracing::info!(
+            reservation_id = %id,
+            is_owner = %is_owner,
+            "Evaluating ownership check"
+        );
+
+        if !is_owner {
+            tracing::warn!(
+                reservation_id = %id,
+                existing_owner_id = %existing.reservation.user_id,
+                request_user_id = %auth_user.id,
+                "FORBIDDEN: User does not own this reservation"
+            );
+            return Err(AppError::Forbidden(
+                "Et voi muokata toisen käyttäjän varausta.".to_string(),
+            ));
+        }
+
+        // 2. Determine if this request is ONLY trying to cancel
+        let has_title_edit = payload.title.is_some();
+        let has_description_edit = payload.description.is_some();
+        let has_occurrences_edit = payload.occurrences.is_some();
+        let has_rrule_edit = payload.rrule.is_some();
+        let is_status_cancelled =
+            payload.status == Some(super::models::ReservationStatus::Cancelled);
+
+        let is_pure_cancellation = is_status_cancelled
+            && !has_title_edit
+            && !has_description_edit
+            && !has_occurrences_edit
+            && !has_rrule_edit;
+
+        tracing::info!(
+            reservation_id = %id,
+            is_pure_cancellation = %is_pure_cancellation,
+            has_title_edit = %has_title_edit,
+            has_description_edit = %has_description_edit,
+            has_occurrences_edit = %has_occurrences_edit,
+            has_rrule_edit = %has_rrule_edit,
+            is_status_cancelled = %is_status_cancelled,
+            "Evaluated non-admin edit permissions"
+        );
+
+        if is_pure_cancellation {
+            tracing::info!(reservation_id = %id, "Processing pure cancellation request for non-admin owner");
+            payload.status = Some(super::models::ReservationStatus::Cancelled);
+        } else {
+            tracing::info!(
+                reservation_id = %id,
+                "Processing content/time edits by non-admin owner: forcing status to Pending & clearing print status"
+            );
+            payload.status = Some(super::models::ReservationStatus::Pending);
+            payload.mark_printed = Some(false);
+        }
+
+        // Always block non-admins from modifying admin_notes
+        payload.admin_notes = None;
+    } else {
+        tracing::info!(reservation_id = %id, "Executing update as Admin");
     }
 
-    let reservation = db::update(&auth_state.pool, id, payload).await?;
+    let reservation = match db::update(&auth_state.pool, id, payload).await {
+        Ok(res) => res,
+        Err(err) => {
+            tracing::error!(reservation_id = %id, error = ?err, "DB update failed");
+            return Err(err);
+        }
+    };
+
+    tracing::info!(reservation_id = %id, "Reservation successfully updated");
     Ok(Json(reservation))
 }
 
