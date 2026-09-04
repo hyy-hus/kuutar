@@ -14,6 +14,7 @@ pub fn router(state: AuthState) -> Router {
             "/",
             get(routes::list_reservations).post(routes::create_reservation),
         )
+        .route("/me", get(routes::list_my_reservations))
         .route(
             "/check-conflicts",
             post(routes::check_reservation_conflicts),

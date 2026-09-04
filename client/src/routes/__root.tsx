@@ -1,6 +1,6 @@
-// src/routes/__root.tsx
 import {
     HeadContent,
+    Outlet,
     Scripts,
     createRootRouteWithContext,
 } from '@tanstack/react-router'
@@ -11,15 +11,52 @@ import TanStackQueryDevtools from '../integrations/tanstack-query/devtools'
 import { getLocale } from '#/paraglide/runtime'
 import appCss from '../styles.css?url'
 import type { QueryClient } from '@tanstack/react-query'
+import type { components } from '#/api/schema'
+import { authKeys, fetchMe } from '#/hooks/useAuth'
 
-interface MyRouterContext {
+type User = components['schemas']['User']
+
+export interface AuthContextType {
+    user: User | null
+    isAuthenticated: boolean
+    isLoading: boolean
+    isAdmin: boolean
+}
+
+export interface MyRouterContext {
     queryClient: QueryClient
+    auth?: AuthContextType
 }
 
 export const Route = createRootRouteWithContext<MyRouterContext>()({
-    beforeLoad: async () => {
+    beforeLoad: async ({ context }) => {
+        const isClient = typeof window !== 'undefined'
+
         if (typeof document !== 'undefined') {
             document.documentElement.setAttribute('lang', getLocale())
+        }
+
+        let user: User | null = context.queryClient.getQueryData(authKeys.me()) ?? null
+
+        if (!user && isClient) {
+            try {
+                user = await context.queryClient.ensureQueryData({
+                    queryKey: authKeys.me(),
+                    queryFn: fetchMe,
+                    staleTime: 1000 * 60 * 5,
+                })
+            } catch {
+                user = null
+            }
+        }
+
+        return {
+            auth: {
+                user,
+                isAuthenticated: Boolean(user),
+                isLoading: false,
+                isAdmin: user?.role === 'admin',
+            },
         }
     },
 
@@ -34,7 +71,18 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
         ],
     }),
     shellComponent: RootDocument,
+    component: RootComponent,
+    notFoundComponent: () => (
+        <div className="flex h-screen flex-col items-center justify-center p-4">
+            <h1 className="text-xl font-bold">404 - Sivua ei löytynyt</h1>
+            <a href="/" className="mt-4 text-blue-600 hover:underline">Palaa etusivulle</a>
+        </div>
+    )
 })
+
+function RootComponent() {
+    return <Outlet />
+}
 
 function RootDocument({ children }: { children: React.ReactNode }) {
     const currentLocale = getLocale()

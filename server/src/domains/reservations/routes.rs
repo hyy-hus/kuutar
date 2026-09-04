@@ -24,7 +24,6 @@ use crate::{
     errors::AppError,
 };
 
-// Maximum allowed search window range in days
 const MAX_SEARCH_RANGE_DAYS: i64 = 91;
 
 #[utoipa::path(
@@ -33,7 +32,7 @@ const MAX_SEARCH_RANGE_DAYS: i64 = 91;
     tag = "Reservations",
     params(ListReservationsQuery),
     responses(
-        (status = 200, description = "List of filtered reservations", body = [ReservationWithOccurrences]),
+        (status = 200, description = "Public calendar reservations", body = [ReservationWithOccurrences]),
         (status = 400, description = "Invalid date window or range exceeds maximum limit"),
         (status = 422, description = "Validation error")
     )
@@ -48,7 +47,7 @@ pub async fn list_reservations(
 
     if !query.validate_range(MAX_SEARCH_RANGE_DAYS) {
         return Err(AppError::BadRequest(format!(
-            "Invalid date range: 'start_date' must be before 'end_date' and total span must not exceed {MAX_SEARCH_RANGE_DAYS} days."
+            "Invalid date range: max span is {MAX_SEARCH_RANGE_DAYS} days."
         )));
     }
 
@@ -61,6 +60,48 @@ pub async fn list_reservations(
         query.resource_id,
         query.status,
         is_admin,
+        None,
+    )
+    .await?;
+
+    Ok(Json(reservations))
+}
+
+#[utoipa::path(
+    get,
+    path = "/reservations/me",
+    tag = "Reservations",
+    security(("bearer_auth" = [])),
+    params(ListReservationsQuery),
+    responses(
+        (status = 200, description = "Current user's own reservations", body = [ReservationWithOccurrences]),
+        (status = 401, description = "Unauthorized")
+    )
+)]
+#[tracing::instrument(skip(auth_state, auth_user))]
+pub async fn list_my_reservations(
+    State(auth_state): State<AuthState>,
+    auth_user: AuthUser,
+    Query(query): Query<ListReservationsQuery>,
+) -> Result<Json<Vec<ReservationWithOccurrences>>, AppError> {
+    query.validate()?;
+
+    if !query.validate_range(MAX_SEARCH_RANGE_DAYS) {
+        return Err(AppError::BadRequest(format!(
+            "Invalid date range: max span is {MAX_SEARCH_RANGE_DAYS} days."
+        )));
+    }
+
+    let is_admin = auth_user.role == Role::Admin;
+
+    let reservations = db::list_filtered(
+        &auth_state.pool,
+        query.start_date,
+        query.end_date,
+        query.resource_id,
+        query.status,
+        is_admin,
+        Some(auth_user.id),
     )
     .await?;
 
@@ -159,7 +200,7 @@ pub async fn check_reservation_conflicts(
     responses(
         (status = 200, description = "Reservation updated successfully", body = ReservationWithOccurrences),
         (status = 401, description = "Unauthorized"),
-        (status = 403, description = "Forbidden - Admin role required"),
+        (status = 403, description = "Forbidden - Admin access required"),
         (status = 404, description = "Reservation not found"),
         (status = 422, description = "Validation error")
     )
@@ -169,15 +210,33 @@ pub async fn update_reservation(
     State(auth_state): State<AuthState>,
     Path(id): Path<Uuid>,
     auth_user: AuthUser,
-    Json(payload): Json<UpdateReservationPayload>,
+    Json(mut payload): Json<UpdateReservationPayload>,
 ) -> Result<Json<ReservationWithOccurrences>, AppError> {
     payload.validate()?;
 
-    // Non-admins cannot update reservation status or edit existing bookings
+    let existing = db::find_by_id(&auth_state.pool, id, true).await?;
+
     if auth_user.role != Role::Admin {
-        return Err(AppError::Forbidden(
-            "Only administrators can edit reservations or change statuses.".to_string(),
-        ));
+        if existing.reservation.user_id != auth_user.id {
+            return Err(AppError::Forbidden(
+                "Et voi muokata toisen käyttäjän varausta.".to_string(),
+            ));
+        }
+
+        let is_cancelling = payload.status == Some(super::models::ReservationStatus::Cancelled)
+            && payload.title.is_none()
+            && payload.description.is_none()
+            && payload.occurrences.is_none()
+            && payload.rrule.is_none();
+
+        if is_cancelling {
+            payload.status = Some(super::models::ReservationStatus::Cancelled);
+        } else {
+            payload.status = Some(super::models::ReservationStatus::Pending);
+            payload.mark_printed = Some(false);
+        }
+
+        payload.admin_notes = None;
     }
 
     let reservation = db::update(&auth_state.pool, id, payload).await?;

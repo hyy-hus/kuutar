@@ -1,6 +1,6 @@
-import { api } from "#/api/client";
-import type { components } from "#/api/schema";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { api } from '#/api/client'
+import type { components } from '#/api/schema'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 type LoginPayload = components['schemas']['LoginPayload']
 type RegisterPayload = components['schemas']['RegisterPayload']
@@ -18,14 +18,9 @@ export async function fetchMe() {
         throw new Error('Unauthenticated')
     }
 
-    console.log("user:", data);
-
     return data
 }
 
-/**
- * Hook to retrieve and cache the currently authenticated user profile.
- */
 export function useMe() {
     return useQuery({
         queryKey: authKeys.me(),
@@ -35,21 +30,14 @@ export function useMe() {
     })
 }
 
-/**
- * Hook to check whether the current user is an admin.
- */
 export function useIsAdmin(): { isAdmin: boolean; isLoading: boolean } {
     const { data: user, isLoading } = useMe()
-
     return {
         isAdmin: user?.role === 'admin',
         isLoading,
     }
 }
 
-/**
- * Primary authentication hook providing login, register, logout, and current user state.
- */
 export function useAuth() {
     const queryClient = useQueryClient()
     const meQuery = useMe()
@@ -57,11 +45,7 @@ export function useAuth() {
     const loginMutation = useMutation({
         mutationFn: async (payload: LoginPayload) => {
             const { data, error } = await api.POST('/auth/login', { body: payload })
-
-            if (error) {
-                throw new Error('Virheellinen sähköposti tai salasana.')
-            }
-
+            if (error) throw new Error('Virheellinen sähköposti tai salasana.')
             return data
         },
         onSuccess: (tokens) => {
@@ -69,7 +53,6 @@ export function useAuth() {
                 localStorage.setItem('access_token', tokens.access_token)
                 localStorage.setItem('refresh_token', tokens.refresh_token)
             }
-
             queryClient.invalidateQueries({ queryKey: authKeys.me() })
         },
     })
@@ -77,11 +60,7 @@ export function useAuth() {
     const registerMutation = useMutation({
         mutationFn: async (payload: RegisterPayload) => {
             const { data, error } = await api.POST('/auth/register', { body: payload })
-
-            if (error) {
-                throw new Error('Käyttäjätilin luonti epäonnistui.')
-            }
-
+            if (error) throw new Error('Käyttäjätilin luonti epäonnistui.')
             return data
         },
         onSuccess: (tokens) => {
@@ -89,7 +68,6 @@ export function useAuth() {
                 localStorage.setItem('access_token', tokens.access_token)
                 localStorage.setItem('refresh_token', tokens.refresh_token)
             }
-
             queryClient.invalidateQueries({ queryKey: authKeys.me() })
         },
     })
@@ -97,7 +75,6 @@ export function useAuth() {
     const logoutMutation = useMutation({
         mutationFn: async () => {
             const refreshToken = localStorage.getItem('refresh_token') || ''
-
             if (refreshToken) {
                 const payload: RefreshPayload = { refresh_token: refreshToken }
                 await api.POST('/auth/logout', { body: payload })
@@ -106,7 +83,6 @@ export function useAuth() {
         onSettled: () => {
             localStorage.removeItem('access_token')
             localStorage.removeItem('refresh_token')
-
             queryClient.setQueryData(authKeys.me(), null)
             queryClient.clear()
         },

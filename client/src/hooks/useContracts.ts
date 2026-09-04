@@ -18,7 +18,7 @@ export function useContracts() {
         queryKey: contractKeys.lists(),
         queryFn: async () => {
             const { data, error } = await api.GET('/contracts')
-            if (error || !data) throw new Error('Sopimuspohjien hakeminen epäonnistui.')
+            if (error || !data) throw new Error('Sopimusten hakeminen epäonnistui.')
             return data
         },
         staleTime: 1000 * 60 * 5,
@@ -32,7 +32,7 @@ export function useContract(id: string) {
             const { data, error } = await api.GET('/contracts/{id}', {
                 params: { path: { id } },
             })
-            if (error || !data) throw new Error('Sopimuspohjan tiedot eivät löytyneet.')
+            if (error || !data) throw new Error('Sopimuksen haku epäonnistui.')
             return data
         },
         enabled: Boolean(id),
@@ -45,56 +45,33 @@ export function useCreateContract() {
     return useMutation({
         mutationFn: async (payload: CreateContractPayload) => {
             const { data, error } = await api.POST('/contracts', { body: payload })
-            if (error || !data) throw new Error('Sopimuspohjan luominen epäonnistui.')
+            if (error || !data) throw new Error('Sopimuksen luominen epäonnistui.')
             return data
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: contractKeys.lists() })
+            queryClient.invalidateQueries({ queryKey: contractKeys.all })
         },
     })
 }
-
-// Inside src/hooks/useContracts.ts
 
 export function useUpdateContract() {
     const queryClient = useQueryClient()
 
     return useMutation({
-        mutationFn: async ({
-            id,
-            payload,
-        }: {
-            id: string
-            payload: components['schemas']['UpdateContract']
-        }) => {
+        mutationFn: async ({ id, payload }: { id: string; payload: UpdateContractPayload }) => {
             const { data, error } = await api.PATCH('/contracts/{id}', {
                 params: { path: { id } },
                 body: payload,
             })
-
-            if (error) throw new Error('Sopimuspohjan päivitys epäonnistui.')
+            if (error || !data) throw new Error('Sopimuksen päivitys epäonnistui.')
             return data
         },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['contracts'] })
-        },
-    })
-}
-
-export function useDeleteContract() {
-    const queryClient = useQueryClient()
-
-    return useMutation({
-        mutationFn: async (id: string) => {
-            const { error } = await api.DELETE('/contracts/{id}', {
-                params: { path: { id } },
-            })
-            if (error) throw new Error('Sopimuspohjan poisto epäonnistui.')
-            return id
-        },
-        onSuccess: (deletedId) => {
-            queryClient.removeQueries({ queryKey: contractKeys.detail(deletedId) })
-            queryClient.invalidateQueries({ queryKey: contractKeys.lists() })
+        onSuccess: (updatedContract) => {
+            queryClient.setQueryData(
+                contractKeys.detail(updatedContract.id),
+                updatedContract
+            )
+            queryClient.invalidateQueries({ queryKey: contractKeys.all })
         },
     })
 }

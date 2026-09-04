@@ -15,23 +15,26 @@ pub async fn list_filtered(
     resource_id: Option<Uuid>,
     status: Option<ReservationStatus>,
     is_admin: bool,
+    target_user_id: Option<Uuid>,
 ) -> Result<Vec<ReservationWithOccurrences>, AppError> {
-    // 1. Fetch distinct reservation IDs that have occurrences within the date/resource filter
     let reservation_ids = sqlx::query_scalar!(
         r#"
         SELECT DISTINCT r.id
         FROM reservations r
-        JOIN occurrences o ON o.reservation_id = r.id
+        LEFT JOIN occurrences o ON o.reservation_id = r.id
         WHERE r.deleted_at IS NULL
           AND o.start_time < $2
           AND o.end_time > $1
           AND ($3::uuid IS NULL OR o.resource_id = $3)
           AND ($4::reservation_status IS NULL OR r.status = $4)
+          -- Filter by target_user_id if provided (mandatory for non-admins)
+          AND ($5::uuid IS NULL OR r.user_id = $5)
         "#,
         start_date,
         end_date,
         resource_id,
-        status as Option<ReservationStatus> // Type annotation for sqlx custom enum
+        status as Option<ReservationStatus>,
+        target_user_id
     )
     .fetch_all(pool)
     .await?;
@@ -40,7 +43,6 @@ pub async fn list_filtered(
         return Ok(Vec::new());
     }
 
-    // 2. Fetch the reservation metadata
     let reservations = sqlx::query_as!(
         Reservation,
         r#"
@@ -64,7 +66,6 @@ pub async fn list_filtered(
         if !is_admin {
             reservation.admin_notes = None;
         }
-        // Fetch occurrences within the specified range for this reservation
         let occurrences = fetch_occurrences_for_reservation_filtered(
             pool,
             reservation.id,
@@ -189,24 +190,25 @@ pub async fn update(
         Reservation,
         r#"
         UPDATE reservations
-        SET 
-            title = COALESCE($1, title),
-            description = COALESCE($2, description),
-            admin_notes = COALESCE($3, admin_notes),
-            rrule = COALESCE($4, rrule),
-            status = COALESCE($5, status),
-            contract_id = COALESCE($6, contract_id),
-            contract_printed_at = CASE 
-                WHEN $7 = TRUE THEN NOW() 
-                ELSE contract_printed_at 
-            END,
-            updated_at = NOW()
-        WHERE id = $8 AND deleted_at IS NULL
-        RETURNING 
-            id, user_id, title, description, admin_notes, rrule, 
-            status AS "status: ReservationStatus",
-            contract_id, contract_printed_at,
-            created_at, updated_at
+SET 
+    title = COALESCE($1, title),
+    description = COALESCE($2, description),
+    admin_notes = COALESCE($3, admin_notes),
+    rrule = COALESCE($4, rrule),
+    status = COALESCE($5, status),
+    contract_id = COALESCE($6, contract_id),
+    contract_printed_at = CASE 
+        WHEN $7 = TRUE THEN NOW() 
+        WHEN $7 = FALSE THEN NULL
+        ELSE contract_printed_at 
+    END,
+    updated_at = NOW()
+WHERE id = $8 AND deleted_at IS NULL
+RETURNING 
+    id, user_id, title, description, admin_notes, rrule, 
+    status AS "status: ReservationStatus",
+    contract_id, contract_printed_at,
+    created_at, updated_at
         "#,
         dto.title,
         dto.description,
