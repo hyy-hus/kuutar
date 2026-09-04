@@ -72,6 +72,12 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
     }),
     shellComponent: RootDocument,
     component: RootComponent,
+    notFoundComponent: () => (
+        <div className="flex h-screen flex-col items-center justify-center p-4">
+            <h1 className="text-xl font-bold">404 - Sivua ei löytynyt</h1>
+            <a href="/" className="mt-4 text-blue-600 hover:underline">Palaa etusivulle</a>
+        </div>
+    )
 })
 
 function RootComponent() {
