@@ -18,4 +18,10 @@ pub struct Config {
 
     #[arg(long, env = "JWT_EXPIRATION_SECONDS", default_value_t = 900)] // 15 mins default
     pub jwt_expiration_seconds: u64,
+
+    #[arg(long, env = "SEED_ADMIN_EMAIL", default_value = "admin@localhost")]
+    pub seed_admin_email: String,
+
+    #[arg(long, env = "SEED_ADMIN_PASSWORD", default_value = "Admin")]
+    pub seed_admin_password: String,
 }
