@@ -6,11 +6,13 @@ import {
     Folder,
     Globe,
     Moon,
+    ShieldAlert,
     Sun,
     UserCheck,
     Users,
 } from 'lucide-react'
 import { Button } from '#/components/Button'
+import { useAuth } from '#/hooks/useAuth'
 import { cn } from '#/utils/cn'
 
 interface SideBarProps {
@@ -21,15 +23,6 @@ interface SideBarProps {
     toggleTheme: () => void
 }
 
-const navItems = [
-    { to: '/calendar', label: 'Kalenteri', icon: Calendar },
-    { to: '/reservations', label: 'Varaukset', icon: BookmarkCheck },
-    { to: '/resources', label: 'Resurssit', icon: Box },
-    { to: '/collections', label: 'Kokoelmat', icon: Folder },
-    { to: '/groups', label: 'Ryhmät', icon: Users },
-    { to: '/users', label: 'Käyttäjät', icon: UserCheck },
-]
-
 export function SideBar({
     isSidebarOpen,
     currentLocale,
@@ -37,6 +30,36 @@ export function SideBar({
     theme,
     toggleTheme,
 }: SideBarProps) {
+    const { user, isAuthenticated } = useAuth()
+    const isAdmin = user?.role === 'admin'
+
+    // Determine navigation links based on user role
+    const navItems = [
+        // Always visible (Guests, Users, Admins)
+        { to: '/calendar', label: 'Kalenteri', icon: Calendar },
+    ]
+
+    if (isAuthenticated) {
+        if (isAdmin) {
+            // Admins see everything + Admin Dashboard
+            navItems.push(
+                { to: '/admin/dashboard', label: 'Ylläpito', icon: ShieldAlert },
+                { to: '/reservations', label: 'Varaukset', icon: BookmarkCheck },
+                { to: '/resources', label: 'Resurssit', icon: Box },
+                { to: '/collections', label: 'Kokoelmat', icon: Folder },
+                { to: '/groups', label: 'Ryhmät', icon: Users },
+                { to: '/users', label: 'Käyttäjät', icon: UserCheck }
+            )
+        } else {
+            // Standard authenticated users see their own reservations
+            navItems.push({
+                to: '/reservations/me',
+                label: 'Omat varaukset',
+                icon: BookmarkCheck,
+            })
+        }
+    }
+
     return (
         <aside
             className={cn(

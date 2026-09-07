@@ -5,7 +5,7 @@ use dotenvy::dotenv;
 use sqlx::postgres::PgPoolOptions;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
-use kuutar::{app, config::Config};
+use kuutar::{app, config::Config, seed};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -26,6 +26,16 @@ async fn main() -> anyhow::Result<()> {
         .context("Failed to connect to database")?;
 
     tracing::info!("Database connection established successfully.");
+
+    tracing::info!("Running database migrations...");
+    sqlx::migrate!("./migrations")
+        .run(&db_pool)
+        .await
+        .context("Failed to run database migrations")?;
+
+    let hashed_password =
+        kuutar::domains::auth::password::hash_password(&config.seed_admin_password)?; // Adjust path to your password hasher
+    seed::seed_admin_user(&db_pool, &config, &hashed_password).await?;
 
     let app = app(db_pool, config.clone());
 
