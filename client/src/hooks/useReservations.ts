@@ -50,6 +50,13 @@ export function useReservations(params: ReservationFilterParams) {
 
 /** Strictly fetches ONLY the authenticated user's own reservations */
 export function useMyReservations(params: ReservationFilterParams) {
+    const hasValidDates = Boolean(
+        params?.startDate &&
+        params?.endDate &&
+        params.startDate.trim() !== '' &&
+        params.endDate.trim() !== ''
+    )
+
     return useQuery({
         queryKey: reservationKeys.myList(params),
         queryFn: async () => {
@@ -58,15 +65,15 @@ export function useMyReservations(params: ReservationFilterParams) {
                     query: {
                         start_date: params.startDate,
                         end_date: params.endDate,
-                        resource_id: params.resourceId,
-                        status: params.status,
+                        resource_id: params.resourceId || undefined,
+                        status: params.status || undefined,
                     },
                 },
             })
             if (error || !data) throw new Error('Omien varausten hakeminen epäonnistui.')
             return data
         },
-        enabled: Boolean(params.startDate && params.endDate),
+        enabled: hasValidDates,
         staleTime: 1000 * 60 * 5,
     })
 }
@@ -91,7 +98,15 @@ export function useCreateReservation() {
     return useMutation({
         mutationFn: async (payload: CreateReservationPayload) => {
             const { data, error } = await api.POST('/reservations', { body: payload })
-            if (error || !data) throw new Error('Varauksen luominen epäonnistui.')
+
+            if (error) {
+                // If backend returns a message object or string, propagate it
+                const message = typeof error === 'object' && error !== null && 'message' in error
+                    ? (error as { message: string }).message
+                    : 'Varauksen luominen epäonnistui.'
+                throw new Error(message)
+            }
+            if (!data) throw new Error('Varauksen luominen epäonnistui.')
             return data
         },
         onSuccess: () => {

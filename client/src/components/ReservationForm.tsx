@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useForm } from '@tanstack/react-form'
 import { Frequency } from 'rrule'
 import { AlertTriangle, CheckCircle2, Loader2, RefreshCw, Save } from 'lucide-react'
@@ -329,53 +329,29 @@ export function ReservationForm({
                 </div>
 
                 {/* Recurrence Rule Fields */}
-                <div className="p-3 bg-stone-100 dark:bg-stone-900 border-2 border-stone-800 dark:border-stone-700 rounded-sm space-y-2">
-                    <div className="flex items-center gap-1.5 text-xs font-mono font-bold text-stone-800 dark:text-stone-200">
-                        <RefreshCw size={14} />
-                        <span>Toistuvuus</span>
-                    </div>
+                <form.Subscribe selector={(state) => [state.values.resource_ids]}>
+                    {([selectedResourceIds]) => {
+                        const canRecur = isAdmin || (
+                            selectedResourceIds.length > 0 &&
+                            selectedResourceIds.every((id) => {
+                                const resource = resources?.find((r) => r.id === id)
+                                // If resource field not present in generated schema yet, default safely
+                                return (resource as { allow_recurring?: boolean })?.allow_recurring ?? true
+                            })
+                        )
 
-                    <div className="grid grid-cols-2 gap-2">
-                        <div className="space-y-1">
-                            <label htmlFor="recurrence_freq" className="text-[11px] text-stone-600 dark:text-stone-400">
-                                Toistuvuusjakso
-                            </label>
-                            <select
-                                id="recurrence_freq"
-                                value={freq === null ? 'none' : freq}
-                                onChange={(e) => {
-                                    const val = e.target.value
-                                    setFreq(val === 'none' ? null : Number(val))
-                                    setConflicts(null)
-                                }}
-                                className="w-full px-2 py-1.5 text-xs bg-stone-50 dark:bg-stone-950 border border-stone-300 dark:border-stone-700 rounded-sm"
-                            >
-                                <option value="none">Ei toistoa</option>
-                                <option value={Frequency.DAILY}>Päivittäin</option>
-                                <option value={Frequency.WEEKLY}>Viikoittain</option>
-                                <option value={Frequency.MONTHLY}>Kuukausittain</option>
-                                <option value={Frequency.YEARLY}>Vuosittain</option>
-                            </select>
-                        </div>
-
-                        {freq !== null && (
-                            <div className="space-y-1">
-                                <label htmlFor="recurrence_until" className="text-[11px] text-stone-600 dark:text-stone-400">
-                                    Toisto päättyy
-                                </label>
-                                <Input
-                                    id="recurrence_until"
-                                    type="date"
-                                    value={untilStr}
-                                    onChange={(e) => {
-                                        setUntilStr(e.target.value)
-                                        setConflicts(null)
-                                    }}
-                                />
-                            </div>
-                        )}
-                    </div>
-                </div>
+                        return (
+                            <RecurrenceSection
+                                canRecur={canRecur}
+                                freq={freq}
+                                setFreq={setFreq}
+                                untilStr={untilStr}
+                                setUntilStr={setUntilStr}
+                                setConflicts={setConflicts}
+                            />
+                        )
+                    }}
+                </form.Subscribe>
 
                 {/* Conflict Check Action */}
                 <Button
@@ -440,5 +416,90 @@ export function ReservationForm({
                 )}
             </form.Subscribe>
         </form>
+    )
+}
+
+interface RecurrenceSectionProps {
+    canRecur: boolean
+    freq: Frequency | null
+    setFreq: (freq: Frequency | null) => void
+    untilStr: string
+    setUntilStr: (str: string) => void
+    setConflicts: (conflicts: Occurrence[] | null) => void
+}
+
+function RecurrenceSection({
+    canRecur,
+    freq,
+    setFreq,
+    untilStr,
+    setUntilStr,
+    setConflicts,
+}: RecurrenceSectionProps) {
+    useEffect(() => {
+        if (!canRecur && freq !== null) {
+            setFreq(null)
+            setConflicts(null)
+        }
+    }, [canRecur, freq, setFreq, setConflicts])
+
+    return (
+        <div className="p-3 bg-stone-100 dark:bg-stone-900 border-2 border-stone-800 dark:border-stone-700 rounded-sm space-y-2">
+            <div className="flex items-center justify-between text-xs font-mono font-bold text-stone-800 dark:text-stone-200">
+                <div className="flex items-center gap-1.5">
+                    <RefreshCw size={14} />
+                    <span>Toistuvuus</span>
+                </div>
+            </div>
+
+            {!canRecur && (
+                <p className="text-[11px] text-amber-600 dark:text-amber-400 font-sans">
+                    Yksi tai useampi valituista resursseista ei salli toistuvia varauksia.
+                </p>
+            )}
+
+            <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-1">
+                    <label htmlFor="recurrence_freq" className="text-[11px] text-stone-600 dark:text-stone-400">
+                        Toistuvuusjakso
+                    </label>
+                    <select
+                        id="recurrence_freq"
+                        disabled={!canRecur}
+                        value={freq === null ? 'none' : freq}
+                        onChange={(e) => {
+                            const val = e.target.value
+                            setFreq(val === 'none' ? null : Number(val))
+                            setConflicts(null)
+                        }}
+                        className="w-full px-2 py-1.5 text-xs bg-stone-50 dark:bg-stone-950 border border-stone-300 dark:border-stone-700 rounded-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        <option value="none">Ei toistoa</option>
+                        <option value={Frequency.DAILY}>Päivittäin</option>
+                        <option value={Frequency.WEEKLY}>Viikoittain</option>
+                        <option value={Frequency.MONTHLY}>Kuukausittain</option>
+                        <option value={Frequency.YEARLY}>Vuosittain</option>
+                    </select>
+                </div>
+
+                {freq !== null && (
+                    <div className="space-y-1">
+                        <label htmlFor="recurrence_until" className="text-[11px] text-stone-600 dark:text-stone-400">
+                            Toisto päättyy
+                        </label>
+                        <Input
+                            id="recurrence_until"
+                            type="date"
+                            disabled={!canRecur}
+                            value={untilStr}
+                            onChange={(e) => {
+                                setUntilStr(e.target.value)
+                                setConflicts(null)
+                            }}
+                        />
+                    </div>
+                )}
+            </div>
+        </div>
     )
 }

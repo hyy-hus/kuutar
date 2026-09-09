@@ -20,17 +20,13 @@ export const resourceKeys = {
  */
 export function useResources() {
     return useQuery({
-        queryKey: resourceKeys.lists(),
+        queryKey: resourceKeys.all,
         queryFn: async () => {
             const { data, error } = await api.GET('/resources')
-
-            if (error || !data) {
-                throw new Error('Resurssien hakeminen epäonnistui.')
-            }
-
+            if (error || !data) throw new Error('Resurssien hakeminen epäonnistui.')
             return data
         },
-        staleTime: 1000 * 60 * 5, // 5 minutes cache
+        staleTime: 1000 * 60 * 15, // Cache resources for 15 mins
     })
 }
 
