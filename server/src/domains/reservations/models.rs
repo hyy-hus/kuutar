@@ -98,22 +98,24 @@ pub struct UpdateReservationPayload {
     pub occurrences: Option<Vec<CreateOccurrencePayload>>,
 }
 
-#[derive(Debug, Deserialize, Validate, IntoParams)]
+#[derive(Debug, Deserialize, Validate, utoipa::IntoParams)]
 pub struct ListReservationsQuery {
-    pub start_date: DateTime<Utc>,
-    pub end_date: DateTime<Utc>,
-    pub resource_id: Option<Uuid>,
-    pub status: Option<ReservationStatus>,
+    pub start_date: Option<DateTime<Utc>>,
+    pub end_date: Option<DateTime<Utc>>,
+    pub resource_id: Option<uuid::Uuid>,
+    pub status: Option<super::models::ReservationStatus>,
 }
 
 impl ListReservationsQuery {
-    /// Validates that start_date < end_date and total range does not exceed max_days
     pub fn validate_range(&self, max_days: i64) -> bool {
-        if self.start_date >= self.end_date {
-            return false;
+        match (self.start_date, self.end_date) {
+            (Some(start), Some(end)) => {
+                if end < start {
+                    return false;
+                }
+                (end - start).num_days() <= max_days
+            }
+            _ => true,
         }
-        let duration = self.end_date - self.start_date;
-        // Allow up to max_days * 24 + 1 hours to comfortably cover full-day end bounds (23:59:59)
-        duration.num_hours() <= (max_days * 24 + 1)
     }
 }

@@ -3,6 +3,7 @@ use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
 };
+use sqlx::PgPool;
 use uuid::Uuid;
 use validator::Validate;
 
@@ -25,6 +26,52 @@ use crate::{
 };
 
 const MAX_SEARCH_RANGE_DAYS: i64 = 91;
+
+/// Helper function to check if non-admin users are creating recurring reservations
+/// on resources that explicitly allow recurrence.
+async fn validate_recurring_permission(
+    pool: &PgPool,
+    payload: &CreateReservationPayload,
+    user_role: Role,
+) -> Result<(), AppError> {
+    // Admins bypass recurrence checks; non-recurring requests require no check
+    if user_role == Role::Admin || payload.rrule.is_none() {
+        return Ok(());
+    }
+
+    // Extract all unique resource IDs across the occurrences
+    let resource_ids: Vec<Uuid> = payload
+        .occurrences
+        .iter()
+        .map(|occ| occ.resource_id)
+        .collect();
+
+    if resource_ids.is_empty() {
+        return Ok(());
+    }
+
+    // Query for any selected resources where allow_recurring is false
+    let invalid_resources = sqlx::query!(
+        r#"
+        SELECT name 
+        FROM resources 
+        WHERE id = ANY($1) AND allow_recurring = FALSE AND deleted_at IS NULL
+        "#,
+        &resource_ids
+    )
+    .fetch_all(pool)
+    .await?;
+
+    if !invalid_resources.is_empty() {
+        let names: Vec<String> = invalid_resources.into_iter().map(|r| r.name).collect();
+        return Err(AppError::Forbidden(format!(
+            "Toistuvat varaukset eivät ole sallittuja seuraaville resursseille: {}",
+            names.join(", ")
+        )));
+    }
+
+    Ok(())
+}
 
 #[utoipa::path(
     get,
@@ -51,12 +98,16 @@ pub async fn list_reservations(
         )));
     }
 
+    let start_date = query.start_date.unwrap_or_else(chrono::Utc::now);
+    let end_date = query
+        .end_date
+        .unwrap_or_else(|| start_date + chrono::TimeDelta::days(30));
     let is_admin = opt_user.0.map(|u| u.role == Role::Admin).unwrap_or(false);
 
     let reservations = db::list_filtered(
         &auth_state.pool,
-        query.start_date,
-        query.end_date,
+        start_date,
+        end_date,
         query.resource_id,
         query.status,
         is_admin,
@@ -92,12 +143,16 @@ pub async fn list_my_reservations(
         )));
     }
 
+    let start_date = query.start_date.unwrap_or_else(chrono::Utc::now);
+    let end_date = query
+        .end_date
+        .unwrap_or_else(|| start_date + chrono::TimeDelta::days(30));
     let is_admin = auth_user.role == Role::Admin;
 
     let reservations = db::list_filtered(
         &auth_state.pool,
-        query.start_date,
-        query.end_date,
+        start_date,
+        end_date,
         query.resource_id,
         query.status,
         is_admin,
@@ -142,6 +197,7 @@ pub async fn get_reservation(
         (status = 201, description = "Reservation created successfully", body = ReservationWithOccurrences),
         (status = 400, description = "Invalid occurrence interval times"),
         (status = 401, description = "Unauthorized"),
+        (status = 403, description = "Forbidden - Recurrence disallowed for one or more resources"),
         (status = 422, description = "Validation error")
     )
 )]
@@ -153,6 +209,10 @@ pub async fn create_reservation(
 ) -> Result<(StatusCode, Json<ReservationWithOccurrences>), AppError> {
     payload.validate()?;
 
+    // 1. Validate recurring permissions for non-admins
+    validate_recurring_permission(&auth_state.pool, &payload, auth_user.role).await?;
+
+    // 2. Default status for non-admin users to Pending
     if auth_user.role != Role::Admin {
         payload.status = Some(super::models::ReservationStatus::Pending);
     }
