@@ -14,7 +14,7 @@ pub async fn list_all(pool: &PgPool) -> Result<Vec<Resource>, AppError> {
     let resources = sqlx::query_as!(
         Resource,
         r#"
-        SELECT id, collection_id, name, created_at, updated_at, deleted_at
+        SELECT id, collection_id, name, allow_recurring, created_at, updated_at, deleted_at
         FROM resources
         WHERE deleted_at IS NULL
         "#
@@ -34,7 +34,7 @@ pub async fn find_by_id(pool: &PgPool, id: Uuid) -> Result<Resource, AppError> {
     sqlx::query_as!(
         Resource,
         r#"
-        SELECT id, collection_id, name, created_at, updated_at, deleted_at
+        SELECT id, collection_id, name, allow_recurring, created_at, updated_at, deleted_at
         FROM resources
         WHERE id = $1 AND deleted_at IS NULL
         "#,
@@ -56,12 +56,13 @@ pub async fn create(pool: &PgPool, dto: CreateResource) -> Result<Resource, AppE
     let resource = sqlx::query_as!(
         Resource,
         r#"
-        INSERT INTO resources (collection_id, name)
-        VALUES ($1, $2)
-        RETURNING id, collection_id, name, created_at, updated_at, deleted_at
+        INSERT INTO resources (collection_id, name, allow_recurring)
+        VALUES ($1, $2, $3)
+        RETURNING id, collection_id, name, allow_recurring, created_at, updated_at, deleted_at
         "#,
         dto.collection_id,
-        dto.name
+        dto.name,
+        dto.allow_recurring
     )
     .fetch_one(pool)
     .await?;
@@ -83,11 +84,14 @@ pub async fn update(pool: &PgPool, id: Uuid, dto: UpdateResource) -> Result<Reso
         Resource,
         r#"
         UPDATE resources
-        SET name = COALESCE($1, name)
-        WHERE id = $2 AND deleted_at IS NULL
-        RETURNING id, collection_id, name, created_at, updated_at, deleted_at
+        SET 
+            name = COALESCE($1, name),
+            allow_recurring = COALESCE($2, allow_recurring)
+        WHERE id = $3 AND deleted_at IS NULL
+        RETURNING id, collection_id, name, allow_recurring, created_at, updated_at, deleted_at
         "#,
         dto.name,
+        dto.allow_recurring,
         id
     )
     .fetch_optional(pool)
