@@ -4,8 +4,12 @@ import { FileText, Save, Loader2, CheckCircle2 } from 'lucide-react'
 import { Button } from '#/components/Button'
 import { ContractEditor } from '#/components/ContractEditor'
 import { useCreateContract } from '#/hooks/useContracts'
+import { requireAuthGuard } from '#/utils/authGuard'
 
 export const Route = createFileRoute('/_app/contracts/create')({
+    beforeLoad: async ({ context }) => {
+        await requireAuthGuard(context)
+    },
     component: CreateContractPage,
 })
 

@@ -1,3 +1,4 @@
+// src/components/calendar/ReservationBlock.tsx
 import { Link } from '@tanstack/react-router'
 import {
     getMinutesSinceMidnight,
@@ -17,7 +18,7 @@ export function ReservationBlock({ event }: { event: PlacedEvent }) {
 
     return (
         <div
-            className="bg-stone-200 dark:bg-stone-800 border border-stone-400 dark:border-stone-600 hover:bg-stone-300 dark:hover:bg-stone-700 relative z-10 text-xs p-1 rounded-xs overflow-hidden shadow-xs hover:z-20 transition-all"
+            className="pointer-events-auto bg-stone-200 dark:bg-stone-800 border border-stone-400 dark:border-stone-600 hover:bg-stone-300 dark:hover:bg-stone-700 relative z-10 text-xs p-1 rounded-xs overflow-hidden shadow-xs hover:z-20 transition-all"
             style={{
                 gridColumn: `${event.col} / span ${event.span}`,
                 gridRow: `${startMins + 1} / span ${durationMins}`,

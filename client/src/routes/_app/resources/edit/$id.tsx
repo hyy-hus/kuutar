@@ -2,8 +2,12 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { ResourceForm } from '#/components/ResourceForm'
 import { useResource, useUpdateResource } from '#/hooks/useResorces'
+import { requireAuthGuard } from '#/utils/authGuard'
 
 export const Route = createFileRoute('/_app/resources/edit/$id')({
+    beforeLoad: async ({ context }) => {
+        await requireAuthGuard(context)
+    },
     component: EditResourcePage,
 })
 

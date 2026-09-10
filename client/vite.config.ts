@@ -1,11 +1,10 @@
 import { defineConfig } from 'vite';
 import { devtools } from '@tanstack/devtools-vite';
 import { paraglideVitePlugin } from '@inlang/paraglide-js';
-import { tanstackStart } from '@tanstack/react-start/plugin/vite';
+import { tanstackRouter } from '@tanstack/router-plugin/vite'
 import viteReact, { reactCompilerPreset } from '@vitejs/plugin-react';
 import babel from '@rolldown/plugin-babel';
 import tailwindcss from '@tailwindcss/vite';
-import { nitro } from 'nitro/vite';
 import path from 'node:path';
 import { storybookTest } from '@storybook/addon-vitest/vitest-plugin';
 import { playwright } from '@vitest/browser-playwright';
@@ -30,19 +29,11 @@ const config = defineConfig({
             outdir: './src/paraglide',
             strategy: ['url', 'baseLocale']
         }),
-        nitro({
-            preset: 'static',
-            routeRules: {
-                '/api/**': {
-                    proxy: 'http://127.0.0.1:3000/**',
-                },
-            },
-            rollupConfig: {
-                external: [/^@sentry\//]
-            }
-        }),
         tailwindcss(),
-        tanstackStart(),
+        tanstackRouter({
+            target: 'react',
+            autoCodeSplitting: true,
+        }),
         viteReact(),
         babel({
             presets: [reactCompilerPreset()]

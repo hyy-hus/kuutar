@@ -5,8 +5,12 @@ import { useGroup, useDeleteGroup } from '#/hooks/useGroups'
 import { readable_uuid } from '#/utils/uuid'
 import { Chip } from '#/components/Chip'
 import { formatDate } from '#/utils/date'
+import { requireAuthGuard } from '#/utils/authGuard'
 
 export const Route = createFileRoute('/_app/groups/$id')({
+    beforeLoad: async ({ context }) => {
+        await requireAuthGuard(context)
+    },
     component: ViewGroupPage,
 })
 

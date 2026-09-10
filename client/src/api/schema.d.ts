@@ -396,6 +396,7 @@ export interface components {
             title: string;
         };
         CreateResource: {
+            allow_recurring?: boolean;
             /** Format: uuid */
             collection_id: string;
             name: string;
@@ -467,6 +468,7 @@ export interface components {
             occurrences: components["schemas"]["Occurrence"][];
         };
         Resource: {
+            allow_recurring: boolean;
             /** Format: uuid */
             collection_id: string;
             /** Format: date-time */
@@ -504,6 +506,7 @@ export interface components {
             title?: string | null;
         };
         UpdateResource: {
+            allow_recurring?: boolean | null;
             name?: string | null;
         };
         UpdateUser: {
@@ -1282,9 +1285,9 @@ export interface operations {
     };
     list_reservations: {
         parameters: {
-            query: {
-                start_date: string;
-                end_date: string;
+            query?: {
+                start_date?: string | null;
+                end_date?: string | null;
                 resource_id?: string | null;
                 status?: null | components["schemas"]["ReservationStatus"];
             };
@@ -1355,6 +1358,13 @@ export interface operations {
                 };
                 content?: never;
             };
+            /** @description Forbidden - Recurrence disallowed for one or more resources */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
             /** @description Validation error */
             422: {
                 headers: {
@@ -1397,9 +1407,9 @@ export interface operations {
     };
     list_my_reservations: {
         parameters: {
-            query: {
-                start_date: string;
-                end_date: string;
+            query?: {
+                start_date?: string | null;
+                end_date?: string | null;
                 resource_id?: string | null;
                 status?: null | components["schemas"]["ReservationStatus"];
             };

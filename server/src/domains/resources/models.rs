@@ -11,6 +11,7 @@ pub struct Resource {
     pub id: Uuid,
     pub collection_id: Uuid,
     pub name: String,
+    pub allow_recurring: bool,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 
@@ -29,6 +30,9 @@ pub struct CreateResource {
         message = "Name must be between 1 and 255 characters"
     ))]
     pub name: String,
+
+    #[serde(default)]
+    pub allow_recurring: bool,
 }
 
 #[derive(Debug, Deserialize, Validate, ToSchema)]
@@ -40,6 +44,8 @@ pub struct UpdateResource {
         message = "Name must be between 1 and 255 characters"
     ))]
     pub name: Option<String>,
+
+    pub allow_recurring: Option<bool>,
 }
 
 #[cfg(test)]
@@ -51,9 +57,20 @@ mod tests {
         let dto = CreateResource {
             collection_id: Uuid::new_v4(),
             name: "Valid Resource Name".to_string(),
+            allow_recurring: true,
         };
 
         assert!(dto.validate().is_ok());
+    }
+
+    #[test]
+    fn test_create_resource_default_allow_recurring() {
+        let json = format!(
+            r#"{{"collection_id": "{}", "name": "Valid Name"}}"#,
+            Uuid::new_v4()
+        );
+        let dto: CreateResource = serde_json::from_str(&json).unwrap();
+        assert_eq!(dto.allow_recurring, false);
     }
 
     #[test]
@@ -61,6 +78,7 @@ mod tests {
         let dto = CreateResource {
             collection_id: Uuid::new_v4(),
             name: "".to_string(),
+            allow_recurring: false,
         };
         let result = dto.validate();
         assert!(result.is_err());
@@ -83,15 +101,16 @@ mod tests {
         assert!(dto.is_ok());
 
         let dto = dto.unwrap();
-        // Trimming stripped "   " to "", so name length is 0
         assert_eq!(dto.name, "");
         assert!(dto.validate().is_err());
     }
 
     #[test]
     fn test_update_resource_none_is_valid() {
-        let dto = UpdateResource { name: None };
-        // Option::None should pass validation for partial updates
+        let dto = UpdateResource {
+            name: None,
+            allow_recurring: None,
+        };
         assert!(dto.validate().is_ok());
     }
 
@@ -102,7 +121,6 @@ mod tests {
         assert!(dto.is_ok());
 
         let dto = dto.unwrap();
-        // Trimming stripped "   " to Some("")
         assert_eq!(dto.name, Some("".to_string()));
         assert!(dto.validate().is_err());
     }

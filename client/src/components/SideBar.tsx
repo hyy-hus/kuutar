@@ -53,7 +53,7 @@ export function SideBar({
         } else {
             // Standard authenticated users see their own reservations
             navItems.push({
-                to: '/reservations/me',
+                to: '/reservations',
                 label: 'Omat varaukset',
                 icon: BookmarkCheck,
             })
