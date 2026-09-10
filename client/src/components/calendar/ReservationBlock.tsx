@@ -1,45 +1,54 @@
 // src/components/calendar/ReservationBlock.tsx
-import { Link } from '@tanstack/react-router'
+import { Link } from "@tanstack/react-router";
+import { useTranslation } from "react-i18next";
 import {
-    getMinutesSinceMidnight,
-    getMinutesBetween,
-    type PlacedEvent,
-} from '#/utils/calendarUtils'
+	getMinutesBetween,
+	getMinutesSinceMidnight,
+	type PlacedEvent,
+} from "#/utils/calendarUtils";
 
-const timeFormatter = new Intl.DateTimeFormat('fi-FI', {
-    hour: '2-digit',
-    minute: '2-digit',
-})
+const timeFormatter = new Intl.DateTimeFormat("fi-FI", {
+	hour: "2-digit",
+	minute: "2-digit",
+});
 
 export function ReservationBlock({ event }: { event: PlacedEvent }) {
-    const startMins = getMinutesSinceMidnight(event.start)
-    const durationMins = getMinutesBetween(event.start, event.end)
-    const timeString = `${timeFormatter.format(event.start)} – ${timeFormatter.format(event.end)}`
+	const { t } = useTranslation();
+	const startMins = getMinutesSinceMidnight(event.start);
+	const durationMins = getMinutesBetween(event.start, event.end);
+	const timeString = t("valVal2", "{{val}} – {{val2}}", {
+		val: timeFormatter.format(event.start),
+		val2: timeFormatter.format(event.end),
+	});
 
-    return (
-        <div
-            className="pointer-events-auto bg-stone-200 dark:bg-stone-800 border border-stone-400 dark:border-stone-600 hover:bg-stone-300 dark:hover:bg-stone-700 relative text-xs p-1 rounded-xs overflow-hidden shadow-xs hover:z-20 transition-all z-15"
-            style={{
-                gridColumn: `${event.col} / span ${event.span}`,
-                gridRow: `${startMins + 1} / span ${durationMins}`,
-            }}
-            title={`${event.resourceName ?? ''}: ${event.title} (${timeString})`}
-        >
-            <Link
-                to="/reservations/$id"
-                params={{ id: event.reservationId }}
-                className="flex flex-col h-full w-full overflow-hidden text-stone-900 dark:text-stone-100 hover:underline"
-            >
-                <span className="font-bold truncate">{event.title}</span>
-                {event.resourceName && (
-                    <span className="text-[10px] text-stone-700 dark:text-stone-300 truncate font-medium">
-                        {event.resourceName}
-                    </span>
-                )}
-                <span className="text-[10px] italic text-stone-600 dark:text-stone-400 truncate">
-                    {timeString}
-                </span>
-            </Link>
-        </div>
-    )
+	return (
+		<div
+			className="pointer-events-auto bg-stone-200 dark:bg-stone-800 border border-stone-400 dark:border-stone-600 hover:bg-stone-300 dark:hover:bg-stone-700 relative text-xs p-1 rounded-xs overflow-hidden shadow-xs hover:z-20 transition-all z-15"
+			style={{
+				gridColumn: `${event.col} / span ${event.span}`,
+				gridRow: `${startMins + 1} / span ${durationMins}`,
+			}}
+			title={t("valTitleTimestring", "{{val}}: {{title}} ({{timeString}})", {
+				val: event.resourceName ?? "",
+				title: event.title,
+				timeString,
+			})}
+		>
+			<Link
+				to="/reservations/$id"
+				params={{ id: event.reservationId }}
+				className="flex flex-col h-full w-full overflow-hidden text-stone-900 dark:text-stone-100 hover:underline"
+			>
+				<span className="font-bold truncate">{event.title}</span>
+				{event.resourceName && (
+					<span className="text-[10px] text-stone-700 dark:text-stone-300 truncate font-medium">
+						{event.resourceName}
+					</span>
+				)}
+				<span className="text-[10px] italic text-stone-600 dark:text-stone-400 truncate">
+					{timeString}
+				</span>
+			</Link>
+		</div>
+	);
 }
