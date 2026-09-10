@@ -68,7 +68,7 @@ function CreateReservationPage() {
     }
 
     return (
-        <div className="p-4 space-y-4">
+        <div className="max-w-xl mx-auto p-2 sm:p-4 space-y-4 pb-12">
             <h1 className="text-xl font-bold text-stone-900 dark:text-stone-100">Uusi varaus</h1>
             <ReservationForm
                 defaultValues={{
