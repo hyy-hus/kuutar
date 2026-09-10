@@ -284,6 +284,23 @@ export interface paths {
         patch: operations["update_resource"];
         trace?: never;
     };
+    "/stats": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** GET /stats */
+        get: operations["get_stats"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/users": {
         parameters: {
             query?: never;
@@ -483,6 +500,26 @@ export interface components {
         };
         /** @enum {string} */
         Role: "admin" | "user";
+        SystemStats: {
+            /** Format: int64 */
+            confirmed_reservations: number;
+            /** Format: int64 */
+            pending_reservations: number;
+            top_resources: components["schemas"]["TopResourceStat"][];
+            /** Format: int64 */
+            total_reservations: number;
+            /** Format: int64 */
+            total_resources: number;
+            /** Format: int64 */
+            total_users: number;
+        };
+        TopResourceStat: {
+            /** Format: int64 */
+            reservation_count: number;
+            /** Format: uuid */
+            resource_id: string;
+            resource_name: string;
+        };
         UpdateCollection: {
             name?: string | null;
         };
@@ -1760,6 +1797,26 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    get_stats: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description System usage and metrics breakdown */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SystemStats"];
+                };
             };
         };
     };
