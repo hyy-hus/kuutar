@@ -8,8 +8,21 @@ import { AuthDialog } from '#/components/AuthPopover'
 import { SideBar } from '#/components/SideBar'
 import { getLocale, setLocale } from '#/paraglide/runtime'
 import { cn } from '#/utils/cn'
+import { authKeys, fetchMe } from '#/hooks/useAuth'
 
 export const Route = createFileRoute('/_app')({
+    beforeLoad: async ({ context }) => {
+        try {
+            const user = await context.queryClient.ensureQueryData({
+                queryKey: authKeys.me(),
+                queryFn: fetchMe,
+                staleTime: 1000 * 60 * 5,
+            })
+            return { user }
+        } catch {
+            return { user: null }
+        }
+    },
     component: AppLayout,
 })
 
@@ -85,3 +98,4 @@ function AppLayout() {
         </div>
     )
 }
+
