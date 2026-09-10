@@ -114,7 +114,6 @@ function AdminReservationCard({
     const handlePrintSingle = async () => {
         if (!selectedContractId) return
         await onMarkPrinted(reservationWithOcc.id)
-        // Pass single ID via the batch-print route
         const url = `/contracts/batch-print?reservation_ids=${reservationWithOcc.id}&contract_id=${selectedContractId}`
         window.open(url, '_blank')
     }
@@ -134,7 +133,7 @@ function AdminReservationCard({
                 <Link
                     to="/reservations/$id"
                     params={{ id: reservationWithOcc.id }}
-                    className="font-bold truncate hover:underline text-stone-900 dark:text-stone-100 flex-1"
+                    className="font-bold truncate hover:underline text-stone-900 dark:text-stone-100 flex-1 text-sm md:text-base"
                 >
                     {reservationWithOcc.title}
                 </Link>
@@ -166,13 +165,13 @@ function AdminReservationCard({
                             ? 'Tulosta valittu sopimus'
                             : 'Valitse sopimuspohja yläpalkista tulostaaksesi'
                     }
-                    className="text-stone-700 dark:text-stone-300 text-xs px-2 py-1 gap-1 shrink-0"
+                    className="text-stone-700 dark:text-stone-300 text-xs px-2 py-1 gap-1 flex-1 sm:flex-initial justify-center"
                 >
                     <FileText size={14} className="text-amber-600 dark:text-amber-500" />
                     <span>Tulosta sopimus</span>
                 </Button>
 
-                <div className="flex items-center gap-1.5 shrink-0">
+                <div className="flex items-center gap-1.5 w-full sm:w-auto justify-end">
                     {isPending ? (
                         <>
                             <Button
@@ -180,7 +179,7 @@ function AdminReservationCard({
                                 size="sm"
                                 disabled={isUpdating}
                                 onClick={() => onStatusChange('cancelled' as ReservationStatus)}
-                                className="text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/50 text-xs px-2.5 py-1"
+                                className="text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/50 text-xs px-2.5 py-1 flex-1 sm:flex-initial justify-center"
                             >
                                 <X size={14} />
                                 <span>Hylkää</span>
@@ -189,7 +188,7 @@ function AdminReservationCard({
                                 size="sm"
                                 disabled={isUpdating}
                                 onClick={() => onStatusChange('confirmed' as ReservationStatus)}
-                                className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-2.5 py-1"
+                                className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-2.5 py-1 flex-1 sm:flex-initial justify-center"
                             >
                                 <Check size={14} />
                                 <span>Hyväksy</span>
@@ -201,7 +200,7 @@ function AdminReservationCard({
                             size="sm"
                             disabled={isUpdating}
                             onClick={() => onStatusChange('pending' as ReservationStatus)}
-                            className="text-stone-600 dark:text-stone-400 text-xs px-2.5 py-1"
+                            className="text-stone-600 dark:text-stone-400 text-xs px-2.5 py-1 w-full sm:w-auto justify-center"
                         >
                             <Clock size={14} />
                             <span>Palauta odottavaksi</span>
@@ -322,19 +321,19 @@ function AdminDashboardPage() {
     }
 
     return (
-        <div className="flex flex-col gap-6 p-4 flex-1 min-h-0">
-            {/* Header */}
-            <div className="flex flex-wrap items-center justify-between gap-4 shrink-0">
-                <h1 className="text-xl font-bold text-stone-900 dark:text-stone-100">
+        <div className="flex flex-col gap-4 sm:gap-6 p-2 sm:p-4 flex-1 min-h-0 min-w-0">
+            {/* Header with Contract Tools */}
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 shrink-0 border-b border-stone-200 dark:border-stone-800 pb-3">
+                <h1 className="text-lg sm:text-xl font-bold text-stone-900 dark:text-stone-100">
                     Ylläpidon hallintapaneeli
                 </h1>
 
-                <div className="flex items-center gap-2">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full lg:w-auto">
                     <select
                         value={selectedContractId}
                         onChange={(e) => setSelectedContractId(e.target.value)}
                         disabled={loadingContracts}
-                        className="px-3 py-1.5 text-xs bg-stone-50 dark:bg-stone-950 border border-stone-300 dark:border-stone-700 rounded-md text-stone-900 dark:text-stone-100"
+                        className="w-full sm:w-60 px-3 py-1.5 text-xs bg-stone-50 dark:bg-stone-950 border border-stone-300 dark:border-stone-700 rounded-md text-stone-900 dark:text-stone-100 truncate"
                     >
                         <option value="">-- Valitse sopimuspohja --</option>
                         {contracts?.map((c) => (
@@ -348,40 +347,42 @@ function AdminDashboardPage() {
                         size="sm"
                         disabled={!selectedContractId || confirmedReservations.length === 0}
                         onClick={handleBatchPrintConfirmed}
-                        className="bg-amber-600 hover:bg-amber-700 text-white gap-1.5"
+                        className="bg-amber-600 hover:bg-amber-700 text-white gap-1.5 justify-center w-full sm:w-auto text-xs shrink-0"
                     >
                         <Printer size={16} />
-                        <span>
-                            Tulosta aikavälin vahvistetut ({confirmedReservations.length})
+                        <span className="truncate">
+                            Tulosta vahvistetut ({confirmedReservations.length})
                         </span>
                     </Button>
                 </div>
             </div>
 
-            {/* Controls */}
+            {/* Controls Bar */}
             <div className="flex flex-wrap items-center gap-2 shrink-0 p-2 bg-stone-100 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-md">
-                <Button variant="secondary" size="sm" onClick={() => moveStart(-days)}>
-                    <ChevronLeft size={18} />
-                </Button>
+                <div className="flex items-center gap-1">
+                    <Button variant="secondary" size="sm" onClick={() => moveStart(-days)}>
+                        <ChevronLeft size={16} />
+                    </Button>
 
-                <input
-                    type="date"
-                    value={formatYYYYMMDD(start)}
-                    onChange={(e) =>
-                        e.target.valueAsDate &&
-                        updateSearch({ start_date: formatYYYYMMDD(e.target.valueAsDate) })
-                    }
-                    className="px-3 py-1.5 text-xs bg-stone-50 dark:bg-stone-950 border border-stone-200 dark:border-stone-800 rounded-md"
-                />
+                    <input
+                        type="date"
+                        value={formatYYYYMMDD(start)}
+                        onChange={(e) =>
+                            e.target.valueAsDate &&
+                            updateSearch({ start_date: formatYYYYMMDD(e.target.valueAsDate) })
+                        }
+                        className="px-2.5 py-1 text-xs bg-stone-50 dark:bg-stone-950 border border-stone-200 dark:border-stone-800 rounded-md font-mono"
+                    />
 
-                <Button variant="secondary" size="sm" onClick={() => moveStart(days)}>
-                    <ChevronRight size={18} />
-                </Button>
+                    <Button variant="secondary" size="sm" onClick={() => moveStart(days)}>
+                        <ChevronRight size={16} />
+                    </Button>
+                </div>
 
                 <select
                     value={days}
                     onChange={(e) => updateSearch({ days: Number(e.target.value) })}
-                    className="px-3 py-1.5 text-xs bg-stone-50 dark:bg-stone-950 border border-stone-200 dark:border-stone-800 rounded-md"
+                    className="px-2.5 py-1 text-xs bg-stone-50 dark:bg-stone-950 border border-stone-200 dark:border-stone-800 rounded-md font-medium"
                 >
                     <option value={7}>1 viikko</option>
                     <option value={14}>2 viikkoa</option>
@@ -393,7 +394,7 @@ function AdminDashboardPage() {
                     value={resourceId || ''}
                     onChange={(e) => updateSearch({ resource_id: e.target.value || undefined })}
                     disabled={loadingResources}
-                    className="px-3 py-1.5 text-xs bg-stone-50 dark:bg-stone-950 border border-stone-200 dark:border-stone-800 rounded-md"
+                    className="px-2.5 py-1 text-xs bg-stone-50 dark:bg-stone-950 border border-stone-200 dark:border-stone-800 rounded-md font-medium max-w-full truncate"
                 >
                     <option value="">Kaikki resurssit</option>
                     {resources?.map((res) => (
@@ -419,11 +420,11 @@ function AdminDashboardPage() {
                     <div className="space-y-3">
                         <div className="flex items-center gap-2 text-amber-600 dark:text-amber-500 font-bold">
                             <Clock size={18} />
-                            <h2>Odottaa hyväksyntää ({pendingReservations.length})</h2>
+                            <h2 className="text-sm sm:text-base">Odottaa hyväksyntää ({pendingReservations.length})</h2>
                         </div>
 
                         {pendingReservations.length > 0 ? (
-                            <ul className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-3">
+                            <ul className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
                                 {pendingReservations.map((res) => (
                                     <AdminReservationCard
                                         key={res.id}
@@ -449,11 +450,11 @@ function AdminDashboardPage() {
                     <div className="space-y-3">
                         <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-500 font-bold">
                             <CheckCircle2 size={18} />
-                            <h2>Vahvistetut varaukset ({confirmedReservations.length})</h2>
+                            <h2 className="text-sm sm:text-base">Vahvistetut varaukset ({confirmedReservations.length})</h2>
                         </div>
 
                         {confirmedReservations.length > 0 ? (
-                            <ul className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-3">
+                            <ul className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
                                 {confirmedReservations.map((res) => (
                                     <AdminReservationCard
                                         key={res.id}
@@ -479,11 +480,11 @@ function AdminDashboardPage() {
                     <div className="space-y-3">
                         <div className="flex items-center gap-2 text-rose-600 dark:text-rose-500 font-bold">
                             <XCircle size={18} />
-                            <h2>Hylätyt ja perutut varaukset ({cancelledReservations.length})</h2>
+                            <h2 className="text-sm sm:text-base">Hylätyt ja perutut varaukset ({cancelledReservations.length})</h2>
                         </div>
 
                         {cancelledReservations.length > 0 ? (
-                            <ul className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-3">
+                            <ul className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
                                 {cancelledReservations.map((res) => (
                                     <AdminReservationCard
                                         key={res.id}

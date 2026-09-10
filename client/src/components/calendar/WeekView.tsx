@@ -13,7 +13,13 @@ interface WeekViewProps {
     onSlotDoubleClick?: (startTimeISO: string, endTimeISO: string) => void
 }
 
-function CurrentTimeIndicator({ start, days }: { start: Date; days: number }) {
+function CurrentTimeIndicator({
+    start,
+    days,
+}: {
+    start: Date
+    days: number
+}) {
     const [now, setNow] = useState(() => new Date())
 
     useEffect(() => {
@@ -21,9 +27,9 @@ function CurrentTimeIndicator({ start, days }: { start: Date; days: number }) {
         return () => clearInterval(timer)
     }, [])
 
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime()
+    const todayDateOnly = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime()
     const startDateOnly = new Date(start.getFullYear(), start.getMonth(), start.getDate()).getTime()
-    const dayOffset = Math.round((today - startDateOnly) / (1000 * 60 * 60 * 24))
+    const dayOffset = Math.round((todayDateOnly - startDateOnly) / (1000 * 60 * 60 * 24))
 
     const isTodayVisible = dayOffset >= 0 && dayOffset < days
 
@@ -34,11 +40,13 @@ function CurrentTimeIndicator({ start, days }: { start: Date; days: number }) {
 
     return (
         <div
-            className="absolute left-0 right-0 z-30 pointer-events-none flex items-center border-none"
-            style={{ top: topOffset }}
+            className="absolute left-0 right-0 z-10 pointer-events-none border-none"
+            style={{
+                top: topOffset,
+                gridColumn: `2 / -1`, // Starts strictly after the hour column and spans across all day columns
+            }}
         >
-            <div className="w-2.5 h-2.5 rounded-full bg-rose-600 -ml-1 shrink-0" />
-            <div className="h-0.5 bg-rose-600 dark:bg-rose-500 w-full shadow-xs" />
+            <div className="h-0.5 bg-rose-500/80 dark:bg-rose-400/80 w-full" />
         </div>
     )
 }
@@ -54,7 +62,7 @@ export function WeekView({ start, days, events, onSlotDoubleClick }: WeekViewPro
 
     useEffect(() => {
         if (scrollRef.current) {
-            scrollRef.current.scrollTop = 480
+            scrollRef.current.scrollTop = 480 // Scroll to ~08:00
         }
     }, [])
 
@@ -90,25 +98,37 @@ export function WeekView({ start, days, events, onSlotDoubleClick }: WeekViewPro
         onSlotDoubleClick(formatDateTimeLocal(targetStart), formatDateTimeLocal(targetEnd))
     }
 
+    const getColumnHeader = (colIndex: number) => {
+        const targetDate = new Date(start)
+        targetDate.setDate(targetDate.getDate() + colIndex)
+
+        const startDayIndex = (targetDate.getDay() + 6) % 7
+        const dayName = weekdays[startDayIndex]
+        const dateFormatted = `${targetDate.getDate()}.${targetDate.getMonth() + 1}.`
+
+        return { dayName, dateFormatted }
+    }
+
     return (
         <div
             ref={scrollRef}
-            className="flex-1 min-h-0 overflow-y-auto border border-stone-200 dark:border-stone-800 rounded-md bg-stone-50 dark:bg-stone-950"
+            className="flex-1 min-h-0 overflow-auto border border-stone-200 dark:border-stone-800 rounded-md bg-stone-50 dark:bg-stone-950"
         >
             <div
-                className="relative grid grid-rows-[3rem_repeat(24,5rem)] divide-x divide-y divide-stone-200 dark:divide-stone-800 w-full min-w-150"
+                className="relative grid grid-rows-[3rem_repeat(24,5rem)] divide-x divide-y divide-stone-200 dark:divide-stone-800 min-w-full"
                 style={{
-                    gridTemplateColumns: `4rem repeat(${days}, minmax(8rem, 1fr))`,
+                    gridTemplateColumns: `3.5rem repeat(${days}, minmax(${days === 1 ? '100%' : '11rem'}, 1fr))`,
                 }}
             >
+                {/* Current Time Indicator anchored to gridColumn */}
                 <CurrentTimeIndicator start={start} days={days} />
 
+                {/* Grid Cells */}
                 {Array.from({ length: 25 }).map((_, row) =>
                     Array.from({ length: days + 1 }).map((__, col) => {
-                        const startDayIndex = (start.getDay() + 6) % 7
-                        const dayName = weekdays[(startDayIndex + col - 1) % 7]
                         const isInteractiveCell = row > 0 && col > 0
                         const isHovered = hoveredCell?.row === row && hoveredCell?.col === col
+                        const { dayName, dateFormatted } = col > 0 ? getColumnHeader(col - 1) : { dayName: '', dateFormatted: '' }
 
                         return (
                             <div
@@ -120,7 +140,7 @@ export function WeekView({ start, days, events, onSlotDoubleClick }: WeekViewPro
                                     ? 'sticky top-0 z-20 bg-stone-100 dark:bg-stone-900 border-b border-stone-300 dark:border-stone-700 font-semibold cursor-default justify-center'
                                     : ''
                                     } ${col === 0
-                                        ? 'sticky left-0 z-10 bg-stone-100 dark:bg-stone-900 border-r border-stone-300 dark:border-stone-700 font-mono text-stone-500 cursor-default justify-center'
+                                        ? 'sticky left-0 z-20 bg-stone-100 dark:bg-stone-900 border-r border-stone-300 dark:border-stone-700 font-mono text-stone-500 cursor-default justify-center text-[11px]'
                                         : ''
                                     } ${row === 0 && col === 0 ? 'z-30' : ''} ${isInteractiveCell
                                         ? isHovered
@@ -133,12 +153,18 @@ export function WeekView({ start, days, events, onSlotDoubleClick }: WeekViewPro
                                     gridColumn: col + 1,
                                 }}
                             >
-                                {row === 0 && col > 0 && <span>{dayName}</span>}
+                                {row === 0 && col > 0 && (
+                                    <div className="flex flex-col items-center">
+                                        <span className="font-bold text-xs truncate">{dayName}</span>
+                                        <span className="text-[10px] font-normal text-stone-500">{dateFormatted}</span>
+                                    </div>
+                                )}
+
                                 {col === 0 && row > 0 && <span>{hours[row - 1]}</span>}
 
                                 {isInteractiveCell && isHovered && (
                                     <span className="w-full text-center text-[10px] font-mono text-purple-700 dark:text-purple-300 bg-purple-200/60 dark:bg-purple-900/60 rounded px-1 py-0.5 mt-auto">
-                                        {hours[row - 1]} – {hours[row] || '00:00'}
+                                        {hours[row - 1]} (Kaksoisklikkaa)
                                     </span>
                                 )}
                             </div>
@@ -146,9 +172,13 @@ export function WeekView({ start, days, events, onSlotDoubleClick }: WeekViewPro
                     })
                 )}
 
-                {/* Day Overlay Columns - set pointer-events-none on wrapper so double clicks pass through to grid cells */}
+                {/* Day Overlay Columns */}
                 {Array.from({ length: days }).map((_, i) => (
-                    <div key={`day-${i}`} className="pointer-events-none col-span-1" style={{ gridColumn: i + 2, gridRow: '1 / -1' }}>
+                    <div
+                        key={`day-${i}`}
+                        className="pointer-events-none"
+                        style={{ gridColumn: i + 2, gridRow: '1 / -1' }}
+                    >
                         <DayColumn events={eventsByDay[i]} columnIndex={i + 2} />
                     </div>
                 ))}
