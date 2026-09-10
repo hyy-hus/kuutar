@@ -30,6 +30,7 @@ import { Route as AppReservationsCreateRouteImport } from './routes/_app/reserva
 import { Route as AppResourcesIndexRouteImport } from './routes/_app/resources/index'
 import { Route as AppResourcesIdRouteImport } from './routes/_app/resources/$id'
 import { Route as AppResourcesCreateRouteImport } from './routes/_app/resources/create'
+import { Route as AppStatsIndexRouteImport } from './routes/_app/stats/index'
 import { Route as AppUsersIndexRouteImport } from './routes/_app/users/index'
 import { Route as AppUsersIdRouteImport } from './routes/_app/users/$id'
 import { Route as AppUsersCreateRouteImport } from './routes/_app/users/create'
@@ -144,6 +145,11 @@ const AppResourcesCreateRoute = AppResourcesCreateRouteImport.update({
   path: '/resources/create',
   getParentRoute: () => AppRoute,
 } as any)
+const AppStatsIndexRoute = AppStatsIndexRouteImport.update({
+  id: '/stats/',
+  path: '/stats/',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppUsersIndexRoute = AppUsersIndexRouteImport.update({
   id: '/users/',
   path: '/users/',
@@ -213,6 +219,7 @@ export interface FileRoutesByFullPath {
   '/groups/': typeof AppGroupsIndexRoute
   '/reservations/': typeof AppReservationsIndexRoute
   '/resources/': typeof AppResourcesIndexRoute
+  '/stats/': typeof AppStatsIndexRoute
   '/users/': typeof AppUsersIndexRoute
   '/collections/edit/$id': typeof AppCollectionsEditIdRoute
   '/groups/edit/$id': typeof AppGroupsEditIdRoute
@@ -244,6 +251,7 @@ export interface FileRoutesByTo {
   '/groups': typeof AppGroupsIndexRoute
   '/reservations': typeof AppReservationsIndexRoute
   '/resources': typeof AppResourcesIndexRoute
+  '/stats': typeof AppStatsIndexRoute
   '/users': typeof AppUsersIndexRoute
   '/collections/edit/$id': typeof AppCollectionsEditIdRoute
   '/groups/edit/$id': typeof AppGroupsEditIdRoute
@@ -277,6 +285,7 @@ export interface FileRoutesById {
   '/_app/groups/': typeof AppGroupsIndexRoute
   '/_app/reservations/': typeof AppReservationsIndexRoute
   '/_app/resources/': typeof AppResourcesIndexRoute
+  '/_app/stats/': typeof AppStatsIndexRoute
   '/_app/users/': typeof AppUsersIndexRoute
   '/_app/collections/edit/$id': typeof AppCollectionsEditIdRoute
   '/_app/groups/edit/$id': typeof AppGroupsEditIdRoute
@@ -310,6 +319,7 @@ export interface FileRouteTypes {
     | '/groups/'
     | '/reservations/'
     | '/resources/'
+    | '/stats/'
     | '/users/'
     | '/collections/edit/$id'
     | '/groups/edit/$id'
@@ -341,6 +351,7 @@ export interface FileRouteTypes {
     | '/groups'
     | '/reservations'
     | '/resources'
+    | '/stats'
     | '/users'
     | '/collections/edit/$id'
     | '/groups/edit/$id'
@@ -373,6 +384,7 @@ export interface FileRouteTypes {
     | '/_app/groups/'
     | '/_app/reservations/'
     | '/_app/resources/'
+    | '/_app/stats/'
     | '/_app/users/'
     | '/_app/collections/edit/$id'
     | '/_app/groups/edit/$id'
@@ -536,6 +548,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppResourcesCreateRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/stats/': {
+      id: '/_app/stats/'
+      path: '/stats'
+      fullPath: '/stats/'
+      preLoaderRoute: typeof AppStatsIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/users/': {
       id: '/_app/users/'
       path: '/users'
@@ -636,6 +655,7 @@ interface AppRouteChildren {
   AppGroupsIndexRoute: typeof AppGroupsIndexRoute
   AppReservationsIndexRoute: typeof AppReservationsIndexRoute
   AppResourcesIndexRoute: typeof AppResourcesIndexRoute
+  AppStatsIndexRoute: typeof AppStatsIndexRoute
   AppUsersIndexRoute: typeof AppUsersIndexRoute
   AppCollectionsEditIdRoute: typeof AppCollectionsEditIdRoute
   AppGroupsEditIdRoute: typeof AppGroupsEditIdRoute
@@ -666,6 +686,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppGroupsIndexRoute: AppGroupsIndexRoute,
   AppReservationsIndexRoute: AppReservationsIndexRoute,
   AppResourcesIndexRoute: AppResourcesIndexRoute,
+  AppStatsIndexRoute: AppStatsIndexRoute,
   AppUsersIndexRoute: AppUsersIndexRoute,
   AppCollectionsEditIdRoute: AppCollectionsEditIdRoute,
   AppGroupsEditIdRoute: AppGroupsEditIdRoute,

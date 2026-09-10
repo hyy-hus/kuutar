@@ -6,12 +6,9 @@ import { SearchBar } from '#/components/SearchBar'
 import { Button } from '#/components/Button'
 import { AuthDialog } from '#/components/AuthPopover'
 import { SideBar } from '#/components/SideBar'
-import { getLocale, setLocale } from '#/paraglide/runtime'
+import { getLocale, setLocale, locales } from '#/paraglide/runtime'
 import { cn } from '#/utils/cn'
 import { authKeys, fetchMe } from '#/hooks/useAuth'
-import { SiGithub } from '@icons-pack/react-simple-icons';
-
-
 
 export const Route = createFileRoute('/_app')({
     beforeLoad: async ({ context }) => {
@@ -62,10 +59,6 @@ function AppLayout() {
     }
 
     const currentLocale = getLocale()
-    const toggleLanguage = () => {
-        const nextLocale = currentLocale === 'fi' ? 'en' : 'fi'
-        setLocale(nextLocale)
-    }
 
     return (
         <div className="h-screen w-screen overflow-hidden flex flex-col bg-stone-50 dark:bg-stone-950 text-stone-900 dark:text-stone-100">
@@ -132,7 +125,8 @@ function AppLayout() {
                         <SideBar
                             isSidebarOpen={true}
                             currentLocale={currentLocale}
-                            toggleLanguage={toggleLanguage}
+                            onSelectLocale={(next) => setLocale(next as any)}
+                            availableLocales={locales as unknown as string[]}
                             theme={theme}
                             toggleTheme={toggleTheme}
                         />
@@ -145,24 +139,12 @@ function AppLayout() {
                 </main>
             </div>
 
-            {/* Compact Base Sticky Bar */}
+            {/* Footer */}
             <footer className="h-8 border-t-2 border-stone-800 dark:border-stone-600 flex items-center justify-between px-3 text-[11px] font-mono bg-stone-100 dark:bg-stone-900 shrink-0 z-40 text-stone-600 dark:text-stone-400">
                 <div className="flex items-center gap-3">
                     <span className="font-bold text-stone-800 dark:text-stone-200">kuutar</span>
                     <span className="hidden sm:inline text-stone-400">|</span>
                     <span className="hidden sm:inline">Helsingin yliopiston ylioppilaskunta</span>
-                </div>
-
-                <div className="flex items-center gap-3">
-                    <a
-                        href="https://github.com/hyy-hus/kuutar"
-                        target="_blank"
-                        rel="noreferrer"
-                        className="hover:underline flex items-center gap-1 font-semibold text-stone-800 dark:text-stone-200"
-                    >
-                        <SiGithub size={12} />
-                        <span className="hidden xs:inline">GitHub</span>
-                    </a>
                 </div>
             </footer>
         </div>
