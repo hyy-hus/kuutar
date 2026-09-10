@@ -1,5 +1,5 @@
 // src/routes/_app.tsx
-import { createFileRoute, Outlet, useLocation } from '@tanstack/react-router'
+import { createFileRoute, Link, Outlet, useLocation } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
 import { Menu, X } from 'lucide-react'
 import { SearchBar } from '#/components/SearchBar'
@@ -77,9 +77,12 @@ function AppLayout() {
                     <Menu size={20} />
                 </Button>
 
-                <h1 className="font-bold text-base md:text-lg tracking-tight truncate shrink-0">
-                    Varauskalenteri
-                </h1>
+                {/* Clickable Header Logo */}
+                <Link to="/" className="hover:opacity-80 transition-opacity shrink-0">
+                    <h1 className="font-bold text-base md:text-lg tracking-tight truncate">
+                        Varauskalenteri
+                    </h1>
+                </Link>
 
                 <div className="flex-1" />
 

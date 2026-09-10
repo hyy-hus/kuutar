@@ -1,6 +1,6 @@
 // src/components/SideBar.tsx
 import { Link } from '@tanstack/react-router'
-import { Calendar, Shield, Bookmark, Box, Folder, Users, User, Globe, Sun, Moon } from 'lucide-react'
+import { Home, Calendar, Shield, Bookmark, Box, Folder, Users, User, Globe, Sun, Moon } from 'lucide-react'
 import { Button } from '#/components/Button'
 import { useAuth, useIsAdmin } from '#/hooks/useAuth'
 
@@ -22,6 +22,7 @@ export function SideBar({
     const { isAdmin } = useIsAdmin()
 
     const navItems = [
+        { to: '/', label: 'Etusivu', icon: Home, public: true },
         { to: '/calendar', label: 'Kalenteri', icon: Calendar, public: true },
         { to: '/admin/dashboard', label: 'Ylläpito', icon: Shield, adminOnly: true },
         { to: '/reservations', label: 'Varaukset', icon: Bookmark, authOnly: true },
