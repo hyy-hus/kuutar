@@ -68,7 +68,7 @@ jobs:
       - name: Install & Build Frontend
         working-directory: ./client
         run: |
-          pnpm install --frozen-lockfile --ignore-workspace
+          pnpm install --no-frozen-lockfile
           pnpm build
         env:
           VITE_API_URL: ${{ secrets.VITE_API_URL }}
