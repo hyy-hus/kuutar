@@ -1,4 +1,6 @@
+// src/components/calendar/Calendar.tsx
 import { useEffect, useMemo } from 'react'
+import { useNavigate } from '@tanstack/react-router'
 import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react'
 import { Button } from '#/components/Button'
 import { useResources } from '#/hooks/useResorces'
@@ -6,7 +8,7 @@ import { useReservations } from '#/hooks/useReservations'
 import type { CalendarEvent } from '#/utils/calendarUtils'
 import { WeekView } from './WeekView'
 import { ToggleChip } from '../Chip'
-import type { CalendarSearch } from '#/routes/calendar'
+import type { CalendarSearch } from '#/routes/_app/calendar'
 
 interface CalendarProps {
     startStr: string
@@ -33,6 +35,7 @@ export function Calendar({
     selectedResourceIds,
     onSearchChange,
 }: CalendarProps) {
+    const navigate = useNavigate()
     const start = useMemo(() => parseLocalDate(startStr), [startStr])
 
     const { data: resources, isLoading: loadingResources } = useResources()
@@ -85,6 +88,17 @@ export function Calendar({
             : [...activeResourceIds, id]
 
         onSearchChange({ resources: nextResources })
+    }
+
+    const handleSlotDoubleClick = (startTime: string, endTime: string) => {
+        navigate({
+            to: '/reservations/create',
+            search: {
+                start_time: startTime,
+                end_time: endTime,
+                resource_ids: activeResourceIds,
+            },
+        })
     }
 
     const calendarEvents = useMemo(() => {
@@ -204,7 +218,12 @@ export function Calendar({
             </div>
 
             {/* Main Calendar View */}
-            <WeekView start={start} days={days} events={calendarEvents} />
+            <WeekView
+                start={start}
+                days={days}
+                events={calendarEvents}
+                onSlotDoubleClick={handleSlotDoubleClick}
+            />
         </div>
     )
 }

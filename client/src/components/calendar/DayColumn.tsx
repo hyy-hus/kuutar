@@ -1,3 +1,4 @@
+// src/components/calendar/DayColumn.tsx
 import { useMemo } from 'react'
 import { layoutDay, type CalendarEvent } from '#/utils/calendarUtils'
 import { ReservationBlock } from './ReservationBlock'
@@ -12,7 +13,7 @@ export function DayColumn({ events, columnIndex }: DayColumnProps) {
 
     return (
         <div
-            className="grid grid-rows-[repeat(1440,1fr)] gap-x-0.5 w-full h-full pointer-events-auto"
+            className="grid grid-rows-[repeat(1440,1fr)] gap-x-0.5 w-full h-full pointer-events-none"
             style={{
                 gridTemplateColumns: `repeat(${maxCols}, minmax(0, 1fr))`,
                 gridRow: '2 / span 24',
