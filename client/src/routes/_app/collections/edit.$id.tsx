@@ -1,8 +1,12 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { CollectionForm } from '#/components/CollectionForm'
 import { useCollection, useUpdateCollection } from '#/hooks/useCollections'
+import { requireAuthGuard } from '#/utils/authGuard'
 
 export const Route = createFileRoute('/_app/collections/edit/$id')({
+    beforeLoad: async ({ context }) => {
+        await requireAuthGuard(context)
+    },
     component: EditCollectionPage,
 })
 

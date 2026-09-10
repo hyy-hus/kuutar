@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { createFileRoute, Link, redirect } from '@tanstack/react-router'
+import { createFileRoute, Link } from '@tanstack/react-router'
 import {
     Loader2,
     Calendar,
@@ -25,7 +25,7 @@ import { startOfCurrentWeek } from '#/utils/calendarUtils'
 import { cn } from '#/utils/cn'
 import { readable_uuid } from '#/utils/uuid'
 import { formatDate } from '#/utils/date'
-import { authKeys, fetchMe } from '#/hooks/useAuth'
+import { requireAuthGuard } from '#/utils/authGuard'
 
 export interface UserDashboardSearch {
     start_date?: string
@@ -54,27 +54,7 @@ export const Route = createFileRoute('/_app/reservations/')({
         }
     },
     beforeLoad: async ({ context }) => {
-        if (typeof window === 'undefined') return
-
-        try {
-            const user = await context.queryClient.ensureQueryData({
-                queryKey: authKeys.me(),
-                queryFn: fetchMe,
-                staleTime: 1000 * 60 * 5,
-            })
-
-            if (!user) {
-                throw redirect({
-                    to: '/reservations',
-                    replace: true,
-                })
-            }
-        } catch (err) {
-            if (err && typeof err === 'object' && 'to' in err) {
-                throw err
-            }
-            console.error('Error in beforeLoad guard:', err)
-        }
+        await requireAuthGuard(context)
     },
     component: UserDashboardPage,
 })

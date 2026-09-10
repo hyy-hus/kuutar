@@ -1,12 +1,25 @@
-import { createFileRoute, Outlet, redirect, useNavigate } from '@tanstack/react-router'
-import { useEffect } from 'react'
-import { useAuth } from '#/hooks/useAuth'
+// src/routes/_app/admin.tsx
+import { createFileRoute, Outlet, redirect } from '@tanstack/react-router'
+import { authKeys, fetchMe } from '#/hooks/useAuth'
 
 export const Route = createFileRoute('/_app/admin')({
     beforeLoad: async ({ context }) => {
         if (typeof window === 'undefined') return
 
-        if (!context.auth?.isAuthenticated || !context.auth?.isAdmin) {
+        let user = context.user
+        if (user === undefined) {
+            try {
+                user = await context.queryClient.ensureQueryData({
+                    queryKey: authKeys.me(),
+                    queryFn: fetchMe,
+                    staleTime: 1000 * 60 * 5,
+                })
+            } catch {
+                user = null
+            }
+        }
+
+        if (!user || user.role !== 'admin') {
             throw redirect({
                 to: '/',
                 replace: true,
@@ -17,26 +30,5 @@ export const Route = createFileRoute('/_app/admin')({
 })
 
 function AdminLayout() {
-    const { user, isLoading } = useAuth()
-    const navigate = useNavigate()
-
-    useEffect(() => {
-        if (!isLoading && (!user || user.role !== 'admin')) {
-            navigate({ to: '/', replace: true })
-        }
-    }, [user, isLoading, navigate])
-
-    if (isLoading) {
-        return (
-            <div className="flex h-screen items-center justify-center bg-stone-50 dark:bg-stone-950">
-                <span className="text-sm font-medium text-stone-500">Tarkistetaan oikeuksia...</span>
-            </div>
-        )
-    }
-
-    if (!user || user.role !== 'admin') {
-        return null
-    }
-
     return <Outlet />
 }

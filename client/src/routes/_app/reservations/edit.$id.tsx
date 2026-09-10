@@ -1,8 +1,12 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { ReservationForm, type ReservationFormValues } from '#/components/ReservationForm'
 import { useReservation, useUpdateReservation } from '#/hooks/useReservations'
+import { requireAuthGuard } from '#/utils/authGuard'
 
 export const Route = createFileRoute('/_app/reservations/edit/$id')({
+    beforeLoad: async ({ context }) => {
+        await requireAuthGuard(context)
+    },
     component: EditReservationPage,
 })
 

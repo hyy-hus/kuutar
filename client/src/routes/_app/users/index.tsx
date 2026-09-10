@@ -6,8 +6,12 @@ import { useUsers, type User } from '#/hooks/useUsers'
 import { useGroups } from '#/hooks/useGroups'
 import { cn } from '#/utils/cn'
 import { readable_uuid } from '#/utils/uuid'
+import { requireAuthGuard } from '#/utils/authGuard'
 
 export const Route = createFileRoute('/_app/users/')({
+    beforeLoad: async ({ context }) => {
+        await requireAuthGuard(context)
+    },
     component: RouteComponent,
 })
 

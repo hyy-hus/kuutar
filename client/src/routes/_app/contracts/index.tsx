@@ -5,8 +5,12 @@ import { Chip } from '#/components/Chip'
 import { useContracts, type Contract } from '#/hooks/useContracts'
 import { readable_uuid } from '#/utils/uuid'
 import { formatDate } from '#/utils/date'
+import { requireAuthGuard } from '#/utils/authGuard'
 
 export const Route = createFileRoute('/_app/contracts/')({
+    beforeLoad: async ({ context }) => {
+        await requireAuthGuard(context)
+    },
     component: ContractsListPage,
 })
 

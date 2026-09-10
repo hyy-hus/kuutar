@@ -9,6 +9,7 @@ import { formatDate } from '#/utils/date'
 import { generateHTML } from '@tiptap/core'
 import StarterKit from '@tiptap/starter-kit'
 import Link from '@tiptap/extension-link'
+import { requireAuthGuard } from '#/utils/authGuard'
 
 export interface BatchPrintSearch {
     reservation_ids: string[]
@@ -24,6 +25,9 @@ export const Route = createFileRoute('/contracts/batch-print')({
                 : [],
         contract_id: String(search.contract_id || ''),
     }),
+    beforeLoad: async ({ context }) => {
+        await requireAuthGuard(context)
+    },
     component: BatchPrintPage,
 })
 

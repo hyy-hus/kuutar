@@ -5,8 +5,12 @@ import { Chip } from '#/components/Chip'
 import { useGroups, type Group } from '#/hooks/useGroups'
 import { cn } from '#/utils/cn'
 import { readable_uuid } from '#/utils/uuid'
+import { requireAuthGuard } from '#/utils/authGuard'
 
 export const Route = createFileRoute('/_app/groups/')({
+    beforeLoad: async ({ context }) => {
+        await requireAuthGuard(context)
+    },
     component: RouteComponent,
 })
 

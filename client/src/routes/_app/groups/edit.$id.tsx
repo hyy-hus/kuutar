@@ -1,8 +1,12 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { GroupForm } from '#/components/GroupForm'
 import { useGroup, useUpdateGroup } from '#/hooks/useGroups'
+import { requireAuthGuard } from '#/utils/authGuard'
 
 export const Route = createFileRoute('/_app/groups/edit/$id')({
+    beforeLoad: async ({ context }) => {
+        await requireAuthGuard(context)
+    },
     component: EditGroupPage,
 })
 
