@@ -4,2046 +4,2046 @@
  */
 
 export interface paths {
-    "/auth/login": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Login with email and password */
-        post: operations["login"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/auth/logout": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Logout (Revoke refresh token) */
-        post: operations["logout"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/auth/refresh": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Exchange a valid Refresh Token for a new Access + Refresh Token pair */
-        post: operations["refresh"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/auth/register": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Register a new user */
-        post: operations["register"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/collections": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** GET /collections */
-        get: operations["list_collections"];
-        put?: never;
-        /** POST /collections */
-        post: operations["create_collection"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/collections/{id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** GET /collections/{id} */
-        get: operations["get_collection"];
-        put?: never;
-        post?: never;
-        /** DELETE /collections/{id} */
-        delete: operations["delete_collection"];
-        options?: never;
-        head?: never;
-        /** PATCH /collections/{id} */
-        patch: operations["update_collection"];
-        trace?: never;
-    };
-    "/contracts": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** GET /contracts */
-        get: operations["list_contracts"];
-        put?: never;
-        /** POST /contracts */
-        post: operations["create_contract"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/contracts/{id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** GET /contracts/{id} */
-        get: operations["get_contract"];
-        put?: never;
-        post?: never;
-        /** DELETE /contracts/{id} */
-        delete: operations["delete_contract"];
-        options?: never;
-        head?: never;
-        /** PATCH /contracts/{id} */
-        patch: operations["update_contract"];
-        trace?: never;
-    };
-    "/groups": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** GET /groups */
-        get: operations["list_groups"];
-        put?: never;
-        /** POST /groups */
-        post: operations["create_group"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/groups/{id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** GET /groups/{id} */
-        get: operations["get_group"];
-        put?: never;
-        post?: never;
-        /** DELETE /groups/{id} */
-        delete: operations["delete_group"];
-        options?: never;
-        head?: never;
-        /** PATCH /groups/{id} */
-        patch: operations["update_group"];
-        trace?: never;
-    };
-    "/reservations": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["list_reservations"];
-        put?: never;
-        post: operations["create_reservation"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/reservations/check-conflicts": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: operations["check_reservation_conflicts"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/reservations/me": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["list_my_reservations"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/reservations/{id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["get_reservation"];
-        put?: never;
-        post?: never;
-        delete: operations["delete_reservation"];
-        options?: never;
-        head?: never;
-        patch: operations["update_reservation"];
-        trace?: never;
-    };
-    "/resources": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** GET /resources */
-        get: operations["list_resources"];
-        put?: never;
-        /** POST /resources */
-        post: operations["create_resource"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/resources/{id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** GET /resources/{id} */
-        get: operations["get_resource"];
-        put?: never;
-        post?: never;
-        /** DELETE /resources/{id} */
-        delete: operations["delete_resource"];
-        options?: never;
-        head?: never;
-        /** PATCH /resources/{id} */
-        patch: operations["update_resource"];
-        trace?: never;
-    };
-    "/stats": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** GET /stats */
-        get: operations["get_stats"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/users": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["list_users"];
-        put?: never;
-        post: operations["create_user"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/users/me": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["get_me"];
-        put?: never;
-        post?: never;
-        delete: operations["delete_me"];
-        options?: never;
-        head?: never;
-        patch: operations["update_me"];
-        trace?: never;
-    };
-    "/users/{id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["get_user"];
-        put?: never;
-        post?: never;
-        delete: operations["delete_user"];
-        options?: never;
-        head?: never;
-        patch: operations["update_user"];
-        trace?: never;
-    };
+	"/auth/login": {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		/** Login with email and password */
+		post: operations["login"];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	"/auth/logout": {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		/** Logout (Revoke refresh token) */
+		post: operations["logout"];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	"/auth/refresh": {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		/** Exchange a valid Refresh Token for a new Access + Refresh Token pair */
+		post: operations["refresh"];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	"/auth/register": {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		/** Register a new user */
+		post: operations["register"];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	"/collections": {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		/** GET /collections */
+		get: operations["list_collections"];
+		put?: never;
+		/** POST /collections */
+		post: operations["create_collection"];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	"/collections/{id}": {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		/** GET /collections/{id} */
+		get: operations["get_collection"];
+		put?: never;
+		post?: never;
+		/** DELETE /collections/{id} */
+		delete: operations["delete_collection"];
+		options?: never;
+		head?: never;
+		/** PATCH /collections/{id} */
+		patch: operations["update_collection"];
+		trace?: never;
+	};
+	"/contracts": {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		/** GET /contracts */
+		get: operations["list_contracts"];
+		put?: never;
+		/** POST /contracts */
+		post: operations["create_contract"];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	"/contracts/{id}": {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		/** GET /contracts/{id} */
+		get: operations["get_contract"];
+		put?: never;
+		post?: never;
+		/** DELETE /contracts/{id} */
+		delete: operations["delete_contract"];
+		options?: never;
+		head?: never;
+		/** PATCH /contracts/{id} */
+		patch: operations["update_contract"];
+		trace?: never;
+	};
+	"/groups": {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		/** GET /groups */
+		get: operations["list_groups"];
+		put?: never;
+		/** POST /groups */
+		post: operations["create_group"];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	"/groups/{id}": {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		/** GET /groups/{id} */
+		get: operations["get_group"];
+		put?: never;
+		post?: never;
+		/** DELETE /groups/{id} */
+		delete: operations["delete_group"];
+		options?: never;
+		head?: never;
+		/** PATCH /groups/{id} */
+		patch: operations["update_group"];
+		trace?: never;
+	};
+	"/reservations": {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		get: operations["list_reservations"];
+		put?: never;
+		post: operations["create_reservation"];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	"/reservations/check-conflicts": {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		post: operations["check_reservation_conflicts"];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	"/reservations/me": {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		get: operations["list_my_reservations"];
+		put?: never;
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	"/reservations/{id}": {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		get: operations["get_reservation"];
+		put?: never;
+		post?: never;
+		delete: operations["delete_reservation"];
+		options?: never;
+		head?: never;
+		patch: operations["update_reservation"];
+		trace?: never;
+	};
+	"/resources": {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		/** GET /resources */
+		get: operations["list_resources"];
+		put?: never;
+		/** POST /resources */
+		post: operations["create_resource"];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	"/resources/{id}": {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		/** GET /resources/{id} */
+		get: operations["get_resource"];
+		put?: never;
+		post?: never;
+		/** DELETE /resources/{id} */
+		delete: operations["delete_resource"];
+		options?: never;
+		head?: never;
+		/** PATCH /resources/{id} */
+		patch: operations["update_resource"];
+		trace?: never;
+	};
+	"/stats": {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		/** GET /stats */
+		get: operations["get_stats"];
+		put?: never;
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	"/users": {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		get: operations["list_users"];
+		put?: never;
+		post: operations["create_user"];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	"/users/me": {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		get: operations["get_me"];
+		put?: never;
+		post?: never;
+		delete: operations["delete_me"];
+		options?: never;
+		head?: never;
+		patch: operations["update_me"];
+		trace?: never;
+	};
+	"/users/{id}": {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		get: operations["get_user"];
+		put?: never;
+		post?: never;
+		delete: operations["delete_user"];
+		options?: never;
+		head?: never;
+		patch: operations["update_user"];
+		trace?: never;
+	};
 }
 export type webhooks = Record<string, never>;
 export interface components {
-    schemas: {
-        AuthTokens: {
-            access_token: string;
-            /** Format: int64 */
-            expires_in: number;
-            refresh_token: string;
-            token_type: string;
-        };
-        Collection: {
-            /** Format: date-time */
-            created_at: string;
-            /** Format: date-time */
-            deleted_at?: string | null;
-            /** Format: uuid */
-            id: string;
-            name: string;
-            /** Format: date-time */
-            updated_at: string;
-        };
-        Contract: {
-            body: unknown;
-            /** Format: date-time */
-            created_at: string;
-            /** Format: date-time */
-            deleted_at?: string | null;
-            /** Format: uuid */
-            id: string;
-            name: string;
-            /** Format: date-time */
-            updated_at: string;
-        };
-        CreateCollection: {
-            name: string;
-        };
-        CreateContract: {
-            /** @description Tiptap ProseMirror JSON representation */
-            body: unknown;
-            name: string;
-        };
-        CreateGroup: {
-            name: string;
-        };
-        CreateOccurrencePayload: {
-            /** Format: date-time */
-            end_time: string;
-            /** Format: uuid */
-            resource_id: string;
-            /** Format: date-time */
-            start_time: string;
-        };
-        CreateReservationPayload: {
-            admin_notes?: string | null;
-            /** Format: uuid */
-            contract_id?: string | null;
-            description?: string | null;
-            occurrences: components["schemas"]["CreateOccurrencePayload"][];
-            rrule?: string | null;
-            status?: null | components["schemas"]["ReservationStatus"];
-            title: string;
-        };
-        CreateResource: {
-            allow_recurring?: boolean;
-            /** Format: uuid */
-            collection_id: string;
-            name: string;
-        };
-        CreateUser: {
-            email: string;
-            /** Format: uuid */
-            group_id: string;
-            password: string;
-        };
-        Group: {
-            /** Format: date-time */
-            created_at: string;
-            /** Format: uuid */
-            id: string;
-            name: string;
-            /** Format: date-time */
-            updated_at: string;
-        };
-        LoginPayload: {
-            email: string;
-            password: string;
-        };
-        Occurrence: {
-            /** Format: date-time */
-            created_at: string;
-            /** Format: date-time */
-            end_time: string;
-            /** Format: uuid */
-            id: string;
-            /** Format: uuid */
-            reservation_id: string;
-            /** Format: uuid */
-            resource_id: string;
-            /** Format: date-time */
-            start_time: string;
-        };
-        RefreshPayload: {
-            refresh_token: string;
-        };
-        RegisterPayload: {
-            email: string;
-            /** Format: uuid */
-            group_id: string;
-            password: string;
-        };
-        Reservation: {
-            admin_notes?: string | null;
-            /** Format: uuid */
-            contract_id?: string | null;
-            /** Format: date-time */
-            contract_printed_at?: string | null;
-            /** Format: date-time */
-            created_at: string;
-            description?: string | null;
-            /** Format: uuid */
-            id: string;
-            rrule?: string | null;
-            status: components["schemas"]["ReservationStatus"];
-            title: string;
-            /** Format: date-time */
-            updated_at: string;
-            /** Format: uuid */
-            user_id: string;
-        };
-        /** @enum {string} */
-        ReservationStatus: "pending" | "confirmed" | "cancelled";
-        ReservationWithOccurrences: components["schemas"]["Reservation"] & {
-            occurrences: components["schemas"]["Occurrence"][];
-        };
-        Resource: {
-            allow_recurring: boolean;
-            /** Format: uuid */
-            collection_id: string;
-            /** Format: date-time */
-            created_at: string;
-            /** Format: date-time */
-            deleted_at?: string | null;
-            /** Format: uuid */
-            id: string;
-            name: string;
-            /** Format: date-time */
-            updated_at: string;
-        };
-        /** @enum {string} */
-        Role: "admin" | "user";
-        SystemStats: {
-            /** Format: int64 */
-            confirmed_reservations: number;
-            /** Format: int64 */
-            pending_reservations: number;
-            top_resources: components["schemas"]["TopResourceStat"][];
-            /** Format: int64 */
-            total_reservations: number;
-            /** Format: int64 */
-            total_resources: number;
-            /** Format: int64 */
-            total_users: number;
-        };
-        TopResourceStat: {
-            /** Format: int64 */
-            reservation_count: number;
-            /** Format: uuid */
-            resource_id: string;
-            resource_name: string;
-        };
-        UpdateCollection: {
-            name?: string | null;
-        };
-        UpdateContract: {
-            body?: unknown;
-            name?: string | null;
-        };
-        UpdateGroup: {
-            name: string;
-        };
-        UpdateReservationPayload: {
-            admin_notes?: string | null;
-            /** Format: uuid */
-            contract_id?: string | null;
-            description?: string | null;
-            /** @description When set to true, automatically sets `contract_printed_at` to `NOW()` */
-            mark_printed?: boolean | null;
-            occurrences?: components["schemas"]["CreateOccurrencePayload"][] | null;
-            rrule?: string | null;
-            status?: null | components["schemas"]["ReservationStatus"];
-            title?: string | null;
-        };
-        UpdateResource: {
-            allow_recurring?: boolean | null;
-            name?: string | null;
-        };
-        UpdateUser: {
-            email?: string | null;
-            /** Format: uuid */
-            group_id?: string | null;
-            password?: string | null;
-        };
-        User: {
-            /** Format: date-time */
-            created_at: string;
-            email: string;
-            /** Format: uuid */
-            group_id: string;
-            /** Format: uuid */
-            id: string;
-            role: components["schemas"]["Role"];
-            /** Format: date-time */
-            updated_at: string;
-        };
-    };
-    responses: never;
-    parameters: never;
-    requestBodies: never;
-    headers: never;
-    pathItems: never;
+	schemas: {
+		AuthTokens: {
+			access_token: string;
+			/** Format: int64 */
+			expires_in: number;
+			refresh_token: string;
+			token_type: string;
+		};
+		Collection: {
+			/** Format: date-time */
+			created_at: string;
+			/** Format: date-time */
+			deleted_at?: string | null;
+			/** Format: uuid */
+			id: string;
+			name: string;
+			/** Format: date-time */
+			updated_at: string;
+		};
+		Contract: {
+			body: unknown;
+			/** Format: date-time */
+			created_at: string;
+			/** Format: date-time */
+			deleted_at?: string | null;
+			/** Format: uuid */
+			id: string;
+			name: string;
+			/** Format: date-time */
+			updated_at: string;
+		};
+		CreateCollection: {
+			name: string;
+		};
+		CreateContract: {
+			/** @description Tiptap ProseMirror JSON representation */
+			body: unknown;
+			name: string;
+		};
+		CreateGroup: {
+			name: string;
+		};
+		CreateOccurrencePayload: {
+			/** Format: date-time */
+			end_time: string;
+			/** Format: uuid */
+			resource_id: string;
+			/** Format: date-time */
+			start_time: string;
+		};
+		CreateReservationPayload: {
+			admin_notes?: string | null;
+			/** Format: uuid */
+			contract_id?: string | null;
+			description?: string | null;
+			occurrences: components["schemas"]["CreateOccurrencePayload"][];
+			rrule?: string | null;
+			status?: null | components["schemas"]["ReservationStatus"];
+			title: string;
+		};
+		CreateResource: {
+			allow_recurring?: boolean;
+			/** Format: uuid */
+			collection_id: string;
+			name: string;
+		};
+		CreateUser: {
+			email: string;
+			/** Format: uuid */
+			group_id: string;
+			password: string;
+		};
+		Group: {
+			/** Format: date-time */
+			created_at: string;
+			/** Format: uuid */
+			id: string;
+			name: string;
+			/** Format: date-time */
+			updated_at: string;
+		};
+		LoginPayload: {
+			email: string;
+			password: string;
+		};
+		Occurrence: {
+			/** Format: date-time */
+			created_at: string;
+			/** Format: date-time */
+			end_time: string;
+			/** Format: uuid */
+			id: string;
+			/** Format: uuid */
+			reservation_id: string;
+			/** Format: uuid */
+			resource_id: string;
+			/** Format: date-time */
+			start_time: string;
+		};
+		RefreshPayload: {
+			refresh_token: string;
+		};
+		RegisterPayload: {
+			email: string;
+			/** Format: uuid */
+			group_id: string;
+			password: string;
+		};
+		Reservation: {
+			admin_notes?: string | null;
+			/** Format: uuid */
+			contract_id?: string | null;
+			/** Format: date-time */
+			contract_printed_at?: string | null;
+			/** Format: date-time */
+			created_at: string;
+			description?: string | null;
+			/** Format: uuid */
+			id: string;
+			rrule?: string | null;
+			status: components["schemas"]["ReservationStatus"];
+			title: string;
+			/** Format: date-time */
+			updated_at: string;
+			/** Format: uuid */
+			user_id: string;
+		};
+		/** @enum {string} */
+		ReservationStatus: "pending" | "confirmed" | "cancelled";
+		ReservationWithOccurrences: components["schemas"]["Reservation"] & {
+			occurrences: components["schemas"]["Occurrence"][];
+		};
+		Resource: {
+			allow_recurring: boolean;
+			/** Format: uuid */
+			collection_id: string;
+			/** Format: date-time */
+			created_at: string;
+			/** Format: date-time */
+			deleted_at?: string | null;
+			/** Format: uuid */
+			id: string;
+			name: string;
+			/** Format: date-time */
+			updated_at: string;
+		};
+		/** @enum {string} */
+		Role: "admin" | "user";
+		SystemStats: {
+			/** Format: int64 */
+			confirmed_reservations: number;
+			/** Format: int64 */
+			pending_reservations: number;
+			top_resources: components["schemas"]["TopResourceStat"][];
+			/** Format: int64 */
+			total_reservations: number;
+			/** Format: int64 */
+			total_resources: number;
+			/** Format: int64 */
+			total_users: number;
+		};
+		TopResourceStat: {
+			/** Format: int64 */
+			reservation_count: number;
+			/** Format: uuid */
+			resource_id: string;
+			resource_name: string;
+		};
+		UpdateCollection: {
+			name?: string | null;
+		};
+		UpdateContract: {
+			body?: unknown;
+			name?: string | null;
+		};
+		UpdateGroup: {
+			name: string;
+		};
+		UpdateReservationPayload: {
+			admin_notes?: string | null;
+			/** Format: uuid */
+			contract_id?: string | null;
+			description?: string | null;
+			/** @description When set to true, automatically sets `contract_printed_at` to `NOW()` */
+			mark_printed?: boolean | null;
+			occurrences?: components["schemas"]["CreateOccurrencePayload"][] | null;
+			rrule?: string | null;
+			status?: null | components["schemas"]["ReservationStatus"];
+			title?: string | null;
+		};
+		UpdateResource: {
+			allow_recurring?: boolean | null;
+			name?: string | null;
+		};
+		UpdateUser: {
+			email?: string | null;
+			/** Format: uuid */
+			group_id?: string | null;
+			password?: string | null;
+		};
+		User: {
+			/** Format: date-time */
+			created_at: string;
+			email: string;
+			/** Format: uuid */
+			group_id: string;
+			/** Format: uuid */
+			id: string;
+			role: components["schemas"]["Role"];
+			/** Format: date-time */
+			updated_at: string;
+		};
+	};
+	responses: never;
+	parameters: never;
+	requestBodies: never;
+	headers: never;
+	pathItems: never;
 }
 export type $defs = Record<string, never>;
 export interface operations {
-    login: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["LoginPayload"];
-            };
-        };
-        responses: {
-            /** @description Login successful */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["AuthTokens"];
-                };
-            };
-            /** @description Invalid credentials */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    logout: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["RefreshPayload"];
-            };
-        };
-        responses: {
-            /** @description Logged out successfully */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    refresh: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["RefreshPayload"];
-            };
-        };
-        responses: {
-            /** @description Token refreshed successfully */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["AuthTokens"];
-                };
-            };
-            /** @description Invalid or expired refresh token */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    register: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["RegisterPayload"];
-            };
-        };
-        responses: {
-            /** @description User registered successfully */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["AuthTokens"];
-                };
-            };
-            /** @description Email already registered */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Validation error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    list_collections: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description List of active collections */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Collection"][];
-                };
-            };
-        };
-    };
-    create_collection: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CreateCollection"];
-            };
-        };
-        responses: {
-            /** @description Collection created successfully */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Collection"];
-                };
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Forbidden - Admin access required */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Collection name conflict */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Validation error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    get_collection: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description Collection UUID */
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Collection details */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Collection"];
-                };
-            };
-            /** @description Collection not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    delete_collection: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description Collection UUID */
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Collection soft-deleted successfully */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Forbidden - Admin access required */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Collection not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    update_collection: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description Collection UUID */
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["UpdateCollection"];
-            };
-        };
-        responses: {
-            /** @description Collection updated successfully */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Collection"];
-                };
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Forbidden - Admin access required */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Collection not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Collection name conflict */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Validation error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    list_contracts: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description List of active contracts */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Contract"][];
-                };
-            };
-        };
-    };
-    create_contract: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CreateContract"];
-            };
-        };
-        responses: {
-            /** @description Contract created successfully */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Contract"];
-                };
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Forbidden - Admin access required */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Contract name conflict */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Validation error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    get_contract: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description Contract UUID */
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Contract details */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Contract"];
-                };
-            };
-            /** @description Contract not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    delete_contract: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description Contract UUID */
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Contract soft-deleted successfully */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Forbidden - Admin access required */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Contract not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    update_contract: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description Contract UUID */
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["UpdateContract"];
-            };
-        };
-        responses: {
-            /** @description Contract updated successfully */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Contract"];
-                };
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Forbidden - Admin access required */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Contract not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Contract name conflict */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Validation error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    list_groups: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description List all active groups */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Group"][];
-                };
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    create_group: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CreateGroup"];
-            };
-        };
-        responses: {
-            /** @description Group created */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Group"];
-                };
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Forbidden - Admin access required */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Group name already exists */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Validation error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    get_group: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description Group ID */
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Group details */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Group"];
-                };
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Group not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    delete_group: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description Group ID */
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Group deleted */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Forbidden - Admin access required */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Group not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    update_group: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description Group ID */
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["UpdateGroup"];
-            };
-        };
-        responses: {
-            /** @description Group updated */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Group"];
-                };
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Forbidden - Admin access required */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Group not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Validation error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    list_reservations: {
-        parameters: {
-            query?: {
-                start_date?: string | null;
-                end_date?: string | null;
-                resource_id?: string | null;
-                status?: null | components["schemas"]["ReservationStatus"];
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Public calendar reservations */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ReservationWithOccurrences"][];
-                };
-            };
-            /** @description Invalid date window or range exceeds maximum limit */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Validation error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    create_reservation: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CreateReservationPayload"];
-            };
-        };
-        responses: {
-            /** @description Reservation created successfully */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ReservationWithOccurrences"];
-                };
-            };
-            /** @description Invalid occurrence interval times */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Forbidden - Recurrence disallowed for one or more resources */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Validation error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    check_reservation_conflicts: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CreateOccurrencePayload"][];
-            };
-        };
-        responses: {
-            /** @description List of conflicting occurrences */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Occurrence"][];
-                };
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    list_my_reservations: {
-        parameters: {
-            query?: {
-                start_date?: string | null;
-                end_date?: string | null;
-                resource_id?: string | null;
-                status?: null | components["schemas"]["ReservationStatus"];
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Current user's own reservations */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ReservationWithOccurrences"][];
-                };
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    get_reservation: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description Reservation UUID */
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Reservation details */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ReservationWithOccurrences"];
-                };
-            };
-            /** @description Reservation not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    delete_reservation: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description Reservation UUID */
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Reservation soft-deleted successfully */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Reservation not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    update_reservation: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description Reservation UUID */
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["UpdateReservationPayload"];
-            };
-        };
-        responses: {
-            /** @description Reservation updated successfully */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ReservationWithOccurrences"];
-                };
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Forbidden - Admin access required */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Reservation not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Validation error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    list_resources: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description List of active resources */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Resource"][];
-                };
-            };
-        };
-    };
-    create_resource: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CreateResource"];
-            };
-        };
-        responses: {
-            /** @description Resource created successfully */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Resource"];
-                };
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Forbidden - Admin access required */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Resource name conflict in collection */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Validation error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    get_resource: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description Resource UUID */
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Resource details */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Resource"];
-                };
-            };
-            /** @description Resource not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    delete_resource: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description Resource UUID */
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Resource soft-deleted successfully */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Forbidden - Admin access required */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Resource not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    update_resource: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description Resource UUID */
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["UpdateResource"];
-            };
-        };
-        responses: {
-            /** @description Resource updated successfully */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Resource"];
-                };
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Forbidden - Admin access required */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Resource not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Resource name conflict */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Validation error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    get_stats: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description System usage and metrics breakdown */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SystemStats"];
-                };
-            };
-        };
-    };
-    list_users: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description List all active users */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["User"][];
-                };
-            };
-        };
-    };
-    create_user: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CreateUser"];
-            };
-        };
-        responses: {
-            /** @description User created */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["User"];
-                };
-            };
-            /** @description Group does not exist */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Email already exists */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    get_me: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Current authenticated user profile */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["User"];
-                };
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    delete_me: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Current user account deleted */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    update_me: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["UpdateUser"];
-            };
-        };
-        responses: {
-            /** @description Current user updated */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["User"];
-                };
-            };
-            /** @description Email already in use */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    get_user: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description User ID */
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description User details */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["User"];
-                };
-            };
-            /** @description User not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    delete_user: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description User ID */
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description User deleted */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description User not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    update_user: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description User ID */
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["UpdateUser"];
-            };
-        };
-        responses: {
-            /** @description User updated */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["User"];
-                };
-            };
-            /** @description User not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
+	login: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				"application/json": components["schemas"]["LoginPayload"];
+			};
+		};
+		responses: {
+			/** @description Login successful */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					"application/json": components["schemas"]["AuthTokens"];
+				};
+			};
+			/** @description Invalid credentials */
+			401: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+		};
+	};
+	logout: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				"application/json": components["schemas"]["RefreshPayload"];
+			};
+		};
+		responses: {
+			/** @description Logged out successfully */
+			204: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+		};
+	};
+	refresh: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				"application/json": components["schemas"]["RefreshPayload"];
+			};
+		};
+		responses: {
+			/** @description Token refreshed successfully */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					"application/json": components["schemas"]["AuthTokens"];
+				};
+			};
+			/** @description Invalid or expired refresh token */
+			401: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+		};
+	};
+	register: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				"application/json": components["schemas"]["RegisterPayload"];
+			};
+		};
+		responses: {
+			/** @description User registered successfully */
+			201: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					"application/json": components["schemas"]["AuthTokens"];
+				};
+			};
+			/** @description Email already registered */
+			409: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			/** @description Validation error */
+			422: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+		};
+	};
+	list_collections: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description List of active collections */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					"application/json": components["schemas"]["Collection"][];
+				};
+			};
+		};
+	};
+	create_collection: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				"application/json": components["schemas"]["CreateCollection"];
+			};
+		};
+		responses: {
+			/** @description Collection created successfully */
+			201: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					"application/json": components["schemas"]["Collection"];
+				};
+			};
+			/** @description Unauthorized */
+			401: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			/** @description Forbidden - Admin access required */
+			403: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			/** @description Collection name conflict */
+			409: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			/** @description Validation error */
+			422: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+		};
+	};
+	get_collection: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				/** @description Collection UUID */
+				id: string;
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Collection details */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					"application/json": components["schemas"]["Collection"];
+				};
+			};
+			/** @description Collection not found */
+			404: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+		};
+	};
+	delete_collection: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				/** @description Collection UUID */
+				id: string;
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Collection soft-deleted successfully */
+			204: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			/** @description Unauthorized */
+			401: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			/** @description Forbidden - Admin access required */
+			403: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			/** @description Collection not found */
+			404: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+		};
+	};
+	update_collection: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				/** @description Collection UUID */
+				id: string;
+			};
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				"application/json": components["schemas"]["UpdateCollection"];
+			};
+		};
+		responses: {
+			/** @description Collection updated successfully */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					"application/json": components["schemas"]["Collection"];
+				};
+			};
+			/** @description Unauthorized */
+			401: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			/** @description Forbidden - Admin access required */
+			403: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			/** @description Collection not found */
+			404: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			/** @description Collection name conflict */
+			409: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			/** @description Validation error */
+			422: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+		};
+	};
+	list_contracts: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description List of active contracts */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					"application/json": components["schemas"]["Contract"][];
+				};
+			};
+		};
+	};
+	create_contract: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				"application/json": components["schemas"]["CreateContract"];
+			};
+		};
+		responses: {
+			/** @description Contract created successfully */
+			201: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					"application/json": components["schemas"]["Contract"];
+				};
+			};
+			/** @description Unauthorized */
+			401: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			/** @description Forbidden - Admin access required */
+			403: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			/** @description Contract name conflict */
+			409: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			/** @description Validation error */
+			422: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+		};
+	};
+	get_contract: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				/** @description Contract UUID */
+				id: string;
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Contract details */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					"application/json": components["schemas"]["Contract"];
+				};
+			};
+			/** @description Contract not found */
+			404: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+		};
+	};
+	delete_contract: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				/** @description Contract UUID */
+				id: string;
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Contract soft-deleted successfully */
+			204: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			/** @description Unauthorized */
+			401: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			/** @description Forbidden - Admin access required */
+			403: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			/** @description Contract not found */
+			404: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+		};
+	};
+	update_contract: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				/** @description Contract UUID */
+				id: string;
+			};
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				"application/json": components["schemas"]["UpdateContract"];
+			};
+		};
+		responses: {
+			/** @description Contract updated successfully */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					"application/json": components["schemas"]["Contract"];
+				};
+			};
+			/** @description Unauthorized */
+			401: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			/** @description Forbidden - Admin access required */
+			403: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			/** @description Contract not found */
+			404: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			/** @description Contract name conflict */
+			409: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			/** @description Validation error */
+			422: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+		};
+	};
+	list_groups: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description List all active groups */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					"application/json": components["schemas"]["Group"][];
+				};
+			};
+			/** @description Unauthorized */
+			401: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+		};
+	};
+	create_group: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				"application/json": components["schemas"]["CreateGroup"];
+			};
+		};
+		responses: {
+			/** @description Group created */
+			201: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					"application/json": components["schemas"]["Group"];
+				};
+			};
+			/** @description Unauthorized */
+			401: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			/** @description Forbidden - Admin access required */
+			403: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			/** @description Group name already exists */
+			409: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			/** @description Validation error */
+			422: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+		};
+	};
+	get_group: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				/** @description Group ID */
+				id: string;
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Group details */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					"application/json": components["schemas"]["Group"];
+				};
+			};
+			/** @description Unauthorized */
+			401: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			/** @description Group not found */
+			404: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+		};
+	};
+	delete_group: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				/** @description Group ID */
+				id: string;
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Group deleted */
+			204: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			/** @description Unauthorized */
+			401: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			/** @description Forbidden - Admin access required */
+			403: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			/** @description Group not found */
+			404: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+		};
+	};
+	update_group: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				/** @description Group ID */
+				id: string;
+			};
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				"application/json": components["schemas"]["UpdateGroup"];
+			};
+		};
+		responses: {
+			/** @description Group updated */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					"application/json": components["schemas"]["Group"];
+				};
+			};
+			/** @description Unauthorized */
+			401: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			/** @description Forbidden - Admin access required */
+			403: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			/** @description Group not found */
+			404: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			/** @description Validation error */
+			422: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+		};
+	};
+	list_reservations: {
+		parameters: {
+			query?: {
+				start_date?: string | null;
+				end_date?: string | null;
+				resource_id?: string | null;
+				status?: null | components["schemas"]["ReservationStatus"];
+			};
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Public calendar reservations */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					"application/json": components["schemas"]["ReservationWithOccurrences"][];
+				};
+			};
+			/** @description Invalid date window or range exceeds maximum limit */
+			400: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			/** @description Validation error */
+			422: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+		};
+	};
+	create_reservation: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				"application/json": components["schemas"]["CreateReservationPayload"];
+			};
+		};
+		responses: {
+			/** @description Reservation created successfully */
+			201: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					"application/json": components["schemas"]["ReservationWithOccurrences"];
+				};
+			};
+			/** @description Invalid occurrence interval times */
+			400: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			/** @description Unauthorized */
+			401: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			/** @description Forbidden - Recurrence disallowed for one or more resources */
+			403: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			/** @description Validation error */
+			422: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+		};
+	};
+	check_reservation_conflicts: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				"application/json": components["schemas"]["CreateOccurrencePayload"][];
+			};
+		};
+		responses: {
+			/** @description List of conflicting occurrences */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					"application/json": components["schemas"]["Occurrence"][];
+				};
+			};
+			/** @description Unauthorized */
+			401: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+		};
+	};
+	list_my_reservations: {
+		parameters: {
+			query?: {
+				start_date?: string | null;
+				end_date?: string | null;
+				resource_id?: string | null;
+				status?: null | components["schemas"]["ReservationStatus"];
+			};
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Current user's own reservations */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					"application/json": components["schemas"]["ReservationWithOccurrences"][];
+				};
+			};
+			/** @description Unauthorized */
+			401: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+		};
+	};
+	get_reservation: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				/** @description Reservation UUID */
+				id: string;
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Reservation details */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					"application/json": components["schemas"]["ReservationWithOccurrences"];
+				};
+			};
+			/** @description Reservation not found */
+			404: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+		};
+	};
+	delete_reservation: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				/** @description Reservation UUID */
+				id: string;
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Reservation soft-deleted successfully */
+			204: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			/** @description Unauthorized */
+			401: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			/** @description Reservation not found */
+			404: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+		};
+	};
+	update_reservation: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				/** @description Reservation UUID */
+				id: string;
+			};
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				"application/json": components["schemas"]["UpdateReservationPayload"];
+			};
+		};
+		responses: {
+			/** @description Reservation updated successfully */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					"application/json": components["schemas"]["ReservationWithOccurrences"];
+				};
+			};
+			/** @description Unauthorized */
+			401: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			/** @description Forbidden - Admin access required */
+			403: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			/** @description Reservation not found */
+			404: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			/** @description Validation error */
+			422: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+		};
+	};
+	list_resources: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description List of active resources */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					"application/json": components["schemas"]["Resource"][];
+				};
+			};
+		};
+	};
+	create_resource: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				"application/json": components["schemas"]["CreateResource"];
+			};
+		};
+		responses: {
+			/** @description Resource created successfully */
+			201: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					"application/json": components["schemas"]["Resource"];
+				};
+			};
+			/** @description Unauthorized */
+			401: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			/** @description Forbidden - Admin access required */
+			403: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			/** @description Resource name conflict in collection */
+			409: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			/** @description Validation error */
+			422: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+		};
+	};
+	get_resource: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				/** @description Resource UUID */
+				id: string;
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Resource details */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					"application/json": components["schemas"]["Resource"];
+				};
+			};
+			/** @description Resource not found */
+			404: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+		};
+	};
+	delete_resource: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				/** @description Resource UUID */
+				id: string;
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Resource soft-deleted successfully */
+			204: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			/** @description Unauthorized */
+			401: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			/** @description Forbidden - Admin access required */
+			403: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			/** @description Resource not found */
+			404: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+		};
+	};
+	update_resource: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				/** @description Resource UUID */
+				id: string;
+			};
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				"application/json": components["schemas"]["UpdateResource"];
+			};
+		};
+		responses: {
+			/** @description Resource updated successfully */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					"application/json": components["schemas"]["Resource"];
+				};
+			};
+			/** @description Unauthorized */
+			401: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			/** @description Forbidden - Admin access required */
+			403: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			/** @description Resource not found */
+			404: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			/** @description Resource name conflict */
+			409: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			/** @description Validation error */
+			422: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+		};
+	};
+	get_stats: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description System usage and metrics breakdown */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					"application/json": components["schemas"]["SystemStats"];
+				};
+			};
+		};
+	};
+	list_users: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description List all active users */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					"application/json": components["schemas"]["User"][];
+				};
+			};
+		};
+	};
+	create_user: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				"application/json": components["schemas"]["CreateUser"];
+			};
+		};
+		responses: {
+			/** @description User created */
+			201: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					"application/json": components["schemas"]["User"];
+				};
+			};
+			/** @description Group does not exist */
+			400: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			/** @description Email already exists */
+			409: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+		};
+	};
+	get_me: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Current authenticated user profile */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					"application/json": components["schemas"]["User"];
+				};
+			};
+			/** @description Unauthorized */
+			401: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+		};
+	};
+	delete_me: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Current user account deleted */
+			204: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+		};
+	};
+	update_me: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				"application/json": components["schemas"]["UpdateUser"];
+			};
+		};
+		responses: {
+			/** @description Current user updated */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					"application/json": components["schemas"]["User"];
+				};
+			};
+			/** @description Email already in use */
+			409: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+		};
+	};
+	get_user: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				/** @description User ID */
+				id: string;
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description User details */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					"application/json": components["schemas"]["User"];
+				};
+			};
+			/** @description User not found */
+			404: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+		};
+	};
+	delete_user: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				/** @description User ID */
+				id: string;
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description User deleted */
+			204: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			/** @description User not found */
+			404: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+		};
+	};
+	update_user: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				/** @description User ID */
+				id: string;
+			};
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				"application/json": components["schemas"]["UpdateUser"];
+			};
+		};
+		responses: {
+			/** @description User updated */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					"application/json": components["schemas"]["User"];
+				};
+			};
+			/** @description User not found */
+			404: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+		};
+	};
 }

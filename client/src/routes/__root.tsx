@@ -1,15 +1,15 @@
 // src/routes/__root.tsx
-import { createRootRouteWithContext, Outlet } from '@tanstack/react-router'
-import type { QueryClient } from '@tanstack/react-query'
+import { createRootRouteWithContext, Outlet } from "@tanstack/react-router";
+import type { QueryClient } from "@tanstack/react-query";
 
 export interface RouterContext {
-    queryClient: QueryClient
+	queryClient: QueryClient;
 }
 
 export const Route = createRootRouteWithContext<RouterContext>()({
-    component: RootComponent,
-})
+	component: RootComponent,
+});
 
 function RootComponent() {
-    return <Outlet />
+	return <Outlet />;
 }

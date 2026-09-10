@@ -1,171 +1,190 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { api } from '#/api/client'
-import type { components } from '#/api/schema'
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { api } from "#/api/client";
+import type { components } from "#/api/schema";
 
-export type Reservation = components['schemas']['Reservation']
-export type ReservationWithOccurrences = components['schemas']['ReservationWithOccurrences']
-export type CreateReservationPayload = components['schemas']['CreateReservationPayload']
-export type UpdateReservationPayload = components['schemas']['UpdateReservationPayload']
-export type ReservationStatus = components['schemas']['ReservationStatus']
+export type Reservation = components["schemas"]["Reservation"];
+export type ReservationWithOccurrences =
+	components["schemas"]["ReservationWithOccurrences"];
+export type CreateReservationPayload =
+	components["schemas"]["CreateReservationPayload"];
+export type UpdateReservationPayload =
+	components["schemas"]["UpdateReservationPayload"];
+export type ReservationStatus = components["schemas"]["ReservationStatus"];
 
 export interface ReservationFilterParams {
-    startDate: string
-    endDate: string
-    resourceId?: string
-    status?: ReservationStatus
+	startDate: string;
+	endDate: string;
+	resourceId?: string;
+	status?: ReservationStatus;
 }
 
 export const reservationKeys = {
-    all: ['reservations'] as const,
-    lists: () => [...reservationKeys.all, 'list'] as const,
-    list: (params: ReservationFilterParams) => [...reservationKeys.lists(), params] as const,
-    myLists: () => [...reservationKeys.all, 'my-list'] as const,
-    myList: (params: ReservationFilterParams) => [...reservationKeys.myLists(), params] as const,
-    details: () => [...reservationKeys.all, 'detail'] as const,
-    detail: (id: string) => [...reservationKeys.details(), id] as const,
-}
+	all: ["reservations"] as const,
+	lists: () => [...reservationKeys.all, "list"] as const,
+	list: (params: ReservationFilterParams) =>
+		[...reservationKeys.lists(), params] as const,
+	myLists: () => [...reservationKeys.all, "my-list"] as const,
+	myList: (params: ReservationFilterParams) =>
+		[...reservationKeys.myLists(), params] as const,
+	details: () => [...reservationKeys.all, "detail"] as const,
+	detail: (id: string) => [...reservationKeys.details(), id] as const,
+};
 
 /** Fetches all active reservations within date/resource filters (Public calendar or Admin dashboard) */
 export function useReservations(params: ReservationFilterParams) {
-    return useQuery({
-        queryKey: reservationKeys.list(params),
-        queryFn: async () => {
-            const { data, error } = await api.GET('/reservations', {
-                params: {
-                    query: {
-                        start_date: params.startDate,
-                        end_date: params.endDate,
-                        resource_id: params.resourceId,
-                        status: params.status,
-                    },
-                },
-            })
-            if (error || !data) throw new Error('Varauksien hakeminen epäonnistui.')
-            return data
-        },
-        enabled: Boolean(params.startDate && params.endDate),
-        staleTime: 1000 * 60 * 5,
-    })
+	return useQuery({
+		queryKey: reservationKeys.list(params),
+		queryFn: async () => {
+			const { data, error } = await api.GET("/reservations", {
+				params: {
+					query: {
+						start_date: params.startDate,
+						end_date: params.endDate,
+						resource_id: params.resourceId,
+						status: params.status,
+					},
+				},
+			});
+			if (error || !data) throw new Error("Varauksien hakeminen epäonnistui.");
+			return data;
+		},
+		enabled: Boolean(params.startDate && params.endDate),
+		staleTime: 1000 * 60 * 5,
+	});
 }
 
 /** Strictly fetches ONLY the authenticated user's own reservations */
 export function useMyReservations(params: ReservationFilterParams) {
-    const hasValidDates = Boolean(
-        params?.startDate &&
-        params?.endDate &&
-        params.startDate.trim() !== '' &&
-        params.endDate.trim() !== ''
-    )
+	const hasValidDates = Boolean(
+		params?.startDate &&
+			params?.endDate &&
+			params.startDate.trim() !== "" &&
+			params.endDate.trim() !== "",
+	);
 
-    return useQuery({
-        queryKey: reservationKeys.myList(params),
-        queryFn: async () => {
-            const { data, error } = await api.GET('/reservations/me', {
-                params: {
-                    query: {
-                        start_date: params.startDate,
-                        end_date: params.endDate,
-                        resource_id: params.resourceId || undefined,
-                        status: params.status || undefined,
-                    },
-                },
-            })
-            if (error || !data) throw new Error('Omien varausten hakeminen epäonnistui.')
-            return data
-        },
-        enabled: hasValidDates,
-        staleTime: 1000 * 60 * 5,
-    })
+	return useQuery({
+		queryKey: reservationKeys.myList(params),
+		queryFn: async () => {
+			const { data, error } = await api.GET("/reservations/me", {
+				params: {
+					query: {
+						start_date: params.startDate,
+						end_date: params.endDate,
+						resource_id: params.resourceId || undefined,
+						status: params.status || undefined,
+					},
+				},
+			});
+			if (error || !data)
+				throw new Error("Omien varausten hakeminen epäonnistui.");
+			return data;
+		},
+		enabled: hasValidDates,
+		staleTime: 1000 * 60 * 5,
+	});
 }
 
 export function useReservation(id: string) {
-    return useQuery({
-        queryKey: reservationKeys.detail(id),
-        queryFn: async () => {
-            const { data, error } = await api.GET('/reservations/{id}', {
-                params: { path: { id } },
-            })
-            if (error || !data) throw new Error('Varauksen tiedot ei löytynyt.')
-            return data
-        },
-        enabled: Boolean(id),
-    })
+	return useQuery({
+		queryKey: reservationKeys.detail(id),
+		queryFn: async () => {
+			const { data, error } = await api.GET("/reservations/{id}", {
+				params: { path: { id } },
+			});
+			if (error || !data) throw new Error("Varauksen tiedot ei löytynyt.");
+			return data;
+		},
+		enabled: Boolean(id),
+	});
 }
 
 export function useCreateReservation() {
-    const queryClient = useQueryClient()
+	const queryClient = useQueryClient();
 
-    return useMutation({
-        mutationFn: async (payload: CreateReservationPayload) => {
-            const { data, error } = await api.POST('/reservations', { body: payload })
+	return useMutation({
+		mutationFn: async (payload: CreateReservationPayload) => {
+			const { data, error } = await api.POST("/reservations", {
+				body: payload,
+			});
 
-            if (error) {
-                // If backend returns a message object or string, propagate it
-                const message = typeof error === 'object' && error !== null && 'message' in error
-                    ? (error as { message: string }).message
-                    : 'Varauksen luominen epäonnistui.'
-                throw new Error(message)
-            }
-            if (!data) throw new Error('Varauksen luominen epäonnistui.')
-            return data
-        },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: reservationKeys.all })
-        },
-    })
+			if (error) {
+				// If backend returns a message object or string, propagate it
+				const message =
+					typeof error === "object" && error !== null && "message" in error
+						? (error as { message: string }).message
+						: "Varauksen luominen epäonnistui.";
+				throw new Error(message);
+			}
+			if (!data) throw new Error("Varauksen luominen epäonnistui.");
+			return data;
+		},
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: reservationKeys.all });
+		},
+	});
 }
 
 export function useUpdateReservation() {
-    const queryClient = useQueryClient()
+	const queryClient = useQueryClient();
 
-    return useMutation({
-        mutationFn: async ({ id, payload }: { id: string; payload: UpdateReservationPayload }) => {
-            const { data, error } = await api.PATCH('/reservations/{id}', {
-                params: { path: { id } },
-                body: payload,
-            })
-            if (error || !data) throw new Error('Varauksen päivitys epäonnistui.')
-            return data
-        },
-        onSuccess: (updatedReservation) => {
-            queryClient.setQueryData(
-                reservationKeys.detail(updatedReservation.id),
-                updatedReservation
-            )
-            queryClient.invalidateQueries({ queryKey: reservationKeys.all })
-        },
-    })
+	return useMutation({
+		mutationFn: async ({
+			id,
+			payload,
+		}: {
+			id: string;
+			payload: UpdateReservationPayload;
+		}) => {
+			const { data, error } = await api.PATCH("/reservations/{id}", {
+				params: { path: { id } },
+				body: payload,
+			});
+			if (error || !data) throw new Error("Varauksen päivitys epäonnistui.");
+			return data;
+		},
+		onSuccess: (updatedReservation) => {
+			queryClient.setQueryData(
+				reservationKeys.detail(updatedReservation.id),
+				updatedReservation,
+			);
+			queryClient.invalidateQueries({ queryKey: reservationKeys.all });
+		},
+	});
 }
 
 export function useDeleteReservation() {
-    const queryClient = useQueryClient()
+	const queryClient = useQueryClient();
 
-    return useMutation({
-        mutationFn: async (id: string) => {
-            const { error } = await api.DELETE('/reservations/{id}', {
-                params: { path: { id } },
-            })
-            if (error) throw new Error('Varauksen poisto epäonnistui.')
-            return id
-        },
-        onSuccess: (deletedId) => {
-            queryClient.removeQueries({ queryKey: reservationKeys.detail(deletedId) })
-            queryClient.invalidateQueries({ queryKey: reservationKeys.all })
-        },
-    })
+	return useMutation({
+		mutationFn: async (id: string) => {
+			const { error } = await api.DELETE("/reservations/{id}", {
+				params: { path: { id } },
+			});
+			if (error) throw new Error("Varauksen poisto epäonnistui.");
+			return id;
+		},
+		onSuccess: (deletedId) => {
+			queryClient.removeQueries({
+				queryKey: reservationKeys.detail(deletedId),
+			});
+			queryClient.invalidateQueries({ queryKey: reservationKeys.all });
+		},
+	});
 }
 
-export type CreateOccurrencePayload = components['schemas']['CreateOccurrencePayload']
-export type Occurrence = components['schemas']['Occurrence']
+export type CreateOccurrencePayload =
+	components["schemas"]["CreateOccurrencePayload"];
+export type Occurrence = components["schemas"]["Occurrence"];
 
 export function useCheckConflicts() {
-    return useMutation({
-        mutationFn: async (occurrences: CreateOccurrencePayload[]) => {
-            const { data, error } = await api.POST('/reservations/check-conflicts', {
-                body: occurrences,
-            })
-            if (error || !data) throw new Error('Ristiriitojen tarkistus epäonnistui.')
-            return data
-        },
-    })
+	return useMutation({
+		mutationFn: async (occurrences: CreateOccurrencePayload[]) => {
+			const { data, error } = await api.POST("/reservations/check-conflicts", {
+				body: occurrences,
+			});
+			if (error || !data)
+				throw new Error("Ristiriitojen tarkistus epäonnistui.");
+			return data;
+		},
+	});
 }
