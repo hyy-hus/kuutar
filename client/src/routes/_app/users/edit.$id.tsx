@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { UserForm, type UserFormValues } from "#/components/UserForm";
-import { useUser, useUpdateUser } from "#/hooks/useUsers";
+import { useUpdateUser, useUser } from "#/hooks/useUsers";
 import { requireAuthGuard } from "#/utils/authGuard";
 
 export const Route = createFileRoute("/_app/users/edit/$id")({

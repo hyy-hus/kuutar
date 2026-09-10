@@ -1,14 +1,14 @@
 // client/src/routes/_app/stats.tsx
 import { createFileRoute } from "@tanstack/react-router";
 import {
+	AlertCircle,
 	Bookmark,
 	Box,
-	Users,
-	Clock,
 	CheckCircle2,
-	TrendingUp,
+	Clock,
 	Loader2,
-	AlertCircle,
+	TrendingUp,
+	Users,
 } from "lucide-react";
 import { useStats } from "#/hooks/useStats";
 

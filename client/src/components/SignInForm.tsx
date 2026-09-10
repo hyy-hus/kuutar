@@ -1,9 +1,9 @@
 import { useForm } from "@tanstack/react-form";
-import { Loader2, ArrowRight } from "lucide-react";
-import { Input } from "#/components/Input";
-import { Button } from "#/components/Button";
-import { useAuth } from "#/hooks/useAuth";
+import { ArrowRight, Loader2 } from "lucide-react";
 import type { components } from "#/api/schema";
+import { Button } from "#/components/Button";
+import { Input } from "#/components/Input";
+import { useAuth } from "#/hooks/useAuth";
 
 type LoginPayload = components["schemas"]["LoginPayload"];
 

@@ -1,6 +1,6 @@
 // src/routes/sandbox.tsx
 import { createFileRoute } from "@tanstack/react-router";
-import { Plus, RefreshCcw, Trash2, Search } from "lucide-react";
+import { Plus, RefreshCcw, Search, Trash2 } from "lucide-react";
 import { Button } from "#/components/Button";
 import { Input } from "#/components/Input";
 

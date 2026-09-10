@@ -1,12 +1,13 @@
 // src/components/SearchBar.tsx
-import { Search, X, Calendar, Box, Loader2 } from "lucide-react";
-import { Popover } from "radix-ui";
-import { useState, useRef, useEffect } from "react";
+
 import { useNavigate } from "@tanstack/react-router";
-import { Input } from "#/components/Input";
+import { Box, Calendar, Loader2, Search, X } from "lucide-react";
+import { Popover } from "radix-ui";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "#/components/Button";
-import { cn } from "#/utils/cn";
+import { Input } from "#/components/Input";
 import { useSearch } from "#/hooks/useSearch";
+import { cn } from "#/utils/cn";
 
 export interface SearchBarProps {
 	onSearch?: (query: string) => void;

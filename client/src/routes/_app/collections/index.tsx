@@ -1,11 +1,11 @@
 // src/routes/_app/collections/index.tsx
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Eye, Loader2, Plus, Layers } from "lucide-react";
+import { Eye, Layers, Loader2, Plus } from "lucide-react";
 import { Button } from "#/components/Button";
 import { Chip } from "#/components/Chip";
-import { useCollections, type Collection } from "#/hooks/useCollections";
-import { useResources } from "#/hooks/useResorces";
 import { useIsAdmin } from "#/hooks/useAuth";
+import { type Collection, useCollections } from "#/hooks/useCollections";
+import { useResources } from "#/hooks/useResorces";
 import { readable_uuid } from "#/utils/uuid";
 
 export const Route = createFileRoute("/_app/collections/")({

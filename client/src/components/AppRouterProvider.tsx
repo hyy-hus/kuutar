@@ -1,7 +1,7 @@
 import { RouterProvider } from "@tanstack/react-router";
-import { getRouter } from "#/router";
 import { useAuth } from "#/hooks/useAuth";
 import { getContext } from "#/integrations/tanstack-query/root-provider";
+import { getRouter } from "#/router";
 
 const router = getRouter();
 

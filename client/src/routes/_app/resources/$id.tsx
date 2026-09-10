@@ -1,12 +1,12 @@
 // src/routes/resources/$id.tsx
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { Edit, Trash2, ArrowLeft } from "lucide-react";
+import { ArrowLeft, Edit, Trash2 } from "lucide-react";
 import { Button } from "#/components/Button";
-import { useResource, useDeleteResource } from "#/hooks/useResorces";
-import { useCollection } from "#/hooks/useCollections";
-import { readable_uuid } from "#/utils/uuid";
 import { Chip } from "#/components/Chip";
+import { useCollection } from "#/hooks/useCollections";
+import { useDeleteResource, useResource } from "#/hooks/useResorces";
 import { formatDate } from "#/utils/date";
+import { readable_uuid } from "#/utils/uuid";
 
 export const Route = createFileRoute("/_app/resources/$id")({
 	component: ViewResourcePage,

@@ -1,12 +1,12 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { Edit, Trash2, ArrowLeft, ShieldAlert, KeyRound } from "lucide-react";
+import { ArrowLeft, Edit, KeyRound, ShieldAlert, Trash2 } from "lucide-react";
 import { Button } from "#/components/Button";
-import { useUser, useDeleteUser } from "#/hooks/useUsers";
-import { useGroup } from "#/hooks/useGroups";
-import { readable_uuid } from "#/utils/uuid";
 import { Chip } from "#/components/Chip";
-import { formatDate } from "#/utils/date";
+import { useGroup } from "#/hooks/useGroups";
+import { useDeleteUser, useUser } from "#/hooks/useUsers";
 import { requireAuthGuard } from "#/utils/authGuard";
+import { formatDate } from "#/utils/date";
+import { readable_uuid } from "#/utils/uuid";
 
 export const Route = createFileRoute("/_app/users/$id")({
 	beforeLoad: async ({ context }) => {

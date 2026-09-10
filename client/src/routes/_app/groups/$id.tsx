@@ -1,11 +1,11 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { Edit, Trash2, ArrowLeft } from "lucide-react";
+import { ArrowLeft, Edit, Trash2 } from "lucide-react";
 import { Button } from "#/components/Button";
-import { useGroup, useDeleteGroup } from "#/hooks/useGroups";
-import { readable_uuid } from "#/utils/uuid";
 import { Chip } from "#/components/Chip";
-import { formatDate } from "#/utils/date";
+import { useDeleteGroup, useGroup } from "#/hooks/useGroups";
 import { requireAuthGuard } from "#/utils/authGuard";
+import { formatDate } from "#/utils/date";
+import { readable_uuid } from "#/utils/uuid";
 
 export const Route = createFileRoute("/_app/groups/$id")({
 	beforeLoad: async ({ context }) => {

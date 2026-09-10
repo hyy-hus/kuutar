@@ -1,8 +1,8 @@
 // src/components/calendar/ReservationBlock.tsx
 import { Link } from "@tanstack/react-router";
 import {
-	getMinutesSinceMidnight,
 	getMinutesBetween,
+	getMinutesSinceMidnight,
 	type PlacedEvent,
 } from "#/utils/calendarUtils";
 

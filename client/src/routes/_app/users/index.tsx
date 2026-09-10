@@ -4,17 +4,17 @@ import {
 	Eye,
 	Loader2,
 	Plus,
+	Shield,
 	User as UserIcon,
 	Users,
-	Shield,
 } from "lucide-react";
 import { Button } from "#/components/Button";
 import { Chip } from "#/components/Chip";
-import { useUsers, type User } from "#/hooks/useUsers";
-import { useGroups } from "#/hooks/useGroups";
 import { useIsAdmin } from "#/hooks/useAuth";
-import { readable_uuid } from "#/utils/uuid";
+import { useGroups } from "#/hooks/useGroups";
+import { type User, useUsers } from "#/hooks/useUsers";
 import { requireAuthGuard } from "#/utils/authGuard";
+import { readable_uuid } from "#/utils/uuid";
 
 export const Route = createFileRoute("/_app/users/")({
 	beforeLoad: async ({ context }) => {

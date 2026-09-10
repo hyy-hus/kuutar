@@ -1,8 +1,8 @@
 // src/components/ResourceForm.tsx
 import { useForm } from "@tanstack/react-form";
 import { Loader2, Save } from "lucide-react";
-import { Input } from "#/components/Input";
 import { Button } from "#/components/Button";
+import { Input } from "#/components/Input";
 import { useCollections } from "#/hooks/useCollections";
 import type { CreateResource } from "#/hooks/useResorces";
 

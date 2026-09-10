@@ -5,15 +5,15 @@ import {
 	Outlet,
 	useLocation,
 } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
 import { Menu, X } from "lucide-react";
-import { SearchBar } from "#/components/SearchBar";
-import { Button } from "#/components/Button";
+import { useEffect, useState } from "react";
 import { AuthDialog } from "#/components/AuthPopover";
+import { Button } from "#/components/Button";
+import { SearchBar } from "#/components/SearchBar";
 import { SideBar } from "#/components/SideBar";
-import { getLocale, setLocale, locales } from "#/paraglide/runtime";
-import { cn } from "#/utils/cn";
 import { authKeys, fetchMe } from "#/hooks/useAuth";
+import { getLocale, locales, setLocale } from "#/paraglide/runtime";
+import { cn } from "#/utils/cn";
 
 export const Route = createFileRoute("/_app")({
 	beforeLoad: async ({ context }) => {
@@ -39,14 +39,14 @@ function AppLayout() {
 		}
 		return true;
 	});
-	const location = useLocation();
+	const _location = useLocation();
 
 	// Auto-close mobile drawer when route changes
 	useEffect(() => {
 		if (window.innerWidth < 768) {
 			setIsSidebarOpen(false);
 		}
-	}, [location.pathname]);
+	}, []);
 
 	const [theme, setTheme] = useState<"light" | "dark">(() => {
 		if (typeof window !== "undefined") {

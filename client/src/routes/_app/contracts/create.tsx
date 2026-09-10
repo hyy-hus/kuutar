@@ -1,6 +1,6 @@
-import { useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { FileText, Save, Loader2, CheckCircle2 } from "lucide-react";
+import { CheckCircle2, FileText, Loader2, Save } from "lucide-react";
+import { useState } from "react";
 import { Button } from "#/components/Button";
 import { ContractEditor } from "#/components/ContractEditor";
 import { useCreateContract } from "#/hooks/useContracts";

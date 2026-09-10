@@ -1,19 +1,19 @@
 // src/components/SideBar.tsx
 import { Link } from "@tanstack/react-router";
 import {
-	Home,
-	Calendar,
 	BarChart3,
-	Shield,
 	Bookmark,
 	Box,
-	Folder,
-	Users,
-	User,
-	Globe,
-	Sun,
-	Moon,
+	Calendar,
 	ChevronDown,
+	Folder,
+	Globe,
+	Home,
+	Moon,
+	Shield,
+	Sun,
+	User,
+	Users,
 } from "lucide-react";
 import { useAuth, useIsAdmin } from "#/hooks/useAuth";
 

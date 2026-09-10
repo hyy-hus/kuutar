@@ -1,6 +1,6 @@
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "#/api/client";
 import type { components } from "#/api/schema";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 type LoginPayload = components["schemas"]["LoginPayload"];
 type RegisterPayload = components["schemas"]["RegisterPayload"];

@@ -12,7 +12,7 @@ export function formatDate(
 
 	const date = typeof dateInput === "string" ? new Date(dateInput) : dateInput;
 
-	if (isNaN(date.getTime())) return "—";
+	if (Number.isNaN(date.getTime())) return "—";
 
 	return new Intl.DateTimeFormat(locale, {
 		day: "numeric",

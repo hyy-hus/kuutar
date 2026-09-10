@@ -1,6 +1,5 @@
-import React from "react";
-
 import { createFileRoute } from "@tanstack/react-router";
+import React from "react";
 
 import { Header } from "./Header";
 

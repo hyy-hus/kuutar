@@ -1,12 +1,12 @@
-import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { FileText, Save, Loader2, CheckCircle2, ArrowLeft } from "lucide-react";
+import { generateHTML } from "@tiptap/core";
+import Link from "@tiptap/extension-link";
+import StarterKit from "@tiptap/starter-kit";
+import { ArrowLeft, CheckCircle2, FileText, Loader2, Save } from "lucide-react";
+import { useEffect, useState } from "react";
 import { Button } from "#/components/Button";
 import { ContractEditor } from "#/components/ContractEditor";
 import { useContracts, useUpdateContract } from "#/hooks/useContracts";
-import { generateHTML } from "@tiptap/core";
-import StarterKit from "@tiptap/starter-kit";
-import Link from "@tiptap/extension-link";
 import { requireAuthGuard } from "#/utils/authGuard";
 
 export const Route = createFileRoute("/_app/contracts/$id")({

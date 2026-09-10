@@ -1,31 +1,31 @@
-import { useMemo } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
-	Loader2,
 	Calendar,
+	CheckCircle2,
 	ChevronLeft,
 	ChevronRight,
 	Clock,
-	CheckCircle2,
-	XCircle,
-	X,
 	Eye,
+	Loader2,
 	RotateCcw,
+	X,
+	XCircle,
 } from "lucide-react";
+import { useMemo } from "react";
 import { Button } from "#/components/Button";
 import { Chip } from "#/components/Chip";
-import { useResources } from "#/hooks/useResorces";
 import {
+	type ReservationStatus,
+	type ReservationWithOccurrences,
 	useMyReservations,
 	useUpdateReservation,
-	type ReservationWithOccurrences,
-	type ReservationStatus,
 } from "#/hooks/useReservations";
+import { useResources } from "#/hooks/useResorces";
+import { requireAuthGuard } from "#/utils/authGuard";
 import { startOfCurrentWeek } from "#/utils/calendarUtils";
 import { cn } from "#/utils/cn";
-import { readable_uuid } from "#/utils/uuid";
 import { formatDate } from "#/utils/date";
-import { requireAuthGuard } from "#/utils/authGuard";
+import { readable_uuid } from "#/utils/uuid";
 
 export interface UserDashboardSearch {
 	start_date?: string;

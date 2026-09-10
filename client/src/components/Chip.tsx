@@ -1,5 +1,5 @@
 // src/components/Chip.tsx
-import type { ReactNode, ComponentPropsWithoutRef } from "react";
+import type { ComponentPropsWithoutRef, ReactNode } from "react";
 import { cn } from "#/utils/cn";
 
 export interface ChipProps {

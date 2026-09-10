@@ -1,14 +1,14 @@
+import { generateHTML } from "@tiptap/core";
+import Link from "@tiptap/extension-link";
+import Mention from "@tiptap/extension-mention";
+import StarterKit from "@tiptap/starter-kit";
+import { FileText, Loader2, Printer, X } from "lucide-react";
 import { useState } from "react";
-import { FileText, Printer, X, Loader2 } from "lucide-react";
 import { Button } from "#/components/Button";
-import { useContracts, type Contract } from "#/hooks/useContracts";
+import { mentionSuggestion } from "#/components/MentionSuggestion";
+import { useContracts } from "#/hooks/useContracts";
 import type { ReservationWithOccurrences } from "#/hooks/useReservations";
 import { formatDate } from "#/utils/date";
-import { generateHTML } from "@tiptap/core";
-import StarterKit from "@tiptap/starter-kit";
-import Mention from "@tiptap/extension-mention";
-import Link from "@tiptap/extension-link";
-import { mentionSuggestion } from "#/components/MentionSuggestion";
 
 interface ContractPrintModalProps {
 	reservation: ReservationWithOccurrences;

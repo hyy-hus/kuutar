@@ -1,11 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { FileText, Plus, Loader2, Calendar } from "lucide-react";
+import { Calendar, FileText, Loader2, Plus } from "lucide-react";
 import { Button } from "#/components/Button";
 import { Chip } from "#/components/Chip";
-import { useContracts, type Contract } from "#/hooks/useContracts";
-import { readable_uuid } from "#/utils/uuid";
-import { formatDate } from "#/utils/date";
+import { type Contract, useContracts } from "#/hooks/useContracts";
 import { requireAuthGuard } from "#/utils/authGuard";
+import { formatDate } from "#/utils/date";
+import { readable_uuid } from "#/utils/uuid";
 
 export const Route = createFileRoute("/_app/contracts/")({
 	beforeLoad: async ({ context }) => {

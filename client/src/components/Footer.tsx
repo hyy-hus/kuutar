@@ -1,7 +1,8 @@
 // src/components/Footer.tsx
-import { Link } from "@tanstack/react-router";
-import { ShieldCheck, Info, Newspaper, Loader2 } from "lucide-react";
+
 import { SiGithub } from "@icons-pack/react-simple-icons";
+import { Link } from "@tanstack/react-router";
+import { Info, Loader2, Newspaper, ShieldCheck } from "lucide-react";
 import { useHealth } from "#/hooks/useHealth";
 
 export function Footer() {

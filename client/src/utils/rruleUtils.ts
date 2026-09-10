@@ -1,4 +1,4 @@
-import { RRule, Frequency, rrulestr } from "rrule";
+import { type Frequency, RRule, rrulestr } from "rrule";
 import type { CreateOccurrencePayload } from "#/hooks/useReservations";
 
 export interface RRuleConfig {
@@ -34,7 +34,11 @@ export function generateOccurrences(
 	const end = new Date(endTimeStr);
 	const durationMs = end.getTime() - start.getTime();
 
-	if (isNaN(start.getTime()) || isNaN(end.getTime()) || durationMs <= 0) {
+	if (
+		Number.isNaN(start.getTime()) ||
+		Number.isNaN(end.getTime()) ||
+		durationMs <= 0
+	) {
 		return { occurrences: [], rruleString: null };
 	}
 

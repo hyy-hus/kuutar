@@ -1,14 +1,15 @@
 // src/components/calendar/Calendar.tsx
-import { useEffect, useMemo } from "react";
-import { useNavigate, Link } from "@tanstack/react-router";
+
+import { Link, useNavigate } from "@tanstack/react-router";
 import { ChevronLeft, ChevronRight, Loader2, Plus } from "lucide-react";
+import { useEffect, useMemo } from "react";
 import { Button } from "#/components/Button";
-import { useResources } from "#/hooks/useResorces";
 import { useReservations } from "#/hooks/useReservations";
-import type { CalendarEvent } from "#/utils/calendarUtils";
-import { WeekView } from "./WeekView";
-import { ToggleChip } from "../Chip";
+import { useResources } from "#/hooks/useResorces";
 import type { CalendarSearch } from "#/routes/_app/calendar";
+import type { CalendarEvent } from "#/utils/calendarUtils";
+import { ToggleChip } from "../Chip";
+import { WeekView } from "./WeekView";
 
 interface CalendarProps {
 	startStr: string;
@@ -53,7 +54,7 @@ export function Calendar({
 		if (window.innerWidth < 640 && days > 1 && !selectedResourceIds) {
 			onSearchChange({ days: 1, start: formatYYYYMMDD(new Date()) });
 		}
-	}, []);
+	}, [days, onSearchChange, selectedResourceIds]);
 
 	const activeResourceIds = useMemo(() => {
 		if (selectedResourceIds && selectedResourceIds.length > 0) {

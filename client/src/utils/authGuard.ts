@@ -1,7 +1,8 @@
 // src/utils/authGuard.ts
+
+import type { QueryClient } from "@tanstack/react-query";
 import { redirect } from "@tanstack/react-router";
 import { authKeys, fetchMe } from "#/hooks/useAuth";
-import type { QueryClient } from "@tanstack/react-query";
 
 export async function requireAuthGuard(context: {
 	queryClient: QueryClient;

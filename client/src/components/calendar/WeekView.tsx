@@ -1,5 +1,5 @@
 // src/components/calendar/WeekView.tsx
-import { useEffect, useRef, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { CalendarEvent } from "#/utils/calendarUtils";
 import { DayColumn } from "./DayColumn";
 

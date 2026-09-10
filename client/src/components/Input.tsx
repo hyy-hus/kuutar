@@ -1,6 +1,7 @@
 // src/components/ui/Input.tsx
-import { forwardRef, type InputHTMLAttributes } from "react";
+
 import { cva, type VariantProps } from "class-variance-authority";
+import { forwardRef, type InputHTMLAttributes } from "react";
 import { cn } from "#/utils/cn";
 
 export const inputVariants = cva(

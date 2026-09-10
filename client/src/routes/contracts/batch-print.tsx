@@ -1,15 +1,15 @@
-import { useEffect, useRef } from "react";
-import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { createFileRoute } from "@tanstack/react-router";
+import { generateHTML } from "@tiptap/core";
+import Link from "@tiptap/extension-link";
+import StarterKit from "@tiptap/starter-kit";
+import { useEffect, useRef } from "react";
 import { api } from "#/api/client";
 import { useContracts } from "#/hooks/useContracts";
+import type { ReservationWithOccurrences } from "#/hooks/useReservations";
 import { useResources } from "#/hooks/useResorces";
-import { type ReservationWithOccurrences } from "#/hooks/useReservations";
-import { formatDate } from "#/utils/date";
-import { generateHTML } from "@tiptap/core";
-import StarterKit from "@tiptap/starter-kit";
-import Link from "@tiptap/extension-link";
 import { requireAuthGuard } from "#/utils/authGuard";
+import { formatDate } from "#/utils/date";
 
 export interface BatchPrintSearch {
 	reservation_ids: string[];

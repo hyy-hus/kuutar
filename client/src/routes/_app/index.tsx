@@ -1,26 +1,27 @@
 // src/routes/_app/index.tsx
-import { useMemo } from "react";
+
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
-	Calendar,
-	Plus,
-	Clock,
-	Box,
-	CheckCircle2,
-	Shield,
-	ChevronRight,
 	ArrowUpRight,
+	Box,
+	Calendar,
+	CheckCircle2,
+	ChevronRight,
+	Clock,
 	Loader2,
+	Plus,
+	Shield,
 } from "lucide-react";
+import { useMemo } from "react";
 import { Button } from "#/components/Button";
 import { Chip } from "#/components/Chip";
 import { Footer } from "#/components/Footer";
 import { useAuth, useIsAdmin } from "#/hooks/useAuth";
-import { useResources } from "#/hooks/useResorces";
 import { useReservations } from "#/hooks/useReservations";
+import { useResources } from "#/hooks/useResorces";
 import { startOfCurrentWeek } from "#/utils/calendarUtils";
-import { readable_uuid } from "#/utils/uuid";
 import { formatDate } from "#/utils/date";
+import { readable_uuid } from "#/utils/uuid";
 
 export const Route = createFileRoute("/_app/")({
 	component: HomePage,

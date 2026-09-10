@@ -3,9 +3,9 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Eye, Folder, Loader2, Plus, RefreshCw } from "lucide-react";
 import { Button } from "#/components/Button";
 import { Chip } from "#/components/Chip";
-import { useCollections, type Collection } from "#/hooks/useCollections";
-import { useResources, type Resource } from "#/hooks/useResorces";
 import { useIsAdmin } from "#/hooks/useAuth";
+import { type Collection, useCollections } from "#/hooks/useCollections";
+import { type Resource, useResources } from "#/hooks/useResorces";
 import { readable_uuid } from "#/utils/uuid";
 
 export const Route = createFileRoute("/_app/resources/")({

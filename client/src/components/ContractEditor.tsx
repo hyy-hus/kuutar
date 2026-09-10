@@ -1,12 +1,12 @@
-import { useEditor, EditorContent, useEditorState } from "@tiptap/react";
-import StarterKit from "@tiptap/starter-kit";
 import Link from "@tiptap/extension-link";
+import { EditorContent, useEditor, useEditorState } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
 import {
 	Bold,
 	Italic,
+	Link as LinkIcon,
 	List,
 	ListOrdered,
-	Link as LinkIcon,
 	Unlink,
 } from "lucide-react";
 import { cn } from "#/utils/cn";

@@ -1,15 +1,15 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { Edit, Trash2, ArrowLeft, Clock } from "lucide-react";
+import { ArrowLeft, Clock, Edit, Trash2 } from "lucide-react";
 import { Button } from "#/components/Button";
+import { Chip } from "#/components/Chip";
 import {
-	useReservation,
-	useDeleteReservation,
 	type ReservationStatus,
+	useDeleteReservation,
+	useReservation,
 } from "#/hooks/useReservations";
 import { useResources } from "#/hooks/useResorces";
-import { readable_uuid } from "#/utils/uuid";
-import { Chip } from "#/components/Chip";
 import { formatDate } from "#/utils/date";
+import { readable_uuid } from "#/utils/uuid";
 
 export const Route = createFileRoute("/_app/reservations/$id")({
 	component: ViewReservationPage,

@@ -1,6 +1,6 @@
 // src/components/calendar/DayColumn.tsx
 import { useMemo } from "react";
-import { layoutDay, type CalendarEvent } from "#/utils/calendarUtils";
+import { type CalendarEvent, layoutDay } from "#/utils/calendarUtils";
 import { ReservationBlock } from "./ReservationBlock";
 
 interface DayColumnProps {

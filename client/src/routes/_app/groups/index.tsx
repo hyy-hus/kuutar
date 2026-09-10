@@ -3,10 +3,10 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Eye, Loader2, Plus, Users } from "lucide-react";
 import { Button } from "#/components/Button";
 import { Chip } from "#/components/Chip";
-import { useGroups, type Group } from "#/hooks/useGroups";
 import { useIsAdmin } from "#/hooks/useAuth";
-import { readable_uuid } from "#/utils/uuid";
+import { type Group, useGroups } from "#/hooks/useGroups";
 import { requireAuthGuard } from "#/utils/authGuard";
+import { readable_uuid } from "#/utils/uuid";
 
 export const Route = createFileRoute("/_app/groups/")({
 	beforeLoad: async ({ context }) => {

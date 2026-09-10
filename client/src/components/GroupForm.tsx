@@ -1,7 +1,7 @@
 import { useForm } from "@tanstack/react-form";
 import { Loader2, Save } from "lucide-react";
-import { Input } from "#/components/Input";
 import { Button } from "#/components/Button";
+import { Input } from "#/components/Input";
 import type { CreateGroup } from "#/hooks/useGroups";
 
 interface GroupFormProps {
