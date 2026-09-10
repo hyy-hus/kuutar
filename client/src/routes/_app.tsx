@@ -27,7 +27,13 @@ export const Route = createFileRoute('/_app')({
 })
 
 function AppLayout() {
-    const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+    // Default open on desktop, closed on mobile
+    const [isSidebarOpen, setIsSidebarOpen] = useState(() => {
+        if (typeof window !== 'undefined') {
+            return window.innerWidth >= 768
+        }
+        return true
+    })
     const location = useLocation()
 
     // Auto-close mobile drawer when route changes
@@ -102,10 +108,12 @@ function AppLayout() {
                 {/* Mobile Drawer & Desktop Sidebar Container */}
                 <aside
                     className={cn(
-                        'bg-stone-100 dark:bg-stone-900 border-r-2 border-stone-800 dark:border-stone-600 transition-transform duration-300 ease-in-out shrink-0 flex flex-col shadow-2xl md:shadow-none',
+                        'bg-stone-100 dark:bg-stone-900 transition-all duration-300 ease-in-out shrink-0 flex flex-col shadow-2xl md:shadow-none overflow-hidden',
                         // Mobile fixed drawer styling
-                        'fixed md:static inset-y-0 left-0 z-50 h-full w-72 md:w-60',
-                        isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
+                        'fixed md:static inset-y-0 left-0 z-50 h-full',
+                        isSidebarOpen
+                            ? 'w-72 md:w-60 translate-x-0 border-r-2 border-stone-800 dark:border-stone-600'
+                            : '-translate-x-full md:translate-x-0 md:w-0 md:border-r-0'
                     )}
                 >
                     {/* Drawer Header on Mobile */}
@@ -121,9 +129,9 @@ function AppLayout() {
                         </Button>
                     </div>
 
-                    <div className="flex-1 overflow-y-auto p-2">
+                    <div className="flex-1 overflow-y-auto p-2 min-w-[15rem]">
                         <SideBar
-                            isSidebarOpen={true}
+                            isSidebarOpen={isSidebarOpen}
                             currentLocale={currentLocale}
                             onSelectLocale={(next) => setLocale(next as any)}
                             availableLocales={locales as unknown as string[]}
