@@ -25,6 +25,7 @@ export function ResourceForm({
         defaultValues: {
             name: defaultValues?.name ?? '',
             collection_id: defaultValues?.collection_id ?? '',
+            allow_recurring: defaultValues?.allow_recurring ?? true,
         },
         onSubmit: async ({ value }) => {
             await onSubmit(value)
@@ -110,6 +111,24 @@ export function ResourceForm({
                         </div>
                     )
                 }}
+            </form.Field>
+
+            {/* Allow Recurring Toggle */}
+            <form.Field name="allow_recurring">
+                {(field) => (
+                    <div className="flex items-center gap-3 p-3 bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-md">
+                        <input
+                            type="checkbox"
+                            id={field.name}
+                            checked={field.state.value}
+                            onChange={(e) => field.handleChange(e.target.checked)}
+                            className="w-4 h-4 text-purple-600 rounded border-stone-300 focus:ring-purple-500 dark:border-stone-700 dark:bg-stone-950"
+                        />
+                        <label htmlFor={field.name} className="text-xs font-medium text-stone-800 dark:text-stone-200 cursor-pointer select-none">
+                            Salli toistuvat varaukset tälle resurssille
+                        </label>
+                    </div>
+                )}
             </form.Field>
 
             {/* Submit Button */}

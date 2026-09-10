@@ -188,7 +188,7 @@ export function ReservationForm({
                 )}
             </form.Field>
 
-            {/* Status */}
+            {/* Status (Admin Only) */}
             {isAdmin && (
                 <form.Field name="status">
                     {(field) => (
@@ -212,23 +212,25 @@ export function ReservationForm({
                 </form.Field>
             )}
 
-            {/* Admin Notes */}
-            <form.Field name="admin_notes">
-                {(field) => (
-                    <div className="space-y-1">
-                        <label htmlFor={field.name} className="text-xs font-medium text-stone-700 dark:text-stone-300">
-                            Ylläpitäjän muistiinpanot
-                        </label>
-                        <Input
-                            id={field.name}
-                            value={field.state.value}
-                            onChange={(e) => field.handleChange(e.target.value)}
-                            onBlur={field.handleBlur}
-                            placeholder="Vain ylläpidolle näkyvät merkinnät"
-                        />
-                    </div>
-                )}
-            </form.Field>
+            {/* Admin Notes (Admin Only) */}
+            {isAdmin && (
+                <form.Field name="admin_notes">
+                    {(field) => (
+                        <div className="space-y-1">
+                            <label htmlFor={field.name} className="text-xs font-medium text-stone-700 dark:text-stone-300">
+                                Ylläpitäjän muistiinpanot
+                            </label>
+                            <Input
+                                id={field.name}
+                                value={field.state.value}
+                                onChange={(e) => field.handleChange(e.target.value)}
+                                onBlur={field.handleBlur}
+                                placeholder="Vain ylläpidolle näkyvät merkinnät"
+                            />
+                        </div>
+                    )}
+                </form.Field>
+            )}
 
             {/* Occurrence & Multi-Resource Selection Section */}
             <div className="pt-3 border-t-2 border-stone-800 dark:border-stone-700 space-y-3">
@@ -335,7 +337,6 @@ export function ReservationForm({
                             selectedResourceIds.length > 0 &&
                             selectedResourceIds.every((id) => {
                                 const resource = resources?.find((r) => r.id === id)
-                                // If resource field not present in generated schema yet, default safely
                                 return (resource as { allow_recurring?: boolean })?.allow_recurring ?? true
                             })
                         )
@@ -443,6 +444,10 @@ function RecurrenceSection({
         }
     }, [canRecur, freq, setFreq, setConflicts])
 
+    if (!canRecur) {
+        return null
+    }
+
     return (
         <div className="p-3 bg-stone-100 dark:bg-stone-900 border-2 border-stone-800 dark:border-stone-700 rounded-sm space-y-2">
             <div className="flex items-center justify-between text-xs font-mono font-bold text-stone-800 dark:text-stone-200">
@@ -452,12 +457,6 @@ function RecurrenceSection({
                 </div>
             </div>
 
-            {!canRecur && (
-                <p className="text-[11px] text-amber-600 dark:text-amber-400 font-sans">
-                    Yksi tai useampi valituista resursseista ei salli toistuvia varauksia.
-                </p>
-            )}
-
             <div className="grid grid-cols-2 gap-2">
                 <div className="space-y-1">
                     <label htmlFor="recurrence_freq" className="text-[11px] text-stone-600 dark:text-stone-400">
@@ -465,14 +464,13 @@ function RecurrenceSection({
                     </label>
                     <select
                         id="recurrence_freq"
-                        disabled={!canRecur}
                         value={freq === null ? 'none' : freq}
                         onChange={(e) => {
                             const val = e.target.value
                             setFreq(val === 'none' ? null : Number(val))
                             setConflicts(null)
                         }}
-                        className="w-full px-2 py-1.5 text-xs bg-stone-50 dark:bg-stone-950 border border-stone-300 dark:border-stone-700 rounded-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-full px-2 py-1.5 text-xs bg-stone-50 dark:bg-stone-950 border border-stone-300 dark:border-stone-700 rounded-sm"
                     >
                         <option value="none">Ei toistoa</option>
                         <option value={Frequency.DAILY}>Päivittäin</option>
@@ -490,7 +488,6 @@ function RecurrenceSection({
                         <Input
                             id="recurrence_until"
                             type="date"
-                            disabled={!canRecur}
                             value={untilStr}
                             onChange={(e) => {
                                 setUntilStr(e.target.value)
