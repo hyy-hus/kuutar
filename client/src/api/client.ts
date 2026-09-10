@@ -3,14 +3,24 @@ import createClient, { type Middleware } from "openapi-fetch";
 import type { paths } from "./schema";
 
 const getBaseUrl = () => {
-	if (typeof window !== "undefined" && window.location?.origin) {
-		return `${window.location.origin}/api`;
+	// 1. Use VITE_API_URL directly if provided (strip trailing slash)
+	if (import.meta.env.VITE_API_URL) {
+		return import.meta.env.VITE_API_URL.replace(/\/$/, "");
 	}
-	return "http://127.0.0.1:3000/api";
+
+	// 2. Fallback to current origin for production without VITE_API_URL
+	if (typeof window !== "undefined" && window.location?.origin) {
+		return window.location.origin;
+	}
+
+	// 3. Fallback for local development
+	return "http://127.0.0.1:3000";
 };
 
+const baseUrl = getBaseUrl();
+
 export const api = createClient<paths>({
-	baseUrl: getBaseUrl(),
+	baseUrl,
 });
 
 const authMiddleware: Middleware = {
@@ -31,8 +41,8 @@ const authMiddleware: Middleware = {
 
 			if (refreshToken) {
 				try {
-					// Attempt token refresh
-					const res = await fetch("/api/auth/refresh", {
+					// Request refresh endpoint directly under baseUrl
+					const res = await fetch(`${baseUrl}/auth/refresh`, {
 						method: "POST",
 						headers: { "Content-Type": "application/json" },
 						body: JSON.stringify({ refresh_token: refreshToken }),
@@ -43,15 +53,13 @@ const authMiddleware: Middleware = {
 						localStorage.setItem("access_token", data.access_token);
 						localStorage.setItem("refresh_token", data.refresh_token);
 
-						// Reconstruct absolute URL to prevent native fetch relative URL parse errors
 						const targetUrl = request.url.startsWith("http")
 							? request.url
-							: new URL(request.url, window.location.origin).toString();
+							: new URL(request.url, baseUrl).toString();
 
 						const headers = new Headers(request.headers);
 						headers.set("Authorization", `Bearer ${data.access_token}`);
 
-						// Retry original request with updated auth header
 						return fetch(targetUrl, {
 							method: request.method,
 							headers,
@@ -61,7 +69,6 @@ const authMiddleware: Middleware = {
 						});
 					}
 				} catch {
-					// Refresh failed, purge tokens
 					localStorage.removeItem("access_token");
 					localStorage.removeItem("refresh_token");
 				}
