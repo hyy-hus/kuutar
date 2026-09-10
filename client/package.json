@@ -64,6 +64,7 @@
         "@storybook/tanstack-react": "^10.5.9",
         "@tanstack/devtools-vite": "latest",
         "@tanstack/router-cli": "^1.132.0",
+        "@tanstack/router-plugin": "^1.168.37",
         "@types/node": "^22.10.2",
         "@types/react": "^19.2.0",
         "@types/react-dom": "^19.2.0",
