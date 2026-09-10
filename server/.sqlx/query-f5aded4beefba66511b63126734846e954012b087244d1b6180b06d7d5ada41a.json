@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        INSERT INTO resources (collection_id, name)\n        VALUES ($1, $2)\n        RETURNING id, collection_id, name, created_at, updated_at, deleted_at\n        ",
+  "query": "\n        SELECT id, collection_id, name, allow_recurring, created_at, updated_at, deleted_at\n        FROM resources\n        WHERE id = $1 AND deleted_at IS NULL\n        ",
   "describe": {
     "columns": [
       {
@@ -38,6 +38,17 @@
       },
       {
         "ordinal": 3,
+        "name": "allow_recurring",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "resources",
+            "name": "allow_recurring"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
         "name": "created_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -48,7 +59,7 @@
         }
       },
       {
-        "ordinal": 4,
+        "ordinal": 5,
         "name": "updated_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -59,7 +70,7 @@
         }
       },
       {
-        "ordinal": 5,
+        "ordinal": 6,
         "name": "deleted_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -72,8 +83,7 @@
     ],
     "parameters": {
       "Left": [
-        "Uuid",
-        "Text"
+        "Uuid"
       ]
     },
     "nullable": [
@@ -82,8 +92,9 @@
       false,
       false,
       false,
+      false,
       true
     ]
   },
-  "hash": "da3e5ae3aabf8cea7554eac70e0b25e21dd15e05151e8d10cd1d680295bd3622"
+  "hash": "f5aded4beefba66511b63126734846e954012b087244d1b6180b06d7d5ada41a"
 }

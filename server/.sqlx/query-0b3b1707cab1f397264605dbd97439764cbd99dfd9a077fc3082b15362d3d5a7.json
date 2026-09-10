@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        SELECT \n            id, user_id, title, description, admin_notes, rrule, \n            status AS \"status: ReservationStatus\", created_at, updated_at\n        FROM reservations\n        WHERE id = $1 AND deleted_at IS NULL\n        ",
+  "query": "\n        SELECT \n            id, user_id, title, description, admin_notes, rrule, \n            status AS \"status: ReservationStatus\",\n            contract_id, contract_printed_at,\n            created_at, updated_at\n        FROM reservations\n        WHERE id = $1 AND deleted_at IS NULL\n        ",
   "describe": {
     "columns": [
       {
@@ -93,6 +93,28 @@
       },
       {
         "ordinal": 7,
+        "name": "contract_id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "reservations",
+            "name": "contract_id"
+          }
+        }
+      },
+      {
+        "ordinal": 8,
+        "name": "contract_printed_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "reservations",
+            "name": "contract_printed_at"
+          }
+        }
+      },
+      {
+        "ordinal": 9,
         "name": "created_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -103,7 +125,7 @@
         }
       },
       {
-        "ordinal": 8,
+        "ordinal": 10,
         "name": "updated_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -127,9 +149,11 @@
       true,
       true,
       false,
+      true,
+      true,
       false,
       false
     ]
   },
-  "hash": "db42dd96d6d15d12551ee4e28f7f6682f59c661929c3273f4cc8f4496dd5bee3"
+  "hash": "0b3b1707cab1f397264605dbd97439764cbd99dfd9a077fc3082b15362d3d5a7"
 }

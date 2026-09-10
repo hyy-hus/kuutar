@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        INSERT INTO reservations (user_id, title, description, admin_notes, rrule, status)\n        VALUES ($1, $2, $3, $4, $5, $6)\n        RETURNING \n            id, user_id, title, description, admin_notes, rrule, \n            status AS \"status: ReservationStatus\", created_at, updated_at\n        ",
+  "query": "\n        INSERT INTO reservations (user_id, title, description, admin_notes, rrule, status, contract_id)\n        VALUES ($1, $2, $3, $4, $5, $6, $7)\n        RETURNING \n            id, user_id, title, description, admin_notes, rrule, \n            status AS \"status: ReservationStatus\",\n            contract_id, contract_printed_at,\n            created_at, updated_at\n        ",
   "describe": {
     "columns": [
       {
@@ -93,6 +93,28 @@
       },
       {
         "ordinal": 7,
+        "name": "contract_id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "reservations",
+            "name": "contract_id"
+          }
+        }
+      },
+      {
+        "ordinal": 8,
+        "name": "contract_printed_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "reservations",
+            "name": "contract_printed_at"
+          }
+        }
+      },
+      {
+        "ordinal": 9,
         "name": "created_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -103,7 +125,7 @@
         }
       },
       {
-        "ordinal": 8,
+        "ordinal": 10,
         "name": "updated_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -132,7 +154,8 @@
               ]
             }
           }
-        }
+        },
+        "Uuid"
       ]
     },
     "nullable": [
@@ -143,9 +166,11 @@
       true,
       true,
       false,
+      true,
+      true,
       false,
       false
     ]
   },
-  "hash": "b7c762ac5cf5b22ec9de0437b2e149e446bf45dc25ee2e32baadffc73f5407a5"
+  "hash": "422d946b21cc300200f6a4605dbd4e5d9c306739da1a80c5e4ff9a694492f69a"
 }

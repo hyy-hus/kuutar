@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        SELECT \n            id, user_id, title, description, admin_notes, rrule, \n            status AS \"status: ReservationStatus\", created_at, updated_at\n        FROM reservations\n        WHERE deleted_at IS NULL\n        ORDER BY created_at DESC\n        ",
+  "query": "\n        UPDATE reservations\nSET \n    title = COALESCE($1, title),\n    description = COALESCE($2, description),\n    admin_notes = COALESCE($3, admin_notes),\n    rrule = COALESCE($4, rrule),\n    status = COALESCE($5, status),\n    contract_id = COALESCE($6, contract_id),\n    contract_printed_at = CASE \n        WHEN $7 = TRUE THEN NOW() \n        WHEN $7 = FALSE THEN NULL\n        ELSE contract_printed_at \n    END,\n    updated_at = NOW()\nWHERE id = $8 AND deleted_at IS NULL\nRETURNING \n    id, user_id, title, description, admin_notes, rrule, \n    status AS \"status: ReservationStatus\",\n    contract_id, contract_printed_at,\n    created_at, updated_at\n        ",
   "describe": {
     "columns": [
       {
@@ -93,6 +93,28 @@
       },
       {
         "ordinal": 7,
+        "name": "contract_id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "reservations",
+            "name": "contract_id"
+          }
+        }
+      },
+      {
+        "ordinal": 8,
+        "name": "contract_printed_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "reservations",
+            "name": "contract_printed_at"
+          }
+        }
+      },
+      {
+        "ordinal": 9,
         "name": "created_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -103,7 +125,7 @@
         }
       },
       {
-        "ordinal": 8,
+        "ordinal": 10,
         "name": "updated_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -115,7 +137,27 @@
       }
     ],
     "parameters": {
-      "Left": []
+      "Left": [
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        {
+          "Custom": {
+            "name": "reservation_status",
+            "kind": {
+              "Enum": [
+                "pending",
+                "confirmed",
+                "cancelled"
+              ]
+            }
+          }
+        },
+        "Uuid",
+        "Bool",
+        "Uuid"
+      ]
     },
     "nullable": [
       false,
@@ -125,9 +167,11 @@
       true,
       true,
       false,
+      true,
+      true,
       false,
       false
     ]
   },
-  "hash": "22ff8e1032325dcbdf60dd6c217c5f2739ac7bad1dfea34c023f3b62f1c1f3b8"
+  "hash": "9c2b26c6bfd367f79541af60622cb9e5ab6b12db0ae7caddf25726c71596035a"
 }

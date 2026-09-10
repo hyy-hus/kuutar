@@ -1,0 +1,45 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT \n            res.id as \"resource_id!\",\n            res.name as \"resource_name!\",\n            COUNT(occ.id) as \"reservation_count!\"\n        FROM resources res\n        LEFT JOIN occurrences occ ON occ.resource_id = res.id\n        LEFT JOIN reservations r ON r.id = occ.reservation_id AND r.deleted_at IS NULL\n        WHERE res.deleted_at IS NULL\n        GROUP BY res.id, res.name\n        ORDER BY \"reservation_count!\" DESC\n        LIMIT 5\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "resource_id!",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "resources",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "resource_name!",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "resources",
+            "name": "name"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "reservation_count!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      false,
+      false,
+      null
+    ]
+  },
+  "hash": "f76ac8b54bc8330eb14284cb2fa6fb9abd2cc024788ee86ca5ddf1c7f59a82f0"
+}

@@ -1,0 +1,43 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT DISTINCT r.id\n        FROM reservations r\n        LEFT JOIN occurrences o ON o.reservation_id = r.id\n        WHERE r.deleted_at IS NULL\n          AND o.start_time < $2\n          AND o.end_time > $1\n          AND ($3::uuid IS NULL OR o.resource_id = $3)\n          AND ($4::reservation_status IS NULL OR r.status = $4)\n          -- Filter by target_user_id if provided (mandatory for non-admins)\n          AND ($5::uuid IS NULL OR r.user_id = $5)\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "reservations",
+            "name": "id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Timestamptz",
+        "Timestamptz",
+        "Uuid",
+        {
+          "Custom": {
+            "name": "reservation_status",
+            "kind": {
+              "Enum": [
+                "pending",
+                "confirmed",
+                "cancelled"
+              ]
+            }
+          }
+        },
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "08c43df97ce5954dd6ceefc558d5545ccee82171ebd31548e7f9c452dc9dad87"
+}

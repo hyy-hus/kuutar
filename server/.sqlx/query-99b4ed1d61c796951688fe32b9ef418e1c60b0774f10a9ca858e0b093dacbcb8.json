@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        UPDATE resources\n        SET name = COALESCE($1, name)\n        WHERE id = $2 AND deleted_at IS NULL\n        RETURNING id, collection_id, name, created_at, updated_at, deleted_at\n        ",
+  "query": "\n        SELECT id, reservation_id, resource_id, start_time, end_time, created_at\n        FROM occurrences\n        WHERE reservation_id = $1\n          AND start_time < $3\n          AND end_time > $2\n          AND ($4::uuid IS NULL OR resource_id = $4)\n        ORDER BY start_time ASC\n        ",
   "describe": {
     "columns": [
       {
@@ -9,70 +9,72 @@
         "type_info": "Uuid",
         "origin": {
           "Table": {
-            "table": "resources",
+            "table": "occurrences",
             "name": "id"
           }
         }
       },
       {
         "ordinal": 1,
-        "name": "collection_id",
+        "name": "reservation_id",
         "type_info": "Uuid",
         "origin": {
           "Table": {
-            "table": "resources",
-            "name": "collection_id"
+            "table": "occurrences",
+            "name": "reservation_id"
           }
         }
       },
       {
         "ordinal": 2,
-        "name": "name",
-        "type_info": "Text",
+        "name": "resource_id",
+        "type_info": "Uuid",
         "origin": {
           "Table": {
-            "table": "resources",
-            "name": "name"
+            "table": "occurrences",
+            "name": "resource_id"
           }
         }
       },
       {
         "ordinal": 3,
-        "name": "created_at",
+        "name": "start_time",
         "type_info": "Timestamptz",
         "origin": {
           "Table": {
-            "table": "resources",
-            "name": "created_at"
+            "table": "occurrences",
+            "name": "start_time"
           }
         }
       },
       {
         "ordinal": 4,
-        "name": "updated_at",
+        "name": "end_time",
         "type_info": "Timestamptz",
         "origin": {
           "Table": {
-            "table": "resources",
-            "name": "updated_at"
+            "table": "occurrences",
+            "name": "end_time"
           }
         }
       },
       {
         "ordinal": 5,
-        "name": "deleted_at",
+        "name": "created_at",
         "type_info": "Timestamptz",
         "origin": {
           "Table": {
-            "table": "resources",
-            "name": "deleted_at"
+            "table": "occurrences",
+            "name": "created_at"
           }
         }
       }
     ],
     "parameters": {
       "Left": [
-        "Text",
+        "Uuid",
+        "Timestamptz",
+        "Timestamptz",
         "Uuid"
       ]
     },
@@ -82,8 +84,8 @@
       false,
       false,
       false,
-      true
+      false
     ]
   },
-  "hash": "61064cbef383680318544160248c06b734116c690d184d3a2ee280e9406254e7"
+  "hash": "99b4ed1d61c796951688fe32b9ef418e1c60b0774f10a9ca858e0b093dacbcb8"
 }

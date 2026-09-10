@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        SELECT id, collection_id, name, created_at, updated_at, deleted_at\n        FROM resources\n        WHERE deleted_at IS NULL\n        ",
+  "query": "\n        SELECT id, collection_id, name, allow_recurring, created_at, updated_at, deleted_at\n        FROM resources\n        WHERE deleted_at IS NULL\n        ",
   "describe": {
     "columns": [
       {
@@ -38,6 +38,17 @@
       },
       {
         "ordinal": 3,
+        "name": "allow_recurring",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "resources",
+            "name": "allow_recurring"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
         "name": "created_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -48,7 +59,7 @@
         }
       },
       {
-        "ordinal": 4,
+        "ordinal": 5,
         "name": "updated_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -59,7 +70,7 @@
         }
       },
       {
-        "ordinal": 5,
+        "ordinal": 6,
         "name": "deleted_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -79,8 +90,9 @@
       false,
       false,
       false,
+      false,
       true
     ]
   },
-  "hash": "26477597d43a64f85e0af5dfac2e485092469595556c9f832e2d22a04fc37216"
+  "hash": "b930a541df1b5711169091f17ee4607c5dc8f4c7de06ed3c7b5a08205d40edad"
 }
