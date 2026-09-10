@@ -5,6 +5,7 @@ pub mod openapi;
 pub mod seed;
 pub mod utils;
 
+use axum::http::{Method, header};
 use axum::{Json, Router, response::IntoResponse, routing::get};
 use config::Config;
 use domains::{
@@ -14,6 +15,7 @@ use domains::{
 use openapi::ApiDoc;
 use serde::Serialize;
 use sqlx::PgPool;
+use tower_http::cors::{Any, CorsLayer};
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
 
@@ -29,6 +31,18 @@ pub fn app(pool: PgPool, config: Config) -> Router {
         .url("/api-docs/openapi.json", ApiDoc::openapi())
         .into();
 
+    let cors = CorsLayer::new()
+        .allow_origin(Any) // Or restrict to "https://kuutar-staging.s3-website.fr-par.scw.cloud".parse::<HeaderValue>().uanwrap()
+        .allow_methods([
+            Method::GET,
+            Method::POST,
+            Method::PUT,
+            Method::PATCH,
+            Method::DELETE,
+            Method::OPTIONS,
+        ])
+        .allow_headers([header::AUTHORIZATION, header::CONTENT_TYPE, header::ACCEPT]);
+
     Router::new()
         .merge(swagger_router)
         .route("/health", get(health_check))
@@ -40,6 +54,7 @@ pub fn app(pool: PgPool, config: Config) -> Router {
         .nest("/contracts", contracts::router(auth_state.clone()))
         .nest("/resources", resources::router(auth_state.clone()))
         .nest("/stats", stats::router(auth_state))
+        .layer(cors)
 }
 
 #[derive(Serialize)]
