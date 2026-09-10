@@ -35,6 +35,7 @@ import { Route as AppUsersIndexRouteImport } from './routes/_app/users/index'
 import { Route as AppUsersIdRouteImport } from './routes/_app/users/$id'
 import { Route as AppUsersCreateRouteImport } from './routes/_app/users/create'
 import { Route as AppAdminDashboardIndexRouteImport } from './routes/_app/admin/dashboard/index'
+import { Route as AppAdminUsersBatchRegisterRouteImport } from './routes/_app/admin/users/batch-register'
 import { Route as AppCollectionsEditIdRouteImport } from './routes/_app/collections/edit.$id'
 import { Route as AppGroupsEditIdRouteImport } from './routes/_app/groups/edit.$id'
 import { Route as AppReservationsEditIdRouteImport } from './routes/_app/reservations/edit.$id'
@@ -170,6 +171,12 @@ const AppAdminDashboardIndexRoute = AppAdminDashboardIndexRouteImport.update({
   path: '/dashboard/',
   getParentRoute: () => AppAdminRoute,
 } as any)
+const AppAdminUsersBatchRegisterRoute =
+  AppAdminUsersBatchRegisterRouteImport.update({
+    id: '/users/batch-register',
+    path: '/users/batch-register',
+    getParentRoute: () => AppAdminRoute,
+  } as any)
 const AppCollectionsEditIdRoute = AppCollectionsEditIdRouteImport.update({
   id: '/collections/edit/$id',
   path: '/collections/edit/$id',
@@ -221,6 +228,7 @@ export interface FileRoutesByFullPath {
   '/resources/': typeof AppResourcesIndexRoute
   '/stats/': typeof AppStatsIndexRoute
   '/users/': typeof AppUsersIndexRoute
+  '/admin/users/batch-register': typeof AppAdminUsersBatchRegisterRoute
   '/collections/edit/$id': typeof AppCollectionsEditIdRoute
   '/groups/edit/$id': typeof AppGroupsEditIdRoute
   '/reservations/edit/$id': typeof AppReservationsEditIdRoute
@@ -253,6 +261,7 @@ export interface FileRoutesByTo {
   '/resources': typeof AppResourcesIndexRoute
   '/stats': typeof AppStatsIndexRoute
   '/users': typeof AppUsersIndexRoute
+  '/admin/users/batch-register': typeof AppAdminUsersBatchRegisterRoute
   '/collections/edit/$id': typeof AppCollectionsEditIdRoute
   '/groups/edit/$id': typeof AppGroupsEditIdRoute
   '/reservations/edit/$id': typeof AppReservationsEditIdRoute
@@ -287,6 +296,7 @@ export interface FileRoutesById {
   '/_app/resources/': typeof AppResourcesIndexRoute
   '/_app/stats/': typeof AppStatsIndexRoute
   '/_app/users/': typeof AppUsersIndexRoute
+  '/_app/admin/users/batch-register': typeof AppAdminUsersBatchRegisterRoute
   '/_app/collections/edit/$id': typeof AppCollectionsEditIdRoute
   '/_app/groups/edit/$id': typeof AppGroupsEditIdRoute
   '/_app/reservations/edit/$id': typeof AppReservationsEditIdRoute
@@ -321,6 +331,7 @@ export interface FileRouteTypes {
     | '/resources/'
     | '/stats/'
     | '/users/'
+    | '/admin/users/batch-register'
     | '/collections/edit/$id'
     | '/groups/edit/$id'
     | '/reservations/edit/$id'
@@ -353,6 +364,7 @@ export interface FileRouteTypes {
     | '/resources'
     | '/stats'
     | '/users'
+    | '/admin/users/batch-register'
     | '/collections/edit/$id'
     | '/groups/edit/$id'
     | '/reservations/edit/$id'
@@ -386,6 +398,7 @@ export interface FileRouteTypes {
     | '/_app/resources/'
     | '/_app/stats/'
     | '/_app/users/'
+    | '/_app/admin/users/batch-register'
     | '/_app/collections/edit/$id'
     | '/_app/groups/edit/$id'
     | '/_app/reservations/edit/$id'
@@ -583,6 +596,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAdminDashboardIndexRouteImport
       parentRoute: typeof AppAdminRoute
     }
+    '/_app/admin/users/batch-register': {
+      id: '/_app/admin/users/batch-register'
+      path: '/users/batch-register'
+      fullPath: '/admin/users/batch-register'
+      preLoaderRoute: typeof AppAdminUsersBatchRegisterRouteImport
+      parentRoute: typeof AppAdminRoute
+    }
     '/_app/collections/edit/$id': {
       id: '/_app/collections/edit/$id'
       path: '/collections/edit/$id'
@@ -622,10 +642,12 @@ declare module '@tanstack/react-router' {
 }
 
 interface AppAdminRouteChildren {
+  AppAdminUsersBatchRegisterRoute: typeof AppAdminUsersBatchRegisterRoute
   AppAdminDashboardIndexRoute: typeof AppAdminDashboardIndexRoute
 }
 
 const AppAdminRouteChildren: AppAdminRouteChildren = {
+  AppAdminUsersBatchRegisterRoute: AppAdminUsersBatchRegisterRoute,
   AppAdminDashboardIndexRoute: AppAdminDashboardIndexRoute,
 }
 

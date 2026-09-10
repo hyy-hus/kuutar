@@ -2,6 +2,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
 	Eye,
+	FileSpreadsheet,
 	Loader2,
 	Plus,
 	Shield,
@@ -107,7 +108,7 @@ function UserList() {
 	return (
 		<div className="flex flex-col gap-4 p-2 sm:p-4 flex-1 min-h-0 min-w-0">
 			{/* Header & Admin Action */}
-			<div className="flex items-center justify-between gap-2 shrink-0 border-b border-stone-200 dark:border-stone-800 pb-3">
+			<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 shrink-0 border-b border-stone-200 dark:border-stone-800 pb-3">
 				<div>
 					<h1 className="text-lg sm:text-xl font-bold tracking-tight text-stone-900 dark:text-stone-100 flex items-center gap-2">
 						<UserIcon size={20} className="text-stone-500" />
@@ -120,12 +121,20 @@ function UserList() {
 				</div>
 
 				{isAdmin && (
-					<Button asChild size="sm" className="gap-1.5 shrink-0">
-						<Link to="/users/create">
-							<Plus size={16} />
-							<span>{t("rekisteriKyttj", "Rekisteröi käyttäjä")}</span>
-						</Link>
-					</Button>
+					<div className="flex items-center gap-2 shrink-0">
+						<Button variant="secondary" asChild size="sm" className="gap-1.5">
+							<Link to="/admin/users/batch-register">
+								<FileSpreadsheet size={16} />
+								<span>{t("massaRekisterointi", "Massarekisteröinti")}</span>
+							</Link>
+						</Button>
+						<Button asChild size="sm" className="gap-1.5">
+							<Link to="/users/create">
+								<Plus size={16} />
+								<span>{t("rekisteriKyttj", "Rekisteröi käyttäjä")}</span>
+							</Link>
+						</Button>
+					</div>
 				)}
 			</div>
 

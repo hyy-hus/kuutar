@@ -117,3 +117,46 @@ export function useDeleteUser() {
 		},
 	});
 }
+
+export function useBatchCreateUsers() {
+	const queryClient = useQueryClient();
+
+	return useMutation({
+		mutationFn: async (payloads: CreateUserPayload[]) => {
+			const errorMessages: string[] = [];
+
+			const results = await Promise.allSettled(
+				payloads.map(async (payload) => {
+					const { data, error } = await api.POST("/users", { body: payload });
+
+					if (error) {
+						// Extract error message from API response
+						const apiMessage =
+							typeof error === "object" && error !== null && "error" in error
+								? String((error as { error: unknown }).error)
+								: "Käyttäjän luonti epäonnistui.";
+
+						throw new Error(`${payload.email}: ${apiMessage}`);
+					}
+
+					if (!data)
+						throw new Error(`${payload.email}: Ei vastausta palvelimelta.`);
+					return data;
+				}),
+			);
+
+			const rejected = results.filter(
+				(r): r is PromiseRejectedResult => r.status === "rejected",
+			);
+			if (rejected.length > 0) {
+				const details = rejected.map((r) => r.reason.message).join("\n");
+				throw new Error(details);
+			}
+
+			return results.map((r) => (r as PromiseFulfilledResult<User>).value);
+		},
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: userKeys.lists() });
+		},
+	});
+}
