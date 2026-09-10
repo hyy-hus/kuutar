@@ -1,5 +1,4 @@
 use utoipa::openapi::security::{HttpAuthScheme, HttpBuilder, SecurityScheme};
-
 use utoipa::{Modify, OpenApi};
 
 use crate::domains::auth;
@@ -8,6 +7,7 @@ use crate::domains::contracts;
 use crate::domains::groups;
 use crate::domains::reservations;
 use crate::domains::resources;
+use crate::domains::stats;
 use crate::domains::users;
 
 pub struct SecurityAddon;
@@ -83,6 +83,9 @@ impl Modify for SecurityAddon {
         contracts::routes::create_contract,
         contracts::routes::update_contract,
         contracts::routes::delete_contract,
+
+        // Stats
+        stats::routes::get_stats,
     ),
     components(
         schemas(
@@ -112,6 +115,8 @@ impl Modify for SecurityAddon {
             contracts::models::Contract,
             contracts::models::CreateContract,
             contracts::models::UpdateContract,
+            stats::models::SystemStats,
+            stats::models::TopResourceStat,
         )
     ),
     tags(
@@ -121,7 +126,8 @@ impl Modify for SecurityAddon {
         (name = "Resources", description = "Resource management endpoints"),
         (name = "Groups", description = "Group management endpoints"),
         (name = "Reservations", description = "Reservation and occurrence management endpoints"),
-        (name = "Contracts", description = "Contract template management endpoints")
+        (name = "Contracts", description = "Contract template management endpoints"),
+        (name = "Stats", description = "System statistics and usage analytics endpoints")
     ),
     modifiers(&SecurityAddon)
 )]
