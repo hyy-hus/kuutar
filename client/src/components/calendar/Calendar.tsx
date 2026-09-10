@@ -62,8 +62,9 @@ export function Calendar({
         return resources?.map((r) => r.id) || []
     }, [selectedResourceIds, resources])
 
+    // Initialize all resources as selected ONLY if explicitly no resources parameter is in the URL search
     useEffect(() => {
-        if (resources && (!selectedResourceIds || selectedResourceIds.length === 0)) {
+        if (resources && selectedResourceIds === undefined) {
             onSearchChange({ resources: resources.map((r) => r.id) })
         }
     }, [resources, selectedResourceIds, onSearchChange])
