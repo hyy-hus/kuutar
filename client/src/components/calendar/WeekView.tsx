@@ -179,14 +179,45 @@ export function WeekView({
 								? getColumnHeader(col - 1)
 								: { dayName: "", dateFormatted: "" };
 
+						// Deterministic key construction without raw loop indices
+						const cellKey = `grid-r${row}-c${col}`;
+
+						if (isInteractiveCell) {
+							return (
+								<button
+									key={cellKey}
+									type="button"
+									onDoubleClick={() => handleCellDoubleClick(row, col)}
+									onKeyDown={(e) => {
+										if (e.key === "Enter" || e.key === " ") {
+											e.preventDefault();
+											handleCellDoubleClick(row, col);
+										}
+									}}
+									onMouseEnter={() => setHoveredCell({ row, col })}
+									onMouseLeave={() => setHoveredCell(null)}
+									className={`transition-colors flex flex-col justify-between items-center p-1 text-xs select-none cursor-pointer ${
+										isHovered
+											? "bg-purple-100/70 dark:bg-purple-950/40 border-purple-300 dark:border-purple-800"
+											: "bg-stone-50 dark:bg-stone-900/40 hover:bg-stone-100 dark:hover:bg-stone-900"
+									}`}
+									style={{
+										gridRow: row + 1,
+										gridColumn: col + 1,
+									}}
+								>
+									{isHovered && (
+										<span className="w-full text-center text-[10px] font-mono text-purple-700 dark:text-purple-300 bg-purple-200/60 dark:bg-purple-900/60 rounded px-1 py-0.5 mt-auto">
+											{hours[row - 1]} {t("kaksoisklikkaa", "(Kaksoisklikkaa)")}
+										</span>
+									)}
+								</button>
+							);
+						}
+
 						return (
 							<div
-								key={`cell-${row}-${col}`}
-								onDoubleClick={() => handleCellDoubleClick(row, col)}
-								onMouseEnter={() =>
-									isInteractiveCell && setHoveredCell({ row, col })
-								}
-								onMouseLeave={() => isInteractiveCell && setHoveredCell(null)}
+								key={cellKey}
 								className={`transition-colors flex flex-col justify-between items-center p-1 text-xs select-none ${
 									row === 0
 										? "sticky top-0 z-20 bg-stone-100 dark:bg-stone-900 border-b border-stone-300 dark:border-stone-700 font-semibold cursor-default justify-center"
@@ -195,13 +226,7 @@ export function WeekView({
 									col === 0
 										? "sticky left-0 z-20 bg-stone-100 dark:bg-stone-900 border-r border-stone-300 dark:border-stone-700 font-mono text-stone-500 cursor-default justify-center text-[11px]"
 										: ""
-								} ${row === 0 && col === 0 ? "z-30" : ""} ${
-									isInteractiveCell
-										? isHovered
-											? "bg-purple-100/70 dark:bg-purple-950/40 border-purple-300 dark:border-purple-800 cursor-pointer"
-											: "bg-stone-50 dark:bg-stone-900/40 hover:bg-stone-100 dark:hover:bg-stone-900 cursor-pointer"
-										: ""
-								}`}
+								} ${row === 0 && col === 0 ? "z-30" : ""}`}
 								style={{
 									gridRow: row + 1,
 									gridColumn: col + 1,
@@ -219,12 +244,6 @@ export function WeekView({
 								)}
 
 								{col === 0 && row > 0 && <span>{hours[row - 1]}</span>}
-
-								{isInteractiveCell && isHovered && (
-									<span className="w-full text-center text-[10px] font-mono text-purple-700 dark:text-purple-300 bg-purple-200/60 dark:bg-purple-900/60 rounded px-1 py-0.5 mt-auto">
-										{hours[row - 1]} {t("kaksoisklikkaa", "(Kaksoisklikkaa)")}
-									</span>
-								)}
 							</div>
 						);
 					}),
@@ -233,6 +252,7 @@ export function WeekView({
 				{/* Day Overlay Columns */}
 				{Array.from({ length: days }).map((_, i) => (
 					<div
+						// biome-ignore lint/suspicious/noArrayIndexKey: Grid columns are static and non-reorderable
 						key={`day-${i}`}
 						className="pointer-events-none"
 						style={{ gridColumn: i + 2, gridRow: "1 / -1" }}

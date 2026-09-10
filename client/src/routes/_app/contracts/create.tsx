@@ -99,9 +99,9 @@ function CreateContractPage() {
 			</div>
 
 			<div className="flex flex-col gap-1.5">
-				<label className="text-xs font-semibold text-stone-700 dark:text-stone-300">
+				<span className="text-xs font-semibold text-stone-700 dark:text-stone-300">
 					{t("sopimuksenSislt", "Sopimuksen sisältö")}
-				</label>
+				</span>
 				<ContractEditor value={contentHtml} onChange={setContentHtml} />
 			</div>
 		</form>

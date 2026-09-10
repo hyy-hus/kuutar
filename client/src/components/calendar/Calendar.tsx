@@ -189,7 +189,7 @@ export function Calendar({
 		});
 
 		return Array.from(uniqueEvents.values());
-	}, [reservations, resources, activeResourceIds]);
+	}, [reservations, resources, activeResourceIds, t]);
 
 	if (loadingResources || loadingReservations) {
 		return (

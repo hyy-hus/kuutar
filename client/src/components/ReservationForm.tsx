@@ -297,12 +297,12 @@ export function ReservationForm({
 						const hasError = Boolean(field.state.meta.errors.length);
 						return (
 							<div className="space-y-1">
-								<label className="text-xs font-medium text-stone-700 dark:text-stone-300">
+								<span className="text-xs font-medium text-stone-700 dark:text-stone-300">
 									{t(
 										"resurssitValitseYksiTaiUseampi",
 										"Resurssit (Valitse yksi tai useampi)",
 									)}
-								</label>
+								</span>
 
 								{loadingResources ? (
 									<div className="text-xs text-stone-500 py-2">
@@ -459,7 +459,9 @@ export function ReservationForm({
 								<ul className="list-disc list-inside space-y-1 font-mono text-[11px]">
 									{conflicts.map((occ) => (
 										<li key={occ.id}>
-											{formatDate(occ.start_time)} – {formatDate(occ.end_time)}
+											{formatDate(occ.start_time)}
+											{" – "}
+											{formatDate(occ.end_time)}
 										</li>
 									))}
 								</ul>

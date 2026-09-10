@@ -1,12 +1,9 @@
 import { useForm } from "@tanstack/react-form";
 import { ArrowRight, Loader2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import type { components } from "#/api/schema";
 import { Button } from "#/components/Button";
 import { Input } from "#/components/Input";
 import { useAuth } from "#/hooks/useAuth";
-
-type LoginPayload = components["schemas"]["LoginPayload"];
 
 interface SignInFormProps {
 	onSuccess?: () => void;

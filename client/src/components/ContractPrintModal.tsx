@@ -2,7 +2,6 @@ import { generateHTML } from "@tiptap/core";
 import Link from "@tiptap/extension-link";
 import Mention from "@tiptap/extension-mention";
 import StarterKit from "@tiptap/starter-kit";
-import i18next from "i18next";
 import { FileText, Loader2, Printer, X } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -22,6 +21,7 @@ function renderContractBody(body: unknown): string {
 	if (typeof body === "string") return body;
 	if (body && typeof body === "object") {
 		try {
+			/* biome-ignore lint/suspicious/noExplicitAny: No idea what it could be */
 			return generateHTML(body as any, [
 				StarterKit,
 				Link,
@@ -47,12 +47,6 @@ function hydrateContractTemplate(
 		resource_name: occ?.resource_name ?? "—",
 		start_time: occ ? formatDate(occ.start_time) : "—",
 		end_time: occ ? formatDate(occ.end_time) : "—",
-		total_price:
-			reservation.total_price != null
-				? i18next.t("total_price", "{{total_price}} €", {
-						total_price: reservation.total_price,
-					})
-				: "—",
 	};
 
 	return templateHtml.replace(/\[\[(\w+)\]\]/g, (match, key) => {
@@ -102,14 +96,14 @@ export function ContractPrintModal({
 
 				{/* Template Selection Controls (Hidden during print) */}
 				<div className="p-4 border-b border-stone-200 dark:border-stone-800 bg-stone-100/50 dark:bg-stone-900/50 flex flex-wrap items-center gap-3 print:hidden">
-					<label className="text-xs font-semibold text-stone-700 dark:text-stone-300">
+					<span className="text-xs font-semibold text-stone-700 dark:text-stone-300">
 						{t("valitseSopimuspohja", "Valitse sopimuspohja:")}
-					</label>
+					</span>
 					<select
 						value={selectedContractId}
 						onChange={(e) => setSelectedContractId(e.target.value)}
 						disabled={isLoading}
-						className="px-3 py-1.5 text-xs bg-stone-50 dark:bg-stone-950 border border-stone-300 dark:border-stone-700 rounded-md text-stone-900 dark:text-stone-100 flex-1 min-w-[200px]"
+						className="px-3 py-1.5 text-xs bg-stone-50 dark:bg-stone-950 border border-stone-300 dark:border-stone-700 rounded-md text-stone-900 dark:text-stone-100 flex-1 min-w-50"
 					>
 						<option value="">
 							{t("valitseSopimus", "-- Valitse sopimus --")}
@@ -152,6 +146,7 @@ export function ContractPrintModal({
 							{/* Formatted Rich-Text Content */}
 							<div
 								className="prose max-w-none text-stone-900 [&_h1]:text-2xl [&_h1]:font-extrabold [&_h2]:text-xl [&_h2]:font-bold [&_p]:my-2 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5"
+								/* biome-ignore lint/security/noDangerouslySetInnerHtml: Trusted HTML content rendering */
 								dangerouslySetInnerHTML={{ __html: renderedHtml }}
 							/>
 

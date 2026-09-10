@@ -1,10 +1,5 @@
 // src/routes/_app.tsx
-import {
-	createFileRoute,
-	Link,
-	Outlet,
-	useLocation,
-} from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet } from "@tanstack/react-router";
 import { Menu, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -32,7 +27,7 @@ export const Route = createFileRoute("/_app")({
 });
 
 function AppLayout() {
-	const { t, i18n } = useTranslation();
+	const { t } = useTranslation();
 	// Default open on desktop, closed on mobile
 	const [isSidebarOpen, setIsSidebarOpen] = useState(() => {
 		if (typeof window !== "undefined") {
@@ -40,7 +35,6 @@ function AppLayout() {
 		}
 		return true;
 	});
-	const _location = useLocation();
 
 	// Auto-close mobile drawer when route changes
 	useEffect(() => {
@@ -69,9 +63,6 @@ function AppLayout() {
 	const toggleTheme = () => {
 		setTheme((prev) => (prev === "light" ? "dark" : "light"));
 	};
-
-	const currentLocale = i18n.language || "fi";
-	const availableLocales = ["fi", "en", "sv"];
 
 	return (
 		<div className="h-screen w-screen overflow-hidden flex flex-col bg-stone-50 dark:bg-stone-950 text-stone-900 dark:text-stone-100">
@@ -104,7 +95,8 @@ function AppLayout() {
 
 			{/* Mobile Backdrop Overlay */}
 			{isSidebarOpen && (
-				<div
+				<button
+					type="button"
 					className="md:hidden fixed inset-0 bg-stone-950/60 backdrop-blur-xs z-40 transition-opacity"
 					onClick={() => setIsSidebarOpen(false)}
 				/>
@@ -138,7 +130,7 @@ function AppLayout() {
 						</Button>
 					</div>
 
-					<div className="flex-1 overflow-y-auto p-2 min-w-[15rem]">
+					<div className="flex-1 overflow-y-auto p-2 min-w-60">
 						<SideBar
 							isSidebarOpen={isSidebarOpen}
 							theme={theme}
@@ -157,9 +149,9 @@ function AppLayout() {
 			<footer className="h-8 border-t-2 border-stone-800 dark:border-stone-600 flex items-center justify-between px-3 text-[11px] font-mono bg-stone-100 dark:bg-stone-900 shrink-0 z-40 text-stone-600 dark:text-stone-400">
 				<div className="flex items-center gap-3">
 					<span className="font-bold text-stone-800 dark:text-stone-200">
-						kuutar
+						{"kuutar"}
 					</span>
-					<span className="hidden sm:inline text-stone-400">|</span>
+					<span className="hidden sm:inline text-stone-400">{"|"}</span>
 					<span className="hidden sm:inline">
 						{t(
 							"helsinginYliopistonYlioppilaskunta",

@@ -219,6 +219,7 @@ function BatchPrintPage() {
 						{/* Body Text */}
 						<div
 							className="prose max-w-none text-stone-900 text-sm leading-relaxed mb-12"
+							/* biome-ignore lint/security/noDangerouslySetInnerHtml: Trusted HTML content rendering */
 							dangerouslySetInnerHTML={{ __html: rawHtml }}
 						/>
 
