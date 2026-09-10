@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Calendar, FileText, Loader2, Plus } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Button } from "#/components/Button";
 import { Chip } from "#/components/Chip";
 import { type Contract, useContracts } from "#/hooks/useContracts";
@@ -15,6 +16,7 @@ export const Route = createFileRoute("/_app/contracts/")({
 });
 
 function ContractCard({ contract }: { contract: Contract }) {
+	const { t } = useTranslation();
 	return (
 		<li className="p-3 border-2 dark:border-stone-700 flex flex-col gap-2 rounded-sm bg-stone-50 dark:bg-stone-900 transition-colors min-w-0">
 			<div className="flex items-start justify-between gap-2">
@@ -26,7 +28,9 @@ function ContractCard({ contract }: { contract: Contract }) {
 
 			<div className="flex items-center gap-1 text-xs text-stone-500 dark:text-stone-400">
 				<Calendar size={14} />
-				<span>Päivitetty: {formatDate(contract.updated_at)}</span>
+				<span>
+					{t("pivitetty", "Päivitetty:")} {formatDate(contract.updated_at)}
+				</span>
 			</div>
 
 			<div className="pt-2 border-t border-stone-200 dark:border-stone-800 flex justify-end">
@@ -37,7 +41,7 @@ function ContractCard({ contract }: { contract: Contract }) {
 						className="gap-1.5 text-xs font-medium"
 					>
 						<FileText size={16} />
-						<span>Muokkaa sopimusta</span>
+						<span>{t("muokkaaSopimusta", "Muokkaa sopimusta")}</span>
 					</Link>
 				</Button>
 			</div>
@@ -46,6 +50,7 @@ function ContractCard({ contract }: { contract: Contract }) {
 }
 
 function ContractsListPage() {
+	const { t } = useTranslation();
 	const { data: contracts, isLoading, isError } = useContracts();
 
 	return (
@@ -55,7 +60,7 @@ function ContractsListPage() {
 				<div className="flex items-center gap-2">
 					<FileText className="text-amber-600 dark:text-amber-500" size={24} />
 					<h1 className="text-xl font-bold text-stone-900 dark:text-stone-100">
-						Sopimuspohjat
+						{t("sopimuspohjat", "Sopimuspohjat")}
 					</h1>
 				</div>
 
@@ -65,7 +70,7 @@ function ContractsListPage() {
 				>
 					<Link to="/contracts/create">
 						<Plus size={18} />
-						<span>Uusi sopimuspohja</span>
+						<span>{t("uusiSopimuspohja", "Uusi sopimuspohja")}</span>
 					</Link>
 				</Button>
 			</div>
@@ -74,11 +79,14 @@ function ContractsListPage() {
 			{isLoading ? (
 				<div className="p-8 flex items-center justify-center gap-2 text-stone-500">
 					<Loader2 className="animate-spin" size={18} />
-					<span>Ladataan sopimuspohjia...</span>
+					<span>{t("ladataanSopimuspohjia", "Ladataan sopimuspohjia...")}</span>
 				</div>
 			) : isError ? (
 				<div className="p-4 text-xs text-rose-600 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 rounded-md">
-					Virhe ladattaessa sopimuspohjia.
+					{t(
+						"virheLadattaessaSopimuspohjia",
+						"Virhe ladattaessa sopimuspohjia.",
+					)}
 				</div>
 			) : contracts && contracts.length > 0 ? (
 				<ul className="grid grid-cols-1 lg:grid-cols-2 gap-3">
@@ -88,7 +96,7 @@ function ContractsListPage() {
 				</ul>
 			) : (
 				<div className="p-8 text-center text-xs text-stone-500 bg-stone-50 dark:bg-stone-900/40 rounded-md border border-stone-200 dark:border-stone-800">
-					Ei tallennettuja sopimuspohjia.
+					{t("eiTallennettujaSopimuspohjia", "Ei tallennettuja sopimuspohjia.")}
 				</div>
 			)}
 		</div>

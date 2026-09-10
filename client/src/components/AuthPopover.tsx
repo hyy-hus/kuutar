@@ -1,11 +1,13 @@
 import { LogOut, User } from "lucide-react";
 import { Dialog } from "radix-ui";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "#/components/Button";
 import { SignInForm } from "#/components/SignInForm";
 import { useAuth } from "#/hooks/useAuth";
 
 export function AuthDialog() {
+	const { t } = useTranslation();
 	const [isOpen, setIsOpen] = useState(false);
 	const { user, isAuthenticated, logout } = useAuth();
 
@@ -32,7 +34,9 @@ export function AuthDialog() {
 					{isAuthenticated ? (
 						<div className="space-y-4">
 							<div className="border-b border-stone-200 dark:border-stone-800 pb-3">
-								<p className="text-xs text-stone-500">Kirjautunut sisään</p>
+								<p className="text-xs text-stone-500">
+									{t("kirjautunutSisn", "Kirjautunut sisään")}
+								</p>
 								<p className="text-sm font-semibold text-stone-900 dark:text-stone-100">
 									{user?.email}
 								</p>
@@ -50,13 +54,13 @@ export function AuthDialog() {
 								}}
 							>
 								<LogOut size={16} />
-								<span>Kirjaudu ulos</span>
+								<span>{t("kirjauduUlos", "Kirjaudu ulos")}</span>
 							</Button>
 						</div>
 					) : (
 						<div>
 							<Dialog.Title className="text-base font-semibold text-stone-900 dark:text-stone-100 mb-4">
-								Kirjaudu sisään
+								{t("kirjauduSisn", "Kirjaudu sisään")}
 							</Dialog.Title>
 							<SignInForm onSuccess={() => setIsOpen(false)} />
 						</div>

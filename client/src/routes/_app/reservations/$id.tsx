@@ -1,5 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { ArrowLeft, Clock, Edit, Trash2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Button } from "#/components/Button";
 import { Chip } from "#/components/Chip";
 import {
@@ -16,6 +17,7 @@ export const Route = createFileRoute("/_app/reservations/$id")({
 });
 
 function ViewReservationPage() {
+	const { t } = useTranslation();
 	const { id } = Route.useParams();
 	const navigate = useNavigate();
 
@@ -37,10 +39,14 @@ function ViewReservationPage() {
 					to="/reservations"
 					className="inline-flex items-center gap-1 text-xs text-stone-500 hover:underline"
 				>
-					<ArrowLeft size={14} /> Takaisin varauksiin
+					<ArrowLeft size={14} />{" "}
+					{t("takaisinVarauksiin", "Takaisin varauksiin")}
 				</Link>
 				<div className="p-4 text-xs font-mono text-rose-600 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 rounded-md">
-					Varausta ei löytynyt tai virheellinen Tunniste.
+					{t(
+						"varaustaEiLytynytTaiVirheellinenTunniste",
+						"Varausta ei löytynyt tai virheellinen Tunniste.",
+					)}
 				</div>
 			</div>
 		);
@@ -48,7 +54,9 @@ function ViewReservationPage() {
 
 	if (isLoading) {
 		return (
-			<div className="p-4 text-sm text-stone-500">Ladataan varausta...</div>
+			<div className="p-4 text-sm text-stone-500">
+				{t("ladataanVarausta", "Ladataan varausta...")}
+			</div>
 		);
 	}
 
@@ -71,7 +79,7 @@ function ViewReservationPage() {
 				to="/reservations"
 				className="inline-flex items-center gap-1 text-xs text-stone-500 hover:underline"
 			>
-				<ArrowLeft size={14} /> Takaisin varauksiin
+				<ArrowLeft size={14} /> {t("takaisinVarauksiin", "Takaisin varauksiin")}
 			</Link>
 
 			{/* Header */}
@@ -89,7 +97,7 @@ function ViewReservationPage() {
 			{occurrences.length > 0 && (
 				<div className="space-y-2">
 					<h2 className="text-xs uppercase tracking-wider text-stone-400 font-semibold">
-						Varausajat
+						{t("varausajat2", "Varausajat")}
 					</h2>
 					<ul className="space-y-2">
 						{occurrences.map((occ) => (
@@ -117,21 +125,26 @@ function ViewReservationPage() {
 				<div className="text-md space-y-1">
 					{reservation?.description && (
 						<p>
-							<strong>Kuvaus:</strong> {reservation.description}
+							<strong>{t("kuvaus2", "Kuvaus:")}</strong>{" "}
+							{reservation.description}
 						</p>
 					)}
 					{reservation?.admin_notes && (
 						<p>
-							<strong>Ylläpidon muistiinpanot:</strong>{" "}
+							<strong>
+								{t("yllpidonMuistiinpanot", "Ylläpidon muistiinpanot:")}
+							</strong>{" "}
 							{reservation.admin_notes}
 						</p>
 					)}
 					<hr className="my-2 border-stone-300 dark:border-stone-800" />
 					<p>
-						<strong>Muokattu:</strong> {formatDate(reservation?.updated_at)}
+						<strong>{t("muokattu", "Muokattu:")}</strong>{" "}
+						{formatDate(reservation?.updated_at)}
 					</p>
 					<p>
-						<strong>Luotu:</strong> {formatDate(reservation?.created_at)}
+						<strong>{t("luotu", "Luotu:")}</strong>{" "}
+						{formatDate(reservation?.created_at)}
 					</p>
 				</div>
 			</div>
@@ -147,7 +160,7 @@ function ViewReservationPage() {
 						to="/reservations/edit/$id"
 						params={{ id: reservation?.id ?? "" }}
 					>
-						<span>Muokkaa</span>
+						<span>{t("muokkaa", "Muokkaa")}</span>
 						<Edit size={16} />
 					</Link>
 				</Button>
@@ -158,7 +171,7 @@ function ViewReservationPage() {
 					onClick={handleDelete}
 					disabled={deleteReservation.isPending}
 				>
-					<span>Poista varaus</span>
+					<span>{t("poistaVaraus", "Poista varaus")}</span>
 					<Trash2 size={16} />
 				</Button>
 			</div>
@@ -167,13 +180,20 @@ function ViewReservationPage() {
 }
 
 function StatusBadge({ status }: { status: ReservationStatus }) {
+	const { t } = useTranslation();
 	const styles = {
-		confirmed:
+		confirmed: t(
+			"bgemerald100Textemerald800Darkbgemerald950Darktextemerald300Borderemerald300",
 			"bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border-emerald-300",
-		pending:
+		),
+		pending: t(
+			"bgamber100Textamber800Darkbgamber950Darktextamber300Borderamber300",
 			"bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border-amber-300",
-		cancelled:
+		),
+		cancelled: t(
+			"bgrose100Textrose800Darkbgrose950Darktextrose300Borderrose300",
 			"bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300 border-rose-300",
+		),
 	};
 
 	const labels = {

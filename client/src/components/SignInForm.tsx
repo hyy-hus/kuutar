@@ -1,5 +1,6 @@
 import { useForm } from "@tanstack/react-form";
 import { ArrowRight, Loader2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import type { components } from "#/api/schema";
 import { Button } from "#/components/Button";
 import { Input } from "#/components/Input";
@@ -12,6 +13,7 @@ interface SignInFormProps {
 }
 
 export function SignInForm({ onSuccess }: SignInFormProps) {
+	const { t } = useTranslation();
 	const { login, isLoggingIn, loginError } = useAuth();
 
 	const form = useForm({
@@ -51,7 +53,7 @@ export function SignInForm({ onSuccess }: SignInFormProps) {
 				validators={{
 					onChange: ({ value }) =>
 						!value
-							? "Sähköposti on pakollinen"
+							? t("shkpostiOnPakollinen", "Sähköposti on pakollinen")
 							: !/\S+@\S+\.\S+/.test(value)
 								? "Anna kelvollinen sähköpostiosoite"
 								: undefined,
@@ -65,7 +67,7 @@ export function SignInForm({ onSuccess }: SignInFormProps) {
 								htmlFor={field.name}
 								className="text-xs font-medium text-stone-700 dark:text-stone-300"
 							>
-								Sähköposti
+								{t("shkposti", "Sähköposti")}
 							</label>
 							<Input
 								id={field.name}
@@ -91,7 +93,9 @@ export function SignInForm({ onSuccess }: SignInFormProps) {
 				name="password"
 				validators={{
 					onChange: ({ value }) =>
-						!value ? "Salasana on pakollinen" : undefined,
+						!value
+							? t("salasanaOnPakollinen", "Salasana on pakollinen")
+							: undefined,
 				}}
 			>
 				{(field) => {
@@ -102,7 +106,7 @@ export function SignInForm({ onSuccess }: SignInFormProps) {
 								htmlFor={field.name}
 								className="text-xs font-medium text-stone-700 dark:text-stone-300"
 							>
-								Salasana
+								{t("salasana", "Salasana")}
 							</label>
 							<Input
 								id={field.name}
@@ -137,7 +141,7 @@ export function SignInForm({ onSuccess }: SignInFormProps) {
 							<Loader2 className="animate-spin" size={16} />
 						) : (
 							<>
-								<span>Kirjaudu</span>
+								<span>{t("kirjaudu", "Kirjaudu")}</span>
 								<ArrowRight size={16} />
 							</>
 						)}

@@ -1,5 +1,6 @@
 // src/routes/resources/create.tsx
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useTranslation } from "react-i18next";
 import { ResourceForm } from "#/components/ResourceForm";
 import { useCreateResource } from "#/hooks/useResorces";
 import { requireAuthGuard } from "#/utils/authGuard";
@@ -12,6 +13,7 @@ export const Route = createFileRoute("/_app/resources/create")({
 });
 
 function CreateResourcePage() {
+	const { t } = useTranslation();
 	const navigate = useNavigate();
 	const createResource = useCreateResource();
 
@@ -26,7 +28,7 @@ function CreateResourcePage() {
 	return (
 		<div className="p-4 space-y-4">
 			<h1 className="text-xl font-bold text-stone-900 dark:text-stone-100">
-				Uusi resurssi
+				{t("uusiResurssi", "Uusi resurssi")}
 			</h1>
 			<ResourceForm
 				onSubmit={handleSubmit}

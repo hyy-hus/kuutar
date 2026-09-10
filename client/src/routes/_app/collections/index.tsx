@@ -1,6 +1,7 @@
 // src/routes/_app/collections/index.tsx
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Eye, Layers, Loader2, Plus } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Button } from "#/components/Button";
 import { Chip } from "#/components/Chip";
 import { useIsAdmin } from "#/hooks/useAuth";
@@ -19,6 +20,7 @@ function CollectionCard({
 	collection: Collection;
 	resourceCount: number;
 }) {
+	const { t } = useTranslation();
 	return (
 		<li className="p-3 border-2 border-stone-800 dark:border-stone-700 flex flex-col justify-between gap-3 rounded-md bg-stone-50 dark:bg-stone-900 shadow-xs hover:border-purple-600 dark:hover:border-purple-500 transition-colors min-w-0">
 			<div className="space-y-2 min-w-0">
@@ -33,12 +35,17 @@ function CollectionCard({
 				{/* Resource Count Badge */}
 				<div className="flex items-center gap-1.5 text-xs text-stone-500 dark:text-stone-400">
 					<Layers size={14} className="shrink-0" />
-					<span>{resourceCount} resurssia</span>
+					<span>
+						{t("resourcecountResurssia", "{{resourceCount}} resurssia", {
+							resourceCount,
+						})}
+					</span>
 				</div>
 
 				{/* Description */}
 				<p className="text-xs text-stone-600 dark:text-stone-400 line-clamp-2 min-h-8">
-					{collection.description || "Ei kuvausta saatavilla."}
+					{collection.description ||
+						t("eiKuvaustaSaatavilla2", "Ei kuvausta saatavilla.")}
 				</p>
 			</div>
 
@@ -51,7 +58,7 @@ function CollectionCard({
 					className="gap-1.5 text-xs"
 				>
 					<Link to="/collections/$id" params={{ id: collection.id }}>
-						<span>Näytä</span>
+						<span>{t("nyt", "Näytä")}</span>
 						<Eye size={14} />
 					</Link>
 				</Button>
@@ -61,6 +68,7 @@ function CollectionCard({
 }
 
 function CollectionList() {
+	const { t } = useTranslation();
 	const { isAdmin } = useIsAdmin();
 	const {
 		data: collections,
@@ -77,7 +85,7 @@ function CollectionList() {
 		return (
 			<div className="p-8 flex items-center justify-center gap-2 text-stone-500">
 				<Loader2 className="animate-spin" size={18} />
-				<span>Ladataan kokoelmia...</span>
+				<span>{t("ladataanKokoelmia", "Ladataan kokoelmia...")}</span>
 			</div>
 		);
 	}
@@ -85,7 +93,7 @@ function CollectionList() {
 	if (errorCollections || errorResources) {
 		return (
 			<div className="p-4 text-xs text-rose-600 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 rounded-md">
-				Virhe ladattaessa tietoja.
+				{t("virheLadattaessaTietoja", "Virhe ladattaessa tietoja.")}
 			</div>
 		);
 	}
@@ -103,10 +111,10 @@ function CollectionList() {
 			<div className="flex items-center justify-between gap-2 shrink-0 border-b border-stone-200 dark:border-stone-800 pb-3">
 				<div>
 					<h1 className="text-lg sm:text-xl font-bold tracking-tight text-stone-900 dark:text-stone-100">
-						Kokoelmat
+						{t("kokoelmat", "Kokoelmat")}
 					</h1>
 					<p className="text-xs text-stone-500">
-						Yhteensä {collections?.length || 0} kokoelmaa
+						{t("yhteens", "Yhteensä")} {collections?.length || 0} kokoelmaa
 					</p>
 				</div>
 
@@ -114,7 +122,7 @@ function CollectionList() {
 					<Button asChild size="sm" className="gap-1.5 shrink-0">
 						<Link to="/collections/create">
 							<Plus size={16} />
-							<span>Lisää kokoelma</span>
+							<span>{t("lisKokoelma", "Lisää kokoelma")}</span>
 						</Link>
 					</Button>
 				)}

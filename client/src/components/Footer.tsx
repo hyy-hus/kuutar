@@ -3,9 +3,11 @@
 import { SiGithub } from "@icons-pack/react-simple-icons";
 import { Link } from "@tanstack/react-router";
 import { Info, Loader2, Newspaper, ShieldCheck } from "lucide-react";
+import { Trans, useTranslation } from "react-i18next";
 import { useHealth } from "#/hooks/useHealth";
 
 export function Footer() {
+	const { t } = useTranslation();
 	const { data: health, isLoading, isError } = useHealth();
 
 	return (
@@ -15,10 +17,15 @@ export function Footer() {
 				<div className="space-y-3">
 					<div className="flex items-start gap-2 text-stone-900 dark:text-stone-100 font-bold text-sm">
 						<span className="w-2.5 h-2.5 rounded-full bg-purple-600 dark:bg-purple-400 shrink-0 mt-1" />
-						<span className="leading-tight">Varauskalenteri Kuutar</span>
+						<span className="leading-tight">
+							{t("varauskalenteriKuutar", "Varauskalenteri Kuutar")}
+						</span>
 					</div>
 					<p className="text-xs text-stone-500 dark:text-stone-400 leading-relaxed">
-						Nykyaikainen ja selkeä resurssien ja tilojen varausjärjestelmä.
+						{t(
+							"nykyaikainenJaSelkeResurssienJaTilojenVarausjrjestelm",
+							"Nykyaikainen ja selkeä resurssien ja tilojen varausjärjestelmä.",
+						)}
 					</p>
 					<div className="pt-1">
 						<a
@@ -28,7 +35,7 @@ export function Footer() {
 							className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-stone-200 dark:bg-stone-800 hover:bg-stone-300 dark:hover:bg-stone-700 text-stone-900 dark:text-stone-100 transition-colors font-medium text-xs border border-stone-300 dark:border-stone-700"
 						>
 							<SiGithub size={14} className="shrink-0" />
-							<span>GitHub</span>
+							<span>{t("github", "GitHub")}</span>
 						</a>
 					</div>
 				</div>
@@ -36,7 +43,7 @@ export function Footer() {
 				{/* Quick Navigation Links */}
 				<div className="space-y-3">
 					<h4 className="font-mono font-bold uppercase tracking-wider text-[11px] text-stone-900 dark:text-stone-100">
-						Järjestelmä
+						{t("jrjestelm", "Järjestelmä")}
 					</h4>
 					<ul className="space-y-2 text-xs">
 						<li>
@@ -44,7 +51,7 @@ export function Footer() {
 								to="/calendar"
 								className="hover:underline text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100"
 							>
-								Kalenteri
+								{t("kalenteri", "Kalenteri")}
 							</Link>
 						</li>
 						<li>
@@ -52,7 +59,7 @@ export function Footer() {
 								to="/resources"
 								className="hover:underline text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100"
 							>
-								Resurssit
+								{t("resurssit", "Resurssit")}
 							</Link>
 						</li>
 						<li>
@@ -60,7 +67,7 @@ export function Footer() {
 								to="/collections"
 								className="hover:underline text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100"
 							>
-								Kokoelmat
+								{t("kokoelmat", "Kokoelmat")}
 							</Link>
 						</li>
 					</ul>
@@ -69,7 +76,7 @@ export function Footer() {
 				{/* Info & Legal Pages */}
 				<div className="space-y-3">
 					<h4 className="font-mono font-bold uppercase tracking-wider text-[11px] text-stone-900 dark:text-stone-100">
-						Tiedot & Ehdot
+						{t("tiedotEhdot", "Tiedot & Ehdot")}
 					</h4>
 					<ul className="space-y-2 text-xs">
 						<li>
@@ -78,7 +85,7 @@ export function Footer() {
 								className="hover:underline flex items-center gap-2 text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100"
 							>
 								<Info size={14} className="shrink-0 text-stone-400" />
-								<span>Tietoa meistä</span>
+								<span>{t("tietoaMeist", "Tietoa meistä")}</span>
 							</Link>
 						</li>
 						<li>
@@ -87,7 +94,7 @@ export function Footer() {
 								className="hover:underline flex items-center gap-2 text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100"
 							>
 								<Newspaper size={14} className="shrink-0 text-stone-400" />
-								<span>Tiedotteet</span>
+								<span>{t("tiedotteet", "Tiedotteet")}</span>
 							</Link>
 						</li>
 						<li>
@@ -100,7 +107,10 @@ export function Footer() {
 									className="shrink-0 text-stone-400 mt-0.5"
 								/>
 								<span className="leading-tight">
-									Tietosuoja & Rekisteriseloste
+									{t(
+										"tietosuojaRekisteriseloste",
+										"Tietosuoja & Rekisteriseloste",
+									)}
 								</span>
 							</Link>
 						</li>
@@ -110,11 +120,11 @@ export function Footer() {
 				{/* Dynamic Version & Technical Info */}
 				<div className="space-y-3">
 					<h4 className="font-mono font-bold uppercase tracking-wider text-[11px] text-stone-900 dark:text-stone-100">
-						Tila & Versio
+						{t("tilaVersio", "Tila & Versio")}
 					</h4>
 					<div className="space-y-2 text-xs text-stone-600 dark:text-stone-400">
 						<div className="flex items-center justify-between gap-2">
-							<span>Versio</span>
+							<span>{t("versio", "Versio")}</span>
 							<span className="font-mono font-bold text-stone-900 dark:text-stone-100">
 								{isLoading ? (
 									<Loader2 size={12} className="animate-spin" />
@@ -124,20 +134,24 @@ export function Footer() {
 							</span>
 						</div>
 						<div className="flex items-center justify-between gap-2">
-							<span>Tila</span>
+							<span>{t("tila", "Tila")}</span>
 							{isLoading ? (
 								<span className="inline-flex items-center gap-1.5 text-stone-500 text-[11px]">
 									<Loader2 size={12} className="animate-spin" />
 								</span>
 							) : isError ? (
 								<span className="inline-flex items-center gap-1.5 font-bold text-rose-700 dark:text-rose-400 bg-rose-100 dark:bg-rose-950/60 px-2 py-0.5 rounded border border-rose-300 dark:border-rose-800 text-[11px]">
-									<span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
-									Häiriö
+									<Trans i18nKey="spanClassnamew15H15RoundedfullBgrose500Hiri">
+										<span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+										Häiriö
+									</Trans>
 								</span>
 							) : (
 								<span className="inline-flex items-center gap-1.5 font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-300 dark:border-emerald-800 text-[11px]">
-									<span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-									Normaali
+									<Trans i18nKey="spanClassnamew15H15RoundedfullBgemerald500AnimatepulseNormaali">
+										<span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+										Normaali
+									</Trans>
 								</span>
 							)}
 						</div>
@@ -148,8 +162,11 @@ export function Footer() {
 			{/* Bottom Copyright Strip */}
 			<div className="border-t border-stone-200 dark:border-stone-800 py-3 px-6 text-center sm:text-left text-[11px] text-stone-500 dark:text-stone-400 flex flex-col sm:flex-row items-center justify-between gap-2 font-mono max-w-6xl mx-auto">
 				<span>
-					&copy; {new Date().getFullYear()} Helsingin yliopiston ylioppilaskunta
-					(HYY)
+					{t("copy", "&copy;")} {new Date().getFullYear()}{" "}
+					{t(
+						"helsinginYliopistonYlioppilaskuntaHyy",
+						"Helsingin yliopiston ylioppilaskunta\n\t\t\t\t\t(HYY)",
+					)}
 				</span>
 			</div>
 		</footer>

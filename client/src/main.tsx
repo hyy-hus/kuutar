@@ -6,6 +6,7 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import { routeTree } from "./routeTree.gen";
 import "./styles.css";
+import "./i18n";
 
 const queryClient = new QueryClient({
 	defaultOptions: {

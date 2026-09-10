@@ -1,5 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { ArrowLeft, Edit, KeyRound, ShieldAlert, Trash2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Button } from "#/components/Button";
 import { Chip } from "#/components/Chip";
 import { useGroup } from "#/hooks/useGroups";
@@ -16,6 +17,7 @@ export const Route = createFileRoute("/_app/users/$id")({
 });
 
 function ViewUserPage() {
+	const { t } = useTranslation();
 	const { id } = Route.useParams();
 	const navigate = useNavigate();
 	const { data: user, isLoading, isError } = useUser(id);
@@ -24,11 +26,15 @@ function ViewUserPage() {
 
 	if (isLoading)
 		return (
-			<div className="p-4 text-sm text-stone-500">Ladataan käyttäjää...</div>
+			<div className="p-4 text-sm text-stone-500">
+				{t("ladataanKyttj", "Ladataan käyttäjää...")}
+			</div>
 		);
 	if (isError || !user)
 		return (
-			<div className="p-4 text-sm text-red-500">Käyttäjää ei löytynyt.</div>
+			<div className="p-4 text-sm text-red-500">
+				{t("kyttjEiLytynyt", "Käyttäjää ei löytynyt.")}
+			</div>
 		);
 
 	const handleDelete = async () => {
@@ -41,7 +47,10 @@ function ViewUserPage() {
 	const handleRevokeSessions = async () => {
 		if (
 			confirm(
-				"Haluatko varmasti päättää kaikki tämän käyttäjän aktiiviset istunnot?",
+				t(
+					"haluatkoVarmastiPttKaikkiTmnKyttjnAktiivisetIstunnot",
+					"Haluatko varmasti päättää kaikki tämän käyttäjän aktiiviset istunnot?",
+				),
 			)
 		) {
 			alert("Toteuta sessioiden mitätöinti backend-päätepisteen valmistuttua.");
@@ -54,7 +63,7 @@ function ViewUserPage() {
 				to="/users"
 				className="inline-flex items-center gap-1 text-xs text-stone-500 hover:underline"
 			>
-				<ArrowLeft size={14} /> Takaisin käyttäjiin
+				<ArrowLeft size={14} /> {t("takaisinKyttjiin", "Takaisin käyttäjiin")}
 			</Link>
 
 			{/* Header */}
@@ -74,14 +83,16 @@ function ViewUserPage() {
 			<div className="space-y-2">
 				<div className="text-md">
 					<p>
-						<strong>Ryhmä:</strong> {group?.name ?? "—"}
+						<strong>{t("ryhm2", "Ryhmä:")}</strong> {group?.name ?? "—"}
 					</p>
 					<hr className="my-2 border-stone-300 dark:border-stone-800" />
 					<p>
-						<strong>Muokattu:</strong> {formatDate(user.updated_at)}
+						<strong>{t("muokattu", "Muokattu:")}</strong>{" "}
+						{formatDate(user.updated_at)}
 					</p>
 					<p>
-						<strong>Luotu:</strong> {formatDate(user.created_at)}
+						<strong>{t("luotu", "Luotu:")}</strong>{" "}
+						{formatDate(user.created_at)}
 					</p>
 				</div>
 			</div>
@@ -90,11 +101,13 @@ function ViewUserPage() {
 			<div className="p-4 border border-stone-200 dark:border-stone-800 rounded-md bg-stone-50 dark:bg-stone-900/50 space-y-3">
 				<div className="flex items-center gap-2 text-stone-900 dark:text-stone-100 font-semibold text-sm">
 					<KeyRound size={16} />
-					<span>Aktiiviset istunnot</span>
+					<span>{t("aktiivisetIstunnot", "Aktiiviset istunnot")}</span>
 				</div>
 				<p className="text-xs text-stone-500">
-					Käyttäjällä ei ole näkyviä aktiivisia istuntoja tai backend ei tue
-					sessionhallintaa vielä.
+					{t(
+						"kyttjllEiOleNkyviAktiivisiaIstuntojaTaiBackendEiTueSessionhallintaaViel",
+						"Käyttäjällä ei ole näkyviä aktiivisia istuntoja tai backend ei tue\n\t\t\t\t\tsessionhallintaa vielä.",
+					)}
 				</p>
 				<Button
 					variant="outline"
@@ -103,7 +116,7 @@ function ViewUserPage() {
 					className="w-full flex items-center justify-center gap-2 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-900"
 				>
 					<ShieldAlert size={16} />
-					<span>Mitätöi kaikki istunnot</span>
+					<span>{t("mittiKaikkiIstunnot", "Mitätöi kaikki istunnot")}</span>
 				</Button>
 			</div>
 
@@ -115,7 +128,7 @@ function ViewUserPage() {
 					asChild
 				>
 					<Link to="/users/edit/$id" params={{ id: user.id }}>
-						<span>Muokkaa</span>
+						<span>{t("muokkaa", "Muokkaa")}</span>
 						<Edit size={16} />
 					</Link>
 				</Button>
@@ -126,7 +139,7 @@ function ViewUserPage() {
 					onClick={handleDelete}
 					disabled={deleteUser.isPending}
 				>
-					<span>Poista käyttäjä</span>
+					<span>{t("poistaKyttj", "Poista käyttäjä")}</span>
 					<Trash2 size={16} />
 				</Button>
 			</div>

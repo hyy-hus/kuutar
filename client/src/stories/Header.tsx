@@ -1,5 +1,6 @@
 import { Button } from "./Button";
 import "./header.css";
+import i18next from "i18next";
 
 type User = {
 	name: string;
@@ -42,24 +43,32 @@ export const Header = ({
 						/>
 					</g>
 				</svg>
-				<h1>Acme</h1>
+				<h1>{i18next.t("acme", "Acme")}</h1>
 			</div>
 			<div>
 				{user ? (
 					<>
 						<span className="welcome">
-							Welcome, <b>{user.name}</b>!
+							{i18next.t("welcome", "Welcome,")} <b>{user.name}</b>!
 						</span>
-						<Button size="small" onClick={onLogout} label="Log out" />
+						<Button
+							size="small"
+							onClick={onLogout}
+							label={i18next.t("logOut", "Log out")}
+						/>
 					</>
 				) : (
 					<>
-						<Button size="small" onClick={onLogin} label="Log in" />
+						<Button
+							size="small"
+							onClick={onLogin}
+							label={i18next.t("logIn", "Log in")}
+						/>
 						<Button
 							primary
 							size="small"
 							onClick={onCreateAccount}
-							label="Sign up"
+							label={i18next.t("signUp", "Sign up")}
 						/>
 					</>
 				)}

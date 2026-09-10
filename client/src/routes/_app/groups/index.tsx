@@ -1,6 +1,7 @@
 // src/routes/_app/groups/index.tsx
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Eye, Loader2, Plus, Users } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Button } from "#/components/Button";
 import { Chip } from "#/components/Chip";
 import { useIsAdmin } from "#/hooks/useAuth";
@@ -16,6 +17,7 @@ export const Route = createFileRoute("/_app/groups/")({
 });
 
 function GroupCard({ group }: { group: Group }) {
+	const { t } = useTranslation();
 	return (
 		<li className="p-3 border-2 border-stone-800 dark:border-stone-700 flex flex-col justify-between gap-3 rounded-md bg-stone-50 dark:bg-stone-900 shadow-xs hover:border-purple-600 dark:hover:border-purple-500 transition-colors min-w-0">
 			<div className="space-y-2 min-w-0">
@@ -29,7 +31,8 @@ function GroupCard({ group }: { group: Group }) {
 
 				{/* Description */}
 				<p className="text-xs text-stone-600 dark:text-stone-400 line-clamp-2 min-h-8">
-					{group.description || "Ei kuvausta saatavilla."}
+					{group.description ||
+						t("eiKuvaustaSaatavilla2", "Ei kuvausta saatavilla.")}
 				</p>
 			</div>
 
@@ -42,7 +45,7 @@ function GroupCard({ group }: { group: Group }) {
 					className="gap-1.5 text-xs"
 				>
 					<Link to="/groups/$id" params={{ id: group.id }}>
-						<span>Näytä</span>
+						<span>{t("nyt", "Näytä")}</span>
 						<Eye size={14} />
 					</Link>
 				</Button>
@@ -52,6 +55,7 @@ function GroupCard({ group }: { group: Group }) {
 }
 
 function GroupList() {
+	const { t } = useTranslation();
 	const { isAdmin } = useIsAdmin();
 	const {
 		data: groups,
@@ -63,7 +67,7 @@ function GroupList() {
 		return (
 			<div className="p-8 flex items-center justify-center gap-2 text-stone-500">
 				<Loader2 className="animate-spin" size={18} />
-				<span>Ladataan ryhmiä...</span>
+				<span>{t("ladataanRyhmi", "Ladataan ryhmiä...")}</span>
 			</div>
 		);
 	}
@@ -71,7 +75,7 @@ function GroupList() {
 	if (errorGroups) {
 		return (
 			<div className="p-4 text-xs text-rose-600 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 rounded-md">
-				Virhe ladattaessa tietoja.
+				{t("virheLadattaessaTietoja", "Virhe ladattaessa tietoja.")}
 			</div>
 		);
 	}
@@ -83,10 +87,11 @@ function GroupList() {
 				<div>
 					<h1 className="text-lg sm:text-xl font-bold tracking-tight text-stone-900 dark:text-stone-100 flex items-center gap-2">
 						<Users size={20} className="text-stone-500" />
-						<span>Ryhmät</span>
+						<span>{t("ryhmt", "Ryhmät")}</span>
 					</h1>
 					<p className="text-xs text-stone-500">
-						Yhteensä {groups?.length || 0} ryhmää
+						{t("yhteens", "Yhteensä")} {groups?.length || 0}{" "}
+						{t("ryhm3", "ryhmää")}
 					</p>
 				</div>
 
@@ -94,7 +99,7 @@ function GroupList() {
 					<Button asChild size="sm" className="gap-1.5 shrink-0">
 						<Link to="/groups/create">
 							<Plus size={16} />
-							<span>Lisää ryhmä</span>
+							<span>{t("lisRyhm", "Lisää ryhmä")}</span>
 						</Link>
 					</Button>
 				)}

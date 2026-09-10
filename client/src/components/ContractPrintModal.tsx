@@ -2,8 +2,10 @@ import { generateHTML } from "@tiptap/core";
 import Link from "@tiptap/extension-link";
 import Mention from "@tiptap/extension-mention";
 import StarterKit from "@tiptap/starter-kit";
+import i18next from "i18next";
 import { FileText, Loader2, Printer, X } from "lucide-react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "#/components/Button";
 import { mentionSuggestion } from "#/components/MentionSuggestion";
 import { useContracts } from "#/hooks/useContracts";
@@ -46,7 +48,11 @@ function hydrateContractTemplate(
 		start_time: occ ? formatDate(occ.start_time) : "—",
 		end_time: occ ? formatDate(occ.end_time) : "—",
 		total_price:
-			reservation.total_price != null ? `${reservation.total_price} €` : "—",
+			reservation.total_price != null
+				? i18next.t("total_price", "{{total_price}} €", {
+						total_price: reservation.total_price,
+					})
+				: "—",
 	};
 
 	return templateHtml.replace(/\[\[(\w+)\]\]/g, (match, key) => {
@@ -58,6 +64,7 @@ export function ContractPrintModal({
 	reservation,
 	onClose,
 }: ContractPrintModalProps) {
+	const { t } = useTranslation();
 	const { data: contracts, isLoading } = useContracts();
 	const [selectedContractId, setSelectedContractId] = useState<string>("");
 
@@ -85,7 +92,7 @@ export function ContractPrintModal({
 							className="text-amber-600 dark:text-amber-500"
 						/>
 						<h2 className="font-bold text-stone-900 dark:text-stone-100">
-							Tulosta sopimus varaukselle
+							{t("tulostaSopimusVaraukselle", "Tulosta sopimus varaukselle")}
 						</h2>
 					</div>
 					<Button variant="outline" size="sm" onClick={onClose} className="p-1">
@@ -96,7 +103,7 @@ export function ContractPrintModal({
 				{/* Template Selection Controls (Hidden during print) */}
 				<div className="p-4 border-b border-stone-200 dark:border-stone-800 bg-stone-100/50 dark:bg-stone-900/50 flex flex-wrap items-center gap-3 print:hidden">
 					<label className="text-xs font-semibold text-stone-700 dark:text-stone-300">
-						Valitse sopimuspohja:
+						{t("valitseSopimuspohja", "Valitse sopimuspohja:")}
 					</label>
 					<select
 						value={selectedContractId}
@@ -104,7 +111,9 @@ export function ContractPrintModal({
 						disabled={isLoading}
 						className="px-3 py-1.5 text-xs bg-stone-50 dark:bg-stone-950 border border-stone-300 dark:border-stone-700 rounded-md text-stone-900 dark:text-stone-100 flex-1 min-w-[200px]"
 					>
-						<option value="">-- Valitse sopimus --</option>
+						<option value="">
+							{t("valitseSopimus", "-- Valitse sopimus --")}
+						</option>
 						{contracts?.map((c) => (
 							<option key={c.id} value={c.id}>
 								{c.name}
@@ -119,7 +128,7 @@ export function ContractPrintModal({
 						className="bg-amber-600 hover:bg-amber-700 text-white gap-1.5"
 					>
 						<Printer size={16} />
-						<span>Tulosta</span>
+						<span>{t("tulosta", "Tulosta")}</span>
 					</Button>
 				</div>
 				{/* Printable Document Body */}
@@ -127,12 +136,16 @@ export function ContractPrintModal({
 					{isLoading ? (
 						<div className="p-8 flex items-center justify-center gap-2 text-stone-500">
 							<Loader2 className="animate-spin" size={18} />
-							<span>Haetaan sopimuspohjia...</span>
+							<span>
+								{t("haetaanSopimuspohjia", "Haetaan sopimuspohjia...")}
+							</span>
 						</div>
 					) : !selectedContract ? (
 						<div className="p-8 text-center text-sm text-stone-400 border border-dashed border-stone-300 rounded-md print:hidden">
-							Valitse sopimuspohja valikosta esikatsellaksesi täytettyä
-							asiakirjaa.
+							{t(
+								"valitseSopimuspohjaValikostaEsikatsellaksesiTytettyAsiakirjaa",
+								"Valitse sopimuspohja valikosta esikatsellaksesi täytettyä\n\t\t\t\t\t\t\tasiakirjaa.",
+							)}
 						</div>
 					) : (
 						<div className="space-y-8">
@@ -147,14 +160,20 @@ export function ContractPrintModal({
 								<div className="space-y-12">
 									<div className="border-b border-stone-400 h-8" />
 									<div className="text-xs text-stone-600">
-										<p className="font-bold text-stone-900">Vuokranantaja</p>
-										<p>Päiväys ja allekirjoitus</p>
+										<p className="font-bold text-stone-900">
+											{t("vuokranantaja", "Vuokranantaja")}
+										</p>
+										<p>
+											{t("pivysJaAllekirjoitus", "Päiväys ja allekirjoitus")}
+										</p>
 									</div>
 								</div>
 								<div className="space-y-12">
 									<div className="border-b border-stone-400 h-8" />
 									<div className="text-xs text-stone-600">
-										<p className="font-bold text-stone-900">Vuokralainen</p>
+										<p className="font-bold text-stone-900">
+											{t("vuokralainen", "Vuokralainen")}
+										</p>
 										<p>{reservation.user?.name ?? "—"}</p>
 									</div>
 								</div>

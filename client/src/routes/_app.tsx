@@ -7,12 +7,12 @@ import {
 } from "@tanstack/react-router";
 import { Menu, X } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { AuthDialog } from "#/components/AuthPopover";
 import { Button } from "#/components/Button";
 import { SearchBar } from "#/components/SearchBar";
 import { SideBar } from "#/components/SideBar";
 import { authKeys, fetchMe } from "#/hooks/useAuth";
-import { getLocale, locales, setLocale } from "#/paraglide/runtime";
 import { cn } from "#/utils/cn";
 
 export const Route = createFileRoute("/_app")({
@@ -32,6 +32,7 @@ export const Route = createFileRoute("/_app")({
 });
 
 function AppLayout() {
+	const { t, i18n } = useTranslation();
 	// Default open on desktop, closed on mobile
 	const [isSidebarOpen, setIsSidebarOpen] = useState(() => {
 		if (typeof window !== "undefined") {
@@ -69,7 +70,8 @@ function AppLayout() {
 		setTheme((prev) => (prev === "light" ? "dark" : "light"));
 	};
 
-	const currentLocale = getLocale();
+	const currentLocale = i18n.language || "fi";
+	const availableLocales = ["fi", "en", "sv"];
 
 	return (
 		<div className="h-screen w-screen overflow-hidden flex flex-col bg-stone-50 dark:bg-stone-950 text-stone-900 dark:text-stone-100">
@@ -79,7 +81,7 @@ function AppLayout() {
 					variant="ghost"
 					size="icon"
 					onClick={() => setIsSidebarOpen((prev) => !prev)}
-					aria-label="Toggle Menu"
+					aria-label={t("toggleMenu", "Toggle Menu")}
 				>
 					<Menu size={20} />
 				</Button>
@@ -87,7 +89,7 @@ function AppLayout() {
 				{/* Clickable Header Logo */}
 				<Link to="/" className="hover:opacity-80 transition-opacity shrink-0">
 					<h1 className="font-bold text-base md:text-lg tracking-tight truncate">
-						Varauskalenteri
+						{t("varauskalenteri", "Varauskalenteri")}
 					</h1>
 				</Link>
 
@@ -124,13 +126,13 @@ function AppLayout() {
 					{/* Drawer Header on Mobile */}
 					<div className="flex items-center justify-between p-3 border-b-2 border-stone-800 dark:border-stone-700 md:hidden">
 						<span className="font-bold text-sm tracking-wide uppercase font-mono">
-							Valikko
+							{t("valikko", "Valikko")}
 						</span>
 						<Button
 							variant="ghost"
 							size="icon"
 							onClick={() => setIsSidebarOpen(false)}
-							aria-label="Close Drawer"
+							aria-label={t("closeDrawer", "Close Drawer")}
 						>
 							<X size={18} />
 						</Button>
@@ -139,9 +141,6 @@ function AppLayout() {
 					<div className="flex-1 overflow-y-auto p-2 min-w-[15rem]">
 						<SideBar
 							isSidebarOpen={isSidebarOpen}
-							currentLocale={currentLocale}
-							onSelectLocale={(next) => setLocale(next as any)}
-							availableLocales={locales as unknown as string[]}
 							theme={theme}
 							toggleTheme={toggleTheme}
 						/>
@@ -162,7 +161,10 @@ function AppLayout() {
 					</span>
 					<span className="hidden sm:inline text-stone-400">|</span>
 					<span className="hidden sm:inline">
-						Helsingin yliopiston ylioppilaskunta
+						{t(
+							"helsinginYliopistonYlioppilaskunta",
+							"Helsingin yliopiston ylioppilaskunta",
+						)}
 					</span>
 				</div>
 			</footer>

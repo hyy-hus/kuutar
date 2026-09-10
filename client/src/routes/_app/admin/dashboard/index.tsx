@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import i18next from "i18next";
 import {
 	AlertTriangle,
 	Calendar,
@@ -14,6 +15,7 @@ import {
 	XCircle,
 } from "lucide-react";
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "#/components/Button";
 import { Chip } from "#/components/Chip";
 import { type Contract, useContracts } from "#/hooks/useContracts";
@@ -77,11 +79,14 @@ function getContractPrintBadge(
 	if (isOutdated) {
 		return (
 			<span
-				title="Sopimuspohjaa on päivitetty tulostuksen jälkeen"
+				title={i18next.t(
+					"sopimuspohjaaOnPivitettyTulostuksenJlkeen",
+					"Sopimuspohjaa on päivitetty tulostuksen jälkeen",
+				)}
 				className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-300 dark:border-amber-800 shrink-0"
 			>
 				<AlertTriangle size={11} />
-				<span>Vanhentunut tuloste</span>
+				<span>{i18next.t("vanhentunutTuloste", "Vanhentunut tuloste")}</span>
 			</span>
 		);
 	}
@@ -89,7 +94,7 @@ function getContractPrintBadge(
 	return (
 		<span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 shrink-0">
 			<Check size={11} />
-			<span>Tulostettu</span>
+			<span>{i18next.t("tulostettu", "Tulostettu")}</span>
 		</span>
 	);
 }
@@ -109,6 +114,7 @@ function AdminReservationCard({
 	onMarkPrinted: (id: string) => Promise<void>;
 	isUpdating: boolean;
 }) {
+	const { t } = useTranslation();
 	const firstOccurrence = reservationWithOcc.occurrences?.[0];
 	const isPending = reservationWithOcc.status === "pending";
 	const isCancelled = reservationWithOcc.status === "cancelled";
@@ -149,7 +155,9 @@ function AdminReservationCard({
 						<span>{formatDate(firstOccurrence.start_time)}</span>
 					</div>
 				) : (
-					<span className="text-xs text-stone-400">Ei tiettyjä aikoja</span>
+					<span className="text-xs text-stone-400">
+						{t("eiTiettyjAikoja", "Ei tiettyjä aikoja")}
+					</span>
 				)}
 
 				{getContractPrintBadge(reservationWithOcc, selectedContract)}
@@ -164,13 +172,16 @@ function AdminReservationCard({
 					onClick={handlePrintSingle}
 					title={
 						selectedContractId
-							? "Tulosta valittu sopimus"
-							: "Valitse sopimuspohja yläpalkista tulostaaksesi"
+							? t("tulostaValittuSopimus", "Tulosta valittu sopimus")
+							: t(
+									"valitseSopimuspohjaYlpalkistaTulostaaksesi",
+									"Valitse sopimuspohja yläpalkista tulostaaksesi",
+								)
 					}
 					className="text-stone-700 dark:text-stone-300 text-xs px-2 py-1 gap-1 flex-1 sm:flex-initial justify-center"
 				>
 					<FileText size={14} className="text-amber-600 dark:text-amber-500" />
-					<span>Tulosta sopimus</span>
+					<span>{t("tulostaSopimus", "Tulosta sopimus")}</span>
 				</Button>
 
 				<div className="flex items-center gap-1.5 w-full sm:w-auto justify-end">
@@ -184,7 +195,7 @@ function AdminReservationCard({
 								className="text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/50 text-xs px-2.5 py-1 flex-1 sm:flex-initial justify-center"
 							>
 								<X size={14} />
-								<span>Hylkää</span>
+								<span>{t("hylk", "Hylkää")}</span>
 							</Button>
 							<Button
 								size="sm"
@@ -193,7 +204,7 @@ function AdminReservationCard({
 								className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-2.5 py-1 flex-1 sm:flex-initial justify-center"
 							>
 								<Check size={14} />
-								<span>Hyväksy</span>
+								<span>{t("hyvksy", "Hyväksy")}</span>
 							</Button>
 						</>
 					) : (
@@ -205,7 +216,7 @@ function AdminReservationCard({
 							className="text-stone-600 dark:text-stone-400 text-xs px-2.5 py-1 w-full sm:w-auto justify-center"
 						>
 							<Clock size={14} />
-							<span>Palauta odottavaksi</span>
+							<span>{t("palautaOdottavaksi", "Palauta odottavaksi")}</span>
 						</Button>
 					)}
 				</div>
@@ -215,6 +226,7 @@ function AdminReservationCard({
 }
 
 function AdminDashboardPage() {
+	const { t } = useTranslation();
 	const search = Route.useSearch();
 	const navigate = Route.useNavigate();
 
@@ -336,7 +348,7 @@ function AdminDashboardPage() {
 			{/* Header with Contract Tools */}
 			<div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 shrink-0 border-b border-stone-200 dark:border-stone-800 pb-3">
 				<h1 className="text-lg sm:text-xl font-bold text-stone-900 dark:text-stone-100">
-					Ylläpidon hallintapaneeli
+					{t("yllpidonHallintapaneeli", "Ylläpidon hallintapaneeli")}
 				</h1>
 
 				<div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full lg:w-auto">
@@ -346,7 +358,9 @@ function AdminDashboardPage() {
 						disabled={loadingContracts}
 						className="w-full sm:w-60 px-3 py-1.5 text-xs bg-stone-50 dark:bg-stone-950 border border-stone-300 dark:border-stone-700 rounded-md text-stone-900 dark:text-stone-100 truncate"
 					>
-						<option value="">-- Valitse sopimuspohja --</option>
+						<option value="">
+							{t("valitseSopimuspohja2", "-- Valitse sopimuspohja --")}
+						</option>
 						{contracts?.map((c) => (
 							<option key={c.id} value={c.id}>
 								{c.name}
@@ -362,7 +376,11 @@ function AdminDashboardPage() {
 					>
 						<Printer size={16} />
 						<span className="truncate">
-							Tulosta vahvistetut ({confirmedReservations.length})
+							{t(
+								"tulostaVahvistetutLength",
+								"Tulosta vahvistetut ({{length}})",
+								{ length: confirmedReservations.length },
+							)}
 						</span>
 					</Button>
 				</div>
@@ -399,10 +417,10 @@ function AdminDashboardPage() {
 					onChange={(e) => updateSearch({ days: Number(e.target.value) })}
 					className="px-2.5 py-1 text-xs bg-stone-50 dark:bg-stone-950 border border-stone-200 dark:border-stone-800 rounded-md font-medium"
 				>
-					<option value={7}>1 viikko</option>
-					<option value={14}>2 viikkoa</option>
-					<option value={30}>1 kuukausi</option>
-					<option value={90}>3 kuukautta</option>
+					<option value={7}>{t("1Viikko", "1 viikko")}</option>
+					<option value={14}>{t("2Viikkoa", "2 viikkoa")}</option>
+					<option value={30}>{t("1Kuukausi", "1 kuukausi")}</option>
+					<option value={90}>{t("3Kuukautta", "3 kuukautta")}</option>
 				</select>
 
 				<select
@@ -413,7 +431,7 @@ function AdminDashboardPage() {
 					disabled={loadingResources}
 					className="px-2.5 py-1 text-xs bg-stone-50 dark:bg-stone-950 border border-stone-200 dark:border-stone-800 rounded-md font-medium max-w-full truncate"
 				>
-					<option value="">Kaikki resurssit</option>
+					<option value="">{t("kaikkiResurssit", "Kaikki resurssit")}</option>
 					{resources?.map((res) => (
 						<option key={res.id} value={res.id}>
 							{res.name}
@@ -425,11 +443,16 @@ function AdminDashboardPage() {
 			{isLoading ? (
 				<div className="p-8 flex items-center justify-center gap-2 text-stone-500">
 					<Loader2 className="animate-spin" size={18} />
-					<span>Ladataan hallintapaneelia...</span>
+					<span>
+						{t("ladataanHallintapaneelia", "Ladataan hallintapaneelia...")}
+					</span>
 				</div>
 			) : isError ? (
 				<div className="p-4 text-xs text-rose-600 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 rounded-md">
-					Virhe ladattaessa varaustietoja.
+					{t(
+						"virheLadattaessaVaraustietoja",
+						"Virhe ladattaessa varaustietoja.",
+					)}
 				</div>
 			) : (
 				<div className="space-y-6">
@@ -438,7 +461,11 @@ function AdminDashboardPage() {
 						<div className="flex items-center gap-2 text-amber-600 dark:text-amber-500 font-bold">
 							<Clock size={18} />
 							<h2 className="text-sm sm:text-base">
-								Odottaa hyväksyntää ({pendingReservations.length})
+								{t(
+									"odottaaHyvksyntLength",
+									"Odottaa hyväksyntää ({{length}})",
+									{ length: pendingReservations.length },
+								)}
 							</h2>
 						</div>
 
@@ -458,7 +485,10 @@ function AdminDashboardPage() {
 							</ul>
 						) : (
 							<div className="p-4 text-xs text-stone-500 bg-stone-50 dark:bg-stone-900/40 rounded-md border border-stone-200 dark:border-stone-800">
-								Ei odottavia varauksia valitulla aikavälillä.
+								{t(
+									"eiOdottaviaVarauksiaValitullaAikavlill",
+									"Ei odottavia varauksia valitulla aikavälillä.",
+								)}
 							</div>
 						)}
 					</div>
@@ -468,7 +498,11 @@ function AdminDashboardPage() {
 						<div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-500 font-bold">
 							<CheckCircle2 size={18} />
 							<h2 className="text-sm sm:text-base">
-								Vahvistetut varaukset ({confirmedReservations.length})
+								{t(
+									"vahvistetutVarauksetLength",
+									"Vahvistetut varaukset ({{length}})",
+									{ length: confirmedReservations.length },
+								)}
 							</h2>
 						</div>
 
@@ -488,7 +522,10 @@ function AdminDashboardPage() {
 							</ul>
 						) : (
 							<div className="p-4 text-xs text-stone-500 bg-stone-50 dark:bg-stone-900/40 rounded-md border border-stone-200 dark:border-stone-800">
-								Ei vahvistettuja varauksia valitulla aikavälillä.
+								{t(
+									"eiVahvistettujaVarauksiaValitullaAikavlill",
+									"Ei vahvistettuja varauksia valitulla aikavälillä.",
+								)}
 							</div>
 						)}
 					</div>
@@ -498,7 +535,11 @@ function AdminDashboardPage() {
 						<div className="flex items-center gap-2 text-rose-600 dark:text-rose-500 font-bold">
 							<XCircle size={18} />
 							<h2 className="text-sm sm:text-base">
-								Hylätyt ja perutut varaukset ({cancelledReservations.length})
+								{t(
+									"hyltytJaPerututVarauksetLength",
+									"Hylätyt ja perutut varaukset ({{length}})",
+									{ length: cancelledReservations.length },
+								)}
 							</h2>
 						</div>
 
@@ -518,7 +559,10 @@ function AdminDashboardPage() {
 							</ul>
 						) : (
 							<div className="p-4 text-xs text-stone-500 bg-stone-50 dark:bg-stone-900/40 rounded-md border border-stone-200 dark:border-stone-800">
-								Ei hylättyjä varauksia valitulla aikavälillä.
+								{t(
+									"eiHylttyjVarauksiaValitullaAikavlill",
+									"Ei hylättyjä varauksia valitulla aikavälillä.",
+								)}
 							</div>
 						)}
 					</div>

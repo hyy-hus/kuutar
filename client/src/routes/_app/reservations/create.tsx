@@ -1,5 +1,6 @@
 // src/routes/_app/reservations/create.tsx
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useTranslation } from "react-i18next";
 import {
 	ReservationForm,
 	type ReservationFormValues,
@@ -53,6 +54,7 @@ export const Route = createFileRoute("/_app/reservations/create")({
 });
 
 function CreateReservationPage() {
+	const { t } = useTranslation();
 	const navigate = useNavigate();
 	const createReservation = useCreateReservation();
 	const { start_time, end_time, resource_ids } = Route.useSearch();
@@ -76,7 +78,7 @@ function CreateReservationPage() {
 	return (
 		<div className="max-w-xl mx-auto p-2 sm:p-4 space-y-4 pb-12">
 			<h1 className="text-xl font-bold text-stone-900 dark:text-stone-100">
-				Uusi varaus
+				{t("uusiVaraus", "Uusi varaus")}
 			</h1>
 			<ReservationForm
 				defaultValues={{

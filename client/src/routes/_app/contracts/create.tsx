@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { CheckCircle2, FileText, Loader2, Save } from "lucide-react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "#/components/Button";
 import { ContractEditor } from "#/components/ContractEditor";
 import { useCreateContract } from "#/hooks/useContracts";
@@ -14,6 +15,7 @@ export const Route = createFileRoute("/_app/contracts/create")({
 });
 
 function CreateContractPage() {
+	const { t } = useTranslation();
 	const navigate = useNavigate();
 	const [title, setTitle] = useState("");
 	const [contentHtml, setContentHtml] = useState("");
@@ -50,7 +52,7 @@ function CreateContractPage() {
 				<div className="flex items-center gap-2">
 					<FileText className="text-amber-600 dark:text-amber-500" size={24} />
 					<h1 className="text-xl font-bold text-stone-900 dark:text-stone-100">
-						Uusi sopimuspohja
+						{t("uusiSopimuspohja", "Uusi sopimuspohja")}
 					</h1>
 				</div>
 
@@ -64,7 +66,7 @@ function CreateContractPage() {
 					) : (
 						<Save size={16} />
 					)}
-					<span>Tallenna sopimuspohja</span>
+					<span>{t("tallennaSopimuspohja", "Tallenna sopimuspohja")}</span>
 				</Button>
 			</div>
 
@@ -80,13 +82,16 @@ function CreateContractPage() {
 					htmlFor="contract-title"
 					className="text-xs font-semibold text-stone-700 dark:text-stone-300"
 				>
-					Sopimuspohjan nimi
+					{t("sopimuspohjanNimi", "Sopimuspohjan nimi")}
 				</label>
 				<input
 					id="contract-title"
 					type="text"
 					required
-					placeholder="esim. Saunatilan vuokrasopimus 2026"
+					placeholder={t(
+						"esimSaunatilanVuokrasopimus2026",
+						"esim. Saunatilan vuokrasopimus 2026",
+					)}
 					value={title}
 					onChange={(e) => setTitle(e.target.value)}
 					className="px-3 py-2 text-sm bg-stone-50 dark:bg-stone-900 border border-stone-300 dark:border-stone-700 rounded-md text-stone-900 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-amber-500"
@@ -95,7 +100,7 @@ function CreateContractPage() {
 
 			<div className="flex flex-col gap-1.5">
 				<label className="text-xs font-semibold text-stone-700 dark:text-stone-300">
-					Sopimuksen sisältö
+					{t("sopimuksenSislt", "Sopimuksen sisältö")}
 				</label>
 				<ContractEditor value={contentHtml} onChange={setContentHtml} />
 			</div>

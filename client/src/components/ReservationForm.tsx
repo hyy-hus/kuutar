@@ -7,6 +7,7 @@ import {
 	Save,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Frequency } from "rrule";
 import { Button } from "#/components/Button";
 import { Input } from "#/components/Input";
@@ -47,6 +48,7 @@ export function ReservationForm({
 	isSubmitting = false,
 	submitLabel = "Tallenna",
 }: ReservationFormProps) {
+	const { t } = useTranslation();
 	const { data: resources, isLoading: loadingResources } = useResources();
 
 	const checkConflicts = useCheckConflicts();
@@ -161,7 +163,9 @@ export function ReservationForm({
 				name="title"
 				validators={{
 					onChange: ({ value }) =>
-						!value ? "Otsikko on pakollinen" : undefined,
+						!value
+							? t("otsikkoOnPakollinen", "Otsikko on pakollinen")
+							: undefined,
 				}}
 			>
 				{(field) => {
@@ -172,7 +176,7 @@ export function ReservationForm({
 								htmlFor={field.name}
 								className="text-xs font-medium text-stone-700 dark:text-stone-300"
 							>
-								Otsikko
+								{t("otsikko", "Otsikko")}
 							</label>
 							<Input
 								id={field.name}
@@ -180,7 +184,7 @@ export function ReservationForm({
 								onChange={(e) => field.handleChange(e.target.value)}
 								onBlur={field.handleBlur}
 								isError={hasError}
-								placeholder="esim. Viikkokokous"
+								placeholder={t("esimViikkokokous", "esim. Viikkokokous")}
 							/>
 							{hasError && (
 								<p className="text-[11px] text-red-500">
@@ -200,7 +204,7 @@ export function ReservationForm({
 							htmlFor={field.name}
 							className="text-xs font-medium text-stone-700 dark:text-stone-300"
 						>
-							Kuvaus
+							{t("kuvaus", "Kuvaus")}
 						</label>
 						<Input
 							id={field.name}
@@ -222,7 +226,7 @@ export function ReservationForm({
 								htmlFor={field.name}
 								className="text-xs font-medium text-stone-700 dark:text-stone-300"
 							>
-								Tila
+								{t("tila", "Tila")}
 							</label>
 							<select
 								id={field.name}
@@ -233,9 +237,11 @@ export function ReservationForm({
 								onBlur={field.handleBlur}
 								className="w-full px-3 py-2 text-sm bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
 							>
-								<option value="confirmed">Vahvistettu</option>
-								<option value="pending">Odottaa</option>
-								<option value="cancelled">Peruttu</option>
+								<option value="confirmed">
+									{t("vahvistettu", "Vahvistettu")}
+								</option>
+								<option value="pending">{t("odottaa", "Odottaa")}</option>
+								<option value="cancelled">{t("peruttu", "Peruttu")}</option>
 							</select>
 						</div>
 					)}
@@ -251,14 +257,17 @@ export function ReservationForm({
 								htmlFor={field.name}
 								className="text-xs font-medium text-stone-700 dark:text-stone-300"
 							>
-								Ylläpitäjän muistiinpanot
+								{t("yllpitjnMuistiinpanot", "Ylläpitäjän muistiinpanot")}
 							</label>
 							<Input
 								id={field.name}
 								value={field.state.value}
 								onChange={(e) => field.handleChange(e.target.value)}
 								onBlur={field.handleBlur}
-								placeholder="Vain ylläpidolle näkyvät merkinnät"
+								placeholder={t(
+									"vainYllpidolleNkyvtMerkinnt",
+									"Vain ylläpidolle näkyvät merkinnät",
+								)}
 							/>
 						</div>
 					)}
@@ -268,7 +277,7 @@ export function ReservationForm({
 			{/* Occurrence & Multi-Resource Selection Section */}
 			<div className="pt-3 border-t-2 border-stone-800 dark:border-stone-700 space-y-3">
 				<h3 className="text-xs font-bold text-stone-900 dark:text-stone-100 uppercase tracking-wider">
-					Ajanvaraus ja Resurssit
+					{t("ajanvarausJaResurssit", "Ajanvaraus ja Resurssit")}
 				</h3>
 
 				{/* Multi-Resource Selector */}
@@ -277,7 +286,10 @@ export function ReservationForm({
 					validators={{
 						onChange: ({ value }) =>
 							!value || value.length === 0
-								? "Valitse vähintään yksi resurssi"
+								? t(
+										"valitseVhintnYksiResurssi",
+										"Valitse vähintään yksi resurssi",
+									)
 								: undefined,
 					}}
 				>
@@ -286,12 +298,15 @@ export function ReservationForm({
 						return (
 							<div className="space-y-1">
 								<label className="text-xs font-medium text-stone-700 dark:text-stone-300">
-									Resurssit (Valitse yksi tai useampi)
+									{t(
+										"resurssitValitseYksiTaiUseampi",
+										"Resurssit (Valitse yksi tai useampi)",
+									)}
 								</label>
 
 								{loadingResources ? (
 									<div className="text-xs text-stone-500 py-2">
-										Ladataan resursseja...
+										{t("ladataanResursseja", "Ladataan resursseja...")}
 									</div>
 								) : (
 									<div className="flex flex-wrap gap-2 p-2 bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-md max-h-36 overflow-y-auto">
@@ -341,7 +356,7 @@ export function ReservationForm({
 									htmlFor={field.name}
 									className="text-xs font-medium text-stone-700 dark:text-stone-300"
 								>
-									Alkamisaika
+									{t("alkamisaika", "Alkamisaika")}
 								</label>
 								<Input
 									id={field.name}
@@ -364,7 +379,7 @@ export function ReservationForm({
 									htmlFor={field.name}
 									className="text-xs font-medium text-stone-700 dark:text-stone-300"
 								>
-									Päättymisaika
+									{t("pttymisaika", "Päättymisaika")}
 								</label>
 								<Input
 									id={field.name}
@@ -420,7 +435,9 @@ export function ReservationForm({
 					{checkConflicts.isPending ? (
 						<Loader2 className="animate-spin" size={14} />
 					) : (
-						<span>Tarkista päällekkäisyydet</span>
+						<span>
+							{t("tarkistaPllekkisyydet", "Tarkista päällekkäisyydet")}
+						</span>
 					)}
 				</Button>
 
@@ -431,7 +448,13 @@ export function ReservationForm({
 							<div className="p-3 bg-rose-100 dark:bg-rose-950/80 border-2 border-rose-600 text-rose-900 dark:text-rose-200 rounded-sm space-y-2 text-xs">
 								<div className="flex items-center gap-2 font-bold">
 									<AlertTriangle size={16} />
-									<span>Löytyi {conflicts.length} päällekkäistä varausta!</span>
+									<span>
+										{t(
+											"lytyiLengthPllekkistVarausta",
+											"Löytyi {{length}} päällekkäistä varausta!",
+											{ length: conflicts.length },
+										)}
+									</span>
 								</div>
 								<ul className="list-disc list-inside space-y-1 font-mono text-[11px]">
 									{conflicts.map((occ) => (
@@ -444,7 +467,9 @@ export function ReservationForm({
 						) : (
 							<div className="p-2 bg-emerald-100 dark:bg-emerald-950/80 border-2 border-emerald-600 text-emerald-900 dark:text-emerald-200 rounded-sm flex items-center gap-2 text-xs font-medium">
 								<CheckCircle2 size={16} />
-								<span>Ei päällekkäisiä varauksia.</span>
+								<span>
+									{t("eiPllekkisiVarauksia", "Ei päällekkäisiä varauksia.")}
+								</span>
 							</div>
 						)}
 					</div>
@@ -493,6 +518,7 @@ function RecurrenceSection({
 	setUntilStr,
 	setConflicts,
 }: RecurrenceSectionProps) {
+	const { t } = useTranslation();
 	useEffect(() => {
 		if (!canRecur && freq !== null) {
 			setFreq(null);
@@ -509,7 +535,7 @@ function RecurrenceSection({
 			<div className="flex items-center justify-between text-xs font-mono font-bold text-stone-800 dark:text-stone-200">
 				<div className="flex items-center gap-1.5">
 					<RefreshCw size={14} />
-					<span>Toistuvuus</span>
+					<span>{t("toistuvuus", "Toistuvuus")}</span>
 				</div>
 			</div>
 
@@ -519,7 +545,7 @@ function RecurrenceSection({
 						htmlFor="recurrence_freq"
 						className="text-[11px] text-stone-600 dark:text-stone-400"
 					>
-						Toistuvuusjakso
+						{t("toistuvuusjakso", "Toistuvuusjakso")}
 					</label>
 					<select
 						id="recurrence_freq"
@@ -531,11 +557,19 @@ function RecurrenceSection({
 						}}
 						className="w-full px-2 py-1.5 text-xs bg-stone-50 dark:bg-stone-950 border border-stone-300 dark:border-stone-700 rounded-sm"
 					>
-						<option value="none">Ei toistoa</option>
-						<option value={Frequency.DAILY}>Päivittäin</option>
-						<option value={Frequency.WEEKLY}>Viikoittain</option>
-						<option value={Frequency.MONTHLY}>Kuukausittain</option>
-						<option value={Frequency.YEARLY}>Vuosittain</option>
+						<option value="none">{t("eiToistoa", "Ei toistoa")}</option>
+						<option value={Frequency.DAILY}>
+							{t("pivittin", "Päivittäin")}
+						</option>
+						<option value={Frequency.WEEKLY}>
+							{t("viikoittain", "Viikoittain")}
+						</option>
+						<option value={Frequency.MONTHLY}>
+							{t("kuukausittain", "Kuukausittain")}
+						</option>
+						<option value={Frequency.YEARLY}>
+							{t("vuosittain", "Vuosittain")}
+						</option>
 					</select>
 				</div>
 
@@ -545,7 +579,7 @@ function RecurrenceSection({
 							htmlFor="recurrence_until"
 							className="text-[11px] text-stone-600 dark:text-stone-400"
 						>
-							Toisto päättyy
+							{t("toistoPttyy", "Toisto päättyy")}
 						</label>
 						<Input
 							id="recurrence_until"

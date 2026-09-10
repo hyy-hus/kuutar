@@ -1,4 +1,5 @@
 import { ReactRenderer } from "@tiptap/react";
+import i18next from "i18next";
 import { forwardRef, useImperativeHandle, useState } from "react";
 import tippy, { type Instance as TippyInstance } from "tippy.js";
 import {
@@ -47,7 +48,7 @@ export const MentionList = forwardRef(
 		if (!props.items.length) {
 			return (
 				<div className="p-2 text-xs text-stone-400 bg-stone-900 border border-stone-800 rounded-md shadow-lg">
-					Ei kenttiä
+					{i18next.t("eiKentti", "Ei kenttiä")}
 				</div>
 			);
 		}
@@ -66,7 +67,9 @@ export const MentionList = forwardRef(
 						}`}
 					>
 						{item.label}{" "}
-						<span className="opacity-60 font-mono">([[${item.id}]])</span>
+						<span className="opacity-60 font-mono">
+							{i18next.t("id", "([[${{id}}]])", { id: item.id })}
+						</span>
 					</button>
 				))}
 			</div>

@@ -8,6 +8,7 @@ import {
 	User as UserIcon,
 	Users,
 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Button } from "#/components/Button";
 import { Chip } from "#/components/Chip";
 import { useIsAdmin } from "#/hooks/useAuth";
@@ -24,6 +25,7 @@ export const Route = createFileRoute("/_app/users/")({
 });
 
 function UserCard({ user, groupName }: { user: User; groupName?: string }) {
+	const { t } = useTranslation();
 	return (
 		<li className="p-3 border-2 border-stone-800 dark:border-stone-700 flex flex-col justify-between gap-3 rounded-md bg-stone-50 dark:bg-stone-900 shadow-xs hover:border-purple-600 dark:hover:border-purple-500 transition-colors min-w-0">
 			<div className="space-y-2 min-w-0">
@@ -48,12 +50,12 @@ function UserCard({ user, groupName }: { user: User; groupName?: string }) {
 				{user.role === "admin" ? (
 					<span className="inline-flex items-center gap-1 text-[10px] font-mono text-amber-700 dark:text-amber-400 bg-amber-100 dark:bg-amber-950/60 px-1.5 py-0.5 rounded border border-amber-300 dark:border-amber-800">
 						<Shield size={10} />
-						<span>Admin</span>
+						<span>{t("admin", "Admin")}</span>
 					</span>
 				) : (
 					<span className="inline-flex items-center gap-1 text-[10px] font-mono text-stone-600 dark:text-stone-400 bg-stone-200/60 dark:bg-stone-800 px-1.5 py-0.5 rounded">
 						<UserIcon size={10} />
-						<span>Käyttäjä</span>
+						<span>{t("kyttj", "Käyttäjä")}</span>
 					</span>
 				)}
 
@@ -64,7 +66,7 @@ function UserCard({ user, groupName }: { user: User; groupName?: string }) {
 					className="gap-1.5 text-xs"
 				>
 					<Link to="/users/$id" params={{ id: user.id }}>
-						<span>Näytä</span>
+						<span>{t("nyt", "Näytä")}</span>
 						<Eye size={14} />
 					</Link>
 				</Button>
@@ -74,6 +76,7 @@ function UserCard({ user, groupName }: { user: User; groupName?: string }) {
 }
 
 function UserList() {
+	const { t } = useTranslation();
 	const { isAdmin } = useIsAdmin();
 	const {
 		data: users,
@@ -86,7 +89,7 @@ function UserList() {
 		return (
 			<div className="p-8 flex items-center justify-center gap-2 text-stone-500">
 				<Loader2 className="animate-spin" size={18} />
-				<span>Ladataan käyttäjiä...</span>
+				<span>{t("ladataanKyttji", "Ladataan käyttäjiä...")}</span>
 			</div>
 		);
 	}
@@ -94,7 +97,7 @@ function UserList() {
 	if (errorUsers) {
 		return (
 			<div className="p-4 text-xs text-rose-600 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 rounded-md">
-				Virhe ladattaessa tietoja.
+				{t("virheLadattaessaTietoja", "Virhe ladattaessa tietoja.")}
 			</div>
 		);
 	}
@@ -108,10 +111,11 @@ function UserList() {
 				<div>
 					<h1 className="text-lg sm:text-xl font-bold tracking-tight text-stone-900 dark:text-stone-100 flex items-center gap-2">
 						<UserIcon size={20} className="text-stone-500" />
-						<span>Käyttäjät</span>
+						<span>{t("kyttjt", "Käyttäjät")}</span>
 					</h1>
 					<p className="text-xs text-stone-500">
-						Yhteensä {users?.length || 0} käyttäjää
+						{t("yhteens", "Yhteensä")} {users?.length || 0}{" "}
+						{t("kyttj2", "käyttäjää")}
 					</p>
 				</div>
 
@@ -119,7 +123,7 @@ function UserList() {
 					<Button asChild size="sm" className="gap-1.5 shrink-0">
 						<Link to="/users/create">
 							<Plus size={16} />
-							<span>Rekisteröi käyttäjä</span>
+							<span>{t("rekisteriKyttj", "Rekisteröi käyttäjä")}</span>
 						</Link>
 					</Button>
 				)}

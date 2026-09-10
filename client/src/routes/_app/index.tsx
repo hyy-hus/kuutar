@@ -13,6 +13,7 @@ import {
 	Shield,
 } from "lucide-react";
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "#/components/Button";
 import { Chip } from "#/components/Chip";
 import { Footer } from "#/components/Footer";
@@ -28,6 +29,7 @@ export const Route = createFileRoute("/_app/")({
 });
 
 function HomePage() {
+	const { t } = useTranslation();
 	const { user } = useAuth();
 	const { isAdmin } = useIsAdmin();
 	const { data: resources, isLoading: loadingResources } = useResources();
@@ -102,11 +104,16 @@ function HomePage() {
 				<section className="p-6 md:p-8 rounded-lg bg-stone-100 dark:bg-stone-900 border-2 border-stone-800 dark:border-stone-700 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
 					<div className="space-y-2 max-w-2xl">
 						<h1 className="text-2xl sm:text-3xl md:text-4xl font-black tracking-tight text-stone-900 dark:text-stone-100">
-							Tervetuloa varaamaan tiloja ja resursseja
+							{t(
+								"tervetuloaVaraamaanTilojaJaResursseja",
+								"Tervetuloa varaamaan tiloja ja resursseja",
+							)}
 						</h1>
 						<p className="text-sm text-stone-600 dark:text-stone-400">
-							Tarkastele reaaliaikaista kalenterivaraustilannetta, tee uusia
-							varauksia ja hallinnoi omia varauksiasi helposti.
+							{t(
+								"tarkasteleReaaliaikaistaKalenterivaraustilannettaTeeUusiaVarauksiaJaHallinnoiOmiaVarauksiasiHelposti",
+								"Tarkastele reaaliaikaista kalenterivaraustilannetta, tee uusia\n\t\t\t\t\t\t\tvarauksia ja hallinnoi omia varauksiasi helposti.",
+							)}
 						</p>
 					</div>
 
@@ -114,7 +121,7 @@ function HomePage() {
 						<Button asChild size="lg" className="gap-2 justify-center">
 							<Link to="/calendar">
 								<Calendar size={18} />
-								<span>Avaa kalenteri</span>
+								<span>{t("avaaKalenteri", "Avaa kalenteri")}</span>
 							</Link>
 						</Button>
 
@@ -127,7 +134,7 @@ function HomePage() {
 							>
 								<Link to="/reservations/create">
 									<Plus size={18} />
-									<span>Uusi varaus</span>
+									<span>{t("uusiVaraus", "Uusi varaus")}</span>
 								</Link>
 							</Button>
 						)}
@@ -143,11 +150,17 @@ function HomePage() {
 							</div>
 							<div>
 								<h2 className="font-bold text-sm text-amber-900 dark:text-amber-200">
-									Odottavia hyväksyntöjä ({pendingReservations.length})
+									{t(
+										"odottaviaHyvksyntjLength",
+										"Odottavia hyväksyntöjä ({{length}})",
+										{ length: pendingReservations.length },
+									)}
 								</h2>
 								<p className="text-xs text-amber-700 dark:text-amber-400">
-									Järjestelmässä on uusia varauspyyntöjä, jotka odottavat
-									ylläpidon vahvistusta.
+									{t(
+										"jrjestelmssOnUusiaVarauspyyntjJotkaOdottavatYllpidonVahvistusta",
+										"Järjestelmässä on uusia varauspyyntöjä, jotka odottavat\n\t\t\t\t\t\t\t\t\tylläpidon vahvistusta.",
+									)}
 								</p>
 							</div>
 						</div>
@@ -158,7 +171,7 @@ function HomePage() {
 							className="bg-amber-700 hover:bg-amber-800 text-white shrink-0 self-end sm:self-center"
 						>
 							<Link to="/admin/dashboard">
-								<span>Käsittele pyynnöt</span>
+								<span>{t("ksittelePyynnt", "Käsittele pyynnöt")}</span>
 								<ChevronRight size={16} />
 							</Link>
 						</Button>
@@ -172,7 +185,7 @@ function HomePage() {
 						<div className="flex items-center justify-between">
 							<h2 className="text-lg font-bold text-stone-900 dark:text-stone-100 flex items-center gap-2">
 								<Clock size={18} className="text-stone-500" />
-								<span>Tulevat varauksesi</span>
+								<span>{t("tulevatVarauksesi", "Tulevat varauksesi")}</span>
 							</h2>
 
 							{user && (
@@ -183,7 +196,7 @@ function HomePage() {
 									className="text-xs gap-1"
 								>
 									<Link to="/reservations">
-										<span>Kaikki varaukset</span>
+										<span>{t("kaikkiVaraukset", "Kaikki varaukset")}</span>
 										<ChevronRight size={14} />
 									</Link>
 								</Button>
@@ -193,14 +206,16 @@ function HomePage() {
 						{!user ? (
 							<div className="p-6 text-center border-2 border-dashed border-stone-300 dark:border-stone-800 rounded-md bg-stone-50 dark:bg-stone-900/40 space-y-3">
 								<p className="text-xs text-stone-500">
-									Kirjaudu sisään nähdäksesi omat tulevat varauksesi ja
-									tehdäksesi uusia varauksia.
+									{t(
+										"kirjauduSisnNhdksesiOmatTulevatVarauksesiJaTehdksesiUusiaVarauksia",
+										"Kirjaudu sisään nähdäksesi omat tulevat varauksesi ja\n\t\t\t\t\t\t\t\t\ttehdäksesi uusia varauksia.",
+									)}
 								</p>
 							</div>
 						) : loadingReservations ? (
 							<div className="p-8 flex items-center justify-center gap-2 text-stone-500">
 								<Loader2 className="animate-spin" size={18} />
-								<span>Ladataan varauksia...</span>
+								<span>{t("ladataanVarauksia", "Ladataan varauksia...")}</span>
 							</div>
 						) : userReservations.length > 0 ? (
 							<ul className="space-y-2.5">
@@ -237,13 +252,13 @@ function HomePage() {
 												{isPending && (
 													<span className="inline-flex items-center gap-1 text-[10px] font-mono text-amber-800 dark:text-amber-300 bg-amber-100 dark:bg-amber-950/60 px-2 py-0.5 rounded border border-amber-300 dark:border-amber-800">
 														<Clock size={11} />
-														<span>Odottaa</span>
+														<span>{t("odottaa", "Odottaa")}</span>
 													</span>
 												)}
 												{isConfirmed && (
 													<span className="inline-flex items-center gap-1 text-[10px] font-mono text-emerald-800 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-300 dark:border-emerald-800">
 														<CheckCircle2 size={11} />
-														<span>Vahvistettu</span>
+														<span>{t("vahvistettu", "Vahvistettu")}</span>
 													</span>
 												)}
 
@@ -254,7 +269,7 @@ function HomePage() {
 													className="text-xs gap-1"
 												>
 													<Link to="/reservations/$id" params={{ id: res.id }}>
-														<span>Tiedot</span>
+														<span>{t("tiedot", "Tiedot")}</span>
 														<ArrowUpRight size={14} />
 													</Link>
 												</Button>
@@ -266,7 +281,10 @@ function HomePage() {
 						) : (
 							<div className="p-6 text-center border-2 border-stone-200 dark:border-stone-800 rounded-md bg-stone-50 dark:bg-stone-900/40">
 								<p className="text-xs text-stone-500">
-									Sinulla ei ole aktiivisia varauksia lähitulevaisuudessa.
+									{t(
+										"sinullaEiOleAktiivisiaVarauksiaLhitulevaisuudessa",
+										"Sinulla ei ole aktiivisia varauksia lähitulevaisuudessa.",
+									)}
 								</p>
 							</div>
 						)}
@@ -277,7 +295,7 @@ function HomePage() {
 						<div className="flex items-center justify-between">
 							<h2 className="text-lg font-bold text-stone-900 dark:text-stone-100 flex items-center gap-2">
 								<Box size={18} className="text-stone-500" />
-								<span>Resurssit</span>
+								<span>{t("resurssit", "Resurssit")}</span>
 							</h2>
 
 							<Button
@@ -287,7 +305,7 @@ function HomePage() {
 								className="text-xs gap-1"
 							>
 								<Link to="/resources">
-									<span>Selaa kaikkia</span>
+									<span>{t("selaaKaikkia", "Selaa kaikkia")}</span>
 									<ChevronRight size={14} />
 								</Link>
 							</Button>
@@ -309,7 +327,8 @@ function HomePage() {
 												{res.name}
 											</h3>
 											<p className="text-[11px] text-stone-500 truncate">
-												{res.description || "Ei kuvausta saatavilla"}
+												{res.description ||
+													t("eiKuvaustaSaatavilla", "Ei kuvausta saatavilla")}
 											</p>
 										</div>
 

@@ -1,6 +1,7 @@
 // src/routes/_app/resources/index.tsx
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Eye, Folder, Loader2, Plus, RefreshCw } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Button } from "#/components/Button";
 import { Chip } from "#/components/Chip";
 import { useIsAdmin } from "#/hooks/useAuth";
@@ -19,6 +20,7 @@ function ResourceCard({
 	resource: Resource;
 	collection?: Collection;
 }) {
+	const { t } = useTranslation();
 	return (
 		<li className="p-3 border-2 border-stone-800 dark:border-stone-700 flex flex-col justify-between gap-3 rounded-md bg-stone-50 dark:bg-stone-900 shadow-xs hover:border-purple-600 dark:hover:border-purple-500 transition-colors min-w-0">
 			<div className="space-y-2 min-w-0">
@@ -46,7 +48,8 @@ function ResourceCard({
 
 				{/* Description */}
 				<p className="text-xs text-stone-600 dark:text-stone-400 line-clamp-2 min-h-8">
-					{resource.description || "Ei kuvausta saantiilla."}
+					{resource.description ||
+						t("eiKuvaustaSaantiilla", "Ei kuvausta saantiilla.")}
 				</p>
 			</div>
 
@@ -56,7 +59,7 @@ function ResourceCard({
 				{(resource as { allow_recurring?: boolean }).allow_recurring ? (
 					<span className="inline-flex items-center gap-1 text-[10px] font-mono text-stone-600 dark:text-stone-400 bg-stone-200/60 dark:bg-stone-800 px-1.5 py-0.5 rounded">
 						<RefreshCw size={10} />
-						<span>Toistuva</span>
+						<span>{t("toistuva", "Toistuva")}</span>
 					</span>
 				) : (
 					<div />
@@ -69,7 +72,7 @@ function ResourceCard({
 					className="gap-1.5 text-xs"
 				>
 					<Link to="/resources/$id" params={{ id: resource.id }}>
-						<span>Näytä</span>
+						<span>{t("nyt", "Näytä")}</span>
 						<Eye size={14} />
 					</Link>
 				</Button>
@@ -79,6 +82,7 @@ function ResourceCard({
 }
 
 function ResourceList() {
+	const { t } = useTranslation();
 	const { isAdmin } = useIsAdmin();
 	const {
 		data: resources,
@@ -95,7 +99,7 @@ function ResourceList() {
 		return (
 			<div className="p-8 flex items-center justify-center gap-2 text-stone-500">
 				<Loader2 className="animate-spin" size={18} />
-				<span>Ladataan resursseja...</span>
+				<span>{t("ladataanResursseja", "Ladataan resursseja...")}</span>
 			</div>
 		);
 	}
@@ -103,7 +107,7 @@ function ResourceList() {
 	if (errorResources || errorCollections) {
 		return (
 			<div className="p-4 text-xs text-rose-600 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 rounded-md">
-				Virhe ladattaessa tietoja.
+				{t("virheLadattaessaTietoja", "Virhe ladattaessa tietoja.")}
 			</div>
 		);
 	}
@@ -116,10 +120,10 @@ function ResourceList() {
 			<div className="flex items-center justify-between gap-2 shrink-0 border-b border-stone-200 dark:border-stone-800 pb-3">
 				<div>
 					<h1 className="text-lg sm:text-xl font-bold tracking-tight text-stone-900 dark:text-stone-100">
-						Resurssit
+						{t("resurssit", "Resurssit")}
 					</h1>
 					<p className="text-xs text-stone-500">
-						Yhteensä {resources?.length || 0} resurssia
+						{t("yhteens", "Yhteensä")} {resources?.length || 0} resurssia
 					</p>
 				</div>
 
@@ -127,7 +131,7 @@ function ResourceList() {
 					<Button asChild size="sm" className="gap-1.5 shrink-0">
 						<Link to="/resources/create">
 							<Plus size={16} />
-							<span>Lisää resurssi</span>
+							<span>{t("lisResurssi", "Lisää resurssi")}</span>
 						</Link>
 					</Button>
 				)}

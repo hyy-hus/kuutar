@@ -1,5 +1,6 @@
 import { useForm } from "@tanstack/react-form";
 import { Loader2, Save } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Button } from "#/components/Button";
 import { Input } from "#/components/Input";
 import type { CreateGroup } from "#/hooks/useGroups";
@@ -17,6 +18,7 @@ export function GroupForm({
 	isSubmitting = false,
 	submitLabel = "Tallenna",
 }: GroupFormProps) {
+	const { t } = useTranslation();
 	const form = useForm({
 		defaultValues: {
 			name: defaultValues?.name ?? "",
@@ -38,7 +40,8 @@ export function GroupForm({
 			<form.Field
 				name="name"
 				validators={{
-					onChange: ({ value }) => (!value ? "Nimi on pakollinen" : undefined),
+					onChange: ({ value }) =>
+						!value ? t("nimiOnPakollinen", "Nimi on pakollinen") : undefined,
 				}}
 			>
 				{(field) => {
@@ -49,7 +52,7 @@ export function GroupForm({
 								htmlFor={field.name}
 								className="text-xs font-medium text-stone-700 dark:text-stone-300"
 							>
-								Ryhmän nimi
+								{t("ryhmnNimi", "Ryhmän nimi")}
 							</label>
 							<Input
 								id={field.name}
@@ -57,7 +60,7 @@ export function GroupForm({
 								onChange={(e) => field.handleChange(e.target.value)}
 								onBlur={field.handleBlur}
 								isError={hasError}
-								placeholder="esim. Ylläpitäjät"
+								placeholder={t("esimYllpitjt", "esim. Ylläpitäjät")}
 							/>
 							{hasError && (
 								<p className="text-[11px] text-red-500">

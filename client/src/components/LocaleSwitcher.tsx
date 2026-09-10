@@ -1,46 +1,34 @@
-// Locale switcher refs:
-// - Paraglide docs: https://inlang.com/m/gerre34r/library-inlang-paraglideJs
-// - Router example: https://github.com/TanStack/router/tree/main/examples/react/i18n-paraglide#switching-locale
+import { useTranslation } from "react-i18next";
 
-import { m } from "#/paraglide/messages";
-import { getLocale, locales, setLocale } from "#/paraglide/runtime";
+const LOCALES = ["fi", "en", "sv"] as const;
 
-export default function ParaglideLocaleSwitcher() {
-	const currentLocale = getLocale();
+export default function LocaleSwitcher() {
+	const { t, i18n } = useTranslation();
+	const currentLocale = i18n.language || "fi";
 
 	return (
 		<div
-			style={{
-				display: "flex",
-				gap: "0.5rem",
-				alignItems: "center",
-				color: "inherit",
-			}}
-			aria-label={m.language_label()}
+			className="flex items-center gap-2 text-inherit"
+			aria-label={t("language_label", "Kielen valinta")}
 		>
-			<span style={{ opacity: 0.85 }}>
-				{m.current_locale({ locale: currentLocale })}
-			</span>
-			<div style={{ display: "flex", gap: "0.25rem" }}>
-				{locales.map((locale) => (
-					<button
-						key={locale}
-						onClick={() => setLocale(locale)}
-						aria-pressed={locale === currentLocale}
-						style={{
-							cursor: "pointer",
-							padding: "0.35rem 0.75rem",
-							borderRadius: "999px",
-							border: "1px solid #d1d5db",
-							background: locale === currentLocale ? "#0f172a" : "transparent",
-							color: locale === currentLocale ? "#f8fafc" : "inherit",
-							fontWeight: locale === currentLocale ? 700 : 500,
-							letterSpacing: "0.01em",
-						}}
-					>
-						{locale.toUpperCase()}
-					</button>
-				))}
+			<div className="flex gap-1">
+				{LOCALES.map((locale) => {
+					const isActive = locale === currentLocale;
+					return (
+						<button
+							key={locale}
+							type="button"
+							onClick={() => i18n.changeLanguage(locale)}
+							aria-pressed={isActive}
+							className={`cursor-pointer px-3 py-1.5 rounded-full border text-xs font-medium tracking-tight transition-colors ${isActive
+									? "bg-stone-900 text-stone-50 border-stone-800 dark:bg-stone-100 dark:text-stone-900 font-bold"
+									: "bg-transparent border-stone-300 hover:bg-stone-200 dark:border-stone-700 dark:hover:bg-stone-800"
+								}`}
+						>
+							{locale.toUpperCase()}
+						</button>
+					);
+				})}
 			</div>
 		</div>
 	);

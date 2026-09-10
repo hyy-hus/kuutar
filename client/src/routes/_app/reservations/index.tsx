@@ -12,6 +12,7 @@ import {
 	XCircle,
 } from "lucide-react";
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "#/components/Button";
 import { Chip } from "#/components/Chip";
 import {
@@ -70,6 +71,7 @@ function UserReservationCard({
 	onStatusToggle: (id: string, nextStatus: ReservationStatus) => void;
 	isUpdating: boolean;
 }) {
+	const { t } = useTranslation();
 	const firstOccurrence = reservationWithOcc.occurrences?.[0];
 	const isPending = reservationWithOcc.status === "pending";
 	const isCancelled = reservationWithOcc.status === "cancelled";
@@ -103,7 +105,9 @@ function UserReservationCard({
 						<span>{formatDate(firstOccurrence.start_time)}</span>
 					</div>
 				) : (
-					<span className="text-xs text-stone-400">Ei tiettyjä aikoja</span>
+					<span className="text-xs text-stone-400">
+						{t("eiTiettyjAikoja", "Ei tiettyjä aikoja")}
+					</span>
 				)}
 			</div>
 
@@ -115,7 +119,7 @@ function UserReservationCard({
 						className="gap-1 text-xs"
 					>
 						<Eye size={14} />
-						<span>Näytä tiedot</span>
+						<span>{t("nytTiedot", "Näytä tiedot")}</span>
 					</Link>
 				</Button>
 
@@ -133,7 +137,7 @@ function UserReservationCard({
 						className="text-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/50 text-xs px-2.5 py-1 gap-1"
 					>
 						<RotateCcw size={14} />
-						<span>Palauta odottavaksi</span>
+						<span>{t("palautaOdottavaksi", "Palauta odottavaksi")}</span>
 					</Button>
 				) : (
 					<Button
@@ -149,7 +153,7 @@ function UserReservationCard({
 						className="text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/50 text-xs px-2.5 py-1 gap-1"
 					>
 						<X size={14} />
-						<span>Peru varaus</span>
+						<span>{t("peruVaraus", "Peru varaus")}</span>
 					</Button>
 				)}
 			</div>
@@ -158,6 +162,7 @@ function UserReservationCard({
 }
 
 function UserDashboardPage() {
+	const { t } = useTranslation();
 	const search = Route.useSearch();
 	const navigate = Route.useNavigate();
 
@@ -244,7 +249,7 @@ function UserDashboardPage() {
 		<div className="flex flex-col gap-6 p-4 flex-1 min-h-0">
 			<div className="flex items-center justify-between gap-4 shrink-0">
 				<h1 className="text-xl font-bold text-stone-900 dark:text-stone-100">
-					Omat varaukset
+					{t("omatVaraukset", "Omat varaukset")}
 				</h1>
 			</div>
 
@@ -272,10 +277,10 @@ function UserDashboardPage() {
 					onChange={(e) => updateSearch({ days: Number(e.target.value) })}
 					className="px-3 py-1.5 text-xs bg-stone-50 dark:bg-stone-950 border border-stone-200 dark:border-stone-800 rounded-md"
 				>
-					<option value={7}>1 viikko</option>
-					<option value={14}>2 viikkoa</option>
-					<option value={30}>1 kuukausi</option>
-					<option value={90}>3 kuukautta</option>
+					<option value={7}>{t("1Viikko", "1 viikko")}</option>
+					<option value={14}>{t("2Viikkoa", "2 viikkoa")}</option>
+					<option value={30}>{t("1Kuukausi", "1 kuukausi")}</option>
+					<option value={90}>{t("3Kuukautta", "3 kuukautta")}</option>
 				</select>
 
 				<select
@@ -286,7 +291,7 @@ function UserDashboardPage() {
 					disabled={loadingResources}
 					className="px-3 py-1.5 text-xs bg-stone-50 dark:bg-stone-950 border border-stone-200 dark:border-stone-800 rounded-md"
 				>
-					<option value="">Kaikki resurssit</option>
+					<option value="">{t("kaikkiResurssit", "Kaikki resurssit")}</option>
 					{resources?.map((res) => (
 						<option key={res.id} value={res.id}>
 							{res.name}
@@ -298,11 +303,14 @@ function UserDashboardPage() {
 			{isLoading ? (
 				<div className="p-8 flex items-center justify-center gap-2 text-stone-500">
 					<Loader2 className="animate-spin" size={18} />
-					<span>Ladataan varauksiasi...</span>
+					<span>{t("ladataanVarauksiasi", "Ladataan varauksiasi...")}</span>
 				</div>
 			) : isError ? (
 				<div className="p-4 text-xs text-rose-600 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 rounded-md">
-					Virhe ladattaessa varaustietoja.
+					{t(
+						"virheLadattaessaVaraustietoja",
+						"Virhe ladattaessa varaustietoja.",
+					)}
 				</div>
 			) : (
 				<div className="space-y-6">
@@ -310,7 +318,13 @@ function UserDashboardPage() {
 					<div className="space-y-3">
 						<div className="flex items-center gap-2 text-amber-600 dark:text-amber-500 font-bold">
 							<Clock size={18} />
-							<h2>Odottaa hyväksyntää ({pendingReservations.length})</h2>
+							<h2>
+								{t(
+									"odottaaHyvksyntLength",
+									"Odottaa hyväksyntää ({{length}})",
+									{ length: pendingReservations.length },
+								)}
+							</h2>
 						</div>
 
 						{pendingReservations.length > 0 ? (
@@ -326,7 +340,10 @@ function UserDashboardPage() {
 							</ul>
 						) : (
 							<div className="p-4 text-xs text-stone-500 bg-stone-50 dark:bg-stone-900/40 rounded-md border border-stone-200 dark:border-stone-800">
-								Ei odottavia varauksia valitulla aikavälillä.
+								{t(
+									"eiOdottaviaVarauksiaValitullaAikavlill",
+									"Ei odottavia varauksia valitulla aikavälillä.",
+								)}
 							</div>
 						)}
 					</div>
@@ -335,7 +352,13 @@ function UserDashboardPage() {
 					<div className="space-y-3">
 						<div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-500 font-bold">
 							<CheckCircle2 size={18} />
-							<h2>Vahvistetut varaukset ({confirmedReservations.length})</h2>
+							<h2>
+								{t(
+									"vahvistetutVarauksetLength",
+									"Vahvistetut varaukset ({{length}})",
+									{ length: confirmedReservations.length },
+								)}
+							</h2>
 						</div>
 
 						{confirmedReservations.length > 0 ? (
@@ -351,7 +374,10 @@ function UserDashboardPage() {
 							</ul>
 						) : (
 							<div className="p-4 text-xs text-stone-500 bg-stone-50 dark:bg-stone-900/40 rounded-md border border-stone-200 dark:border-stone-800">
-								Ei vahvistettuja varauksia valitulla aikavälillä.
+								{t(
+									"eiVahvistettujaVarauksiaValitullaAikavlill",
+									"Ei vahvistettuja varauksia valitulla aikavälillä.",
+								)}
 							</div>
 						)}
 					</div>
@@ -360,7 +386,11 @@ function UserDashboardPage() {
 					<div className="space-y-3">
 						<div className="flex items-center gap-2 text-rose-600 dark:text-rose-500 font-bold">
 							<XCircle size={18} />
-							<h2>Perutut varaukset ({cancelledReservations.length})</h2>
+							<h2>
+								{t("perututVarauksetLength", "Perutut varaukset ({{length}})", {
+									length: cancelledReservations.length,
+								})}
+							</h2>
 						</div>
 
 						{cancelledReservations.length > 0 ? (
@@ -376,7 +406,10 @@ function UserDashboardPage() {
 							</ul>
 						) : (
 							<div className="p-4 text-xs text-stone-500 bg-stone-50 dark:bg-stone-900/40 rounded-md border border-stone-200 dark:border-stone-800">
-								Ei peruttuja varauksia valitulla aikavälillä.
+								{t(
+									"eiPeruttujaVarauksiaValitullaAikavlill",
+									"Ei peruttuja varauksia valitulla aikavälillä.",
+								)}
 							</div>
 						)}
 					</div>

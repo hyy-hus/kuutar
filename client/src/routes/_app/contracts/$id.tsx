@@ -4,6 +4,7 @@ import Link from "@tiptap/extension-link";
 import StarterKit from "@tiptap/starter-kit";
 import { ArrowLeft, CheckCircle2, FileText, Loader2, Save } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "#/components/Button";
 import { ContractEditor } from "#/components/ContractEditor";
 import { useContracts, useUpdateContract } from "#/hooks/useContracts";
@@ -17,6 +18,7 @@ export const Route = createFileRoute("/_app/contracts/$id")({
 });
 
 function EditContractPage() {
+	const { t } = useTranslation();
 	const { id } = Route.useParams();
 	const navigate = useNavigate();
 
@@ -78,7 +80,7 @@ function EditContractPage() {
 		return (
 			<div className="p-8 flex items-center justify-center gap-2 text-stone-500">
 				<Loader2 className="animate-spin" size={18} />
-				<span>Ladataan sopimuspohjaa...</span>
+				<span>{t("ladataanSopimuspohjaa", "Ladataan sopimuspohjaa...")}</span>
 			</div>
 		);
 	}
@@ -86,7 +88,7 @@ function EditContractPage() {
 	if (!contract) {
 		return (
 			<div className="p-8 text-center text-rose-600 font-semibold text-sm">
-				Sopimuspohjaa ei löytynyt.
+				{t("sopimuspohjaaEiLytynyt", "Sopimuspohjaa ei löytynyt.")}
 			</div>
 		);
 	}
@@ -104,7 +106,7 @@ function EditContractPage() {
 						variant="ghost"
 						size="icon"
 						onClick={() => navigate({ to: "/contracts" })}
-						title="Takaisin listaukseen"
+						title={t("takaisinListaukseen", "Takaisin listaukseen")}
 					>
 						<ArrowLeft size={20} />
 					</Button>
@@ -115,7 +117,7 @@ function EditContractPage() {
 							size={24}
 						/>
 						<h1 className="text-xl font-bold text-stone-900 dark:text-stone-100">
-							Muokkaa sopimuspohjaa
+							{t("muokkaaSopimuspohjaa", "Muokkaa sopimuspohjaa")}
 						</h1>
 					</div>
 				</div>
@@ -130,7 +132,7 @@ function EditContractPage() {
 					) : (
 						<Save size={16} />
 					)}
-					<span>Tallenna muutokset</span>
+					<span>{t("tallennaMuutokset", "Tallenna muutokset")}</span>
 				</Button>
 			</div>
 
@@ -145,7 +147,10 @@ function EditContractPage() {
 			{updateContract.isError && (
 				<div className="p-3 text-sm text-rose-600 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 rounded-md">
 					{updateContract.error.message ||
-						"Sopimuspohjan päivitys epäonnistui."}
+						t(
+							"sopimuspohjanPivitysEponnistui",
+							"Sopimuspohjan päivitys epäonnistui.",
+						)}
 				</div>
 			)}
 
@@ -155,7 +160,7 @@ function EditContractPage() {
 					htmlFor="contract-title"
 					className="text-xs font-semibold text-stone-700 dark:text-stone-300"
 				>
-					Sopimuspohjan nimi
+					{t("sopimuspohjanNimi", "Sopimuspohjan nimi")}
 				</label>
 				<input
 					id="contract-title"
@@ -170,7 +175,7 @@ function EditContractPage() {
 			{/* Rich Text Editor */}
 			<div className="flex flex-col gap-1.5">
 				<label className="text-xs font-semibold text-stone-700 dark:text-stone-300">
-					Sopimuksen sisältö
+					{t("sopimuksenSislt", "Sopimuksen sisältö")}
 				</label>
 				{isInitialized && (
 					<ContractEditor value={contentHtml} onChange={setContentHtml} />

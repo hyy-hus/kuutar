@@ -10,6 +10,7 @@ import {
 	TrendingUp,
 	Users,
 } from "lucide-react";
+import { Trans, useTranslation } from "react-i18next";
 import { useStats } from "#/hooks/useStats";
 
 export const Route = createFileRoute("/_app/stats/")({
@@ -17,6 +18,7 @@ export const Route = createFileRoute("/_app/stats/")({
 });
 
 export function StatsPage() {
+	const { t } = useTranslation();
 	const { data: stats, isLoading, isError } = useStats();
 
 	return (
@@ -26,24 +28,32 @@ export function StatsPage() {
 				<div className="space-y-1 border-b border-stone-200 dark:border-stone-800 pb-4">
 					<div className="flex items-center gap-2">
 						<h1 className="text-2xl font-black text-stone-900 dark:text-stone-100 tracking-tight">
-							Tilastot
+							{t("tilastot", "Tilastot")}
 						</h1>
 					</div>
 					<p className="text-xs text-stone-600 dark:text-stone-400 font-mono">
-						Tilastoa varausten tilanteesta
+						{t(
+							"tilastoaVaraustenTilanteesta",
+							"Tilastoa varausten tilanteesta",
+						)}
 					</p>
 				</div>
 
 				{isLoading ? (
 					<div className="p-12 flex flex-col items-center justify-center gap-3 text-stone-500">
 						<Loader2 className="animate-spin" size={24} />
-						<span className="text-xs font-mono">Ladataan tilastoja...</span>
+						<span className="text-xs font-mono">
+							{t("ladataanTilastoja", "Ladataan tilastoja...")}
+						</span>
 					</div>
 				) : isError ? (
 					<div className="p-6 border-2 border-rose-300 dark:border-rose-900 bg-rose-50 dark:bg-rose-950/40 rounded-md text-xs font-mono text-rose-800 dark:text-rose-300 flex items-center gap-2">
 						<AlertCircle size={16} />
 						<span>
-							Tilastojen lataaminen epäonnistui. Yritä myöhemmin uudelleen.
+							{t(
+								"tilastojenLataaminenEponnistuiYritMyhemminUudelleen",
+								"Tilastojen lataaminen epäonnistui. Yritä myöhemmin uudelleen.",
+							)}
 						</span>
 					</div>
 				) : (
@@ -53,7 +63,7 @@ export function StatsPage() {
 							<div className="p-4 border-2 border-stone-800 dark:border-stone-700 rounded-md bg-stone-100 dark:bg-stone-900 space-y-1">
 								<div className="flex items-center justify-between text-stone-500">
 									<span className="text-xs font-mono font-bold uppercase">
-										Varaukset
+										{t("varaukset", "Varaukset")}
 									</span>
 									<Bookmark size={16} />
 								</div>
@@ -65,7 +75,7 @@ export function StatsPage() {
 							<div className="p-4 border-2 border-stone-800 dark:border-stone-700 rounded-md bg-stone-100 dark:bg-stone-900 space-y-1">
 								<div className="flex items-center justify-between text-stone-500">
 									<span className="text-xs font-mono font-bold uppercase">
-										Resurssit
+										{t("resurssit", "Resurssit")}
 									</span>
 									<Box size={16} />
 								</div>
@@ -77,7 +87,7 @@ export function StatsPage() {
 							<div className="p-4 border-2 border-stone-800 dark:border-stone-700 rounded-md bg-stone-100 dark:bg-stone-900 space-y-1">
 								<div className="flex items-center justify-between text-amber-600 dark:text-amber-400">
 									<span className="text-xs font-mono font-bold uppercase">
-										Odottavat
+										{t("odottavat", "Odottavat")}
 									</span>
 									<Clock size={16} />
 								</div>
@@ -89,7 +99,7 @@ export function StatsPage() {
 							<div className="p-4 border-2 border-stone-800 dark:border-stone-700 rounded-md bg-stone-100 dark:bg-stone-900 space-y-1">
 								<div className="flex items-center justify-between text-stone-500">
 									<span className="text-xs font-mono font-bold uppercase">
-										Käyttäjät
+										{t("kyttjt", "Käyttäjät")}
 									</span>
 									<Users size={16} />
 								</div>
@@ -108,7 +118,9 @@ export function StatsPage() {
 										size={16}
 										className="text-purple-600 dark:text-purple-400"
 									/>
-									<span>Suosituimmat resurssit</span>
+									<span>
+										{t("suosituimmatResurssit", "Suosituimmat resurssit")}
+									</span>
 								</h2>
 
 								{stats?.top_resources && stats.top_resources.length > 0 ? (
@@ -127,7 +139,11 @@ export function StatsPage() {
 															{item.resource_name}
 														</span>
 														<span className="text-stone-500 shrink-0">
-															{item.reservation_count} varaus
+															{t(
+																"reservation_countVaraus",
+																"{{reservation_count}} varaus",
+																{ reservation_count: item.reservation_count },
+															)}
 															{item.reservation_count !== 1 && "ta"}
 														</span>
 													</div>
@@ -143,7 +159,10 @@ export function StatsPage() {
 									</ul>
 								) : (
 									<p className="text-xs text-stone-500 font-mono">
-										Ei vielä varaustilastoja saatavilla.
+										{t(
+											"eiVielVaraustilastojaSaatavilla",
+											"Ei vielä varaustilastoja saatavilla.",
+										)}
 									</p>
 								)}
 							</div>
@@ -155,14 +174,18 @@ export function StatsPage() {
 										size={16}
 										className="text-emerald-600 dark:text-emerald-400"
 									/>
-									<span>Varausten tilajakauma</span>
+									<span>
+										{t("varaustenTilajakauma", "Varausten tilajakauma")}
+									</span>
 								</h2>
 
 								<div className="space-y-3 text-xs font-mono">
 									<div className="p-3 border border-stone-200 dark:border-stone-800 rounded bg-stone-100 dark:bg-stone-950 flex items-center justify-between">
 										<span className="flex items-center gap-2 text-emerald-700 dark:text-emerald-400">
-											<span className="w-2 h-2 rounded-full bg-emerald-500" />
-											Vahvistetut varaukset
+											<Trans i18nKey="spanClassnamew2H2RoundedfullBgemerald500VahvistetutVaraukset">
+												<span className="w-2 h-2 rounded-full bg-emerald-500" />
+												Vahvistetut varaukset
+											</Trans>
 										</span>
 										<span className="font-bold text-stone-900 dark:text-stone-100">
 											{stats?.confirmed_reservations ?? 0}
@@ -171,8 +194,10 @@ export function StatsPage() {
 
 									<div className="p-3 border border-stone-200 dark:border-stone-800 rounded bg-stone-100 dark:bg-stone-950 flex items-center justify-between">
 										<span className="flex items-center gap-2 text-amber-700 dark:text-amber-400">
-											<span className="w-2 h-2 rounded-full bg-amber-500" />
-											Odottavat pyynnöt
+											<Trans i18nKey="spanClassnamew2H2RoundedfullBgamber500OdottavatPyynnt">
+												<span className="w-2 h-2 rounded-full bg-amber-500" />
+												Odottavat pyynnöt
+											</Trans>
 										</span>
 										<span className="font-bold text-stone-900 dark:text-stone-100">
 											{stats?.pending_reservations ?? 0}

@@ -4,6 +4,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { Box, Calendar, Loader2, Search, X } from "lucide-react";
 import { Popover } from "radix-ui";
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "#/components/Button";
 import { Input } from "#/components/Input";
 import { useSearch } from "#/hooks/useSearch";
@@ -14,6 +15,7 @@ export interface SearchBarProps {
 }
 
 export function SearchBar({ onSearch }: SearchBarProps) {
+	const { t } = useTranslation();
 	const [query, setQuery] = useState("");
 	const [isOpen, setIsOpen] = useState(false);
 	const inputRef = useRef<HTMLInputElement>(null);
@@ -111,7 +113,10 @@ export function SearchBar({ onSearch }: SearchBarProps) {
 									handleEscape();
 								}
 							}}
-							placeholder="Etsi varauksia & tiloja... [Ctrl+K]"
+							placeholder={t(
+								"etsiVarauksiaTilojaCtrlk",
+								"Etsi varauksia & tiloja... [Ctrl+K]",
+							)}
 							className={cn(
 								"w-full transition-all duration-150 text-xs font-mono",
 								query ? "pr-16" : "pr-9",
@@ -127,7 +132,7 @@ export function SearchBar({ onSearch }: SearchBarProps) {
 									size="icon"
 									onClick={handleClear}
 									className="text-stone-400 hover:text-stone-700 dark:text-stone-500 dark:hover:text-stone-200 h-7 w-7"
-									aria-label="Clear input"
+									aria-label={t("clearInput", "Clear input")}
 								>
 									<X size={14} />
 								</Button>
@@ -137,7 +142,7 @@ export function SearchBar({ onSearch }: SearchBarProps) {
 								variant="ghost"
 								size="icon"
 								className="text-stone-500 hover:text-stone-900 dark:text-stone-400 dark:hover:text-stone-100 h-7 w-7 pointer-events-none"
-								aria-label="Search icon"
+								aria-label={t("searchIcon", "Search icon")}
 							>
 								<Search size={15} />
 							</Button>
@@ -163,16 +168,23 @@ export function SearchBar({ onSearch }: SearchBarProps) {
 					>
 						{!query.trim() ? (
 							<div className="p-2 text-xs text-stone-400 dark:text-stone-500 font-mono">
-								Kirjoita hakeaksesi varauksia tai resursseja...
+								{t(
+									"kirjoitaHakeaksesiVarauksiaTaiResursseja",
+									"Kirjoita hakeaksesi varauksia tai resursseja...",
+								)}
 							</div>
 						) : isLoading ? (
 							<div className="p-3 flex items-center gap-2 text-xs font-mono text-stone-500">
 								<Loader2 size={14} className="animate-spin" />
-								<span>Haetaan tuloksia...</span>
+								<span>{t("haetaanTuloksia", "Haetaan tuloksia...")}</span>
 							</div>
 						) : !hasResults ? (
 							<div className="p-2 text-xs text-stone-500 font-mono">
-								Ei tuloksia hakusanalla &quot;{query}&quot;
+								{t(
+									"eiTuloksiaHakusanallaQuotqueryquot",
+									"Ei tuloksia hakusanalla &quot;{{query}}&quot;",
+									{ query },
+								)}
 							</div>
 						) : (
 							<div className="space-y-3">
@@ -180,7 +192,9 @@ export function SearchBar({ onSearch }: SearchBarProps) {
 								{reservations.length > 0 && (
 									<div className="space-y-1">
 										<div className="text-[10px] font-mono font-bold tracking-wider text-stone-400 dark:text-stone-500 uppercase px-1">
-											Varaukset ({reservations.length})
+											{t("varauksetLength", "Varaukset ({{length}})", {
+												length: reservations.length,
+											})}
 										</div>
 										{reservations.slice(0, 5).map((res) => (
 											<button
@@ -212,7 +226,9 @@ export function SearchBar({ onSearch }: SearchBarProps) {
 								{resources.length > 0 && (
 									<div className="space-y-1">
 										<div className="text-[10px] font-mono font-bold tracking-wider text-stone-400 dark:text-stone-500 uppercase px-1">
-											Resurssit ({resources.length})
+											{t("resurssitLength", "Resurssit ({{length}})", {
+												length: resources.length,
+											})}
 										</div>
 										{resources.slice(0, 5).map((res) => (
 											<button

@@ -15,13 +15,11 @@ import {
 	User,
 	Users,
 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useAuth, useIsAdmin } from "#/hooks/useAuth";
 
 interface SideBarProps {
 	isSidebarOpen: boolean;
-	currentLocale: string;
-	onSelectLocale: (locale: string) => void;
-	availableLocales?: string[];
 	theme: "light" | "dark";
 	toggleTheme: () => void;
 }
@@ -32,31 +30,65 @@ const LANGUAGE_LABELS: Record<string, string> = {
 	sv: "Svenska",
 };
 
-export function SideBar({
-	currentLocale,
-	onSelectLocale,
-	availableLocales = ["fi", "en", "sv"],
-	theme,
-	toggleTheme,
-}: SideBarProps) {
+const AVAILABLE_LOCALES = ["fi", "en", "sv"] as const;
+
+export function SideBar({ theme, toggleTheme }: SideBarProps) {
+	const { t, i18n } = useTranslation();
 	const { user } = useAuth();
 	const { isAdmin } = useIsAdmin();
 
+	const currentLocale = i18n.language || "fi";
+
 	const navItems = [
-		{ to: "/", label: "Etusivu", icon: Home, public: true },
-		{ to: "/calendar", label: "Kalenteri", icon: Calendar, public: true },
-		{ to: "/stats", label: "Tilastot", icon: BarChart3, public: true },
+		{ to: "/", label: t("etusivu", "Etusivu"), icon: Home, public: true },
+		{
+			to: "/calendar",
+			label: t("kalenteri", "Kalenteri"),
+			icon: Calendar,
+			public: true,
+		},
+		{
+			to: "/stats",
+			label: t("tilastot", "Tilastot"),
+			icon: BarChart3,
+			public: true,
+		},
 		{
 			to: "/admin/dashboard",
-			label: "Ylläpito",
+			label: t("yllpito", "Ylläpito"),
 			icon: Shield,
 			adminOnly: true,
 		},
-		{ to: "/reservations", label: "Varaukset", icon: Bookmark, authOnly: true },
-		{ to: "/resources", label: "Resurssit", icon: Box, adminOnly: true },
-		{ to: "/collections", label: "Kokoelmat", icon: Folder, adminOnly: true },
-		{ to: "/groups", label: "Ryhmät", icon: Users, adminOnly: true },
-		{ to: "/users", label: "Käyttäjät", icon: User, adminOnly: true },
+		{
+			to: "/reservations",
+			label: t("varaukset", "Varaukset"),
+			icon: Bookmark,
+			authOnly: true,
+		},
+		{
+			to: "/resources",
+			label: t("resurssit", "Resurssit"),
+			icon: Box,
+			adminOnly: true,
+		},
+		{
+			to: "/collections",
+			label: t("kokoelmat", "Kokoelmat"),
+			icon: Folder,
+			adminOnly: true,
+		},
+		{
+			to: "/groups",
+			label: t("ryhmt", "Ryhmät"),
+			icon: Users,
+			adminOnly: true,
+		},
+		{
+			to: "/users",
+			label: t("kyttjt", "Käyttäjät"),
+			icon: User,
+			adminOnly: true,
+		},
 	];
 
 	const visibleNavItems = navItems.filter((item) => {
@@ -102,10 +134,10 @@ export function SideBar({
 					</div>
 					<select
 						value={currentLocale}
-						onChange={(e) => onSelectLocale(e.target.value)}
+						onChange={(e) => i18n.changeLanguage(e.target.value)}
 						className="w-full h-8 pl-8 pr-7 text-xs font-mono font-medium rounded-md border border-stone-300 dark:border-stone-700 bg-stone-200/60 dark:bg-stone-800/60 text-stone-900 dark:text-stone-100 appearance-none cursor-pointer hover:bg-stone-200 dark:hover:bg-stone-800 transition-colors focus:outline-none focus:ring-1 focus:ring-purple-600"
 					>
-						{availableLocales.map((code) => (
+						{AVAILABLE_LOCALES.map((code) => (
 							<option
 								key={code}
 								value={code}
@@ -124,7 +156,7 @@ export function SideBar({
 				<button
 					type="button"
 					onClick={toggleTheme}
-					aria-label="Toggle Theme"
+					aria-label={t("toggleTheme", "Vaihda teemaa")}
 					className="h-8 w-8 shrink-0 rounded-md border border-stone-300 dark:border-stone-700 bg-stone-200/60 dark:bg-stone-800/60 text-stone-700 dark:text-stone-300 hover:bg-stone-200 dark:hover:bg-stone-800 hover:text-stone-900 dark:hover:text-stone-100 flex items-center justify-center transition-colors focus:outline-none focus:ring-1 focus:ring-purple-600"
 				>
 					{theme === "light" ? <Sun size={14} /> : <Moon size={14} />}

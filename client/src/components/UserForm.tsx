@@ -1,5 +1,6 @@
 import { useForm } from "@tanstack/react-form";
 import { Loader2, Save } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Button } from "#/components/Button";
 import { Input } from "#/components/Input";
 import { useGroups } from "#/hooks/useGroups";
@@ -25,6 +26,7 @@ export function UserForm({
 	submitLabel = "Tallenna",
 	isCreate = false,
 }: UserFormProps) {
+	const { t } = useTranslation();
 	const { data: groups, isLoading: loadingGroups } = useGroups();
 
 	const form = useForm({
@@ -39,7 +41,11 @@ export function UserForm({
 	});
 
 	if (loadingGroups) {
-		return <div className="text-sm text-stone-500">Ladataan ryhmiä...</div>;
+		return (
+			<div className="text-sm text-stone-500">
+				{t("ladataanRyhmi", "Ladataan ryhmiä...")}
+			</div>
+		);
 	}
 
 	return (
@@ -57,7 +63,7 @@ export function UserForm({
 				validators={{
 					onChange: ({ value }) =>
 						!value
-							? "Sähköposti on pakollinen"
+							? t("shkpostiOnPakollinen", "Sähköposti on pakollinen")
 							: !/\S+@\S+\.\S+/.test(value)
 								? "Anna kelvollinen sähköpostiosoite"
 								: undefined,
@@ -71,7 +77,7 @@ export function UserForm({
 								htmlFor={field.name}
 								className="text-xs font-medium text-stone-700 dark:text-stone-300"
 							>
-								Sähköposti
+								{t("shkposti", "Sähköposti")}
 							</label>
 							<Input
 								id={field.name}
@@ -107,7 +113,7 @@ export function UserForm({
 								htmlFor={field.name}
 								className="text-xs font-medium text-stone-700 dark:text-stone-300"
 							>
-								Ryhmä
+								{t("ryhm", "Ryhmä")}
 							</label>
 							<select
 								id={field.name}
@@ -117,7 +123,7 @@ export function UserForm({
 								className="w-full px-3 py-2 text-sm bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
 							>
 								<option value="" disabled>
-									Valitse ryhmä...
+									{t("valitseRyhm", "Valitse ryhmä...")}
 								</option>
 								{groups?.map((grp) => (
 									<option key={grp.id} value={grp.id}>
@@ -141,9 +147,12 @@ export function UserForm({
 				validators={{
 					onChange: ({ value }) =>
 						isCreate && !value
-							? "Salasana on pakollinen"
+							? t("salasanaOnPakollinen", "Salasana on pakollinen")
 							: value && value.length < 8
-								? "Salasanan on oltava vähintään 8 merkkiä"
+								? t(
+										"salasananOnOltavaVhintn8Merkki",
+										"Salasanan on oltava vähintään 8 merkkiä",
+									)
 								: undefined,
 				}}
 			>
@@ -157,7 +166,10 @@ export function UserForm({
 							>
 								{isCreate
 									? "Salasana"
-									: "Uusi salasana (jätä tyhjäksi jos ei muuteta)"}
+									: t(
+											"uusiSalasanaJtTyhjksiJosEiMuuteta",
+											"Uusi salasana (jätä tyhjäksi jos ei muuteta)",
+										)}
 							</label>
 							<Input
 								id={field.name}

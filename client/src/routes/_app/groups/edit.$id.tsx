@@ -1,4 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useTranslation } from "react-i18next";
 import { GroupForm } from "#/components/GroupForm";
 import { useGroup, useUpdateGroup } from "#/hooks/useGroups";
 import { requireAuthGuard } from "#/utils/authGuard";
@@ -11,13 +12,18 @@ export const Route = createFileRoute("/_app/groups/edit/$id")({
 });
 
 function EditGroupPage() {
+	const { t } = useTranslation();
 	const { id } = Route.useParams();
 	const navigate = useNavigate();
 	const { data: group, isLoading } = useGroup(id);
 	const updateGroup = useUpdateGroup();
 
-	if (isLoading) return <div className="p-4">Ladataan ryhmää...</div>;
-	if (!group) return <div className="p-4">Ryhmää ei löytynyt.</div>;
+	if (isLoading)
+		return <div className="p-4">{t("ladataanRyhm", "Ladataan ryhmää...")}</div>;
+	if (!group)
+		return (
+			<div className="p-4">{t("ryhmEiLytynyt", "Ryhmää ei löytynyt.")}</div>
+		);
 
 	const handleSubmit = async (values: { name: string }) => {
 		await updateGroup.mutateAsync({
@@ -30,7 +36,7 @@ function EditGroupPage() {
 	return (
 		<div className="p-4 space-y-4">
 			<h1 className="text-xl font-bold text-stone-900 dark:text-stone-100">
-				Muokkaa ryhmää
+				{t("muokkaaRyhm", "Muokkaa ryhmää")}
 			</h1>
 			<GroupForm
 				defaultValues={{

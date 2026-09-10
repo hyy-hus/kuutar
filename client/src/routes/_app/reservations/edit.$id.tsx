@@ -1,4 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useTranslation } from "react-i18next";
 import {
 	ReservationForm,
 	type ReservationFormValues,
@@ -14,13 +15,22 @@ export const Route = createFileRoute("/_app/reservations/edit/$id")({
 });
 
 function EditReservationPage() {
+	const { t } = useTranslation();
 	const { id } = Route.useParams();
 	const navigate = useNavigate();
 	const { data: reservation, isLoading } = useReservation(id);
 	const updateReservation = useUpdateReservation();
 
-	if (isLoading) return <div className="p-4">Ladataan varausta...</div>;
-	if (!reservation) return <div className="p-4">Varausta ei löytynyt.</div>;
+	if (isLoading)
+		return (
+			<div className="p-4">{t("ladataanVarausta", "Ladataan varausta...")}</div>
+		);
+	if (!reservation)
+		return (
+			<div className="p-4">
+				{t("varaustaEiLytynyt", "Varausta ei löytynyt.")}
+			</div>
+		);
 
 	const firstOccurrence = reservation.occurrences?.[0];
 
@@ -55,7 +65,7 @@ function EditReservationPage() {
 	return (
 		<div className="p-4 space-y-4">
 			<h1 className="text-xl font-bold text-stone-900 dark:text-stone-100">
-				Muokkaa varausta
+				{t("muokkaaVarausta", "Muokkaa varausta")}
 			</h1>
 			<ReservationForm
 				defaultValues={{

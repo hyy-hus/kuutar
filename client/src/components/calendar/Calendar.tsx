@@ -3,6 +3,7 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { ChevronLeft, ChevronRight, Loader2, Plus } from "lucide-react";
 import { useEffect, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "#/components/Button";
 import { useReservations } from "#/hooks/useReservations";
 import { useResources } from "#/hooks/useResorces";
@@ -44,6 +45,7 @@ export function Calendar({
 	selectedResourceIds,
 	onSearchChange,
 }: CalendarProps) {
+	const { t } = useTranslation();
 	const navigate = useNavigate();
 	const start = useMemo(() => parseLocalDate(startStr), [startStr]);
 
@@ -140,7 +142,11 @@ export function Calendar({
 				if (activeResourceIds.includes(occ.resource_id)) {
 					const startMs = new Date(occ.start_time).getTime();
 					const endMs = new Date(occ.end_time).getTime();
-					const key = `${res.id}_${startMs}_${endMs}`;
+					const key = t("id_startms_endms", "{{id}}_{{startMs}}_{{endMs}}", {
+						id: res.id,
+						startMs,
+						endMs,
+					});
 
 					const group = timeGroups.get(key) || [];
 					group.push(occ);
@@ -173,7 +179,10 @@ export function Calendar({
 
 		const uniqueEvents = new Map<string, CalendarEvent>();
 		events.forEach((evt) => {
-			const key = `${evt.reservationId}_${evt.start.getTime()}`;
+			const key = t("reservationid_val", "{{reservationId}}_{{val}}", {
+				reservationId: evt.reservationId,
+				val: evt.start.getTime(),
+			});
 			if (!uniqueEvents.has(key)) {
 				uniqueEvents.set(key, evt);
 			}
@@ -186,7 +195,7 @@ export function Calendar({
 		return (
 			<div className="p-8 flex items-center justify-center gap-2 text-stone-500">
 				<Loader2 className="animate-spin" size={18} />
-				<span>Ladataan kalenteria...</span>
+				<span>{t("ladataanKalenteria", "Ladataan kalenteria...")}</span>
 			</div>
 		);
 	}
@@ -196,13 +205,13 @@ export function Calendar({
 			{/* Header & New Reservation Button */}
 			<div className="flex items-center justify-between gap-2 shrink-0">
 				<h1 className="text-lg md:text-xl font-bold tracking-tight">
-					Kalenteri
+					{t("kalenteri", "Kalenteri")}
 				</h1>
 
 				<Button asChild size="sm" className="gap-1.5 shrink-0">
 					<Link to="/reservations/create">
 						<Plus size={16} />
-						<span>Uusi varaus</span>
+						<span>{t("uusiVaraus", "Uusi varaus")}</span>
 					</Link>
 				</Button>
 			</div>
@@ -243,10 +252,10 @@ export function Calendar({
 						onChange={(e) => handleDaysChange(Number(e.target.value))}
 						className="px-2 py-1 text-xs bg-stone-50 dark:bg-stone-950 border border-stone-300 dark:border-stone-700 rounded-md font-medium"
 					>
-						<option value={1}>1 päivä</option>
-						<option value={3}>3 päivää</option>
-						<option value={5}>5 päivää</option>
-						<option value={7}>1 viikko</option>
+						<option value={1}>{t("1Piv", "1 päivä")}</option>
+						<option value={3}>{t("3Piv", "3 päivää")}</option>
+						<option value={5}>{t("5Piv", "5 päivää")}</option>
+						<option value={7}>{t("1Viikko", "1 viikko")}</option>
 					</select>
 				</div>
 			</div>

@@ -1,5 +1,8 @@
 // src/components/calendar/WeekView.tsx
+
+import i18next from "i18next";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import type { CalendarEvent } from "#/utils/calendarUtils";
 import { DayColumn } from "./DayColumn";
 
@@ -12,8 +15,8 @@ const weekdays = [
 	"Lauantai",
 	"Sunnuntai",
 ];
-const hours = Array.from({ length: 24 }).map(
-	(_, i) => `${i.toString().padStart(2, "0")}:00`,
+const hours = Array.from({ length: 24 }).map((_, i) =>
+	i18next.t("val00", "{{val}}:00", { val: i.toString().padStart(2, "0") }),
 );
 
 interface WeekViewProps {
@@ -24,6 +27,7 @@ interface WeekViewProps {
 }
 
 function CurrentTimeIndicator({ start, days }: { start: Date; days: number }) {
+	const { t } = useTranslation();
 	const [now, setNow] = useState(() => new Date());
 
 	useEffect(() => {
@@ -50,7 +54,9 @@ function CurrentTimeIndicator({ start, days }: { start: Date; days: number }) {
 	if (!isTodayVisible) return null;
 
 	const minutesSinceMidnight = now.getHours() * 60 + now.getMinutes();
-	const topOffset = `calc(3rem + ${(minutesSinceMidnight / 60) * 5}rem)`;
+	const topOffset = t("calc3remValrem", "calc(3rem + {{val}}rem)", {
+		val: (minutesSinceMidnight / 60) * 5,
+	});
 
 	return (
 		<div
@@ -76,6 +82,7 @@ export function WeekView({
 	events,
 	onSlotDoubleClick,
 }: WeekViewProps) {
+	const { t } = useTranslation();
 	const scrollRef = useRef<HTMLDivElement>(null);
 	const [hoveredCell, setHoveredCell] = useState<{
 		row: number;
@@ -139,7 +146,10 @@ export function WeekView({
 
 		const startDayIndex = (targetDate.getDay() + 6) % 7;
 		const dayName = weekdays[startDayIndex];
-		const dateFormatted = `${targetDate.getDate()}.${targetDate.getMonth() + 1}.`;
+		const dateFormatted = t("valval2", "{{val}}.{{val2}}.", {
+			val: targetDate.getDate(),
+			val2: targetDate.getMonth() + 1,
+		});
 
 		return { dayName, dateFormatted };
 	};
@@ -212,7 +222,7 @@ export function WeekView({
 
 								{isInteractiveCell && isHovered && (
 									<span className="w-full text-center text-[10px] font-mono text-purple-700 dark:text-purple-300 bg-purple-200/60 dark:bg-purple-900/60 rounded px-1 py-0.5 mt-auto">
-										{hours[row - 1]} (Kaksoisklikkaa)
+										{hours[row - 1]} {t("kaksoisklikkaa", "(Kaksoisklikkaa)")}
 									</span>
 								)}
 							</div>

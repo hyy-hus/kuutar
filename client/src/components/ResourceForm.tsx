@@ -1,6 +1,7 @@
 // src/components/ResourceForm.tsx
 import { useForm } from "@tanstack/react-form";
 import { Loader2, Save } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Button } from "#/components/Button";
 import { Input } from "#/components/Input";
 import { useCollections } from "#/hooks/useCollections";
@@ -19,6 +20,7 @@ export function ResourceForm({
 	isSubmitting = false,
 	submitLabel = "Tallenna",
 }: ResourceFormProps) {
+	const { t } = useTranslation();
 	const { data: collections, isLoading: loadingCollections } = useCollections();
 
 	const form = useForm({
@@ -33,7 +35,11 @@ export function ResourceForm({
 	});
 
 	if (loadingCollections) {
-		return <div className="text-sm text-stone-500">Ladataan kokoelmia...</div>;
+		return (
+			<div className="text-sm text-stone-500">
+				{t("ladataanKokoelmia", "Ladataan kokoelmia...")}
+			</div>
+		);
 	}
 
 	return (
@@ -49,7 +55,8 @@ export function ResourceForm({
 			<form.Field
 				name="name"
 				validators={{
-					onChange: ({ value }) => (!value ? "Nimi on pakollinen" : undefined),
+					onChange: ({ value }) =>
+						!value ? t("nimiOnPakollinen", "Nimi on pakollinen") : undefined,
 				}}
 			>
 				{(field) => {
@@ -60,7 +67,7 @@ export function ResourceForm({
 								htmlFor={field.name}
 								className="text-xs font-medium text-stone-700 dark:text-stone-300"
 							>
-								Resurssin nimi
+								{t("resurssinNimi", "Resurssin nimi")}
 							</label>
 							<Input
 								id={field.name}
@@ -68,7 +75,7 @@ export function ResourceForm({
 								onChange={(e) => field.handleChange(e.target.value)}
 								onBlur={field.handleBlur}
 								isError={hasError}
-								placeholder="esim. Sauna 1"
+								placeholder={t("esimSauna1", "esim. Sauna 1")}
 							/>
 							{hasError && (
 								<p className="text-[11px] text-red-500">
@@ -95,7 +102,7 @@ export function ResourceForm({
 								htmlFor={field.name}
 								className="text-xs font-medium text-stone-700 dark:text-stone-300"
 							>
-								Kokoelma
+								{t("kokoelma", "Kokoelma")}
 							</label>
 							<select
 								id={field.name}
@@ -105,7 +112,7 @@ export function ResourceForm({
 								className="w-full px-3 py-2 text-sm bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
 							>
 								<option value="" disabled>
-									Valitse kokoelma...
+									{t("valitseKokoelma", "Valitse kokoelma...")}
 								</option>
 								{collections?.map((col) => (
 									<option key={col.id} value={col.id}>
@@ -138,7 +145,10 @@ export function ResourceForm({
 							htmlFor={field.name}
 							className="text-xs font-medium text-stone-800 dark:text-stone-200 cursor-pointer select-none"
 						>
-							Salli toistuvat varaukset tälle resurssille
+							{t(
+								"salliToistuvatVarauksetTlleResurssille",
+								"Salli toistuvat varaukset tälle resurssille",
+							)}
 						</label>
 					</div>
 				)}

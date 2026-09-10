@@ -1,4 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useTranslation } from "react-i18next";
 import { UserForm, type UserFormValues } from "#/components/UserForm";
 import { useUpdateUser, useUser } from "#/hooks/useUsers";
 import { requireAuthGuard } from "#/utils/authGuard";
@@ -11,13 +12,20 @@ export const Route = createFileRoute("/_app/users/edit/$id")({
 });
 
 function EditUserPage() {
+	const { t } = useTranslation();
 	const { id } = Route.useParams();
 	const navigate = useNavigate();
 	const { data: user, isLoading } = useUser(id);
 	const updateUser = useUpdateUser();
 
-	if (isLoading) return <div className="p-4">Ladataan käyttäjää...</div>;
-	if (!user) return <div className="p-4">Käyttäjää ei löytynyt.</div>;
+	if (isLoading)
+		return (
+			<div className="p-4">{t("ladataanKyttj", "Ladataan käyttäjää...")}</div>
+		);
+	if (!user)
+		return (
+			<div className="p-4">{t("kyttjEiLytynyt", "Käyttäjää ei löytynyt.")}</div>
+		);
 
 	const handleSubmit = async (values: UserFormValues) => {
 		await updateUser.mutateAsync({
@@ -34,7 +42,7 @@ function EditUserPage() {
 	return (
 		<div className="p-4 space-y-4">
 			<h1 className="text-xl font-bold text-stone-900 dark:text-stone-100">
-				Muokkaa käyttäjää
+				{t("muokkaaKyttj", "Muokkaa käyttäjää")}
 			</h1>
 			<UserForm
 				defaultValues={{

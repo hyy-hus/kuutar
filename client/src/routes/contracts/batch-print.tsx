@@ -4,6 +4,7 @@ import { generateHTML } from "@tiptap/core";
 import Link from "@tiptap/extension-link";
 import StarterKit from "@tiptap/starter-kit";
 import { useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { api } from "#/api/client";
 import { useContracts } from "#/hooks/useContracts";
 import type { ReservationWithOccurrences } from "#/hooks/useReservations";
@@ -32,6 +33,7 @@ export const Route = createFileRoute("/contracts/batch-print")({
 });
 
 function BatchPrintPage() {
+	const { t } = useTranslation();
 	const { reservation_ids, contract_id } = Route.useSearch();
 	const hasTriggeredPrint = useRef(false);
 
@@ -87,7 +89,7 @@ function BatchPrintPage() {
 	if (loadingContracts || loadingResources || loadingReservations) {
 		return (
 			<div className="p-8 text-center text-stone-500 font-mono text-sm">
-				Ladataan erätulostusta...
+				{t("ladataanErtulostusta", "Ladataan erätulostusta...")}
 			</div>
 		);
 	}
@@ -100,7 +102,10 @@ function BatchPrintPage() {
 	) {
 		return (
 			<div className="p-8 text-center text-rose-600 font-semibold text-sm">
-				Sopimuspohjaa tai valittuja varauksia ei löytynyt.
+				{t(
+					"sopimuspohjaaTaiValittujaVarauksiaEiLytynyt",
+					"Sopimuspohjaa tai valittuja varauksia ei löytynyt.",
+				)}
 			</div>
 		);
 	}
@@ -156,7 +161,9 @@ function BatchPrintPage() {
 									{selectedContract.name}
 								</h1>
 								<p className="text-xs text-stone-500 mt-1">
-									Sopimustunniste: {res.id}
+									{t("sopimustunnisteId", "Sopimustunniste: {{id}}", {
+										id: res.id,
+									})}
 								</p>
 							</div>
 						</div>
@@ -164,18 +171,20 @@ function BatchPrintPage() {
 						{/* Info Box */}
 						<div className="mb-8 p-4 bg-stone-50 border border-stone-300 rounded-sm text-xs space-y-3">
 							<h2 className="font-bold text-sm text-stone-900 uppercase border-b border-stone-200 pb-1">
-								Varauksen Tiedot
+								{t("varauksenTiedot", "Varauksen Tiedot")}
 							</h2>
 							<div className="grid grid-cols-2 gap-4">
 								<div>
-									<span className="text-stone-500 block">Varaus:</span>
+									<span className="text-stone-500 block">
+										{t("varaus", "Varaus:")}
+									</span>
 									<strong className="text-stone-900 font-semibold">
 										{res.title}
 									</strong>
 								</div>
 								<div>
 									<span className="text-stone-500 block">
-										Varattu kohde / tila:
+										{t("varattuKohdeTila", "Varattu kohde / tila:")}
 									</span>
 									<strong className="text-stone-900 font-semibold">
 										{resourceNames || "—"}
@@ -184,7 +193,9 @@ function BatchPrintPage() {
 							</div>
 
 							<div className="pt-2 border-t border-stone-200">
-								<span className="text-stone-500 block mb-1">Varausajat:</span>
+								<span className="text-stone-500 block mb-1">
+									{t("varausajat", "Varausajat:")}
+								</span>
 								<ul className="space-y-1">
 									{occurrences.map((occ) => (
 										<li
@@ -217,20 +228,20 @@ function BatchPrintPage() {
 							style={{ pageBreakBefore: "always", breakBefore: "page" }}
 						>
 							<h2 className="font-bold text-sm text-stone-900 uppercase tracking-wide mb-8">
-								Allekirjoitukset
+								{t("allekirjoitukset", "Allekirjoitukset")}
 							</h2>
 
 							<div className="grid grid-cols-2 gap-12">
 								<div className="space-y-10">
 									<div className="border-b border-stone-400 h-8" />
 									<p className="text-xs text-stone-600 font-bold">
-										Vuokranantaja
+										{t("vuokranantaja", "Vuokranantaja")}
 									</p>
 								</div>
 								<div className="space-y-10">
 									<div className="border-b border-stone-400 h-8" />
 									<p className="text-xs text-stone-600 font-bold">
-										Vuokralainen
+										{t("vuokralainen", "Vuokralainen")}
 									</p>
 								</div>
 							</div>

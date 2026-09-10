@@ -1,5 +1,6 @@
 // src/routes/resources/edit.$id.tsx
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useTranslation } from "react-i18next";
 import { ResourceForm } from "#/components/ResourceForm";
 import { useResource, useUpdateResource } from "#/hooks/useResorces";
 import { requireAuthGuard } from "#/utils/authGuard";
@@ -12,13 +13,24 @@ export const Route = createFileRoute("/_app/resources/edit/$id")({
 });
 
 function EditResourcePage() {
+	const { t } = useTranslation();
 	const { id } = Route.useParams();
 	const navigate = useNavigate();
 	const { data: resource, isLoading } = useResource(id);
 	const updateResource = useUpdateResource();
 
-	if (isLoading) return <div className="p-4">Ladataan resurssia...</div>;
-	if (!resource) return <div className="p-4">Resurssia ei löytynyt.</div>;
+	if (isLoading)
+		return (
+			<div className="p-4">
+				{t("ladataanResurssia", "Ladataan resurssia...")}
+			</div>
+		);
+	if (!resource)
+		return (
+			<div className="p-4">
+				{t("resurssiaEiLytynyt", "Resurssia ei löytynyt.")}
+			</div>
+		);
 
 	const handleSubmit = async (values: {
 		name: string;
@@ -34,7 +46,7 @@ function EditResourcePage() {
 	return (
 		<div className="p-4 space-y-4">
 			<h1 className="text-xl font-bold text-stone-900 dark:text-stone-100">
-				Muokkaa resurssia
+				{t("muokkaaResurssia", "Muokkaa resurssia")}
 			</h1>
 			<ResourceForm
 				defaultValues={{

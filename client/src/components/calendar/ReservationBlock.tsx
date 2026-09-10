@@ -1,5 +1,6 @@
 // src/components/calendar/ReservationBlock.tsx
 import { Link } from "@tanstack/react-router";
+import { useTranslation } from "react-i18next";
 import {
 	getMinutesBetween,
 	getMinutesSinceMidnight,
@@ -12,9 +13,13 @@ const timeFormatter = new Intl.DateTimeFormat("fi-FI", {
 });
 
 export function ReservationBlock({ event }: { event: PlacedEvent }) {
+	const { t } = useTranslation();
 	const startMins = getMinutesSinceMidnight(event.start);
 	const durationMins = getMinutesBetween(event.start, event.end);
-	const timeString = `${timeFormatter.format(event.start)} – ${timeFormatter.format(event.end)}`;
+	const timeString = t("valVal2", "{{val}} – {{val2}}", {
+		val: timeFormatter.format(event.start),
+		val2: timeFormatter.format(event.end),
+	});
 
 	return (
 		<div
@@ -23,7 +28,11 @@ export function ReservationBlock({ event }: { event: PlacedEvent }) {
 				gridColumn: `${event.col} / span ${event.span}`,
 				gridRow: `${startMins + 1} / span ${durationMins}`,
 			}}
-			title={`${event.resourceName ?? ""}: ${event.title} (${timeString})`}
+			title={t("valTitleTimestring", "{{val}}: {{title}} ({{timeString}})", {
+				val: event.resourceName ?? "",
+				title: event.title,
+				timeString,
+			})}
 		>
 			<Link
 				to="/reservations/$id"

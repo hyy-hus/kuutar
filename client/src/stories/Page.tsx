@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
+import i18next from "i18next";
 import React from "react";
-
+import { Trans } from "react-i18next";
 import { Header } from "./Header";
 
 type User = {
@@ -18,15 +19,20 @@ const Page: React.FC = () => {
 		<article>
 			<Header
 				user={user}
-				onLogin={() => setUser({ name: "Jane Doe" })}
+				onLogin={() => setUser({ name: i18next.t("janeDoe", "Jane Doe") })}
 				onLogout={() => setUser(undefined)}
-				onCreateAccount={() => setUser({ name: "Jane Doe" })}
+				onCreateAccount={() =>
+					setUser({ name: i18next.t("janeDoe", "Jane Doe") })
+				}
 			/>
 
 			<section className="storybook-page">
-				<h2>Pages in Storybook</h2>
+				<h2>{i18next.t("pagesInStorybook", "Pages in Storybook")}</h2>
 				<p>
-					We recommend building UIs with a{" "}
+					{i18next.t(
+						"weRecommendBuildingUisWithA",
+						"We recommend building UIs with a",
+					)}{" "}
 					<a
 						href="https://componentdriven.org"
 						target="_blank"
@@ -34,25 +40,36 @@ const Page: React.FC = () => {
 					>
 						<strong>component-driven</strong>
 					</a>{" "}
-					process starting with atomic components and ending with pages.
+					{i18next.t(
+						"processStartingWithAtomicComponentsAndEndingWithPages",
+						"process starting with atomic components and ending with pages.",
+					)}
 				</p>
 				<p>
-					Render pages with mock data. This makes it easy to build and review
-					page states without needing to navigate to them in your app. Here are
-					some handy patterns for managing page data in Storybook:
+					{i18next.t(
+						"renderPagesWithMockDataThisMakesItEasyToBuildAndReviewPageStatesWithoutNeedingToNavigateToThemInYourAppHereAreSomeHandyPatternsForManagingPageDataInStorybook",
+						"Render pages with mock data. This makes it easy to build and review\n\t\t\t\t\tpage states without needing to navigate to them in your app. Here are\n\t\t\t\t\tsome handy patterns for managing page data in Storybook:",
+					)}
 				</p>
 				<ul>
 					<li>
-						Use a higher-level connected component. Storybook helps you compose
-						such data from the "args" of child component stories
+						{i18next.t(
+							"useAHigherlevelConnectedComponentStorybookHelpsYouComposeSuchDataFromTheArgsOfChildComponentStories",
+							'Use a higher-level connected component. Storybook helps you compose\n\t\t\t\t\t\tsuch data from the "args" of child component stories',
+						)}
 					</li>
 					<li>
-						Assemble data in the page component from your services. You can mock
-						these services out using Storybook.
+						{i18next.t(
+							"assembleDataInThePageComponentFromYourServicesYouCanMockTheseServicesOutUsingStorybook",
+							"Assemble data in the page component from your services. You can mock\n\t\t\t\t\t\tthese services out using Storybook.",
+						)}
 					</li>
 				</ul>
 				<p>
-					Get a guided tutorial on component-driven development at{" "}
+					{i18next.t(
+						"getAGuidedTutorialOnComponentdrivenDevelopmentAt",
+						"Get a guided tutorial on component-driven development at",
+					)}{" "}
 					<a
 						href="https://storybook.js.org/tutorials/"
 						target="_blank"
@@ -88,7 +105,10 @@ const Page: React.FC = () => {
 							/>
 						</g>
 					</svg>
-					Viewports addon in the toolbar
+					{i18next.t(
+						"viewportsAddonInTheToolbar",
+						"Viewports addon in the toolbar",
+					)}
 				</div>
 			</section>
 		</article>

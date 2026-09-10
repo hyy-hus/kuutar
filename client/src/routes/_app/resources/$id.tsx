@@ -1,6 +1,7 @@
 // src/routes/resources/$id.tsx
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { ArrowLeft, Edit, Trash2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Button } from "#/components/Button";
 import { Chip } from "#/components/Chip";
 import { useCollection } from "#/hooks/useCollections";
@@ -13,6 +14,7 @@ export const Route = createFileRoute("/_app/resources/$id")({
 });
 
 function ViewResourcePage() {
+	const { t } = useTranslation();
 	const { id } = Route.useParams();
 	const navigate = useNavigate();
 	const { data: resource, isLoading, isError } = useResource(id);
@@ -21,11 +23,15 @@ function ViewResourcePage() {
 
 	if (isLoading)
 		return (
-			<div className="p-4 text-sm text-stone-500">Ladataan resurssia...</div>
+			<div className="p-4 text-sm text-stone-500">
+				{t("ladataanResurssia", "Ladataan resurssia...")}
+			</div>
 		);
 	if (isError || !resource)
 		return (
-			<div className="p-4 text-sm text-red-500">Resurssia ei löytynyt.</div>
+			<div className="p-4 text-sm text-red-500">
+				{t("resurssiaEiLytynyt", "Resurssia ei löytynyt.")}
+			</div>
 		);
 
 	const handleDelete = async () => {
@@ -42,7 +48,8 @@ function ViewResourcePage() {
 				to="/resources"
 				className="inline-flex items-center gap-1 text-xs text-stone-500 hover:underline"
 			>
-				<ArrowLeft size={14} /> Takaisin resursseihin
+				<ArrowLeft size={14} />{" "}
+				{t("takaisinResursseihin", "Takaisin resursseihin")}
 			</Link>
 
 			{/* 1. Header: Name & ID Chip */}
@@ -56,14 +63,17 @@ function ViewResourcePage() {
 			<div className="space-y-2">
 				<div className="text-md">
 					<p>
-						<strong>Kokoelma:</strong> {collection?.name ?? "—"}
+						<strong>{t("kokoelma2", "Kokoelma:")}</strong>{" "}
+						{collection?.name ?? "—"}
 					</p>
 					<hr className="my-2 border-stone-300" />
 					<p>
-						<strong>Muokattu:</strong> {formatDate(resource.updated_at)}
+						<strong>{t("muokattu", "Muokattu:")}</strong>{" "}
+						{formatDate(resource.updated_at)}
 					</p>
 					<p>
-						<strong>Luotu:</strong> {formatDate(resource.created_at)}
+						<strong>{t("luotu", "Luotu:")}</strong>{" "}
+						{formatDate(resource.created_at)}
 					</p>
 				</div>
 			</div>
@@ -76,7 +86,7 @@ function ViewResourcePage() {
 					asChild
 				>
 					<Link to="/resources/edit/$id" params={{ id: resource.id }}>
-						<span>Muokkaa</span>
+						<span>{t("muokkaa", "Muokkaa")}</span>
 						<Edit size={16} />
 					</Link>
 				</Button>
@@ -87,7 +97,7 @@ function ViewResourcePage() {
 					onClick={handleDelete}
 					disabled={deleteResource.isPending}
 				>
-					<span>Poista resurssi</span>
+					<span>{t("poistaResurssi", "Poista resurssi")}</span>
 					<Trash2 size={16} />
 				</Button>
 			</div>

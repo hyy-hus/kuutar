@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import i18next from "i18next";
 import { api } from "#/api/client";
 import type { components } from "#/api/schema";
 
@@ -112,7 +113,10 @@ export function useCreateReservation() {
 				const message =
 					typeof error === "object" && error !== null && "message" in error
 						? (error as { message: string }).message
-						: "Varauksen luominen epäonnistui.";
+						: i18next.t(
+								"varauksenLuominenEponnistui",
+								"Varauksen luominen epäonnistui.",
+							);
 				throw new Error(message);
 			}
 			if (!data) throw new Error("Varauksen luominen epäonnistui.");
