@@ -51,12 +51,12 @@ export function Calendar({
 
 	const { data: resources, isLoading: loadingResources } = useResources();
 
-	// Default to 1-day view starting today on mobile devices
+	// Default to 1-day view starting at the current selected date on mobile devices
 	useEffect(() => {
 		if (window.innerWidth < 640 && days > 1 && !selectedResourceIds) {
-			onSearchChange({ days: 1, start: formatYYYYMMDD(new Date()) });
+			onSearchChange({ days: 1, start: formatYYYYMMDD(start) });
 		}
-	}, [days, onSearchChange, selectedResourceIds]);
+	}, [days, onSearchChange, selectedResourceIds, start]);
 
 	const activeResourceIds = useMemo(() => {
 		if (selectedResourceIds && selectedResourceIds.length > 0) {
@@ -97,17 +97,15 @@ export function Calendar({
 		next.setDate(next.getDate() + deltaDays);
 		onSearchChange({ start: formatYYYYMMDD(next) });
 	};
-
 	const handleDaysChange = (newDays: number) => {
 		if (newDays === 7) {
 			// For full week view, align start to Monday of the current selected date
 			onSearchChange({ days: 7, start: formatYYYYMMDD(getMonday(start)) });
 		} else {
-			// For 1, 3, or 5 day views, start from today
-			onSearchChange({ days: newDays, start: formatYYYYMMDD(new Date()) });
+			// For 1, 3, or 5 day views, keep current start date
+			onSearchChange({ days: newDays, start: formatYYYYMMDD(start) });
 		}
 	};
-
 	const toggleResource = (id: string) => {
 		const nextResources = activeResourceIds.includes(id)
 			? activeResourceIds.filter((item) => item !== id)
