@@ -122,33 +122,6 @@ export function ReservationForm({
 		},
 	});
 
-	const generateAllOccurrences = () => {
-		const until = untilStr ? new Date(untilStr) : null;
-		const selectedResourceIds = form.getFieldValue("resource_ids") || [];
-		const startTime = form.getFieldValue("start_time");
-		const endTime = form.getFieldValue("end_time");
-
-		let allOccurrences: CreateOccurrencePayload[] = [];
-		for (const resourceId of selectedResourceIds) {
-			const { occurrences } = generateOccurrences(
-				startTime,
-				endTime,
-				resourceId,
-				{ freq, until },
-			);
-			allOccurrences = [...allOccurrences, ...occurrences];
-		}
-		return allOccurrences;
-	};
-
-	const handleCheckConflicts = async () => {
-		const occurrences = generateAllOccurrences();
-		if (occurrences.length === 0) return;
-
-		const results = await checkConflicts.mutateAsync(occurrences);
-		setConflicts(results);
-	};
-
 	return (
 		<form
 			onSubmit={(e) => {
@@ -321,7 +294,6 @@ export function ReservationForm({
 															? field.state.value.filter((id) => id !== res.id)
 															: [...field.state.value, res.id];
 														field.handleChange(nextValue);
-														setConflicts(null);
 													}}
 													className={`px-3 py-1.5 text-xs font-medium rounded-md border transition-colors flex items-center gap-1.5 ${
 														isChecked
@@ -364,7 +336,6 @@ export function ReservationForm({
 									value={field.state.value}
 									onChange={(e) => {
 										field.handleChange(e.target.value);
-										setConflicts(null);
 									}}
 									onBlur={field.handleBlur}
 								/>
@@ -387,7 +358,6 @@ export function ReservationForm({
 									value={field.state.value}
 									onChange={(e) => {
 										field.handleChange(e.target.value);
-										setConflicts(null);
 									}}
 									onBlur={field.handleBlur}
 								/>
@@ -423,59 +393,27 @@ export function ReservationForm({
 					}}
 				</form.Subscribe>
 
-				{/* Conflict Check Action */}
-				<Button
-					type="button"
-					variant="outline"
-					size="sm"
-					onClick={handleCheckConflicts}
-					disabled={checkConflicts.isPending}
-					className="w-full flex items-center justify-center gap-2 text-xs font-mono"
+				{/* Automatic Conflict Checker */}
+				<form.Subscribe
+					selector={(state) => [
+						state.values.resource_ids,
+						state.values.start_time,
+						state.values.end_time,
+					]}
 				>
-					{checkConflicts.isPending ? (
-						<Loader2 className="animate-spin" size={14} />
-					) : (
-						<span>
-							{t("tarkistaPllekkisyydet", "Tarkista päällekkäisyydet")}
-						</span>
+					{([resourceIds, startTime, endTime]) => (
+						<AutomaticConflictChecker
+							resourceIds={resourceIds}
+							startTime={startTime}
+							endTime={endTime}
+							freq={freq}
+							untilStr={untilStr}
+							checkConflicts={checkConflicts}
+							conflicts={conflicts}
+							setConflicts={setConflicts}
+						/>
 					)}
-				</Button>
-
-				{/* Conflict Check Results */}
-				{conflicts !== null && (
-					<div>
-						{conflicts.length > 0 ? (
-							<div className="p-3 bg-rose-100 dark:bg-rose-950/80 border-2 border-rose-600 text-rose-900 dark:text-rose-200 rounded-sm space-y-2 text-xs">
-								<div className="flex items-center gap-2 font-bold">
-									<AlertTriangle size={16} />
-									<span>
-										{t(
-											"lytyiLengthPllekkistVarausta",
-											"Löytyi {{length}} päällekkäistä varausta!",
-											{ length: conflicts.length },
-										)}
-									</span>
-								</div>
-								<ul className="list-disc list-inside space-y-1 font-mono text-[11px]">
-									{conflicts.map((occ) => (
-										<li key={occ.id}>
-											{formatDate(occ.start_time)}
-											{" – "}
-											{formatDate(occ.end_time)}
-										</li>
-									))}
-								</ul>
-							</div>
-						) : (
-							<div className="p-2 bg-emerald-100 dark:bg-emerald-950/80 border-2 border-emerald-600 text-emerald-900 dark:text-emerald-200 rounded-sm flex items-center gap-2 text-xs font-medium">
-								<CheckCircle2 size={16} />
-								<span>
-									{t("eiPllekkisiVarauksia", "Ei päällekkäisiä varauksia.")}
-								</span>
-							</div>
-						)}
-					</div>
-				)}
+				</form.Subscribe>
 			</div>
 
 			{/* Submit Button */}
@@ -500,6 +438,121 @@ export function ReservationForm({
 				)}
 			</form.Subscribe>
 		</form>
+	);
+}
+
+interface AutomaticConflictCheckerProps {
+	resourceIds: string[];
+	startTime: string;
+	endTime: string;
+	freq: Frequency | null;
+	untilStr: string;
+	checkConflicts: ReturnType<typeof useCheckConflicts>;
+	conflicts: Occurrence[] | null;
+	setConflicts: (conflicts: Occurrence[] | null) => void;
+}
+
+function AutomaticConflictChecker({
+	resourceIds,
+	startTime,
+	endTime,
+	freq,
+	untilStr,
+	checkConflicts,
+	conflicts,
+	setConflicts,
+}: AutomaticConflictCheckerProps) {
+	const { t } = useTranslation();
+	const mutateAsync = checkConflicts.mutateAsync;
+
+	useEffect(() => {
+		if (!resourceIds || resourceIds.length === 0 || !startTime || !endTime) {
+			setConflicts(null);
+			return;
+		}
+
+		const until = untilStr ? new Date(untilStr) : null;
+		let allOccurrences: CreateOccurrencePayload[] = [];
+		for (const resourceId of resourceIds) {
+			const { occurrences } = generateOccurrences(
+				startTime,
+				endTime,
+				resourceId,
+				{ freq, until },
+			);
+			allOccurrences = [...allOccurrences, ...occurrences];
+		}
+
+		if (allOccurrences.length === 0) {
+			setConflicts(null);
+			return;
+		}
+
+		let isCancelled = false;
+
+		mutateAsync(allOccurrences)
+			.then((results) => {
+				if (!isCancelled) {
+					setConflicts(results);
+				}
+			})
+			.catch(() => {
+				if (!isCancelled) {
+					setConflicts(null);
+				}
+			});
+
+		return () => {
+			isCancelled = true;
+		};
+	}, [resourceIds, startTime, endTime, freq, untilStr, mutateAsync, setConflicts]);
+
+	if (checkConflicts.isPending) {
+		return (
+			<div className="flex items-center justify-center py-2 text-xs font-mono text-stone-500 gap-2">
+				<Loader2 className="animate-spin" size={14} />
+				<span>{t("tarkistetaanPllekkisyyksi", "Tarkistetaan päällekkäisyyksiä...")}</span>
+			</div>
+		);
+	}
+
+	if (conflicts === null) {
+		return null;
+	}
+
+	return (
+		<div>
+			{conflicts.length > 0 ? (
+				<div className="p-3 bg-rose-100 dark:bg-rose-950/80 border-2 border-rose-600 text-rose-900 dark:text-rose-200 rounded-sm space-y-2 text-xs">
+					<div className="flex items-center gap-2 font-bold">
+						<AlertTriangle size={16} />
+						<span>
+							{t(
+								"lytyiLengthPllekkistVarausta",
+								"Löytyi {{length}} päällekkäistä varausta!",
+								{ length: conflicts.length },
+							)}
+						</span>
+					</div>
+					<ul className="list-disc list-inside space-y-1 font-mono text-[11px]">
+						{conflicts.map((occ) => (
+							<li key={occ.id}>
+								{formatDate(occ.start_time)}
+								{" – "}
+								{formatDate(occ.end_time)}
+							</li>
+						))}
+					</ul>
+				</div>
+			) : (
+				<div className="p-2 bg-emerald-100 dark:bg-emerald-950/80 border-2 border-emerald-600 text-emerald-900 dark:text-emerald-200 rounded-sm flex items-center gap-2 text-xs font-medium">
+					<CheckCircle2 size={16} />
+					<span>
+						{t("eiPllekkisiVarauksia", "Ei päällekkäisiä varauksia.")}
+					</span>
+				</div>
+			)}
+		</div>
 	);
 }
 
@@ -555,7 +608,6 @@ function RecurrenceSection({
 						onChange={(e) => {
 							const val = e.target.value;
 							setFreq(val === "none" ? null : Number(val));
-							setConflicts(null);
 						}}
 						className="w-full px-2 py-1.5 text-xs bg-stone-50 dark:bg-stone-950 border border-stone-300 dark:border-stone-700 rounded-sm"
 					>
@@ -589,7 +641,6 @@ function RecurrenceSection({
 							value={untilStr}
 							onChange={(e) => {
 								setUntilStr(e.target.value);
-								setConflicts(null);
 							}}
 						/>
 					</div>
