@@ -122,7 +122,7 @@ export function Calendar({
 			search: {
 				start_time: startTime,
 				end_time: endTime,
-				resource_ids: activeResourceIds,
+				resource_ids: activeResourceIds.length > 1 ? [] : activeResourceIds,
 			},
 		});
 	};
