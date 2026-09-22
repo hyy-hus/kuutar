@@ -83,6 +83,8 @@ impl Modify for SecurityAddon {
         contracts::routes::create_contract,
         contracts::routes::update_contract,
         contracts::routes::delete_contract,
+        contracts::routes::generate_upload_url,
+        contracts::routes::generate_download_url,
 
         // Stats
         stats::routes::get_stats,
@@ -115,6 +117,9 @@ impl Modify for SecurityAddon {
             contracts::models::Contract,
             contracts::models::CreateContract,
             contracts::models::UpdateContract,
+            contracts::models::PresignedUploadRequest,
+            contracts::models::PresignedUploadResponse,
+            contracts::models::PresignedDownloadResponse,
             stats::models::SystemStats,
             stats::models::TopResourceStat,
         )
@@ -126,7 +131,7 @@ impl Modify for SecurityAddon {
         (name = "Resources", description = "Resource management endpoints"),
         (name = "Groups", description = "Group management endpoints"),
         (name = "Reservations", description = "Reservation and occurrence management endpoints"),
-        (name = "Contracts", description = "Contract template management endpoints"),
+        (name = "Contracts", description = "Contract document management endpoints"),
         (name = "Stats", description = "System statistics and usage analytics endpoints")
     ),
     modifiers(&SecurityAddon)

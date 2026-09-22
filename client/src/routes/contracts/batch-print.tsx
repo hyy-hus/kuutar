@@ -1,12 +1,17 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { generateHTML } from "@tiptap/core";
-import Link from "@tiptap/extension-link";
-import StarterKit from "@tiptap/starter-kit";
-import { useEffect, useRef } from "react";
+import { AlertTriangle, Loader2, Printer } from "lucide-react";
+import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "#/api/client";
-import { useContracts } from "#/hooks/useContracts";
+import { Button } from "#/components/Button";
+import {
+	type Contract,
+	getLocalizedText,
+	useContracts,
+	usePresignDownload,
+} from "#/hooks/useContracts";
 import type { ReservationWithOccurrences } from "#/hooks/useReservations";
 import { useResources } from "#/hooks/useResorces";
 import { requireAuthGuard } from "#/utils/authGuard";
@@ -14,7 +19,6 @@ import { formatDate } from "#/utils/date";
 
 export interface BatchPrintSearch {
 	reservation_ids: string[];
-	contract_id: string;
 }
 
 export const Route = createFileRoute("/contracts/batch-print")({
@@ -24,7 +28,6 @@ export const Route = createFileRoute("/contracts/batch-print")({
 			: typeof search.reservation_ids === "string"
 				? search.reservation_ids.split(",").filter(Boolean)
 				: [],
-		contract_id: String(search.contract_id || ""),
 	}),
 	beforeLoad: async ({ context }) => {
 		await requireAuthGuard(context);
@@ -32,15 +35,243 @@ export const Route = createFileRoute("/contracts/batch-print")({
 	component: BatchPrintPage,
 });
 
+/** Helper to draw a cover page with reservation details using pdf-lib */
+async function drawCoverPage(
+	pdfDoc: PDFDocument,
+	reservation: ReservationWithOccurrences,
+	resourceMap: Map<string, string>,
+	t: (key: string, fallback: string) => string,
+) {
+	const page = pdfDoc.addPage([595.28, 841.89]); // A4 size in points
+	const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+	const fontRegular = await pdfDoc.embedFont(StandardFonts.Helvetica);
+
+	let y = 780;
+
+	// Title
+	page.drawText(t("sopimusasiakirja", "SOPIMUSASIAKIRJA").toUpperCase(), {
+		x: 50,
+		y,
+		size: 20,
+		font: fontBold,
+		color: rgb(0.1, 0.1, 0.1),
+	});
+
+	y -= 25;
+	page.drawText(`ID: ${reservation.id}`, {
+		x: 50,
+		y,
+		size: 10,
+		font: fontRegular,
+		color: rgb(0.4, 0.4, 0.4),
+	});
+
+	y -= 20;
+	page.drawLine({
+		start: { x: 50, y },
+		end: { x: 545, y },
+		thickness: 1.5,
+		color: rgb(0.2, 0.2, 0.2),
+	});
+
+	// Reservation Info Box
+	y -= 40;
+	page.drawText(t("varauksenTiedot", "VARAUKSEN TIEDOT").toUpperCase(), {
+		x: 50,
+		y,
+		size: 12,
+		font: fontBold,
+		color: rgb(0.2, 0.2, 0.2),
+	});
+
+	y -= 20;
+	page.drawText(`${t("varaus", "Varaus")}:`, {
+		x: 50,
+		y,
+		size: 10,
+		font: fontBold,
+	});
+	page.drawText(reservation.title || "-", {
+		x: 180,
+		y,
+		size: 10,
+		font: fontRegular,
+	});
+
+	y -= 18;
+	if (reservation.description) {
+		page.drawText(`${t("kuvaus", "Kuvaus")}:`, {
+			x: 50,
+			y,
+			size: 10,
+			font: fontBold,
+		});
+		page.drawText(reservation.description, {
+			x: 180,
+			y,
+			size: 10,
+			font: fontRegular,
+		});
+		y -= 18;
+	}
+
+	// Reserved resources
+	const resourceNames = Array.from(
+		new Set(
+			(reservation.occurrences || [])
+				.map((occ) => resourceMap.get(occ.resource_id) || occ.resource_id)
+				.filter(Boolean),
+		),
+	).join(", ");
+
+	page.drawText(`${t("varatutResurssit", "Varatut resurssit")}:`, {
+		x: 50,
+		y,
+		size: 10,
+		font: fontBold,
+	});
+	page.drawText(resourceNames || "-", {
+		x: 180,
+		y,
+		size: 10,
+		font: fontRegular,
+	});
+
+	// Occurrence schedule list
+	y -= 35;
+	page.drawText(t("varausajat", "VARAUSAJAT").toUpperCase(), {
+		x: 50,
+		y,
+		size: 12,
+		font: fontBold,
+		color: rgb(0.2, 0.2, 0.2),
+	});
+
+	y -= 15;
+	page.drawLine({
+		start: { x: 50, y },
+		end: { x: 545, y },
+		thickness: 0.5,
+		color: rgb(0.8, 0.8, 0.8),
+	});
+
+	y -= 20;
+	for (const occ of reservation.occurrences || []) {
+		if (y < 80) break; // Prevents overflow
+
+		const resourceName = resourceMap.get(occ.resource_id) || "";
+		const timeStr = `${formatDate(occ.start_time)}  ->  ${formatDate(occ.end_time)}`;
+
+		page.drawText(timeStr, {
+			x: 50,
+			y,
+			size: 9,
+			font: fontRegular,
+		});
+
+		if (resourceName) {
+			page.drawText(`(${resourceName})`, {
+				x: 350,
+				y,
+				size: 9,
+				font: fontRegular,
+				color: rgb(0.4, 0.4, 0.4),
+			});
+		}
+
+		y -= 16;
+	}
+}
+
+/** Helper to draw a signature page using pdf-lib */
+async function drawSignaturePage(
+	pdfDoc: PDFDocument,
+	t: (key: string, fallback: string) => string,
+) {
+	const page = pdfDoc.addPage([595.28, 841.89]);
+	const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+	const fontRegular = await pdfDoc.embedFont(StandardFonts.Helvetica);
+
+	let y = 750;
+
+	page.drawText(t("allekirjoitukset", "ALLEKIRJOITUKSET").toUpperCase(), {
+		x: 50,
+		y,
+		size: 14,
+		font: fontBold,
+		color: rgb(0.1, 0.1, 0.1),
+	});
+
+	y -= 10;
+	page.drawLine({
+		start: { x: 50, y },
+		end: { x: 545, y },
+		thickness: 1,
+		color: rgb(0.3, 0.3, 0.3),
+	});
+
+	y -= 80;
+
+	// Vuokranantaja (Lessor)
+	page.drawLine({
+		start: { x: 50, y },
+		end: { x: 260, y },
+		thickness: 1,
+		color: rgb(0.5, 0.5, 0.5),
+	});
+	page.drawText(t("vuokranantaja", "Vuokranantaja"), {
+		x: 50,
+		y: y - 15,
+		size: 10,
+		font: fontBold,
+	});
+	page.drawText(`${t("paivays", "Päiväys")}: ____.____.20__`, {
+		x: 50,
+		y: y - 35,
+		size: 9,
+		font: fontRegular,
+		color: rgb(0.4, 0.4, 0.4),
+	});
+
+	// Vuokralainen (Lessee)
+	page.drawLine({
+		start: { x: 335, y },
+		end: { x: 545, y },
+		thickness: 1,
+		color: rgb(0.5, 0.5, 0.5),
+	});
+	page.drawText(t("vuokralainen", "Vuokralainen"), {
+		x: 335,
+		y: y - 15,
+		size: 10,
+		font: fontBold,
+	});
+	page.drawText(`${t("paivays", "Päiväys")}: ____.____.20__`, {
+		x: 335,
+		y: y - 35,
+		size: 9,
+		font: fontRegular,
+		color: rgb(0.4, 0.4, 0.4),
+	});
+}
+
 function BatchPrintPage() {
-	const { t } = useTranslation();
-	const { reservation_ids, contract_id } = Route.useSearch();
-	const hasTriggeredPrint = useRef(false);
+	const { t, i18n } = useTranslation();
+	const { reservation_ids } = Route.useSearch();
+	const iframeRef = useRef<HTMLIFrameElement | null>(null);
 
-	const { data: contracts, isLoading: loadingContracts } = useContracts();
+	const { data: globalContracts, isLoading: loadingContracts } = useContracts({
+		active_only: true,
+	});
 	const { data: resources, isLoading: loadingResources } = useResources();
+	const presignDownload = usePresignDownload();
 
-	// Fetch exact reservations concurrently by ID with explicit return typing
+	const [mergedPdfUrl, setMergedPdfUrl] = useState<string | null>(null);
+	const [isMerging, setIsMerging] = useState(false);
+	const [mergeError, setMergeError] = useState<string | null>(null);
+
+	const resourceMap = new Map(resources?.map((r) => [r.id, r.name]) ?? []);
+
 	const {
 		data: activeReservations,
 		isLoading: loadingReservations,
@@ -67,189 +298,199 @@ function BatchPrintPage() {
 		enabled: reservation_ids.length > 0,
 	});
 
-	const selectedContract = contracts?.find((c) => c.id === contract_id);
-	const isReady =
-		!loadingContracts &&
-		!loadingResources &&
-		!loadingReservations &&
-		selectedContract &&
-		activeReservations &&
-		activeReservations.length > 0;
+	const hasRunRef = useRef(false);
+	const reservationIdsKey = reservation_ids.sort().join(",");
 
 	useEffect(() => {
-		if (isReady && !hasTriggeredPrint.current) {
-			hasTriggeredPrint.current = true;
-			const timer = setTimeout(() => {
-				window.print();
-			}, 500);
-			return () => clearTimeout(timer);
-		}
-	}, [isReady]);
+		async function prepareBatchPdf() {
+			if (
+				hasRunRef.current ||
+				!globalContracts ||
+				!activeReservations ||
+				activeReservations.length === 0
+			) {
+				return;
+			}
 
-	if (loadingContracts || loadingResources || loadingReservations) {
+			hasRunRef.current = true;
+
+			try {
+				setIsMerging(true);
+				setMergeError(null);
+
+				const mergedPdf = await PDFDocument.create();
+
+				for (const reservation of activeReservations) {
+					// 1. Draw Cover / Details Page for this reservation
+					await drawCoverPage(mergedPdf, reservation, resourceMap, t);
+
+					// 2. Collect unique resource IDs involved in this reservation
+					const resourceIds = Array.from(
+						new Set(
+							(reservation.occurrences || []).map((occ) => occ.resource_id),
+						),
+					);
+
+					// 3. Fetch resource-specific contracts for all involved resources
+					const contractMap = new Map<string, Contract>();
+
+					// Add global active contracts
+					for (const gc of globalContracts) {
+						if (gc.is_global) {
+							contractMap.set(gc.id, gc);
+						}
+					}
+
+					// Query GET /contracts?resource_id={rId} to get resource-bound contracts
+					await Promise.all(
+						resourceIds.map(async (rId) => {
+							const { data, error } = await api.GET("/contracts", {
+								params: { query: { resource_id: rId, active_only: true } },
+							});
+							if (!error && data) {
+								for (const c of data as Contract[]) {
+									contractMap.set(c.id, c);
+								}
+							}
+						}),
+					);
+
+					const applicableContracts = Array.from(contractMap.values());
+
+					// 4. Download and append all applicable contract PDFs
+					for (const contract of applicableContracts) {
+						const s3KeyMap = (contract.s3_key as Record<string, string>) || {};
+						const s3Key =
+							s3KeyMap[i18n.language] ||
+							s3KeyMap.fi ||
+							s3KeyMap.en ||
+							Object.values(s3KeyMap)[0];
+
+						if (!s3Key) continue;
+
+						const downloadUrl = await presignDownload.mutateAsync(s3Key);
+						const pdfResponse = await fetch(downloadUrl);
+
+						if (!pdfResponse.ok) {
+							throw new Error(
+								t(
+									"pdfLatausVirhe",
+									"Sopimustiedoston lataaminen epäonnistui: {{title}}",
+									{ title: getLocalizedText(contract.title, i18n.language) },
+								),
+							);
+						}
+
+						const pdfBytes = await pdfResponse.arrayBuffer();
+						const sourceDoc = await PDFDocument.load(pdfBytes);
+						const copiedPages = await mergedPdf.copyPages(
+							sourceDoc,
+							sourceDoc.getPageIndices(),
+						);
+
+						for (const page of copiedPages) {
+							mergedPdf.addPage(page);
+						}
+					}
+
+					// 5. Draw Signature Page for this reservation
+					await drawSignaturePage(mergedPdf, t);
+				}
+
+				const mergedBytes = await mergedPdf.save();
+				const blob = new Blob([mergedBytes.buffer as ArrayBuffer], {
+					type: "application/pdf",
+				});
+				const blobUrl = URL.createObjectURL(blob);
+
+				setMergedPdfUrl(blobUrl);
+			} catch (err) {
+				setMergeError((err as Error).message);
+			} finally {
+				setIsMerging(false);
+			}
+		}
+
+		prepareBatchPdf();
+	}, [globalContracts, activeReservations, i18n.language, reservationIdsKey]);
+
+	const handleTriggerPrint = () => {
+		if (iframeRef.current?.contentWindow) {
+			iframeRef.current.contentWindow.focus();
+			iframeRef.current.contentWindow.print();
+		}
+	};
+
+	if (
+		loadingContracts ||
+		loadingResources ||
+		loadingReservations ||
+		isMerging
+	) {
 		return (
-			<div className="p-8 text-center text-stone-500 font-mono text-sm">
-				{t("ladataanErtulostusta", "Ladataan erätulostusta...")}
+			<div className="p-12 flex flex-col items-center justify-center gap-3 text-stone-500 font-mono text-sm">
+				<Loader2 className="animate-spin text-amber-600" size={24} />
+				<span>
+					{t(
+						"kootaanLiitettyjaSopimuksia",
+						"Kootaan varauksiin liitettyjä sopimusasiakirjoja...",
+					)}
+				</span>
 			</div>
 		);
 	}
 
 	if (
 		isError ||
-		!selectedContract ||
+		mergeError ||
 		!activeReservations ||
 		activeReservations.length === 0
 	) {
 		return (
-			<div className="p-8 text-center text-rose-600 font-semibold text-sm">
-				{t(
-					"sopimuspohjaaTaiValittujaVarauksiaEiLytynyt",
-					"Sopimuspohjaa tai valittuja varauksia ei löytynyt.",
-				)}
+			<div className="p-8 text-center text-rose-600 font-semibold text-sm max-w-md mx-auto space-y-2">
+				<AlertTriangle size={24} className="mx-auto text-rose-500" />
+				<p>
+					{mergeError ||
+						t(
+							"valittujaVarauksiaEiLytynyt",
+							"Valittuja varauksia ei löytynyt.",
+						)}
+				</p>
 			</div>
 		);
 	}
 
-	let rawHtml = "";
-	try {
-		rawHtml =
-			typeof selectedContract.body === "string"
-				? JSON.parse(selectedContract.body)
-				: generateHTML(selectedContract.body as any, [StarterKit, Link]);
-	} catch {
-		rawHtml = String(selectedContract.body || "");
-	}
-
-	// Helper map to look up resource name by ID
-	const resourceMap = new Map(resources?.map((r) => [r.id, r.name]) ?? []);
-
 	return (
-		<div className="bg-white text-stone-900 print:p-0">
-			{activeReservations.map((item, index) => {
-				if (!item) return null;
+		<div className="p-6 max-w-5xl mx-auto space-y-4">
+			<div className="flex items-center justify-between p-4 bg-stone-100 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-md">
+				<div>
+					<h1 className="font-bold text-stone-900 dark:text-stone-100 text-base">
+						{t("sopimustenEratulostus", "Sopimusten erätulostus")}
+					</h1>
+					<p className="text-xs text-stone-500">
+						{t("yhteensaVarauksia", "Kootut sopimukset {{count}} varaukselle", {
+							count: activeReservations.length,
+						})}
+					</p>
+				</div>
 
-				// Handle flattened reservation fields directly
-				const res = item;
-				const occurrences = item.occurrences || [];
+				<Button
+					onClick={handleTriggerPrint}
+					className="bg-amber-600 hover:bg-amber-700 text-white gap-2"
+				>
+					<Printer size={16} />
+					<span>{t("tulostaPdf", "Avaa tulostusikkuna")}</span>
+				</Button>
+			</div>
 
-				// Extract unique resource names for this reservation
-				const resourceNames = Array.from(
-					new Set(
-						occurrences
-							.map((occ) => resourceMap.get(occ.resource_id) || occ.resource_id)
-							.filter(Boolean),
-					),
-				).join(", ");
-
-				return (
-					<div
-						key={res.id}
-						className={`min-h-screen p-8 max-w-3xl mx-auto print:max-w-none print:p-0 ${
-							index < activeReservations.length - 1
-								? "print:break-after-page"
-								: ""
-						}`}
-						style={{
-							pageBreakAfter:
-								index < activeReservations.length - 1 ? "always" : "auto",
-						}}
-					>
-						{/* Header */}
-						<div className="border-b-2 border-stone-900 pb-4 mb-6 flex justify-between items-start">
-							<div>
-								<h1 className="text-2xl font-black uppercase tracking-wide">
-									{selectedContract.name}
-								</h1>
-								<p className="text-xs text-stone-500 mt-1">
-									{t("sopimustunnisteId", "Sopimustunniste: {{id}}", {
-										id: res.id,
-									})}
-								</p>
-							</div>
-						</div>
-
-						{/* Info Box */}
-						<div className="mb-8 p-4 bg-stone-50 border border-stone-300 rounded-sm text-xs space-y-3">
-							<h2 className="font-bold text-sm text-stone-900 uppercase border-b border-stone-200 pb-1">
-								{t("varauksenTiedot", "Varauksen Tiedot")}
-							</h2>
-							<div className="grid grid-cols-2 gap-4">
-								<div>
-									<span className="text-stone-500 block">
-										{t("varaus", "Varaus:")}
-									</span>
-									<strong className="text-stone-900 font-semibold">
-										{res.title}
-									</strong>
-								</div>
-								<div>
-									<span className="text-stone-500 block">
-										{t("varattuKohdeTila", "Varattu kohde / tila:")}
-									</span>
-									<strong className="text-stone-900 font-semibold">
-										{resourceNames || "—"}
-									</strong>
-								</div>
-							</div>
-
-							<div className="pt-2 border-t border-stone-200">
-								<span className="text-stone-500 block mb-1">
-									{t("varausajat", "Varausajat:")}
-								</span>
-								<ul className="space-y-1">
-									{occurrences.map((occ) => (
-										<li
-											key={occ.id}
-											className="flex gap-2 font-mono text-[11px]"
-										>
-											<span>{formatDate(occ.start_time)}</span>
-											<span className="text-stone-400">→</span>
-											<span>{formatDate(occ.end_time)}</span>
-											{resourceMap.has(occ.resource_id) && (
-												<span className="text-stone-500 ml-auto font-sans">
-													({resourceMap.get(occ.resource_id)})
-												</span>
-											)}
-										</li>
-									))}
-								</ul>
-							</div>
-						</div>
-
-						{/* Body Text */}
-						<div
-							className="prose max-w-none text-stone-900 text-sm leading-relaxed mb-12"
-							/* biome-ignore lint/security/noDangerouslySetInnerHtml: Trusted HTML content rendering */
-							dangerouslySetInnerHTML={{ __html: rawHtml }}
-						/>
-
-						{/* Signature Block - Forced Page Break in Print */}
-						<div
-							className="pt-12 mt-12 border-t border-stone-400 print:break-before-page print:pt-12"
-							style={{ pageBreakBefore: "always", breakBefore: "page" }}
-						>
-							<h2 className="font-bold text-sm text-stone-900 uppercase tracking-wide mb-8">
-								{t("allekirjoitukset", "Allekirjoitukset")}
-							</h2>
-
-							<div className="grid grid-cols-2 gap-12">
-								<div className="space-y-10">
-									<div className="border-b border-stone-400 h-8" />
-									<p className="text-xs text-stone-600 font-bold">
-										{t("vuokranantaja", "Vuokranantaja")}
-									</p>
-								</div>
-								<div className="space-y-10">
-									<div className="border-b border-stone-400 h-8" />
-									<p className="text-xs text-stone-600 font-bold">
-										{t("vuokralainen", "Vuokralainen")}
-									</p>
-								</div>
-							</div>
-						</div>
-					</div>
-				);
-			})}
+			{mergedPdfUrl && (
+				<iframe
+					ref={iframeRef}
+					src={mergedPdfUrl}
+					title="Batch PDF Print"
+					className="w-full h-[80vh] border border-stone-300 dark:border-stone-800 rounded-md"
+				/>
+			)}
 		</div>
 	);
 }

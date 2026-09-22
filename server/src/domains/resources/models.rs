@@ -33,6 +33,8 @@ pub struct CreateResource {
 
     #[serde(default)]
     pub allow_recurring: bool,
+
+    pub contract_ids: Option<Vec<Uuid>>,
 }
 
 #[derive(Debug, Deserialize, Validate, ToSchema)]
@@ -46,6 +48,8 @@ pub struct UpdateResource {
     pub name: Option<String>,
 
     pub allow_recurring: Option<bool>,
+
+    pub contract_ids: Option<Vec<Uuid>>,
 }
 
 #[cfg(test)]
@@ -58,6 +62,7 @@ mod tests {
             collection_id: Uuid::new_v4(),
             name: "Valid Resource Name".to_string(),
             allow_recurring: true,
+            contract_ids: None,
         };
 
         assert!(dto.validate().is_ok());
@@ -79,6 +84,7 @@ mod tests {
             collection_id: Uuid::new_v4(),
             name: "".to_string(),
             allow_recurring: false,
+            contract_ids: None,
         };
         let result = dto.validate();
         assert!(result.is_err());
@@ -110,6 +116,7 @@ mod tests {
         let dto = UpdateResource {
             name: None,
             allow_recurring: None,
+            contract_ids: None,
         };
         assert!(dto.validate().is_ok());
     }
