@@ -1,7 +1,6 @@
+import { useQueries } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import i18next from "i18next";
 import {
-	AlertTriangle,
 	Calendar,
 	Check,
 	CheckCircle2,
@@ -14,11 +13,17 @@ import {
 	X,
 	XCircle,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
+import { api } from "#/api/client";
 import { Button } from "#/components/Button";
 import { Chip } from "#/components/Chip";
-import { type Contract, useContracts } from "#/hooks/useContracts";
+import {
+	type Contract,
+	contractKeys,
+	getLocalizedText,
+	useContracts,
+} from "#/hooks/useContracts";
 import {
 	type ReservationStatus,
 	type ReservationWithOccurrences,
@@ -62,67 +67,68 @@ export const Route = createFileRoute("/_app/admin/dashboard/")({
 	component: AdminDashboardPage,
 });
 
-function getContractPrintBadge(
-	reservationWithOcc: ReservationWithOccurrences,
-	selectedContract?: Contract,
-) {
-	const printedAt = reservationWithOcc.contract_printed_at;
+/** Hook to resolve all applicable contracts for a set of resource IDs */
+function useReservationContracts(resourceIds: string[]) {
+	// Query GET /contracts?resource_id=X for every unique resource ID
+	const contractQueries = useQueries({
+		queries: resourceIds.map((rId) => ({
+			queryKey: contractKeys.list({ resource_id: rId, active_only: true }),
+			queryFn: async () => {
+				const { data, error } = await api.GET("/contracts", {
+					params: { query: { resource_id: rId, active_only: true } },
+				});
+				if (error || !data) return [];
+				return data as Contract[];
+			},
+			enabled: Boolean(rId),
+			staleTime: 1000 * 60 * 5,
+		})),
+	});
 
-	if (!printedAt) {
-		return null;
-	}
-
-	const isOutdated =
-		selectedContract &&
-		new Date(printedAt) < new Date(selectedContract.updated_at);
-
-	if (isOutdated) {
-		return (
-			<span
-				title={i18next.t(
-					"sopimuspohjaaOnPivitettyTulostuksenJlkeen",
-					"Sopimuspohjaa on päivitetty tulostuksen jälkeen",
-				)}
-				className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-300 dark:border-amber-800 shrink-0"
-			>
-				<AlertTriangle size={11} />
-				<span>{i18next.t("vanhentunutTuloste", "Vanhentunut tuloste")}</span>
-			</span>
-		);
-	}
-
-	return (
-		<span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 shrink-0">
-			<Check size={11} />
-			<span>{i18next.t("tulostettu", "Tulostettu")}</span>
-		</span>
-	);
+	return useMemo(() => {
+		const contractMap = new Map<string, Contract>();
+		for (const q of contractQueries) {
+			if (q.data) {
+				for (const contract of q.data) {
+					contractMap.set(contract.id, contract);
+				}
+			}
+		}
+		return Array.from(contractMap.values());
+	}, [contractQueries]);
 }
 
 function AdminReservationCard({
 	reservationWithOcc,
-	selectedContractId,
-	selectedContract,
 	onStatusChange,
 	onMarkPrinted,
 	isUpdating,
 }: {
 	reservationWithOcc: ReservationWithOccurrences;
-	selectedContractId: string;
-	selectedContract?: Contract;
 	onStatusChange: (status: ReservationStatus) => void;
 	onMarkPrinted: (id: string) => Promise<void>;
 	isUpdating: boolean;
 }) {
-	const { t } = useTranslation();
+	const { t, i18n } = useTranslation();
 	const firstOccurrence = reservationWithOcc.occurrences?.[0];
 	const isPending = reservationWithOcc.status === "pending";
 	const isCancelled = reservationWithOcc.status === "cancelled";
 
+	// Collect unique resource IDs involved in this reservation
+	const resourceIds = useMemo(() => {
+		return Array.from(
+			new Set(
+				(reservationWithOcc.occurrences || []).map((occ) => occ.resource_id),
+			),
+		);
+	}, [reservationWithOcc.occurrences]);
+
+	// Dynamically fetch contracts applicable to these resources
+	const applicableContracts = useReservationContracts(resourceIds);
+
 	const handlePrintSingle = async () => {
-		if (!selectedContractId) return;
 		await onMarkPrinted(reservationWithOcc.id);
-		const url = `/contracts/batch-print?reservation_ids=${reservationWithOcc.id}&contract_id=${selectedContractId}`;
+		const url = `/contracts/batch-print?reservation_ids=${reservationWithOcc.id}`;
 		window.open(url, "_blank");
 	};
 
@@ -160,28 +166,44 @@ function AdminReservationCard({
 					</span>
 				)}
 
-				{getContractPrintBadge(reservationWithOcc, selectedContract)}
+				{reservationWithOcc.contract_printed_at && (
+					<span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 shrink-0">
+						<Check size={11} />
+						<span>{t("tulostettu", "Tulostettu")}</span>
+					</span>
+				)}
 			</div>
+
+			{/* Applicable Contracts Chips */}
+			{applicableContracts.length > 0 && (
+				<div className="flex flex-wrap gap-1 pt-1 border-t border-stone-200 dark:border-stone-800">
+					{applicableContracts.map((c) => (
+						<span
+							key={c.id}
+							className={cn(
+								"px-1.5 py-0.5 text-[10px] font-medium rounded truncate max-w-[140px]",
+								c.is_global
+									? "bg-stone-200 dark:bg-stone-800 text-stone-700 dark:text-stone-300"
+									: "bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300/50 dark:border-amber-800/50",
+							)}
+							title={getLocalizedText(c.title, i18n.language)}
+						>
+							{getLocalizedText(c.title, i18n.language)}
+						</span>
+					))}
+				</div>
+			)}
 
 			{/* Action Buttons Row */}
 			<div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-stone-200 dark:border-stone-800">
 				<Button
 					variant="outline"
 					size="sm"
-					disabled={!selectedContractId}
 					onClick={handlePrintSingle}
-					title={
-						selectedContractId
-							? t("tulostaValittuSopimus", "Tulosta valittu sopimus")
-							: t(
-									"valitseSopimuspohjaYlpalkistaTulostaaksesi",
-									"Valitse sopimuspohja yläpalkista tulostaaksesi",
-								)
-					}
 					className="text-stone-700 dark:text-stone-300 text-xs px-2 py-1 gap-1 flex-1 sm:flex-initial justify-center"
 				>
 					<FileText size={14} className="text-amber-600 dark:text-amber-500" />
-					<span>{t("tulostaSopimus", "Tulosta sopimus")}</span>
+					<span>{t("tulostaSopimukset", "Tulosta sopimukset")}</span>
 				</Button>
 
 				<div className="flex items-center gap-1.5 w-full sm:w-auto justify-end">
@@ -231,15 +253,7 @@ function AdminDashboardPage() {
 	const navigate = Route.useNavigate();
 
 	const { data: resources, isLoading: loadingResources } = useResources();
-	const { data: contracts, isLoading: loadingContracts } = useContracts();
 	const updateReservation = useUpdateReservation();
-
-	const [selectedContractId, setSelectedContractId] = useState<string>("");
-
-	const selectedContract = useMemo(
-		() => contracts?.find((c) => c.id === selectedContractId),
-		[contracts, selectedContractId],
-	);
 
 	const defaultStartStr = formatYYYYMMDD(startOfCurrentWeek());
 	const startStr = search.start_date || defaultStartStr;
@@ -316,74 +330,50 @@ function AdminDashboardPage() {
 	const handleMarkPrinted = async (id: string) => {
 		await updateReservation.mutateAsync({
 			id,
-			payload: {
-				contract_id: selectedContractId || undefined,
-				mark_printed: true,
-			},
+			payload: { mark_printed: true },
 		});
 	};
 
 	const handleBatchPrintConfirmed = async () => {
-		if (!selectedContractId || confirmedReservations.length === 0) return;
+		if (confirmedReservations.length === 0) return;
 
 		await Promise.all(
 			confirmedReservations.map((r) =>
 				updateReservation.mutateAsync({
 					id: r.id,
-					payload: {
-						contract_id: selectedContractId,
-						mark_printed: true,
-					},
+					payload: { mark_printed: true },
 				}),
 			),
 		);
 
 		const ids = confirmedReservations.map((r) => r.id).join(",");
-		const url = `/contracts/batch-print?reservation_ids=${ids}&contract_id=${selectedContractId}`;
+		const url = `/contracts/batch-print?reservation_ids=${ids}`;
 		window.open(url, "_blank");
 	};
 
 	return (
 		<div className="flex flex-col gap-4 sm:gap-6 p-2 sm:p-4 flex-1 min-h-0 min-w-0">
-			{/* Header with Contract Tools */}
+			{/* Header with Batch Print Action */}
 			<div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 shrink-0 border-b border-stone-200 dark:border-stone-800 pb-3">
 				<h1 className="text-lg sm:text-xl font-bold text-stone-900 dark:text-stone-100">
 					{t("yllpidonHallintapaneeli", "Ylläpidon hallintapaneeli")}
 				</h1>
 
-				<div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full lg:w-auto">
-					<select
-						value={selectedContractId}
-						onChange={(e) => setSelectedContractId(e.target.value)}
-						disabled={loadingContracts}
-						className="w-full sm:w-60 px-3 py-1.5 text-xs bg-stone-50 dark:bg-stone-950 border border-stone-300 dark:border-stone-700 rounded-md text-stone-900 dark:text-stone-100 truncate"
-					>
-						<option value="">
-							{t("valitseSopimuspohja2", "-- Valitse sopimuspohja --")}
-						</option>
-						{contracts?.map((c) => (
-							<option key={c.id} value={c.id}>
-								{c.name}
-							</option>
-						))}
-					</select>
-
-					<Button
-						size="sm"
-						disabled={!selectedContractId || confirmedReservations.length === 0}
-						onClick={handleBatchPrintConfirmed}
-						className="bg-amber-600 hover:bg-amber-700 text-white gap-1.5 justify-center w-full sm:w-auto text-xs shrink-0"
-					>
-						<Printer size={16} />
-						<span className="truncate">
-							{t(
-								"tulostaVahvistetutLength",
-								"Tulosta vahvistetut ({{length}})",
-								{ length: confirmedReservations.length },
-							)}
-						</span>
-					</Button>
-				</div>
+				<Button
+					size="sm"
+					disabled={confirmedReservations.length === 0}
+					onClick={handleBatchPrintConfirmed}
+					className="bg-amber-600 hover:bg-amber-700 text-white gap-1.5 justify-center w-full sm:w-auto text-xs shrink-0"
+				>
+					<Printer size={16} />
+					<span className="truncate">
+						{t(
+							"tulostaKaikkiSopimukset",
+							"Tulosta vahvistettujen sopimukset ({{length}})",
+							{ length: confirmedReservations.length },
+						)}
+					</span>
+				</Button>
 			</div>
 
 			{/* Controls Bar */}
@@ -456,7 +446,7 @@ function AdminDashboardPage() {
 				</div>
 			) : (
 				<div className="space-y-6">
-					{/* SECTION 1: Pending Approvals */}
+					{/* Pending Approvals */}
 					<div className="space-y-3">
 						<div className="flex items-center gap-2 text-amber-600 dark:text-amber-500 font-bold">
 							<Clock size={18} />
@@ -475,8 +465,6 @@ function AdminDashboardPage() {
 									<AdminReservationCard
 										key={res.id}
 										reservationWithOcc={res}
-										selectedContractId={selectedContractId}
-										selectedContract={selectedContract}
 										onStatusChange={(s) => handleStatusChange(res.id, s)}
 										onMarkPrinted={handleMarkPrinted}
 										isUpdating={updateReservation.isPending}
@@ -493,7 +481,7 @@ function AdminDashboardPage() {
 						)}
 					</div>
 
-					{/* SECTION 2: Confirmed Reservations */}
+					{/* Confirmed Reservations */}
 					<div className="space-y-3">
 						<div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-500 font-bold">
 							<CheckCircle2 size={18} />
@@ -512,8 +500,6 @@ function AdminDashboardPage() {
 									<AdminReservationCard
 										key={res.id}
 										reservationWithOcc={res}
-										selectedContractId={selectedContractId}
-										selectedContract={selectedContract}
 										onStatusChange={(s) => handleStatusChange(res.id, s)}
 										onMarkPrinted={handleMarkPrinted}
 										isUpdating={updateReservation.isPending}
@@ -530,7 +516,7 @@ function AdminDashboardPage() {
 						)}
 					</div>
 
-					{/* SECTION 3: Cancelled / Rejected Reservations */}
+					{/* Cancelled / Rejected Reservations */}
 					<div className="space-y-3">
 						<div className="flex items-center gap-2 text-rose-600 dark:text-rose-500 font-bold">
 							<XCircle size={18} />
@@ -549,8 +535,6 @@ function AdminDashboardPage() {
 									<AdminReservationCard
 										key={res.id}
 										reservationWithOcc={res}
-										selectedContractId={selectedContractId}
-										selectedContract={selectedContract}
 										onStatusChange={(s) => handleStatusChange(res.id, s)}
 										onMarkPrinted={handleMarkPrinted}
 										isUpdating={updateReservation.isPending}

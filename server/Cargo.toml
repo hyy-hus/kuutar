@@ -8,6 +8,8 @@ license = "Apache-2.0"
 anyhow = "1.0.102"
 argon2 = "0.5.3"
 async-trait = "0.1.92"
+aws-config = "1.12.0"
+aws-sdk-s3 = "1.148.0"
 axum = "0.8.9"
 chrono = { version = "0.4.45", features = ["serde"] }
 clap = { version = "4.6.6", features = ["derive", "env"] }

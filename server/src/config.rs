@@ -24,4 +24,24 @@ pub struct Config {
 
     #[arg(long, env = "SEED_ADMIN_PASSWORD", default_value = "Admin")]
     pub seed_admin_password: String,
+
+    // --- S3 / Scaleway Object Storage Configuration ---
+    #[arg(long, env = "S3_BUCKET_NAME")]
+    pub s3_bucket_name: String,
+
+    #[arg(
+        long,
+        env = "S3_ENDPOINT",
+        default_value = "https://s3.fr-par.scw.cloud"
+    )]
+    pub s3_endpoint: String,
+
+    #[arg(long, env = "S3_REGION", default_value = "fr-par")]
+    pub s3_region: String,
+
+    #[arg(long, env = "AWS_ACCESS_KEY_ID")]
+    pub aws_access_key_id: String,
+
+    #[arg(long, env = "AWS_SECRET_ACCESS_KEY")]
+    pub aws_secret_access_key: String,
 }

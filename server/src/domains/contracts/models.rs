@@ -1,16 +1,21 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use utoipa::ToSchema;
 use uuid::Uuid;
 use validator::Validate;
 
-use crate::utils::trim::{deserialize_trimmed_option_string, deserialize_trimmed_string};
+/// Map of language codes to localized text (e.g. {"fi": "...", "en": "..."})
+pub type LocalizedString = HashMap<String, String>;
 
 #[derive(Debug, Serialize, Deserialize, sqlx::FromRow, ToSchema)]
 pub struct Contract {
     pub id: Uuid,
-    pub name: String,
-    pub body: serde_json::Value,
+    pub title: serde_json::Value,     // LocalizedString
+    pub s3_key: serde_json::Value,    // LocalizedString
+    pub file_name: serde_json::Value, // LocalizedString
+    pub is_global: bool,
+    pub is_active: bool,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 
@@ -20,51 +25,62 @@ pub struct Contract {
 
 #[derive(Debug, Deserialize, Validate, ToSchema)]
 pub struct CreateContract {
-    #[serde(deserialize_with = "deserialize_trimmed_string")]
-    #[validate(length(
-        min = 1,
-        max = 255,
-        message = "Name must be between 1 and 255 characters"
-    ))]
-    pub name: String,
+    /// Localized titles e.g. {"fi": "Yleiset ehdot", "en": "General Terms"}
+    pub title: LocalizedString,
 
-    /// Tiptap ProseMirror JSON representation
-    pub body: serde_json::Value,
+    /// Localized S3 object keys e.g. {"fi": "contracts/ehdot.pdf", "en": "contracts/terms.pdf"}
+    pub s3_key: LocalizedString,
+
+    /// Localized original file names e.g. {"fi": "ehdot.pdf", "en": "terms.pdf"}
+    pub file_name: LocalizedString,
+
+    #[serde(default)]
+    pub is_global: bool,
+
+    #[serde(default = "default_true")]
+    pub is_active: bool,
+
+    /// Optional list of resource IDs to link this contract to immediately
+    pub resource_ids: Option<Vec<Uuid>>,
+}
+
+fn default_true() -> bool {
+    true
 }
 
 #[derive(Debug, Deserialize, Validate, ToSchema)]
 pub struct UpdateContract {
-    #[serde(deserialize_with = "deserialize_trimmed_option_string")]
-    #[validate(length(
-        min = 1,
-        max = 255,
-        message = "Name must be between 1 and 255 characters"
-    ))]
-    pub name: Option<String>,
-
-    pub body: Option<serde_json::Value>,
+    pub title: Option<LocalizedString>,
+    pub s3_key: Option<LocalizedString>,
+    pub file_name: Option<LocalizedString>,
+    pub is_global: Option<bool>,
+    pub is_active: Option<bool>,
+    pub resource_ids: Option<Vec<Uuid>>,
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+#[derive(Debug, Deserialize, Validate, ToSchema)]
+pub struct LinkResourceContracts {
+    pub contract_ids: Vec<Uuid>,
+}
 
-    #[test]
-    fn test_create_contract_valid() {
-        let dto = CreateContract {
-            name: "Sauna Rental Agreement".to_string(),
-            body: serde_json::json!({ "type": "doc", "content": [] }),
-        };
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct PresignedUploadRequest {
+    pub file_name: String,
+    pub content_type: String, // e.g. "application/pdf"
+}
 
-        assert!(dto.validate().is_ok());
-    }
+#[derive(Debug, Serialize, ToSchema)]
+pub struct PresignedUploadResponse {
+    pub upload_url: String,
+    pub s3_key: String,
+}
 
-    #[test]
-    fn test_create_contract_empty_name() {
-        let dto = CreateContract {
-            name: "".to_string(),
-            body: serde_json::json!({}),
-        };
-        assert!(dto.validate().is_err());
-    }
+#[derive(Debug, Deserialize)]
+pub struct DownloadQuery {
+    pub s3_key: String,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct PresignedDownloadResponse {
+    pub download_url: String,
 }
