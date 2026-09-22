@@ -17,7 +17,7 @@ export const Route = createFileRoute("/_app/stats/")({
 	component: StatsPage,
 });
 
-export function StatsPage() {
+function StatsPage() {
 	const { t } = useTranslation();
 	const { data: stats, isLoading, isError } = useStats();
 

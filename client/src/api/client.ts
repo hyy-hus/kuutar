@@ -1,20 +1,17 @@
-// src/api/client.ts
+// client/src/api/client.ts
 import createClient, { type Middleware } from "openapi-fetch";
 import type { paths } from "./schema";
 
 const getBaseUrl = () => {
-	// 1. Use VITE_API_URL directly if provided (strip trailing slash)
 	if (import.meta.env.VITE_API_URL) {
 		return import.meta.env.VITE_API_URL.replace(/\/$/, "");
 	}
 
-	// 2. Fallback to current origin for production without VITE_API_URL
 	if (typeof window !== "undefined" && window.location?.origin) {
 		return window.location.origin;
 	}
 
-	// 3. Fallback for local development
-	return "http://127.0.0.1:3000";
+	return "http://127.0.0.1:8080";
 };
 
 const baseUrl = getBaseUrl();
@@ -35,13 +32,11 @@ const authMiddleware: Middleware = {
 	},
 
 	async onResponse({ request, response }) {
-		// If request fails with 401 and isn't already trying to login/refresh
 		if (response.status === 401 && !request.url.includes("/auth/")) {
 			const refreshToken = localStorage.getItem("refresh_token");
 
 			if (refreshToken) {
 				try {
-					// Request refresh endpoint directly under baseUrl
 					const res = await fetch(`${baseUrl}/auth/refresh`, {
 						method: "POST",
 						headers: { "Content-Type": "application/json" },

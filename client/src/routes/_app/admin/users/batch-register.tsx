@@ -15,7 +15,7 @@ interface ParsedRow {
 	password?: string;
 }
 
-export function BatchRegisterUserPage() {
+function BatchRegisterUserPage() {
 	const { t } = useTranslation();
 	const navigate = useNavigate();
 	const batchCreate = useBatchCreateUsers();
