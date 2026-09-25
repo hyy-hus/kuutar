@@ -5,6 +5,7 @@ import {
 	Loader2,
 	RefreshCw,
 	Save,
+	ShieldAlert,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -19,6 +20,10 @@ import {
 	useCheckConflicts,
 } from "#/hooks/useReservations";
 import { useResources } from "#/hooks/useResorces";
+import {
+	type RestrictionWithOccurrences,
+	useRestrictions,
+} from "#/hooks/useRestrictions";
 import { formatDate } from "#/utils/date";
 import { generateOccurrences, parseRRule } from "#/utils/rruleUtils";
 
@@ -57,7 +62,6 @@ export function ReservationForm({
 	// Parse initial rrule if present
 	const initialRule = parseRRule(defaultValues?.rrule);
 
-	// Helper to format Date instance to YYYY-MM-DD string for input[type="date"]
 	const formatDateInput = (date?: Date | null) => {
 		if (!date) return "";
 		const year = date.getFullYear();
@@ -71,8 +75,10 @@ export function ReservationForm({
 		formatDateInput(initialRule.until),
 	);
 	const [conflicts, setConflicts] = useState<Occurrence[] | null>(null);
+	const [restrictionConflicts, setRestrictionConflicts] = useState<
+		{ title: string; start_time: string; end_time: string }[] | null
+	>(null);
 
-	// Extract unique resource IDs from defaultValues.occurrences, resource_ids array, or fallback resource_id
 	const initialResourceIds = useMemo(() => {
 		if (defaultValues?.resource_ids && defaultValues.resource_ids.length > 0) {
 			return defaultValues.resource_ids;
@@ -103,7 +109,6 @@ export function ReservationForm({
 			let allOccurrences: CreateOccurrencePayload[] = [];
 			let rruleString: string | null = null;
 
-			// Generate occurrences for EVERY selected resource
 			for (const resourceId of value.resource_ids) {
 				const { occurrences, rruleString: generatedRrule } =
 					generateOccurrences(value.start_time, value.end_time, resourceId, {
@@ -260,9 +265,9 @@ export function ReservationForm({
 						onChange: ({ value }) =>
 							!value || value.length === 0
 								? t(
-										"valitseVhintnYksiResurssi",
-										"Valitse vähintään yksi resurssi",
-									)
+									"valitseVhintnYksiResurssi",
+									"Valitse vähintään yksi resurssi",
+								)
 								: undefined,
 					}}
 				>
@@ -295,11 +300,10 @@ export function ReservationForm({
 															: [...field.state.value, res.id];
 														field.handleChange(nextValue);
 													}}
-													className={`px-3 py-1.5 text-xs font-medium rounded-md border transition-colors flex items-center gap-1.5 ${
-														isChecked
+													className={`px-3 py-1.5 text-xs font-medium rounded-md border transition-colors flex items-center gap-1.5 ${isChecked
 															? "bg-purple-600 text-white border-purple-600 dark:bg-purple-500 dark:border-purple-500"
 															: "bg-white dark:bg-stone-800 text-stone-700 dark:text-stone-300 border-stone-300 dark:border-stone-700 hover:bg-stone-100 dark:hover:bg-stone-700"
-													}`}
+														}`}
 												>
 													<span
 														className={`w-2 h-2 rounded-full ${isChecked ? "bg-white" : "bg-stone-400"}`}
@@ -321,51 +325,102 @@ export function ReservationForm({
 				</form.Field>
 
 				<div className="grid grid-cols-2 gap-2">
-					<form.Field name="start_time">
-						{(field) => (
-							<div className="space-y-1">
-								<label
-									htmlFor={field.name}
-									className="text-xs font-medium text-stone-700 dark:text-stone-300"
-								>
-									{t("alkamisaika", "Alkamisaika")}
-								</label>
-								<Input
-									id={field.name}
-									type="datetime-local"
-									value={field.state.value}
-									onChange={(e) => {
-										field.handleChange(e.target.value);
-									}}
-									onBlur={field.handleBlur}
-								/>
-							</div>
-						)}
+					{/* Start Time Field */}
+					<form.Field
+						name="start_time"
+						validators={{
+							onChange: ({ value, fieldApi }) => {
+								if (!value)
+									return t("valitseAlkamisaika", "Alkamisaika on pakollinen.");
+								const endTime = fieldApi.form.getFieldValue("end_time");
+								if (endTime && new Date(value) >= new Date(endTime)) {
+									return t(
+										"alkamisaikaJalkeenPaattymisajan",
+										"Alkamisajan on oltava ennen päättymisaikaa.",
+									);
+								}
+								return undefined;
+							},
+						}}
+					>
+						{(field) => {
+							const hasError = Boolean(field.state.meta.errors.length);
+							return (
+								<div className="space-y-1">
+									<label
+										htmlFor={field.name}
+										className="text-xs font-medium text-stone-700 dark:text-stone-300"
+									>
+										{t("alkamisaika", "Alkamisaika")}
+									</label>
+									<Input
+										id={field.name}
+										type="datetime-local"
+										value={field.state.value}
+										onChange={(e) => field.handleChange(e.target.value)}
+										onBlur={field.handleBlur}
+										isError={hasError}
+									/>
+									{hasError && (
+										<p className="text-[11px] text-red-500">
+											{field.state.meta.errors.join(", ")}
+										</p>
+									)}
+								</div>
+							);
+						}}
 					</form.Field>
 
-					<form.Field name="end_time">
-						{(field) => (
-							<div className="space-y-1">
-								<label
-									htmlFor={field.name}
-									className="text-xs font-medium text-stone-700 dark:text-stone-300"
-								>
-									{t("pttymisaika", "Päättymisaika")}
-								</label>
-								<Input
-									id={field.name}
-									type="datetime-local"
-									value={field.state.value}
-									onChange={(e) => {
-										field.handleChange(e.target.value);
-									}}
-									onBlur={field.handleBlur}
-								/>
-							</div>
-						)}
+					{/* End Time Field */}
+					<form.Field
+						name="end_time"
+						validators={{
+							onChangeListenTo: ["start_time"],
+							onChange: ({ value, fieldApi }) => {
+								if (!value)
+									return t(
+										"valitsePaattymisaika",
+										"Päättymisaika on pakollinen.",
+									);
+								const startTime = fieldApi.form.getFieldValue("start_time");
+								if (startTime && new Date(value) <= new Date(startTime)) {
+									return t(
+										"paattymisaikaEnnenAlkamisaikaa",
+										"Päättymisajan on oltava alkamisajan jälkeen.",
+									);
+								}
+								return undefined;
+							},
+						}}
+					>
+						{(field) => {
+							const hasError = Boolean(field.state.meta.errors.length);
+							return (
+								<div className="space-y-1">
+									<label
+										htmlFor={field.name}
+										className="text-xs font-medium text-stone-700 dark:text-stone-300"
+									>
+										{t("pttymisaika", "Päättymisaika")}
+									</label>
+									<Input
+										id={field.name}
+										type="datetime-local"
+										value={field.state.value}
+										onChange={(e) => field.handleChange(e.target.value)}
+										onBlur={field.handleBlur}
+										isError={hasError}
+									/>
+									{hasError && (
+										<p className="text-[11px] text-red-500">
+											{field.state.meta.errors.join(", ")}
+										</p>
+									)}
+								</div>
+							);
+						}}
 					</form.Field>
 				</div>
-
 				{/* Recurrence Rule Fields */}
 				<form.Subscribe selector={(state) => [state.values.resource_ids]}>
 					{([selectedResourceIds]) => {
@@ -393,7 +448,7 @@ export function ReservationForm({
 					}}
 				</form.Subscribe>
 
-				{/* Automatic Conflict Checker */}
+				{/* Automatic Conflict & Restriction Checker */}
 				<form.Subscribe
 					selector={(state) => [
 						state.values.resource_ids,
@@ -411,6 +466,9 @@ export function ReservationForm({
 							checkConflicts={checkConflicts}
 							conflicts={conflicts}
 							setConflicts={setConflicts}
+							restrictionConflicts={restrictionConflicts}
+							setRestrictionConflicts={setRestrictionConflicts}
+							isAdmin={isAdmin}
 						/>
 					)}
 				</form.Subscribe>
@@ -420,22 +478,34 @@ export function ReservationForm({
 			<form.Subscribe
 				selector={(state) => [state.canSubmit, state.isSubmitting]}
 			>
-				{([canSubmit, formSubmitting]) => (
-					<Button
-						type="submit"
-						disabled={!canSubmit || isSubmitting || formSubmitting}
-						className="w-full flex items-center justify-center gap-2 mt-4"
-					>
-						{isSubmitting || formSubmitting ? (
-							<Loader2 className="animate-spin" size={16} />
-						) : (
-							<>
-								<Save size={16} />
-								<span>{submitLabel}</span>
-							</>
-						)}
-					</Button>
-				)}
+				{([canSubmit, formSubmitting]) => {
+					const hasRestrictionViolation =
+						!isAdmin &&
+						restrictionConflicts !== null &&
+						restrictionConflicts.length > 0;
+
+					return (
+						<Button
+							type="submit"
+							disabled={
+								!canSubmit ||
+								isSubmitting ||
+								formSubmitting ||
+								hasRestrictionViolation
+							}
+							className="w-full flex items-center justify-center gap-2 mt-4"
+						>
+							{isSubmitting || formSubmitting ? (
+								<Loader2 className="animate-spin" size={16} />
+							) : (
+								<>
+									<Save size={16} />
+									<span>{submitLabel}</span>
+								</>
+							)}
+						</Button>
+					);
+				}}
 			</form.Subscribe>
 		</form>
 	);
@@ -450,6 +520,13 @@ interface AutomaticConflictCheckerProps {
 	checkConflicts: ReturnType<typeof useCheckConflicts>;
 	conflicts: Occurrence[] | null;
 	setConflicts: (conflicts: Occurrence[] | null) => void;
+	restrictionConflicts:
+	| { title: string; start_time: string; end_time: string }[]
+	| null;
+	setRestrictionConflicts: (
+		items: { title: string; start_time: string; end_time: string }[] | null,
+	) => void;
+	isAdmin: boolean;
 }
 
 function AutomaticConflictChecker({
@@ -461,13 +538,27 @@ function AutomaticConflictChecker({
 	checkConflicts,
 	conflicts,
 	setConflicts,
+	restrictionConflicts,
+	setRestrictionConflicts,
+	isAdmin,
 }: AutomaticConflictCheckerProps) {
 	const { t } = useTranslation();
 	const mutateAsync = checkConflicts.mutateAsync;
 
+	// Query restrictions active around the selected dates
+	const { data: activeRestrictions } = useRestrictions({
+		start_date: startTime ? new Date(startTime).toISOString() : undefined,
+		end_date: untilStr
+			? new Date(untilStr).toISOString()
+			: endTime
+				? new Date(endTime).toISOString()
+				: undefined,
+	});
+
 	useEffect(() => {
 		if (!resourceIds || resourceIds.length === 0 || !startTime || !endTime) {
 			setConflicts(null);
+			setRestrictionConflicts(null);
 			return;
 		}
 
@@ -485,44 +576,136 @@ function AutomaticConflictChecker({
 
 		if (allOccurrences.length === 0) {
 			setConflicts(null);
+			setRestrictionConflicts(null);
 			return;
 		}
 
-		let isCancelled = false;
+		// Check for overlapping restrictions (unless admin)
+		if (!isAdmin && activeRestrictions && activeRestrictions.length > 0) {
+			const foundRestrictions: {
+				title: string;
+				start_time: string;
+				end_time: string;
+			}[] = [];
 
+			for (const proposed of allOccurrences) {
+				const pStart = new Date(proposed.start_time).getTime();
+				const pEnd = new Date(proposed.end_time).toISOString();
+				const pEndMs = new Date(proposed.end_time).getTime();
+
+				for (const restr of activeRestrictions) {
+					for (const rOcc of restr.occurrences || []) {
+						// Check resource scoping (NULL = global, or matching resourceId)
+						if (
+							!rOcc.resource_id ||
+							rOcc.resource_id === proposed.resource_id
+						) {
+							const rStartMs = new Date(rOcc.start_time).getTime();
+							const rEndMs = new Date(rOcc.end_time).getTime();
+
+							if (pStart < rEndMs && pEndMs > rStartMs) {
+								foundRestrictions.push({
+									title: restr.title,
+									start_time: proposed.start_time,
+									end_time: pEnd,
+								});
+							}
+						}
+					}
+				}
+			}
+
+			setRestrictionConflicts(
+				foundRestrictions.length > 0 ? foundRestrictions : [],
+			);
+		} else {
+			setRestrictionConflicts(null);
+		}
+
+		// Check for overlapping reservations
+		let isCancelled = false;
 		mutateAsync(allOccurrences)
 			.then((results) => {
-				if (!isCancelled) {
-					setConflicts(results);
-				}
+				if (!isCancelled) setConflicts(results);
 			})
 			.catch(() => {
-				if (!isCancelled) {
-					setConflicts(null);
-				}
+				if (!isCancelled) setConflicts(null);
 			});
 
 		return () => {
 			isCancelled = true;
 		};
-	}, [resourceIds, startTime, endTime, freq, untilStr, mutateAsync, setConflicts]);
+	}, [
+		resourceIds,
+		startTime,
+		endTime,
+		freq,
+		untilStr,
+		activeRestrictions,
+		isAdmin,
+		mutateAsync,
+		setConflicts,
+		setRestrictionConflicts,
+	]);
 
 	if (checkConflicts.isPending) {
 		return (
 			<div className="flex items-center justify-center py-2 text-xs font-mono text-stone-500 gap-2">
 				<Loader2 className="animate-spin" size={14} />
-				<span>{t("tarkistetaanPllekkisyyksi", "Tarkistetaan päällekkäisyyksiä...")}</span>
+				<span>
+					{t("tarkistetaanPllekkisyyksi", "Tarkistetaan päällekkäisyyksiä...")}
+				</span>
 			</div>
 		);
 	}
 
-	if (conflicts === null) {
-		return null;
+	const hasReservationConflicts = conflicts !== null && conflicts.length > 0;
+	const hasRestrictionViolations =
+		!isAdmin &&
+		restrictionConflicts !== null &&
+		restrictionConflicts.length > 0;
+
+	if (
+		!hasReservationConflicts &&
+		!hasRestrictionViolations &&
+		conflicts !== null
+	) {
+		return (
+			<div className="p-2 bg-emerald-100 dark:bg-emerald-950/80 border-2 border-emerald-600 text-emerald-900 dark:text-emerald-200 rounded-sm flex items-center gap-2 text-xs font-medium">
+				<CheckCircle2 size={16} />
+				<span>{t("eiPllekkisiVarauksia", "Ei päällekkäisiä varauksia.")}</span>
+			</div>
+		);
 	}
 
 	return (
-		<div>
-			{conflicts.length > 0 ? (
+		<div className="space-y-2">
+			{/* Restriction Violations */}
+			{hasRestrictionViolations && (
+				<div className="p-3 bg-amber-100 dark:bg-amber-950/80 border-2 border-amber-600 text-amber-900 dark:text-amber-200 rounded-sm space-y-2 text-xs">
+					<div className="flex items-center gap-2 font-bold">
+						<ShieldAlert size={16} className="text-amber-600 shrink-0" />
+						<span>
+							{t(
+								"varausOsuuRajoitetulleAjalle",
+								"Varaus osuu rajoitetulle ajanjaksolle! ({{length}})",
+								{ length: restrictionConflicts.length },
+							)}
+						</span>
+					</div>
+					<ul className="list-disc list-inside space-y-1 font-mono text-[11px]">
+						{restrictionConflicts.map((item, idx) => (
+							<li key={`restr-conf-${idx}`}>
+								<span className="font-semibold font-sans">{item.title}:</span>{" "}
+								{formatDate(item.start_time)} – {formatDate(item.end_time)}
+							</li>
+						))}
+					</ul>
+				</div>
+			)}
+
+			{/* Reservation Conflicts */}
+			{hasReservationConflicts && (
 				<div className="p-3 bg-rose-100 dark:bg-rose-950/80 border-2 border-rose-600 text-rose-900 dark:text-rose-200 rounded-sm space-y-2 text-xs">
 					<div className="flex items-center gap-2 font-bold">
 						<AlertTriangle size={16} />
@@ -537,19 +720,10 @@ function AutomaticConflictChecker({
 					<ul className="list-disc list-inside space-y-1 font-mono text-[11px]">
 						{conflicts.map((occ) => (
 							<li key={occ.id}>
-								{formatDate(occ.start_time)}
-								{" – "}
-								{formatDate(occ.end_time)}
+								{formatDate(occ.start_time)} – {formatDate(occ.end_time)}
 							</li>
 						))}
 					</ul>
-				</div>
-			) : (
-				<div className="p-2 bg-emerald-100 dark:bg-emerald-950/80 border-2 border-emerald-600 text-emerald-900 dark:text-emerald-200 rounded-sm flex items-center gap-2 text-xs font-medium">
-					<CheckCircle2 size={16} />
-					<span>
-						{t("eiPllekkisiVarauksia", "Ei päällekkäisiä varauksia.")}
-					</span>
 				</div>
 			)}
 		</div>

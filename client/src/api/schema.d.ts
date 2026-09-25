@@ -318,6 +318,38 @@ export interface paths {
         patch: operations["update_resource"];
         trace?: never;
     };
+    "/restrictions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_restrictions"];
+        put?: never;
+        post: operations["create_restriction"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/restrictions/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_restriction"];
+        put?: never;
+        post?: never;
+        delete: operations["delete_restriction"];
+        options?: never;
+        head?: never;
+        patch: operations["update_restriction"];
+        trace?: never;
+    };
     "/stats": {
         parameters: {
             query?: never;
@@ -463,6 +495,21 @@ export interface components {
             contract_ids?: string[] | null;
             name: string;
         };
+        CreateRestrictionOccurrencePayload: {
+            /** Format: date-time */
+            end_time: string;
+            /** Format: uuid */
+            resource_id?: string | null;
+            /** Format: date-time */
+            start_time: string;
+        };
+        CreateRestrictionPayload: {
+            description?: string | null;
+            exempt_group_ids?: string[] | null;
+            occurrences: components["schemas"]["CreateRestrictionOccurrencePayload"][];
+            rrule?: string | null;
+            title: string;
+        };
         CreateUser: {
             email: string;
             /** Format: uuid */
@@ -557,6 +604,35 @@ export interface components {
             /** Format: date-time */
             updated_at: string;
         };
+        Restriction: {
+            /** Format: date-time */
+            created_at: string;
+            description?: string | null;
+            exempt_group_ids: string[];
+            /** Format: uuid */
+            id: string;
+            rrule?: string | null;
+            title: string;
+            /** Format: date-time */
+            updated_at: string;
+        };
+        RestrictionOccurrence: {
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            end_time: string;
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            resource_id?: string | null;
+            /** Format: uuid */
+            restriction_id: string;
+            /** Format: date-time */
+            start_time: string;
+        };
+        RestrictionWithOccurrences: components["schemas"]["Restriction"] & {
+            occurrences: components["schemas"]["RestrictionOccurrence"][];
+        };
         /** @enum {string} */
         Role: "admin" | "user";
         SystemStats: {
@@ -609,6 +685,13 @@ export interface components {
             allow_recurring?: boolean | null;
             contract_ids?: string[] | null;
             name?: string | null;
+        };
+        UpdateRestrictionPayload: {
+            description?: string | null;
+            exempt_group_ids?: string[] | null;
+            occurrences?: components["schemas"]["CreateRestrictionOccurrencePayload"][] | null;
+            rrule?: string | null;
+            title?: string | null;
         };
         UpdateUser: {
             email?: string | null;
@@ -1916,6 +1999,153 @@ export interface operations {
             };
             /** @description Validation error */
             422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    list_restrictions: {
+        parameters: {
+            query?: {
+                start_date?: string | null;
+                end_date?: string | null;
+                resource_id?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RestrictionWithOccurrences"][];
+                };
+            };
+        };
+    };
+    create_restriction: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateRestrictionPayload"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RestrictionWithOccurrences"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_restriction: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RestrictionWithOccurrences"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    delete_restriction: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    update_restriction: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateRestrictionPayload"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RestrictionWithOccurrences"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };
