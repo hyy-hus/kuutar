@@ -7,6 +7,7 @@ import { useTranslation } from "react-i18next";
 import { Button } from "#/components/Button";
 import { useReservations } from "#/hooks/useReservations";
 import { useResources } from "#/hooks/useResorces";
+import { useRestrictions } from "#/hooks/useRestrictions";
 import type { CalendarSearch } from "#/routes/_app/calendar";
 import type { CalendarEvent } from "#/utils/calendarUtils";
 import { ToggleChip } from "../Chip";
@@ -31,11 +32,10 @@ const formatYYYYMMDD = (d: Date): string => {
 	return `${year}-${month}-${day}`;
 };
 
-// Get Monday of the current week for 7-day view
 const getMonday = (d: Date): Date => {
 	const target = new Date(d);
 	const day = target.getDay();
-	const diff = target.getDate() - day + (day === 0 ? -6 : 1); // adjust when day is sunday
+	const diff = target.getDate() - day + (day === 0 ? -6 : 1);
 	return new Date(target.setDate(diff));
 };
 
@@ -51,7 +51,6 @@ export function Calendar({
 
 	const { data: resources, isLoading: loadingResources } = useResources();
 
-	// Default to 1-day view starting at the current selected date on mobile devices
 	useEffect(() => {
 		if (window.innerWidth < 640 && days > 1 && !selectedResourceIds) {
 			onSearchChange({ days: 1, start: formatYYYYMMDD(start) });
@@ -65,7 +64,6 @@ export function Calendar({
 		return resources?.map((r) => r.id) || [];
 	}, [selectedResourceIds, resources]);
 
-	// Initialize all resources as selected ONLY if explicitly no resources parameter is in the URL search
 	useEffect(() => {
 		if (resources && selectedResourceIds === undefined) {
 			onSearchChange({ resources: resources.map((r) => r.id) });
@@ -92,20 +90,26 @@ export function Calendar({
 			endDate: endDateISO,
 		});
 
+	const { data: restrictions, isLoading: loadingRestrictions } =
+		useRestrictions({
+			start_date: startDateISO,
+			end_date: endDateISO,
+		});
+
 	const moveStart = (deltaDays: number) => {
 		const next = new Date(start);
 		next.setDate(next.getDate() + deltaDays);
 		onSearchChange({ start: formatYYYYMMDD(next) });
 	};
+
 	const handleDaysChange = (newDays: number) => {
 		if (newDays === 7) {
-			// For full week view, align start to Monday of the current selected date
 			onSearchChange({ days: 7, start: formatYYYYMMDD(getMonday(start)) });
 		} else {
-			// For 1, 3, or 5 day views, keep current start date
 			onSearchChange({ days: newDays, start: formatYYYYMMDD(start) });
 		}
 	};
+
 	const toggleResource = (id: string) => {
 		const nextResources = activeResourceIds.includes(id)
 			? activeResourceIds.filter((item) => item !== id)
@@ -126,70 +130,100 @@ export function Calendar({
 	};
 
 	const calendarEvents = useMemo(() => {
-		if (!reservations || !resources) return [];
+		if (!resources) return [];
 
 		const resourcesMap = new Map(resources.map((r) => [r.id, r.name]));
 		const events: CalendarEvent[] = [];
 
-		reservations.forEach((res) => {
-			if (!res.occurrences || res.occurrences.length === 0) return;
+		// 1. Process Reservations
+		if (reservations) {
+			reservations.forEach((res) => {
+				if (!res.occurrences || res.occurrences.length === 0) return;
 
-			const timeGroups = new Map<string, typeof res.occurrences>();
+				const timeGroups = new Map<string, typeof res.occurrences>();
 
-			res.occurrences.forEach((occ) => {
-				if (activeResourceIds.includes(occ.resource_id)) {
-					const startMs = new Date(occ.start_time).getTime();
-					const endMs = new Date(occ.end_time).getTime();
-					const key = t("id_startms_endms", "{{id}}_{{startMs}}_{{endMs}}", {
-						id: res.id,
-						startMs,
-						endMs,
+				res.occurrences.forEach((occ) => {
+					if (activeResourceIds.includes(occ.resource_id)) {
+						const startMs = new Date(occ.start_time).getTime();
+						const endMs = new Date(occ.end_time).getTime();
+						const key = `${res.id}_${startMs}_${endMs}`;
+
+						const group = timeGroups.get(key) || [];
+						group.push(occ);
+						timeGroups.set(key, group);
+					}
+				});
+
+				timeGroups.forEach((occurrencesGroup) => {
+					const resourceNames = Array.from(
+						new Set(
+							occurrencesGroup
+								.map((occ) => resourcesMap.get(occ.resource_id))
+								.filter(Boolean),
+						),
+					).join(", ");
+
+					const firstOcc = occurrencesGroup[0];
+
+					events.push({
+						id: firstOcc.id,
+						reservationId: res.id,
+						isRestriction: false,
+						title: res.title,
+						start: new Date(firstOcc.start_time),
+						end: new Date(firstOcc.end_time),
+						resourceId: firstOcc.resource_id,
+						resourceName: resourceNames,
 					});
-
-					const group = timeGroups.get(key) || [];
-					group.push(occ);
-					timeGroups.set(key, group);
-				}
-			});
-
-			timeGroups.forEach((occurrencesGroup) => {
-				const resourceNames = Array.from(
-					new Set(
-						occurrencesGroup
-							.map((occ) => resourcesMap.get(occ.resource_id))
-							.filter(Boolean),
-					),
-				).join(", ");
-
-				const firstOcc = occurrencesGroup[0];
-
-				events.push({
-					id: firstOcc.id,
-					reservationId: res.id,
-					title: res.title,
-					start: new Date(firstOcc.start_time),
-					end: new Date(firstOcc.end_time),
-					resourceId: firstOcc.resource_id,
-					resourceName: resourceNames,
 				});
 			});
-		});
+		}
 
+		// 2. Process Restrictions (global or specific resource bindings)
+		// Process Restriction Occurrences
+		if (restrictions) {
+			restrictions.forEach((restrWithOcc) => {
+				const occurrences = restrWithOcc.occurrences || [];
+
+				occurrences.forEach((occ) => {
+					const targetResourceIds = occ.resource_id
+						? activeResourceIds.includes(occ.resource_id)
+							? [occ.resource_id]
+							: []
+						: activeResourceIds;
+
+					targetResourceIds.forEach((resId) => {
+						events.push({
+							id: `restr-${occ.id}-${resId}`,
+							restrictionId: restrWithOcc.id,
+							isRestriction: true,
+							title: restrWithOcc.title,
+							start: new Date(occ.start_time),
+							end: new Date(occ.end_time),
+							resourceId: resId,
+							resourceName: resourcesMap.get(resId),
+						});
+					});
+				});
+			});
+		}
+
+		// Deduplicate
 		const uniqueEvents = new Map<string, CalendarEvent>();
 		events.forEach((evt) => {
-			const key = t("reservationid_val", "{{reservationId}}_{{val}}", {
-				reservationId: evt.reservationId,
-				val: evt.start.getTime(),
-			});
+			const key = evt.isRestriction
+				? `${evt.restrictionId}_${evt.resourceId}_${evt.start.getTime()}`
+				: `${evt.reservationId}_${evt.start.getTime()}`;
+
 			if (!uniqueEvents.has(key)) {
 				uniqueEvents.set(key, evt);
 			}
 		});
 
 		return Array.from(uniqueEvents.values());
-	}, [reservations, resources, activeResourceIds, t]);
+	}, [reservations, restrictions, resources, activeResourceIds]);
 
-	if (loadingResources || loadingReservations) {
+	if (loadingResources || loadingReservations || loadingRestrictions) {
 		return (
 			<div className="p-8 flex items-center justify-center gap-2 text-stone-500">
 				<Loader2 className="animate-spin" size={18} />
