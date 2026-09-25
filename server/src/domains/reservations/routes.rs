@@ -209,11 +209,22 @@ pub async fn create_reservation(
 ) -> Result<(StatusCode, Json<ReservationWithOccurrences>), AppError> {
     payload.validate()?;
 
+    let is_admin = auth_user.role == Role::Admin;
+
     // 1. Validate recurring permissions for non-admins
     validate_recurring_permission(&auth_state.pool, &payload, auth_user.role).await?;
 
-    // 2. Default status for non-admin users to Pending
-    if auth_user.role != Role::Admin {
+    // 2. Validate occurrences against time restrictions
+    db::validate_occurrence_restrictions(
+        &auth_state.pool,
+        auth_user.id,
+        is_admin,
+        &payload.occurrences,
+    )
+    .await?;
+
+    // 3. Default status for non-admin users to Pending
+    if !is_admin {
         payload.status = Some(super::models::ReservationStatus::Pending);
     }
 
@@ -274,9 +285,10 @@ pub async fn update_reservation(
 ) -> Result<Json<ReservationWithOccurrences>, AppError> {
     payload.validate()?;
 
+    let is_admin = auth_user.role == Role::Admin;
     let existing = db::find_by_id(&auth_state.pool, id, true).await?;
 
-    if auth_user.role != Role::Admin {
+    if !is_admin {
         if existing.reservation.user_id != auth_user.id {
             return Err(AppError::Forbidden(
                 "Et voi muokata toisen käyttäjän varausta.".to_string(),
@@ -297,6 +309,17 @@ pub async fn update_reservation(
         }
 
         payload.admin_notes = None;
+    }
+
+    // Validate new occurrences against time restrictions
+    if let Some(ref new_occurrences) = payload.occurrences {
+        db::validate_occurrence_restrictions(
+            &auth_state.pool,
+            auth_user.id,
+            is_admin,
+            new_occurrences,
+        )
+        .await?;
     }
 
     let reservation = db::update(&auth_state.pool, id, payload).await?;

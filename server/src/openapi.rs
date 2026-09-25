@@ -7,6 +7,7 @@ use crate::domains::contracts;
 use crate::domains::groups;
 use crate::domains::reservations;
 use crate::domains::resources;
+use crate::domains::restrictions;
 use crate::domains::stats;
 use crate::domains::users;
 
@@ -77,6 +78,13 @@ impl Modify for SecurityAddon {
         reservations::routes::update_reservation,
         reservations::routes::delete_reservation,
 
+        // Restrictions
+        restrictions::routes::list_restrictions,
+        restrictions::routes::get_restriction,
+        restrictions::routes::create_restriction,
+        restrictions::routes::update_restriction,
+        restrictions::routes::delete_restriction,
+
         // Contracts
         contracts::routes::list_contracts,
         contracts::routes::get_contract,
@@ -114,6 +122,9 @@ impl Modify for SecurityAddon {
             reservations::models::CreateReservationPayload,
             reservations::models::CreateOccurrencePayload,
             reservations::models::UpdateReservationPayload,
+            restrictions::models::Restriction,
+            restrictions::models::CreateRestrictionPayload,
+            restrictions::models::UpdateRestrictionPayload,
             contracts::models::Contract,
             contracts::models::CreateContract,
             contracts::models::UpdateContract,
@@ -131,6 +142,7 @@ impl Modify for SecurityAddon {
         (name = "Resources", description = "Resource management endpoints"),
         (name = "Groups", description = "Group management endpoints"),
         (name = "Reservations", description = "Reservation and occurrence management endpoints"),
+        (name = "Restrictions", description = "Time restriction and group exemption management endpoints"),
         (name = "Contracts", description = "Contract document management endpoints"),
         (name = "Stats", description = "System statistics and usage analytics endpoints")
     ),

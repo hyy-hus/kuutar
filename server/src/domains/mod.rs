@@ -4,5 +4,6 @@ pub mod contracts;
 pub mod groups;
 pub mod reservations;
 pub mod resources;
+pub mod restrictions;
 pub mod stats;
 pub mod users;

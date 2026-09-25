@@ -1,6 +1,10 @@
+// src/utils/calendarUtils.ts
+
 export interface CalendarEvent {
 	id: string;
-	reservationId: string;
+	reservationId?: string;
+	restrictionId?: string;
+	isRestriction?: boolean;
 	title: string;
 	start: Date;
 	end: Date;
@@ -13,124 +17,93 @@ export interface PlacedEvent extends CalendarEvent {
 	span: number;
 }
 
-/**
- * Returns the Monday of the current week at 00:00:00
- */
-export function startOfCurrentWeek(): Date {
+export const getMinutesSinceMidnight = (d: Date): number => {
+	return d.getHours() * 60 + d.getMinutes();
+};
+
+export const getMinutesBetween = (start: Date, end: Date): number => {
+	const diff = end.getTime() - start.getTime();
+	return Math.max(1, Math.round(diff / (1000 * 60)));
+};
+
+export const startOfCurrentWeek = (): Date => {
 	const now = new Date();
 	const day = now.getDay();
 	const diff = now.getDate() - day + (day === 0 ? -6 : 1);
-	const monday = new Date(now.setDate(diff));
-	monday.setHours(0, 0, 0, 0);
-	return monday;
-}
+	return new Date(now.setDate(diff));
+};
 
-export function getMinutesSinceMidnight(date: Date): number {
-	return date.getHours() * 60 + date.getMinutes();
-}
-
-export function getMinutesBetween(start: Date, end: Date): number {
-	const diffMs = end.getTime() - start.getTime();
-	return Math.max(15, Math.round(diffMs / (1000 * 60)));
-}
-
-/**
- * Calculates overlap column placement for events within a day column.
- * Cluster-based greedy allocation that stretches non-conflicting events across available spans.
- */
-export function layoutDay(events: CalendarEvent[]): {
-	maxCols: number;
-	placed: PlacedEvent[];
-} {
+export function layoutDay(events: CalendarEvent[]) {
 	if (!events.length) return { maxCols: 1, placed: [] };
 
-	// 1. Sort events by start time, then duration (descending)
-	const sorted = [...events].sort((a, b) => {
-		if (a.start.getTime() !== b.start.getTime()) {
-			return a.start.getTime() - b.start.getTime();
-		}
-		return b.end.getTime() - a.end.getTime();
-	});
+	const sorted = [...events].sort(
+		(a, b) => a.start.getTime() - b.start.getTime(),
+	);
+	const groups: CalendarEvent[][] = [];
+	let currentGroup: CalendarEvent[] = [];
+	let groupEnd = 0;
 
-	// 2. Partition into contiguous overlapping clusters
-	const clusters: CalendarEvent[][] = [];
-	let currentCluster: CalendarEvent[] = [];
-	let clusterEnd = 0;
-
-	sorted.forEach((evt) => {
-		const startMs = evt.start.getTime();
-		const endMs = evt.end.getTime();
-
-		if (currentCluster.length === 0 || startMs < clusterEnd) {
-			currentCluster.push(evt);
-			clusterEnd = Math.max(clusterEnd, endMs);
+	for (const evt of sorted) {
+		if (currentGroup.length === 0) {
+			currentGroup.push(evt);
+			groupEnd = evt.end.getTime();
+		} else if (evt.start.getTime() < groupEnd) {
+			currentGroup.push(evt);
+			if (evt.end.getTime() > groupEnd) groupEnd = evt.end.getTime();
 		} else {
-			clusters.push(currentCluster);
-			currentCluster = [evt];
-			clusterEnd = endMs;
+			groups.push(currentGroup);
+			currentGroup = [evt];
+			groupEnd = evt.end.getTime();
 		}
-	});
-	if (currentCluster.length > 0) {
-		clusters.push(currentCluster);
 	}
+	if (currentGroup.length) groups.push(currentGroup);
 
-	// 3. Lay out each cluster and calculate dynamic column span
 	const placed: PlacedEvent[] = [];
-	let globalMaxCols = 1;
 
-	clusters.forEach((cluster) => {
+	for (const group of groups) {
 		const columns: CalendarEvent[][] = [];
-
-		cluster.forEach((evt) => {
+		for (const evt of group) {
 			let placedInCol = false;
 			for (let i = 0; i < columns.length; i++) {
-				const lastInCol = columns[i][columns[i].length - 1];
-				if (lastInCol.end.getTime() <= evt.start.getTime()) {
-					columns[i].push(evt);
+				const col = columns[i];
+				const last = col[col.length - 1];
+				if (last.end.getTime() <= evt.start.getTime()) {
+					col.push(evt);
+					placed.push({ ...evt, col: i + 1, span: 1 });
 					placedInCol = true;
 					break;
 				}
 			}
 			if (!placedInCol) {
 				columns.push([evt]);
+				placed.push({ ...evt, col: columns.length, span: 1 });
 			}
-		});
+		}
 
-		const clusterCols = columns.length;
-		globalMaxCols = Math.max(globalMaxCols, clusterCols);
-
-		// Assign column indices and compute dynamic span expansion
-		cluster.forEach((evt) => {
-			let colIdx = 0;
-			for (let i = 0; i < columns.length; i++) {
-				if (columns[i].includes(evt)) {
-					colIdx = i;
-					break;
+		const numCols = columns.length;
+		for (const evt of placed) {
+			if (group.includes(evt)) {
+				let canExpand = true;
+				for (let c = evt.col; c < numCols; c++) {
+					const colEvts = columns[c];
+					if (
+						colEvts.some(
+							(other) =>
+								!(
+									other.end.getTime() <= evt.start.getTime() ||
+									other.start.getTime() >= evt.end.getTime()
+								),
+						)
+					) {
+						canExpand = false;
+						break;
+					}
 				}
+				if (canExpand) evt.span = numCols - evt.col + 1;
 			}
+		}
+	}
 
-			// Expand span if there are no colliding neighbors to the right
-			let span = 1;
-			for (let j = colIdx + 1; j < clusterCols; j++) {
-				const hasCollision = columns[j].some(
-					(other) =>
-						evt.start.getTime() < other.end.getTime() &&
-						evt.end.getTime() > other.start.getTime(),
-				);
-				if (!hasCollision) {
-					span++;
-				} else {
-					break;
-				}
-			}
-
-			placed.push({
-				...evt,
-				col: colIdx + 1,
-				span,
-			});
-		});
-	});
-
-	return { maxCols: globalMaxCols, placed };
+	const maxCols = Math.max(1, ...placed.map((p) => p.col));
+	return { maxCols, placed };
 }

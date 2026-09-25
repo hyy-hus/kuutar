@@ -30,6 +30,9 @@ import { Route as AppReservationsCreateRouteImport } from './routes/_app/reserva
 import { Route as AppResourcesIndexRouteImport } from './routes/_app/resources/index'
 import { Route as AppResourcesIdRouteImport } from './routes/_app/resources/$id'
 import { Route as AppResourcesCreateRouteImport } from './routes/_app/resources/create'
+import { Route as AppRestrictionsIndexRouteImport } from './routes/_app/restrictions/index'
+import { Route as AppRestrictionsIdRouteImport } from './routes/_app/restrictions/$id'
+import { Route as AppRestrictionsCreateRouteImport } from './routes/_app/restrictions/create'
 import { Route as AppStatsIndexRouteImport } from './routes/_app/stats/index'
 import { Route as AppUsersIndexRouteImport } from './routes/_app/users/index'
 import { Route as AppUsersIdRouteImport } from './routes/_app/users/$id'
@@ -40,6 +43,7 @@ import { Route as AppCollectionsEditIdRouteImport } from './routes/_app/collecti
 import { Route as AppGroupsEditIdRouteImport } from './routes/_app/groups/edit.$id'
 import { Route as AppReservationsEditIdRouteImport } from './routes/_app/reservations/edit.$id'
 import { Route as AppResourcesEditIdRouteImport } from './routes/_app/resources/edit/$id'
+import { Route as AppRestrictionsEditIdRouteImport } from './routes/_app/restrictions/edit.$id'
 import { Route as AppUsersEditIdRouteImport } from './routes/_app/users/edit.$id'
 
 const AppRoute = AppRouteImport.update({
@@ -146,6 +150,21 @@ const AppResourcesCreateRoute = AppResourcesCreateRouteImport.update({
   path: '/resources/create',
   getParentRoute: () => AppRoute,
 } as any)
+const AppRestrictionsIndexRoute = AppRestrictionsIndexRouteImport.update({
+  id: '/restrictions/',
+  path: '/restrictions/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppRestrictionsIdRoute = AppRestrictionsIdRouteImport.update({
+  id: '/restrictions/$id',
+  path: '/restrictions/$id',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppRestrictionsCreateRoute = AppRestrictionsCreateRouteImport.update({
+  id: '/restrictions/create',
+  path: '/restrictions/create',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppStatsIndexRoute = AppStatsIndexRouteImport.update({
   id: '/stats/',
   path: '/stats/',
@@ -197,6 +216,11 @@ const AppResourcesEditIdRoute = AppResourcesEditIdRouteImport.update({
   path: '/resources/edit/$id',
   getParentRoute: () => AppRoute,
 } as any)
+const AppRestrictionsEditIdRoute = AppRestrictionsEditIdRouteImport.update({
+  id: '/restrictions/edit/$id',
+  path: '/restrictions/edit/$id',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppUsersEditIdRoute = AppUsersEditIdRouteImport.update({
   id: '/users/edit/$id',
   path: '/users/edit/$id',
@@ -218,6 +242,8 @@ export interface FileRoutesByFullPath {
   '/reservations/create': typeof AppReservationsCreateRoute
   '/resources/$id': typeof AppResourcesIdRoute
   '/resources/create': typeof AppResourcesCreateRoute
+  '/restrictions/$id': typeof AppRestrictionsIdRoute
+  '/restrictions/create': typeof AppRestrictionsCreateRoute
   '/users/$id': typeof AppUsersIdRoute
   '/users/create': typeof AppUsersCreateRoute
   '/calendar/': typeof AppCalendarIndexRoute
@@ -226,6 +252,7 @@ export interface FileRoutesByFullPath {
   '/groups/': typeof AppGroupsIndexRoute
   '/reservations/': typeof AppReservationsIndexRoute
   '/resources/': typeof AppResourcesIndexRoute
+  '/restrictions/': typeof AppRestrictionsIndexRoute
   '/stats/': typeof AppStatsIndexRoute
   '/users/': typeof AppUsersIndexRoute
   '/admin/users/batch-register': typeof AppAdminUsersBatchRegisterRoute
@@ -233,6 +260,7 @@ export interface FileRoutesByFullPath {
   '/groups/edit/$id': typeof AppGroupsEditIdRoute
   '/reservations/edit/$id': typeof AppReservationsEditIdRoute
   '/resources/edit/$id': typeof AppResourcesEditIdRoute
+  '/restrictions/edit/$id': typeof AppRestrictionsEditIdRoute
   '/users/edit/$id': typeof AppUsersEditIdRoute
   '/admin/dashboard/': typeof AppAdminDashboardIndexRoute
 }
@@ -251,6 +279,8 @@ export interface FileRoutesByTo {
   '/reservations/create': typeof AppReservationsCreateRoute
   '/resources/$id': typeof AppResourcesIdRoute
   '/resources/create': typeof AppResourcesCreateRoute
+  '/restrictions/$id': typeof AppRestrictionsIdRoute
+  '/restrictions/create': typeof AppRestrictionsCreateRoute
   '/users/$id': typeof AppUsersIdRoute
   '/users/create': typeof AppUsersCreateRoute
   '/calendar': typeof AppCalendarIndexRoute
@@ -259,6 +289,7 @@ export interface FileRoutesByTo {
   '/groups': typeof AppGroupsIndexRoute
   '/reservations': typeof AppReservationsIndexRoute
   '/resources': typeof AppResourcesIndexRoute
+  '/restrictions': typeof AppRestrictionsIndexRoute
   '/stats': typeof AppStatsIndexRoute
   '/users': typeof AppUsersIndexRoute
   '/admin/users/batch-register': typeof AppAdminUsersBatchRegisterRoute
@@ -266,6 +297,7 @@ export interface FileRoutesByTo {
   '/groups/edit/$id': typeof AppGroupsEditIdRoute
   '/reservations/edit/$id': typeof AppReservationsEditIdRoute
   '/resources/edit/$id': typeof AppResourcesEditIdRoute
+  '/restrictions/edit/$id': typeof AppRestrictionsEditIdRoute
   '/users/edit/$id': typeof AppUsersEditIdRoute
   '/admin/dashboard': typeof AppAdminDashboardIndexRoute
 }
@@ -286,6 +318,8 @@ export interface FileRoutesById {
   '/_app/reservations/create': typeof AppReservationsCreateRoute
   '/_app/resources/$id': typeof AppResourcesIdRoute
   '/_app/resources/create': typeof AppResourcesCreateRoute
+  '/_app/restrictions/$id': typeof AppRestrictionsIdRoute
+  '/_app/restrictions/create': typeof AppRestrictionsCreateRoute
   '/_app/users/$id': typeof AppUsersIdRoute
   '/_app/users/create': typeof AppUsersCreateRoute
   '/_app/calendar/': typeof AppCalendarIndexRoute
@@ -294,6 +328,7 @@ export interface FileRoutesById {
   '/_app/groups/': typeof AppGroupsIndexRoute
   '/_app/reservations/': typeof AppReservationsIndexRoute
   '/_app/resources/': typeof AppResourcesIndexRoute
+  '/_app/restrictions/': typeof AppRestrictionsIndexRoute
   '/_app/stats/': typeof AppStatsIndexRoute
   '/_app/users/': typeof AppUsersIndexRoute
   '/_app/admin/users/batch-register': typeof AppAdminUsersBatchRegisterRoute
@@ -301,6 +336,7 @@ export interface FileRoutesById {
   '/_app/groups/edit/$id': typeof AppGroupsEditIdRoute
   '/_app/reservations/edit/$id': typeof AppReservationsEditIdRoute
   '/_app/resources/edit/$id': typeof AppResourcesEditIdRoute
+  '/_app/restrictions/edit/$id': typeof AppRestrictionsEditIdRoute
   '/_app/users/edit/$id': typeof AppUsersEditIdRoute
   '/_app/admin/dashboard/': typeof AppAdminDashboardIndexRoute
 }
@@ -321,6 +357,8 @@ export interface FileRouteTypes {
     | '/reservations/create'
     | '/resources/$id'
     | '/resources/create'
+    | '/restrictions/$id'
+    | '/restrictions/create'
     | '/users/$id'
     | '/users/create'
     | '/calendar/'
@@ -329,6 +367,7 @@ export interface FileRouteTypes {
     | '/groups/'
     | '/reservations/'
     | '/resources/'
+    | '/restrictions/'
     | '/stats/'
     | '/users/'
     | '/admin/users/batch-register'
@@ -336,6 +375,7 @@ export interface FileRouteTypes {
     | '/groups/edit/$id'
     | '/reservations/edit/$id'
     | '/resources/edit/$id'
+    | '/restrictions/edit/$id'
     | '/users/edit/$id'
     | '/admin/dashboard/'
   fileRoutesByTo: FileRoutesByTo
@@ -354,6 +394,8 @@ export interface FileRouteTypes {
     | '/reservations/create'
     | '/resources/$id'
     | '/resources/create'
+    | '/restrictions/$id'
+    | '/restrictions/create'
     | '/users/$id'
     | '/users/create'
     | '/calendar'
@@ -362,6 +404,7 @@ export interface FileRouteTypes {
     | '/groups'
     | '/reservations'
     | '/resources'
+    | '/restrictions'
     | '/stats'
     | '/users'
     | '/admin/users/batch-register'
@@ -369,6 +412,7 @@ export interface FileRouteTypes {
     | '/groups/edit/$id'
     | '/reservations/edit/$id'
     | '/resources/edit/$id'
+    | '/restrictions/edit/$id'
     | '/users/edit/$id'
     | '/admin/dashboard'
   id:
@@ -388,6 +432,8 @@ export interface FileRouteTypes {
     | '/_app/reservations/create'
     | '/_app/resources/$id'
     | '/_app/resources/create'
+    | '/_app/restrictions/$id'
+    | '/_app/restrictions/create'
     | '/_app/users/$id'
     | '/_app/users/create'
     | '/_app/calendar/'
@@ -396,6 +442,7 @@ export interface FileRouteTypes {
     | '/_app/groups/'
     | '/_app/reservations/'
     | '/_app/resources/'
+    | '/_app/restrictions/'
     | '/_app/stats/'
     | '/_app/users/'
     | '/_app/admin/users/batch-register'
@@ -403,6 +450,7 @@ export interface FileRouteTypes {
     | '/_app/groups/edit/$id'
     | '/_app/reservations/edit/$id'
     | '/_app/resources/edit/$id'
+    | '/_app/restrictions/edit/$id'
     | '/_app/users/edit/$id'
     | '/_app/admin/dashboard/'
   fileRoutesById: FileRoutesById
@@ -561,6 +609,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppResourcesCreateRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/restrictions/': {
+      id: '/_app/restrictions/'
+      path: '/restrictions'
+      fullPath: '/restrictions/'
+      preLoaderRoute: typeof AppRestrictionsIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/restrictions/$id': {
+      id: '/_app/restrictions/$id'
+      path: '/restrictions/$id'
+      fullPath: '/restrictions/$id'
+      preLoaderRoute: typeof AppRestrictionsIdRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/restrictions/create': {
+      id: '/_app/restrictions/create'
+      path: '/restrictions/create'
+      fullPath: '/restrictions/create'
+      preLoaderRoute: typeof AppRestrictionsCreateRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/stats/': {
       id: '/_app/stats/'
       path: '/stats'
@@ -631,6 +700,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppResourcesEditIdRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/restrictions/edit/$id': {
+      id: '/_app/restrictions/edit/$id'
+      path: '/restrictions/edit/$id'
+      fullPath: '/restrictions/edit/$id'
+      preLoaderRoute: typeof AppRestrictionsEditIdRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/users/edit/$id': {
       id: '/_app/users/edit/$id'
       path: '/users/edit/$id'
@@ -669,6 +745,8 @@ interface AppRouteChildren {
   AppReservationsCreateRoute: typeof AppReservationsCreateRoute
   AppResourcesIdRoute: typeof AppResourcesIdRoute
   AppResourcesCreateRoute: typeof AppResourcesCreateRoute
+  AppRestrictionsIdRoute: typeof AppRestrictionsIdRoute
+  AppRestrictionsCreateRoute: typeof AppRestrictionsCreateRoute
   AppUsersIdRoute: typeof AppUsersIdRoute
   AppUsersCreateRoute: typeof AppUsersCreateRoute
   AppCalendarIndexRoute: typeof AppCalendarIndexRoute
@@ -677,12 +755,14 @@ interface AppRouteChildren {
   AppGroupsIndexRoute: typeof AppGroupsIndexRoute
   AppReservationsIndexRoute: typeof AppReservationsIndexRoute
   AppResourcesIndexRoute: typeof AppResourcesIndexRoute
+  AppRestrictionsIndexRoute: typeof AppRestrictionsIndexRoute
   AppStatsIndexRoute: typeof AppStatsIndexRoute
   AppUsersIndexRoute: typeof AppUsersIndexRoute
   AppCollectionsEditIdRoute: typeof AppCollectionsEditIdRoute
   AppGroupsEditIdRoute: typeof AppGroupsEditIdRoute
   AppReservationsEditIdRoute: typeof AppReservationsEditIdRoute
   AppResourcesEditIdRoute: typeof AppResourcesEditIdRoute
+  AppRestrictionsEditIdRoute: typeof AppRestrictionsEditIdRoute
   AppUsersEditIdRoute: typeof AppUsersEditIdRoute
 }
 
@@ -700,6 +780,8 @@ const AppRouteChildren: AppRouteChildren = {
   AppReservationsCreateRoute: AppReservationsCreateRoute,
   AppResourcesIdRoute: AppResourcesIdRoute,
   AppResourcesCreateRoute: AppResourcesCreateRoute,
+  AppRestrictionsIdRoute: AppRestrictionsIdRoute,
+  AppRestrictionsCreateRoute: AppRestrictionsCreateRoute,
   AppUsersIdRoute: AppUsersIdRoute,
   AppUsersCreateRoute: AppUsersCreateRoute,
   AppCalendarIndexRoute: AppCalendarIndexRoute,
@@ -708,12 +790,14 @@ const AppRouteChildren: AppRouteChildren = {
   AppGroupsIndexRoute: AppGroupsIndexRoute,
   AppReservationsIndexRoute: AppReservationsIndexRoute,
   AppResourcesIndexRoute: AppResourcesIndexRoute,
+  AppRestrictionsIndexRoute: AppRestrictionsIndexRoute,
   AppStatsIndexRoute: AppStatsIndexRoute,
   AppUsersIndexRoute: AppUsersIndexRoute,
   AppCollectionsEditIdRoute: AppCollectionsEditIdRoute,
   AppGroupsEditIdRoute: AppGroupsEditIdRoute,
   AppReservationsEditIdRoute: AppReservationsEditIdRoute,
   AppResourcesEditIdRoute: AppResourcesEditIdRoute,
+  AppRestrictionsEditIdRoute: AppRestrictionsEditIdRoute,
   AppUsersEditIdRoute: AppUsersEditIdRoute,
 }
 

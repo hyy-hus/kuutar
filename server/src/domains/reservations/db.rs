@@ -353,3 +353,60 @@ pub async fn check_conflicts(
 
     Ok(conflicting_occurrences)
 }
+
+/// Validates proposed occurrences against active restrictions.
+/// Admins bypass all restrictions. Non-admin users are blocked unless
+/// their user group is explicitly listed in `restriction_exemptions`.
+pub async fn validate_occurrence_restrictions(
+    pool: &PgPool,
+    user_id: Uuid,
+    is_admin: bool,
+    occurrences: &[CreateOccurrencePayload],
+) -> Result<(), AppError> {
+    if is_admin || occurrences.is_empty() {
+        return Ok(());
+    }
+
+    let user_group_id = sqlx::query_scalar!(
+        r#"SELECT group_id FROM users WHERE id = $1 AND deleted_at IS NULL"#,
+        user_id
+    )
+    .fetch_optional(pool)
+    .await?
+    .ok_or_else(|| AppError::Unauthorized("Käyttäjää ei löytynyt.".to_string()))?;
+
+    for occ in occurrences {
+        let violation = sqlx::query!(
+            r#"
+            SELECT r.title
+            FROM restrictions r
+            JOIN restriction_occurrences ro ON ro.restriction_id = r.id
+            WHERE r.deleted_at IS NULL
+              AND ro.start_time < $2
+              AND ro.end_time > $1
+              AND (ro.resource_id IS NULL OR ro.resource_id = $3)
+              AND NOT EXISTS (
+                  SELECT 1 
+                  FROM restriction_exemptions re 
+                  WHERE re.restriction_id = r.id AND re.group_id = $4
+              )
+            LIMIT 1
+            "#,
+            occ.start_time,
+            occ.end_time,
+            occ.resource_id,
+            user_group_id
+        )
+        .fetch_optional(pool)
+        .await?;
+
+        if let Some(blocked) = violation {
+            return Err(AppError::Forbidden(format!(
+                "Varaus osuu rajoitetulle ajanjaksolle: '{}'",
+                blocked.title
+            )));
+        }
+    }
+
+    Ok(())
+}
