@@ -119,12 +119,24 @@ pub async fn list_reservations(
         .unwrap_or_else(|| start_date + chrono::TimeDelta::days(30));
     let is_admin = opt_user.0.map(|u| u.role == Role::Admin).unwrap_or(false);
 
+    // Filter Logic:
+    // 1. If a specific status query param was passed (e.g., ?status=pending), respect it.
+    // 2. If caller is an admin, show ALL statuses (None = no filter).
+    // 3. If caller is non-admin/guest, restrict results to Confirmed only.
+    let effective_status = query.status.or_else(|| {
+        if is_admin {
+            None
+        } else {
+            Some(super::models::ReservationStatus::Confirmed)
+        }
+    });
+
     let reservations = db::list_filtered(
         &auth_state.pool,
         start_date,
         end_date,
         query.resource_id,
-        query.status,
+        effective_status,
         is_admin,
         None,
     )

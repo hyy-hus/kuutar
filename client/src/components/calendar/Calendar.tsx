@@ -169,6 +169,7 @@ export function Calendar({
 					events.push({
 						id: firstOcc.id,
 						reservationId: res.id,
+						status: res.status, // Passed down to ReservationBlock
 						isRestriction: false,
 						title: res.title,
 						start: new Date(firstOcc.start_time),

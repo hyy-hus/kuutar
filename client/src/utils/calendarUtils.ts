@@ -5,6 +5,7 @@ export interface CalendarEvent {
 	reservationId?: string;
 	restrictionId?: string;
 	isRestriction?: boolean;
+	status?: string;
 	title: string;
 	userName?: string;
 	start: Date;
