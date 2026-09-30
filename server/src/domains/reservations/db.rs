@@ -362,7 +362,7 @@ pub async fn check_conflicts(
             JOIN reservations r ON r.id = o.reservation_id
             WHERE o.resource_id = $1
               AND r.deleted_at IS NULL
-              AND r.status != 'cancelled'
+              AND r.status = 'confirmed'
               AND o.start_time < $3 
               AND o.end_time > $2
             "#,

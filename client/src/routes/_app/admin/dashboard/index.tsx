@@ -1,6 +1,6 @@
-import { useQueries } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
+	AlertTriangle,
 	Calendar,
 	Check,
 	CheckCircle2,
@@ -14,16 +14,9 @@ import {
 	X,
 	XCircle,
 } from "lucide-react";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { api } from "#/api/client";
 import { Button } from "#/components/Button";
-import { Chip } from "#/components/Chip";
-import {
-	type Contract,
-	contractKeys,
-	getLocalizedText,
-} from "#/hooks/useContracts";
 import {
 	type ReservationStatus,
 	type ReservationWithOccurrences,
@@ -34,7 +27,6 @@ import { useResources } from "#/hooks/useResorces";
 import { startOfCurrentWeek } from "#/utils/calendarUtils";
 import { cn } from "#/utils/cn";
 import { formatDate } from "#/utils/date";
-import { readable_uuid } from "#/utils/uuid";
 
 export interface AdminDashboardSearch {
 	start_date?: string;
@@ -47,6 +39,13 @@ const formatYYYYMMDD = (d: Date) => {
 	const month = String(d.getMonth() + 1).padStart(2, "0");
 	const day = String(d.getDate()).padStart(2, "0");
 	return `${year}-${month}-${day}`;
+};
+
+const formatTimeOnly = (isoStr: string) => {
+	const d = new Date(isoStr);
+	const hours = String(d.getHours()).padStart(2, "0");
+	const minutes = String(d.getMinutes()).padStart(2, "0");
+	return `${hours}.${minutes}`;
 };
 
 const parseLocalDate = (dateStr: string): Date => {
@@ -67,61 +66,61 @@ export const Route = createFileRoute("/_app/admin/dashboard/")({
 	component: AdminDashboardPage,
 });
 
-/** Hook to resolve all applicable contracts for a set of resource IDs */
-function useReservationContracts(resourceIds: string[]) {
-	const contractQueries = useQueries({
-		queries: resourceIds.map((rId) => ({
-			queryKey: contractKeys.list({ resource_id: rId, active_only: true }),
-			queryFn: async () => {
-				const { data, error } = await api.GET("/contracts", {
-					params: { query: { resource_id: rId, active_only: true } },
-				});
-				if (error || !data) return [];
-				return data as Contract[];
-			},
-			enabled: Boolean(rId),
-			staleTime: 1000 * 60 * 5,
-		})),
-	});
-
-	return useMemo(() => {
-		const contractMap = new Map<string, Contract>();
-		for (const q of contractQueries) {
-			if (q.data) {
-				for (const contract of q.data) {
-					contractMap.set(contract.id, contract);
-				}
-			}
-		}
-		return Array.from(contractMap.values());
-	}, [contractQueries]);
-}
-
-function AdminReservationCard({
+function AdminReservationRow({
 	reservationWithOcc,
+	resourceMap,
 	onStatusChange,
 	onMarkPrinted,
 	isUpdating,
+	hoveredReservation,
+	onHoverReservation,
 }: {
 	reservationWithOcc: ReservationWithOccurrences;
+	resourceMap: Map<string, string>;
 	onStatusChange: (status: ReservationStatus) => void;
 	onMarkPrinted: (id: string) => Promise<void>;
 	isUpdating: boolean;
+	hoveredReservation: ReservationWithOccurrences | null;
+	onHoverReservation: (res: ReservationWithOccurrences | null) => void;
 }) {
-	const { t, i18n } = useTranslation();
+	const { t } = useTranslation();
 	const firstOccurrence = reservationWithOcc.occurrences?.[0];
 	const isPending = reservationWithOcc.status === "pending";
 	const isCancelled = reservationWithOcc.status === "cancelled";
 
-	const resourceIds = useMemo(() => {
-		return Array.from(
-			new Set(
-				(reservationWithOcc.occurrences || []).map((occ) => occ.resource_id),
-			),
-		);
-	}, [reservationWithOcc.occurrences]);
+	const isHoveredSource = hoveredReservation?.id === reservationWithOcc.id;
 
-	const applicableContracts = useReservationContracts(resourceIds);
+	// Gather resource names reserved by this item
+	const resourceNames = useMemo(() => {
+		if (!reservationWithOcc.occurrences) return "";
+		const names = reservationWithOcc.occurrences
+			.map((occ) => resourceMap.get(occ.resource_id))
+			.filter(Boolean);
+		return Array.from(new Set(names)).join(", ");
+	}, [reservationWithOcc.occurrences, resourceMap]);
+
+	// Precise Time & Resource Conflict Calculation
+	const isConflict = useMemo(() => {
+		if (!hoveredReservation || isHoveredSource) {
+			return false;
+		}
+
+		const hoveredOccs = hoveredReservation.occurrences || [];
+		const currentOccs = reservationWithOcc.occurrences || [];
+
+		return currentOccs.some((curr) => {
+			const currStart = new Date(curr.start_time).getTime();
+			const currEnd = new Date(curr.end_time).getTime();
+
+			return hoveredOccs.some((hov) => {
+				if (hov.resource_id !== curr.resource_id) return false;
+				const hovStart = new Date(hov.start_time).getTime();
+				const hovEnd = new Date(hov.end_time).getTime();
+
+				return currStart < hovEnd && currEnd > hovStart;
+			});
+		});
+	}, [hoveredReservation, reservationWithOcc, isHoveredSource]);
 
 	const handlePrintSingle = async () => {
 		await onMarkPrinted(reservationWithOcc.id);
@@ -129,132 +128,155 @@ function AdminReservationCard({
 		window.open(url, "_blank");
 	};
 
+	const formattedTimeSpan = useMemo(() => {
+		if (!firstOccurrence) return null;
+		const startFormatted = formatDate(firstOccurrence.start_time);
+		const endTimeFormatted = formatTimeOnly(firstOccurrence.end_time);
+		return `${startFormatted} – ${endTimeFormatted}`;
+	}, [firstOccurrence]);
+
 	return (
-		<li
+		<tr
 			className={cn(
-				"p-3 border-2 flex flex-col justify-between gap-3 rounded-sm bg-stone-50 dark:bg-stone-900 transition-colors min-w-0",
-				isPending
-					? "border-amber-400 dark:border-amber-600"
-					: isCancelled
-						? "border-rose-300 dark:border-rose-900/60 opacity-80"
-						: "border-stone-200 dark:border-stone-700",
+				"border-b border-stone-200 dark:border-stone-800 hover:bg-stone-100/80 dark:hover:bg-stone-800/80 transition-colors text-xs font-mono relative outline-none select-none",
+				isPending && "bg-amber-50/40 dark:bg-amber-950/20",
+				isCancelled && "opacity-60 bg-stone-50/30 dark:bg-stone-950/30",
+				// Conflicting target rows: soft rose background and subtle inset shadow instead of outline
+				isConflict &&
+				"bg-rose-100/80 dark:bg-rose-950/60 shadow-[inset_0_0_0_1px_rgba(244,63,94,0.6)] z-10",
+				// Active source row: soft amber background and subtle inset shadow
+				isHoveredSource &&
+				"bg-amber-100/80 dark:bg-amber-900/40 shadow-[inset_0_0_0_1px_rgba(245,158,11,0.8)] z-20",
 			)}
 		>
-			<div className="flex items-start justify-between gap-2 min-w-0">
-				<div className="flex-1 truncate">
+			{/* Reservation Title & User */}
+			<td className="py-2 px-3 align-middle min-w-[200px]">
+				<div className="flex items-center gap-2 truncate">
 					<Link
 						to="/reservations/$id"
 						params={{ id: reservationWithOcc.id }}
-						className="font-bold truncate hover:underline text-stone-900 dark:text-stone-100 text-sm md:text-base block"
+						className="font-bold hover:underline text-stone-900 dark:text-stone-100 text-xs truncate shrink-0"
 					>
 						{reservationWithOcc.title}
 					</Link>
+
 					{reservationWithOcc.user_name && (
-						<p className="text-[11px] text-stone-600 dark:text-stone-400 flex items-center gap-1 mt-0.5 font-medium">
+						<span className="text-[11px] text-stone-500 dark:text-stone-400 flex items-center gap-0.5 font-sans truncate">
 							<UserIcon
-								size={12}
-								className="shrink-0 text-purple-600 dark:text-purple-400"
+								size={11}
+								className="shrink-0 text-stone-400 dark:text-stone-500"
 							/>
 							<span className="truncate">{reservationWithOcc.user_name}</span>
 							{reservationWithOcc.user_email && (
-								<span className="text-stone-400 font-mono text-[10px]">
+								<span className="text-stone-400 font-mono text-[10px] truncate hidden xl:inline">
 									({reservationWithOcc.user_email})
 								</span>
 							)}
-						</p>
+						</span>
 					)}
 				</div>
-				<Chip>{readable_uuid(reservationWithOcc.id)}</Chip>
-			</div>
+			</td>
 
-			<div className="flex flex-wrap items-center justify-between gap-2 min-w-0">
-				{firstOccurrence ? (
-					<div className="flex items-center gap-1 text-xs text-stone-500 dark:text-stone-400 font-mono">
-						<Calendar size={14} className="shrink-0" />
-						<span>{formatDate(firstOccurrence.start_time)}</span>
+			{/* Resource Column */}
+			<td className="py-2 px-3 align-middle whitespace-nowrap min-w-[120px]">
+				{resourceNames ? (
+					<span className="inline-block text-[11px] font-semibold text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-950/50 border border-purple-200/60 dark:border-purple-800/60 px-1.5 py-0.5 rounded truncate max-w-[180px]">
+						{resourceNames}
+					</span>
+				) : (
+					<span className="text-stone-400 italic text-[11px]">—</span>
+				)}
+			</td>
+
+			{/* Date & Full Time Span Column */}
+			<td
+				className="py-2 px-3 align-middle whitespace-nowrap cursor-pointer select-none"
+				onMouseEnter={() => onHoverReservation(reservationWithOcc)}
+				onMouseLeave={() => onHoverReservation(null)}
+			>
+				{formattedTimeSpan ? (
+					<div
+						className={cn(
+							"inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-mono transition-colors",
+							isConflict
+								? "bg-rose-200 dark:bg-rose-900 text-rose-950 dark:text-rose-100 font-bold"
+								: isHoveredSource
+									? "bg-amber-200 dark:bg-amber-800 text-amber-950 dark:text-amber-100 font-bold"
+									: "text-stone-700 dark:text-stone-300 bg-stone-100 dark:bg-stone-800/80 hover:bg-stone-200 dark:hover:bg-stone-700",
+						)}
+					>
+						{isConflict ? (
+							<AlertTriangle
+								size={12}
+								className="shrink-0 text-rose-600 dark:text-rose-400"
+							/>
+						) : (
+							<Calendar size={12} className="shrink-0 text-stone-400" />
+						)}
+						<span>{formattedTimeSpan}</span>
 					</div>
 				) : (
-					<span className="text-xs text-stone-400">
+					<span className="text-stone-400 italic text-[11px]">
 						{t("eiTiettyjAikoja", "Ei tiettyjä aikoja")}
 					</span>
 				)}
+			</td>
 
-				{reservationWithOcc.contract_printed_at && (
-					<span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 shrink-0">
-						<Check size={11} />
-						<span>{t("tulostettu", "Tulostettu")}</span>
-					</span>
-				)}
-			</div>
+			{/* Action Buttons (Secondary Style) */}
+			<td className="py-2 px-3 align-middle text-right whitespace-nowrap">
+				<div className="flex items-center justify-end gap-1">
+					<Button
+						variant="secondary"
+						size="sm"
+						onClick={handlePrintSingle}
+						title={t("tulostaSopimukset", "Tulosta sopimukset")}
+						className="text-[11px] px-2 py-0.5 h-7 gap-1 font-mono"
+					>
+						<FileText
+							size={12}
+							className="text-amber-600 dark:text-amber-500"
+						/>
+						<span className="hidden xl:inline">{t("tulosta", "Tulosta")}</span>
+					</Button>
 
-			{applicableContracts.length > 0 && (
-				<div className="flex flex-wrap gap-1 pt-1 border-t border-stone-200 dark:border-stone-800">
-					{applicableContracts.map((c) => (
-						<span
-							key={c.id}
-							className={cn(
-								"px-1.5 py-0.5 text-[10px] font-medium rounded truncate max-w-[140px]",
-								c.is_global
-									? "bg-stone-200 dark:bg-stone-800 text-stone-700 dark:text-stone-300"
-									: "bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300/50 dark:border-amber-800/50",
-							)}
-							title={getLocalizedText(c.title, i18n.language)}
-						>
-							{getLocalizedText(c.title, i18n.language)}
-						</span>
-					))}
-				</div>
-			)}
-
-			<div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-stone-200 dark:border-stone-800">
-				<Button
-					variant="outline"
-					size="sm"
-					onClick={handlePrintSingle}
-					className="text-stone-700 dark:text-stone-300 text-xs px-2 py-1 gap-1 flex-1 sm:flex-initial justify-center"
-				>
-					<FileText size={14} className="text-amber-600 dark:text-amber-500" />
-					<span>{t("tulostaSopimukset", "Tulosta sopimukset")}</span>
-				</Button>
-
-				<div className="flex items-center gap-1.5 w-full sm:w-auto justify-end">
 					{isPending ? (
 						<>
 							<Button
-								variant="outline"
+								variant="secondary"
 								size="sm"
 								disabled={isUpdating}
 								onClick={() => onStatusChange("cancelled" as ReservationStatus)}
-								className="text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/50 text-xs px-2.5 py-1 flex-1 sm:flex-initial justify-center"
+								className="text-rose-600 hover:text-rose-700 dark:text-rose-400 text-[11px] px-2 py-0.5 h-7 gap-1 font-mono"
 							>
-								<X size={14} />
+								<X size={12} />
 								<span>{t("hylk", "Hylkää")}</span>
 							</Button>
 							<Button
+								variant="secondary"
 								size="sm"
 								disabled={isUpdating}
 								onClick={() => onStatusChange("confirmed" as ReservationStatus)}
-								className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-2.5 py-1 flex-1 sm:flex-initial justify-center"
+								className="text-emerald-700 dark:text-emerald-400 font-bold text-[11px] px-2 py-0.5 h-7 gap-1 font-mono"
 							>
-								<Check size={14} />
+								<Check size={12} />
 								<span>{t("hyvksy", "Hyväksy")}</span>
 							</Button>
 						</>
 					) : (
 						<Button
-							variant="outline"
+							variant="secondary"
 							size="sm"
 							disabled={isUpdating}
 							onClick={() => onStatusChange("pending" as ReservationStatus)}
-							className="text-stone-600 dark:text-stone-400 text-xs px-2.5 py-1 w-full sm:w-auto justify-center"
+							className="text-[11px] px-2 py-0.5 h-7 gap-1 font-mono"
 						>
-							<Clock size={14} />
+							<Clock size={12} />
 							<span>{t("palautaOdottavaksi", "Palauta odottavaksi")}</span>
 						</Button>
 					)}
 				</div>
-			</div>
-		</li>
+			</td>
+		</tr>
 	);
 }
 
@@ -263,8 +285,15 @@ function AdminDashboardPage() {
 	const search = Route.useSearch();
 	const navigate = Route.useNavigate();
 
+	const [hoveredReservation, setHoveredReservation] =
+		useState<ReservationWithOccurrences | null>(null);
+
 	const { data: resources, isLoading: loadingResources } = useResources();
 	const updateReservation = useUpdateReservation();
+
+	const resourceMap = useMemo(() => {
+		return new Map(resources?.map((r) => [r.id, r.name]) || []);
+	}, [resources]);
 
 	const defaultStartStr = formatYYYYMMDD(startOfCurrentWeek());
 	const startStr = search.start_date || defaultStartStr;
@@ -297,6 +326,20 @@ function AdminDashboardPage() {
 		resourceId,
 	});
 
+	// Chronological sorter helper (earliest start_time first)
+	const sortByDateAsc = (
+		a: ReservationWithOccurrences,
+		b: ReservationWithOccurrences,
+	) => {
+		const timeA = a.occurrences?.[0]?.start_time
+			? new Date(a.occurrences[0].start_time).getTime()
+			: Number.MAX_SAFE_INTEGER;
+		const timeB = b.occurrences?.[0]?.start_time
+			? new Date(b.occurrences[0].start_time).getTime()
+			: Number.MAX_SAFE_INTEGER;
+		return timeA - timeB;
+	};
+
 	const { pendingReservations, confirmedReservations, cancelledReservations } =
 		useMemo(() => {
 			if (!reservations) {
@@ -308,13 +351,15 @@ function AdminDashboardPage() {
 			}
 
 			return {
-				pendingReservations: reservations.filter((r) => r.status === "pending"),
-				confirmedReservations: reservations.filter(
-					(r) => r.status === "confirmed",
-				),
-				cancelledReservations: reservations.filter(
-					(r) => r.status === "cancelled",
-				),
+				pendingReservations: reservations
+					.filter((r) => r.status === "pending")
+					.sort(sortByDateAsc),
+				confirmedReservations: reservations
+					.filter((r) => r.status === "confirmed")
+					.sort(sortByDateAsc),
+				cancelledReservations: reservations
+					.filter((r) => r.status === "cancelled")
+					.sort(sortByDateAsc),
 			};
 		}, [reservations]);
 
@@ -455,6 +500,7 @@ function AdminDashboardPage() {
 				</div>
 			) : (
 				<div className="space-y-6">
+					{/* Pending Reservations Inbox Section */}
 					<div className="space-y-3">
 						<div className="flex items-center gap-2 text-amber-600 dark:text-amber-500 font-bold">
 							<Clock size={18} />
@@ -468,17 +514,34 @@ function AdminDashboardPage() {
 						</div>
 
 						{pendingReservations.length > 0 ? (
-							<ul className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-								{pendingReservations.map((res) => (
-									<AdminReservationCard
-										key={res.id}
-										reservationWithOcc={res}
-										onStatusChange={(s) => handleStatusChange(res.id, s)}
-										onMarkPrinted={handleMarkPrinted}
-										isUpdating={updateReservation.isPending}
-									/>
-								))}
-							</ul>
+							<div className="border border-stone-200 dark:border-stone-800 rounded-md overflow-x-auto bg-stone-50 dark:bg-stone-900">
+								<table className="w-full text-left border-collapse min-w-[650px]">
+									<thead>
+										<tr className="border-b border-stone-200 dark:border-stone-800 bg-stone-100/80 dark:bg-stone-800/80 text-[11px] text-stone-500 font-mono uppercase tracking-wider">
+											<th className="py-2 px-3">{t("varaus", "Varaus")}</th>
+											<th className="py-2 px-3">{t("resurssi", "Resurssi")}</th>
+											<th className="py-2 px-3">{t("aika", "Aika")}</th>
+											<th className="py-2 px-3 text-right">
+												{t("toiminnot", "Toiminnot")}
+											</th>
+										</tr>
+									</thead>
+									<tbody>
+										{pendingReservations.map((res) => (
+											<AdminReservationRow
+												key={res.id}
+												reservationWithOcc={res}
+												resourceMap={resourceMap}
+												onStatusChange={(s) => handleStatusChange(res.id, s)}
+												onMarkPrinted={handleMarkPrinted}
+												isUpdating={updateReservation.isPending}
+												hoveredReservation={hoveredReservation}
+												onHoverReservation={setHoveredReservation}
+											/>
+										))}
+									</tbody>
+								</table>
+							</div>
 						) : (
 							<div className="p-4 text-xs text-stone-500 bg-stone-50 dark:bg-stone-900/40 rounded-md border border-stone-200 dark:border-stone-800">
 								{t(
@@ -489,6 +552,7 @@ function AdminDashboardPage() {
 						)}
 					</div>
 
+					{/* Confirmed Reservations Inbox Section */}
 					<div className="space-y-3">
 						<div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-500 font-bold">
 							<CheckCircle2 size={18} />
@@ -502,17 +566,34 @@ function AdminDashboardPage() {
 						</div>
 
 						{confirmedReservations.length > 0 ? (
-							<ul className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-								{confirmedReservations.map((res) => (
-									<AdminReservationCard
-										key={res.id}
-										reservationWithOcc={res}
-										onStatusChange={(s) => handleStatusChange(res.id, s)}
-										onMarkPrinted={handleMarkPrinted}
-										isUpdating={updateReservation.isPending}
-									/>
-								))}
-							</ul>
+							<div className="border border-stone-200 dark:border-stone-800 rounded-md overflow-x-auto bg-stone-50 dark:bg-stone-900">
+								<table className="w-full text-left border-collapse min-w-[650px]">
+									<thead>
+										<tr className="border-b border-stone-200 dark:border-stone-800 bg-stone-100/80 dark:bg-stone-800/80 text-[11px] text-stone-500 font-mono uppercase tracking-wider">
+											<th className="py-2 px-3">{t("varaus", "Varaus")}</th>
+											<th className="py-2 px-3">{t("resurssi", "Resurssi")}</th>
+											<th className="py-2 px-3">{t("aika", "Aika")}</th>
+											<th className="py-2 px-3 text-right">
+												{t("toiminnot", "Toiminnot")}
+											</th>
+										</tr>
+									</thead>
+									<tbody>
+										{confirmedReservations.map((res) => (
+											<AdminReservationRow
+												key={res.id}
+												reservationWithOcc={res}
+												resourceMap={resourceMap}
+												onStatusChange={(s) => handleStatusChange(res.id, s)}
+												onMarkPrinted={handleMarkPrinted}
+												isUpdating={updateReservation.isPending}
+												hoveredReservation={hoveredReservation}
+												onHoverReservation={setHoveredReservation}
+											/>
+										))}
+									</tbody>
+								</table>
+							</div>
 						) : (
 							<div className="p-4 text-xs text-stone-500 bg-stone-50 dark:bg-stone-900/40 rounded-md border border-stone-200 dark:border-stone-800">
 								{t(
@@ -523,6 +604,7 @@ function AdminDashboardPage() {
 						)}
 					</div>
 
+					{/* Cancelled Reservations Inbox Section */}
 					<div className="space-y-3">
 						<div className="flex items-center gap-2 text-rose-600 dark:text-rose-500 font-bold">
 							<XCircle size={18} />
@@ -536,17 +618,34 @@ function AdminDashboardPage() {
 						</div>
 
 						{cancelledReservations.length > 0 ? (
-							<ul className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-								{cancelledReservations.map((res) => (
-									<AdminReservationCard
-										key={res.id}
-										reservationWithOcc={res}
-										onStatusChange={(s) => handleStatusChange(res.id, s)}
-										onMarkPrinted={handleMarkPrinted}
-										isUpdating={updateReservation.isPending}
-									/>
-								))}
-							</ul>
+							<div className="border border-stone-200 dark:border-stone-800 rounded-md overflow-x-auto bg-stone-50 dark:bg-stone-900">
+								<table className="w-full text-left border-collapse min-w-[650px]">
+									<thead>
+										<tr className="border-b border-stone-200 dark:border-stone-800 bg-stone-100/80 dark:bg-stone-800/80 text-[11px] text-stone-500 font-mono uppercase tracking-wider">
+											<th className="py-2 px-3">{t("varaus", "Varaus")}</th>
+											<th className="py-2 px-3">{t("resurssi", "Resurssi")}</th>
+											<th className="py-2 px-3">{t("aika", "Aika")}</th>
+											<th className="py-2 px-3 text-right">
+												{t("toiminnot", "Toiminnot")}
+											</th>
+										</tr>
+									</thead>
+									<tbody>
+										{cancelledReservations.map((res) => (
+											<AdminReservationRow
+												key={res.id}
+												reservationWithOcc={res}
+												resourceMap={resourceMap}
+												onStatusChange={(s) => handleStatusChange(res.id, s)}
+												onMarkPrinted={handleMarkPrinted}
+												isUpdating={updateReservation.isPending}
+												hoveredReservation={hoveredReservation}
+												onHoverReservation={setHoveredReservation}
+											/>
+										))}
+									</tbody>
+								</table>
+							</div>
 						) : (
 							<div className="p-4 text-xs text-stone-500 bg-stone-50 dark:bg-stone-900/40 rounded-md border border-stone-200 dark:border-stone-800">
 								{t(

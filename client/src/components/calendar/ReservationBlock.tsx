@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { AlertOctagon, User as UserIcon } from "lucide-react";
+import { AlertOctagon, Clock, User as UserIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { cn } from "#/utils/cn";
 import {
@@ -7,6 +7,7 @@ import {
 	getMinutesSinceMidnight,
 	type PlacedEvent,
 } from "#/utils/calendarUtils";
+import { useEffect } from "react";
 
 const timeFormatter = new Intl.DateTimeFormat("fi-FI", {
 	hour: "2-digit",
@@ -34,9 +35,15 @@ export function ReservationBlock({ event, maxCols }: ReservationBlockProps) {
 	const widthPct = event.span * colWidthPct;
 
 	const isRestriction = Boolean(event.isRestriction);
+	const isPending = event.status === "pending";
+
 	const tooltipText = isRestriction
 		? `${event.resourceName ?? ""}: ${event.title} (${timeString})`
-		: `${event.resourceName ?? ""}: ${event.title}${event.userName ? ` [${event.userName}]` : ""} (${timeString})`;
+		: `${event.resourceName ?? ""}: ${event.title}${isPending ? ` [${t("odottaa", "Odottaa")}]` : ""}${event.userName ? ` [${event.userName}]` : ""} (${timeString})`;
+
+	useEffect(() => {
+		console.log(event);
+	}, [event]);
 
 	return (
 		<div
@@ -44,7 +51,9 @@ export function ReservationBlock({ event, maxCols }: ReservationBlockProps) {
 				"absolute pointer-events-auto border text-xs p-1 rounded-xs overflow-hidden shadow-xs hover:z-20 transition-all z-15 box-border",
 				isRestriction
 					? "bg-amber-100 dark:bg-amber-950/80 border-amber-400 dark:border-amber-700 hover:bg-amber-200 dark:hover:bg-amber-900"
-					: "bg-stone-200 dark:bg-stone-800 border-stone-400 dark:border-stone-600 hover:bg-stone-300 dark:hover:bg-stone-700",
+					: isPending
+						? "bg-purple-50/70 dark:bg-purple-950/40 border-dashed border-purple-400 dark:border-purple-600 opacity-80 hover:opacity-100 hover:bg-purple-100 dark:hover:bg-purple-900/60"
+						: "bg-stone-200 dark:bg-stone-800 border-stone-400 dark:border-stone-600 hover:bg-stone-300 dark:hover:bg-stone-700",
 			)}
 			style={{
 				top: `${topPct}%`,
@@ -79,7 +88,22 @@ export function ReservationBlock({ event, maxCols }: ReservationBlockProps) {
 					params={{ id: event.reservationId || "" }}
 					className="flex flex-col h-full w-full overflow-hidden text-stone-900 dark:text-stone-100 hover:underline"
 				>
-					<span className="font-bold truncate">{event.title}</span>
+					<div className="flex items-center gap-1 font-bold truncate">
+						{isPending && (
+							<Clock
+								size={11}
+								className="text-purple-600 dark:text-purple-400 shrink-0"
+							/>
+						)}
+						<span className="truncate">{event.title}</span>
+					</div>
+
+					{isPending && (
+						<span className="text-[9px] font-semibold text-purple-700 dark:text-purple-300 uppercase tracking-wider truncate">
+							{t("odottaaVahvistusta", "Odottaa vahvistusta")}
+						</span>
+					)}
+
 					{event.userName && (
 						<span className="text-[10px] text-stone-700 dark:text-stone-300 truncate flex items-center gap-0.5">
 							<UserIcon

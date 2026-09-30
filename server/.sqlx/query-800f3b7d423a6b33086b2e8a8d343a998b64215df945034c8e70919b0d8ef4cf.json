@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n            SELECT o.id, o.reservation_id, o.resource_id, o.start_time, o.end_time, o.created_at\n            FROM occurrences o\n            JOIN reservations r ON r.id = o.reservation_id\n            WHERE o.resource_id = $1\n              AND r.deleted_at IS NULL\n              AND r.status != 'cancelled'\n              AND o.start_time < $3 \n              AND o.end_time > $2\n            ",
+  "query": "\n            SELECT o.id, o.reservation_id, o.resource_id, o.start_time, o.end_time, o.created_at\n            FROM occurrences o\n            JOIN reservations r ON r.id = o.reservation_id\n            WHERE o.resource_id = $1\n              AND r.deleted_at IS NULL\n              AND r.status = 'confirmed'\n              AND o.start_time < $3 \n              AND o.end_time > $2\n            ",
   "describe": {
     "columns": [
       {
@@ -86,5 +86,5 @@
       false
     ]
   },
-  "hash": "d82392923625ccc47a9c6b6b6c238698497bcd0e3df283466fe33d6220ee7a97"
+  "hash": "800f3b7d423a6b33086b2e8a8d343a998b64215df945034c8e70919b0d8ef4cf"
 }
