@@ -70,8 +70,8 @@ export function useCreateResource() {
 			return data;
 		},
 		onSuccess: () => {
-			// Refresh resource list
-			queryClient.invalidateQueries({ queryKey: resourceKeys.lists() });
+			// Invalidate all resource queries to refresh the list
+			queryClient.invalidateQueries({ queryKey: resourceKeys.all });
 		},
 	});
 }
@@ -102,12 +102,12 @@ export function useUpdateResource() {
 			return data;
 		},
 		onSuccess: (updatedResource) => {
-			// Update specific detail cache and invalidate list
+			// Update specific detail cache and invalidate list queries
 			queryClient.setQueryData(
 				resourceKeys.detail(updatedResource.id),
 				updatedResource,
 			);
-			queryClient.invalidateQueries({ queryKey: resourceKeys.lists() });
+			queryClient.invalidateQueries({ queryKey: resourceKeys.all });
 		},
 	});
 }
@@ -131,9 +131,9 @@ export function useDeleteResource() {
 			return id;
 		},
 		onSuccess: (deletedId) => {
-			// Remove detail entry from cache and refresh list
+			// Remove detail entry from cache and refresh list queries
 			queryClient.removeQueries({ queryKey: resourceKeys.detail(deletedId) });
-			queryClient.invalidateQueries({ queryKey: resourceKeys.lists() });
+			queryClient.invalidateQueries({ queryKey: resourceKeys.all });
 		},
 	});
 }

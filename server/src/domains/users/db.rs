@@ -8,10 +8,10 @@ pub async fn list_users(pool: &PgPool) -> Result<Vec<User>, AppError> {
     let users = sqlx::query_as!(
         User,
         r#"
-        SELECT id, group_id, email, role AS "role: Role", created_at, updated_at
+        SELECT id, group_id, name, email, role AS "role: Role", created_at, updated_at
         FROM users
         WHERE deleted_at IS NULL
-        ORDER BY email ASC
+        ORDER BY name ASC, email ASC
         "#
     )
     .fetch_all(pool)
@@ -24,7 +24,7 @@ pub async fn get_user(pool: &PgPool, id: Uuid) -> Result<User, AppError> {
     let user = sqlx::query_as!(
         User,
         r#"
-        SELECT id, group_id, email, role AS "role: Role", created_at, updated_at
+        SELECT id, group_id, name, email, role AS "role: Role", created_at, updated_at
         FROM users
         WHERE id = $1 AND deleted_at IS NULL
         "#,
@@ -45,11 +45,12 @@ pub async fn create_user(
     let user = sqlx::query_as!(
         User,
         r#"
-        INSERT INTO users (group_id, email, password_hash)
-        VALUES ($1, $2, $3)
-        RETURNING id, group_id, email, role AS "role: Role", created_at, updated_at
+        INSERT INTO users (group_id, name, email, password_hash)
+        VALUES ($1, $2, $3, $4)
+        RETURNING id, group_id, name, email, role AS "role: Role", created_at, updated_at
         "#,
         payload.group_id,
+        payload.name,
         payload.email.to_lowercase(),
         password_hash
     )
@@ -70,13 +71,15 @@ pub async fn update_user(
         r#"
         UPDATE users
         SET 
-            email = COALESCE($1, email),
-            password_hash = COALESCE($2, password_hash),
-            group_id = COALESCE($3, group_id),
+            name = COALESCE($1, name),
+            email = COALESCE($2, email),
+            password_hash = COALESCE($3, password_hash),
+            group_id = COALESCE($4, group_id),
             updated_at = NOW()
-        WHERE id = $4 AND deleted_at IS NULL
-        RETURNING id, group_id, email, role AS "role: Role", created_at, updated_at
+        WHERE id = $5 AND deleted_at IS NULL
+        RETURNING id, group_id, name, email, role AS "role: Role", created_at, updated_at
         "#,
+        payload.name,
         payload.email.as_ref().map(|e| e.to_lowercase()),
         new_password_hash,
         payload.group_id,
@@ -148,6 +151,7 @@ mod tests {
 
         let payload = CreateUser {
             group_id,
+            name: "Test User".to_string(),
             email: "testuser@example.com".to_string(),
             password: "password123".to_string(),
         };
@@ -156,6 +160,7 @@ mod tests {
             .await
             .expect("Failed to create user");
 
+        assert_eq!(created.name, "Test User");
         assert_eq!(created.email, "testuser@example.com");
         assert_eq!(created.group_id, group_id);
         assert_eq!(created.role, Role::User);
@@ -165,6 +170,7 @@ mod tests {
             .expect("Failed to fetch user");
 
         assert_eq!(fetched.id, created.id);
+        assert_eq!(fetched.name, "Test User");
         assert_eq!(fetched.email, "testuser@example.com");
         assert_eq!(fetched.role, Role::User);
     }
@@ -177,6 +183,7 @@ mod tests {
             &pool,
             &CreateUser {
                 group_id,
+                name: "Zeta User".to_string(),
                 email: "zeta@example.com".to_string(),
                 password: "password123".to_string(),
             },
@@ -189,6 +196,7 @@ mod tests {
             &pool,
             &CreateUser {
                 group_id,
+                name: "Alpha User".to_string(),
                 email: "alpha@example.com".to_string(),
                 password: "password123".to_string(),
             },
@@ -204,6 +212,7 @@ mod tests {
 
         assert_eq!(list.len(), 1);
         assert_eq!(list[0].id, u2.id);
+        assert_eq!(list[0].name, "Alpha User");
         assert_eq!(list[0].email, "alpha@example.com");
         assert_eq!(list[0].role, Role::User);
     }
@@ -216,6 +225,7 @@ mod tests {
             &pool,
             &CreateUser {
                 group_id,
+                name: "Old Name".to_string(),
                 email: "old@example.com".to_string(),
                 password: "password123".to_string(),
             },
@@ -228,6 +238,7 @@ mod tests {
             &pool,
             created.id,
             &UpdateUser {
+                name: Some("New Name".to_string()),
                 email: Some("new@example.com".to_string()),
                 password: None,
                 group_id: None,
@@ -237,6 +248,7 @@ mod tests {
         .await
         .expect("Failed to update user");
 
+        assert_eq!(updated.name, "New Name");
         assert_eq!(updated.email, "new@example.com");
         assert_eq!(updated.role, Role::User);
     }

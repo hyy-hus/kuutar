@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        INSERT INTO contracts (name, body)\n        VALUES ($1, $2)\n        RETURNING id, name, body, created_at, updated_at, deleted_at\n        ",
+  "query": "\n        INSERT INTO contracts (title, s3_key, file_name, is_global, is_active)\n        VALUES ($1, $2, $3, $4, $5)\n        RETURNING id, title, s3_key, file_name, is_global, is_active, created_at, updated_at, deleted_at\n        ",
   "describe": {
     "columns": [
       {
@@ -16,28 +16,61 @@
       },
       {
         "ordinal": 1,
-        "name": "name",
-        "type_info": "Text",
+        "name": "title",
+        "type_info": "Jsonb",
         "origin": {
           "Table": {
             "table": "contracts",
-            "name": "name"
+            "name": "title"
           }
         }
       },
       {
         "ordinal": 2,
-        "name": "body",
+        "name": "s3_key",
         "type_info": "Jsonb",
         "origin": {
           "Table": {
             "table": "contracts",
-            "name": "body"
+            "name": "s3_key"
           }
         }
       },
       {
         "ordinal": 3,
+        "name": "file_name",
+        "type_info": "Jsonb",
+        "origin": {
+          "Table": {
+            "table": "contracts",
+            "name": "file_name"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "is_global",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "contracts",
+            "name": "is_global"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "is_active",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "contracts",
+            "name": "is_active"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
         "name": "created_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -48,7 +81,7 @@
         }
       },
       {
-        "ordinal": 4,
+        "ordinal": 7,
         "name": "updated_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -59,7 +92,7 @@
         }
       },
       {
-        "ordinal": 5,
+        "ordinal": 8,
         "name": "deleted_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -72,8 +105,11 @@
     ],
     "parameters": {
       "Left": [
-        "Text",
-        "Jsonb"
+        "Jsonb",
+        "Jsonb",
+        "Jsonb",
+        "Bool",
+        "Bool"
       ]
     },
     "nullable": [
@@ -82,8 +118,11 @@
       false,
       false,
       false,
+      false,
+      false,
+      false,
       true
     ]
   },
-  "hash": "9c14b049d7535891b6ad4e37e79b2741ea39b25220554080d27dff15e84907ad"
+  "hash": "8c2db04dda3ee6e9cf951220d6309b69f54098ace4ad254354843d2dbf949081"
 }

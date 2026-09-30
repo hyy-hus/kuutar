@@ -1,0 +1,30 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT DISTINCT r.id\n        FROM restrictions r\n        JOIN restriction_occurrences ro ON ro.restriction_id = r.id\n        WHERE r.deleted_at IS NULL\n          AND ro.start_time < $2\n          AND ro.end_time > $1\n          AND ($3::uuid IS NULL OR ro.resource_id IS NULL OR ro.resource_id = $3)\n        ORDER BY r.id\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "restrictions",
+            "name": "id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Timestamptz",
+        "Timestamptz",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "05781f0d282ca8776ebbf020d461bed4f07cbc3f0432a8794ae156df4805ee44"
+}

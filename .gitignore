@@ -1,3 +1,5 @@
 server/target
 .env*
 .cors.json
+deploy.sh
+todo.md

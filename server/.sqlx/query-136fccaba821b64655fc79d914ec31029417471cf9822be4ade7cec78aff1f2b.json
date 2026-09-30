@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        SELECT id, group_id, email, role AS \"role: Role\", created_at, updated_at\n        FROM users\n        WHERE deleted_at IS NULL\n        ORDER BY email ASC\n        ",
+  "query": "\n        SELECT id, group_id, name, email, role AS \"role: Role\", created_at, updated_at\n        FROM users\n        WHERE id = $1 AND deleted_at IS NULL\n        ",
   "describe": {
     "columns": [
       {
@@ -27,6 +27,17 @@
       },
       {
         "ordinal": 2,
+        "name": "name",
+        "type_info": "Varchar",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "name"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
         "name": "email",
         "type_info": "Text",
         "origin": {
@@ -37,7 +48,7 @@
         }
       },
       {
-        "ordinal": 3,
+        "ordinal": 4,
         "name": "role: Role",
         "type_info": {
           "Custom": {
@@ -58,7 +69,7 @@
         }
       },
       {
-        "ordinal": 4,
+        "ordinal": 5,
         "name": "created_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -69,7 +80,7 @@
         }
       },
       {
-        "ordinal": 5,
+        "ordinal": 6,
         "name": "updated_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -81,9 +92,12 @@
       }
     ],
     "parameters": {
-      "Left": []
+      "Left": [
+        "Uuid"
+      ]
     },
     "nullable": [
+      false,
       false,
       false,
       false,
@@ -92,5 +106,5 @@
       false
     ]
   },
-  "hash": "b85afce852823a5036941f1441a8518a32a81a851637c0b53087f97ad430beb1"
+  "hash": "136fccaba821b64655fc79d914ec31029417471cf9822be4ade7cec78aff1f2b"
 }

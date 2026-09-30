@@ -29,6 +29,10 @@ pub struct RegisterPayload {
     pub group_id: Uuid,
 
     #[serde(deserialize_with = "deserialize_trimmed_string")]
+    #[validate(length(min = 1, message = "Name is required"))]
+    pub name: String,
+
+    #[serde(deserialize_with = "deserialize_trimmed_string")]
     #[validate(email(message = "Invalid email address format"))]
     pub email: String,
 

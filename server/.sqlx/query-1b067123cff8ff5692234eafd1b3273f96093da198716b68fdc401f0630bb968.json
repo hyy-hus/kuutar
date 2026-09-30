@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        SELECT id, collection_id, name, allow_recurring, created_at, updated_at, deleted_at\n        FROM resources\n        WHERE id = $1 AND deleted_at IS NULL\n        ",
+  "query": "\n        SELECT id, collection_id, name, allow_recurring, reservable_until, is_public, created_at, updated_at, deleted_at\n        FROM resources\n        WHERE id = $1 \n          AND deleted_at IS NULL\n          AND ($2 = TRUE OR is_public = TRUE)\n        ",
   "describe": {
     "columns": [
       {
@@ -49,6 +49,28 @@
       },
       {
         "ordinal": 4,
+        "name": "reservable_until",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "resources",
+            "name": "reservable_until"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "is_public",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "resources",
+            "name": "is_public"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
         "name": "created_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -59,7 +81,7 @@
         }
       },
       {
-        "ordinal": 5,
+        "ordinal": 7,
         "name": "updated_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -70,7 +92,7 @@
         }
       },
       {
-        "ordinal": 6,
+        "ordinal": 8,
         "name": "deleted_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -83,7 +105,8 @@
     ],
     "parameters": {
       "Left": [
-        "Uuid"
+        "Uuid",
+        "Bool"
       ]
     },
     "nullable": [
@@ -91,10 +114,12 @@
       false,
       false,
       false,
+      true,
+      false,
       false,
       false,
       true
     ]
   },
-  "hash": "f5aded4beefba66511b63126734846e954012b087244d1b6180b06d7d5ada41a"
+  "hash": "1b067123cff8ff5692234eafd1b3273f96093da198716b68fdc401f0630bb968"
 }

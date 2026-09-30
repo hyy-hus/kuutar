@@ -1,4 +1,3 @@
-// src/routes/_app/users/index.tsx
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
 	Eye,
@@ -30,11 +29,18 @@ function UserCard({ user, groupName }: { user: User; groupName?: string }) {
 	return (
 		<li className="p-3 border-2 border-stone-800 dark:border-stone-700 flex flex-col justify-between gap-3 rounded-md bg-stone-50 dark:bg-stone-900 shadow-xs hover:border-purple-600 dark:hover:border-purple-500 transition-colors min-w-0">
 			<div className="space-y-2 min-w-0">
-				{/* Header: Email and ID Chip */}
+				{/* Header: Name, Email and ID Chip */}
 				<div className="flex items-start justify-between gap-2 min-w-0">
-					<h3 className="font-bold text-sm md:text-base text-stone-900 dark:text-stone-100 truncate flex-1">
-						{user.email}
-					</h3>
+					<div className="flex-1 truncate">
+						<h3 className="font-bold text-sm md:text-base text-stone-900 dark:text-stone-100 truncate">
+							{user.name || user.email}
+						</h3>
+						{user.name && (
+							<p className="text-xs text-stone-500 dark:text-stone-400 truncate">
+								{user.email}
+							</p>
+						)}
+					</div>
 					<Chip>{readable_uuid(user.id)}</Chip>
 				</div>
 
@@ -47,7 +53,6 @@ function UserCard({ user, groupName }: { user: User; groupName?: string }) {
 
 			{/* Bottom Controls & Role Badge */}
 			<div className="flex items-center justify-between gap-2 pt-2 border-t border-stone-200 dark:border-stone-800 shrink-0">
-				{/* Role indicator */}
 				{user.role === "admin" ? (
 					<span className="inline-flex items-center gap-1 text-[10px] font-mono text-amber-700 dark:text-amber-400 bg-amber-100 dark:bg-amber-950/60 px-1.5 py-0.5 rounded border border-amber-300 dark:border-amber-800">
 						<Shield size={10} />

@@ -10,6 +10,7 @@ import {
 	FileText,
 	Loader2,
 	Printer,
+	User as UserIcon,
 	X,
 	XCircle,
 } from "lucide-react";
@@ -22,7 +23,6 @@ import {
 	type Contract,
 	contractKeys,
 	getLocalizedText,
-	useContracts,
 } from "#/hooks/useContracts";
 import {
 	type ReservationStatus,
@@ -69,7 +69,6 @@ export const Route = createFileRoute("/_app/admin/dashboard/")({
 
 /** Hook to resolve all applicable contracts for a set of resource IDs */
 function useReservationContracts(resourceIds: string[]) {
-	// Query GET /contracts?resource_id=X for every unique resource ID
 	const contractQueries = useQueries({
 		queries: resourceIds.map((rId) => ({
 			queryKey: contractKeys.list({ resource_id: rId, active_only: true }),
@@ -114,7 +113,6 @@ function AdminReservationCard({
 	const isPending = reservationWithOcc.status === "pending";
 	const isCancelled = reservationWithOcc.status === "cancelled";
 
-	// Collect unique resource IDs involved in this reservation
 	const resourceIds = useMemo(() => {
 		return Array.from(
 			new Set(
@@ -123,7 +121,6 @@ function AdminReservationCard({
 		);
 	}, [reservationWithOcc.occurrences]);
 
-	// Dynamically fetch contracts applicable to these resources
 	const applicableContracts = useReservationContracts(resourceIds);
 
 	const handlePrintSingle = async () => {
@@ -144,20 +141,36 @@ function AdminReservationCard({
 			)}
 		>
 			<div className="flex items-start justify-between gap-2 min-w-0">
-				<Link
-					to="/reservations/$id"
-					params={{ id: reservationWithOcc.id }}
-					className="font-bold truncate hover:underline text-stone-900 dark:text-stone-100 flex-1 text-sm md:text-base"
-				>
-					{reservationWithOcc.title}
-				</Link>
+				<div className="flex-1 truncate">
+					<Link
+						to="/reservations/$id"
+						params={{ id: reservationWithOcc.id }}
+						className="font-bold truncate hover:underline text-stone-900 dark:text-stone-100 text-sm md:text-base block"
+					>
+						{reservationWithOcc.title}
+					</Link>
+					{reservationWithOcc.user_name && (
+						<p className="text-[11px] text-stone-600 dark:text-stone-400 flex items-center gap-1 mt-0.5 font-medium">
+							<UserIcon
+								size={12}
+								className="shrink-0 text-purple-600 dark:text-purple-400"
+							/>
+							<span className="truncate">{reservationWithOcc.user_name}</span>
+							{reservationWithOcc.user_email && (
+								<span className="text-stone-400 font-mono text-[10px]">
+									({reservationWithOcc.user_email})
+								</span>
+							)}
+						</p>
+					)}
+				</div>
 				<Chip>{readable_uuid(reservationWithOcc.id)}</Chip>
 			</div>
 
 			<div className="flex flex-wrap items-center justify-between gap-2 min-w-0">
 				{firstOccurrence ? (
-					<div className="flex items-center gap-1 text-xs text-stone-500 dark:text-stone-400">
-						<Calendar size={14} />
+					<div className="flex items-center gap-1 text-xs text-stone-500 dark:text-stone-400 font-mono">
+						<Calendar size={14} className="shrink-0" />
 						<span>{formatDate(firstOccurrence.start_time)}</span>
 					</div>
 				) : (
@@ -174,7 +187,6 @@ function AdminReservationCard({
 				)}
 			</div>
 
-			{/* Applicable Contracts Chips */}
 			{applicableContracts.length > 0 && (
 				<div className="flex flex-wrap gap-1 pt-1 border-t border-stone-200 dark:border-stone-800">
 					{applicableContracts.map((c) => (
@@ -194,7 +206,6 @@ function AdminReservationCard({
 				</div>
 			)}
 
-			{/* Action Buttons Row */}
 			<div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-stone-200 dark:border-stone-800">
 				<Button
 					variant="outline"
@@ -353,7 +364,6 @@ function AdminDashboardPage() {
 
 	return (
 		<div className="flex flex-col gap-4 sm:gap-6 p-2 sm:p-4 flex-1 min-h-0 min-w-0">
-			{/* Header with Batch Print Action */}
 			<div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 shrink-0 border-b border-stone-200 dark:border-stone-800 pb-3">
 				<h1 className="text-lg sm:text-xl font-bold text-stone-900 dark:text-stone-100">
 					{t("yllpidonHallintapaneeli", "Ylläpidon hallintapaneeli")}
@@ -376,7 +386,6 @@ function AdminDashboardPage() {
 				</Button>
 			</div>
 
-			{/* Controls Bar */}
 			<div className="flex flex-wrap items-center gap-2 shrink-0 p-2 bg-stone-100 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-md">
 				<div className="flex items-center gap-1">
 					<Button
@@ -446,7 +455,6 @@ function AdminDashboardPage() {
 				</div>
 			) : (
 				<div className="space-y-6">
-					{/* Pending Approvals */}
 					<div className="space-y-3">
 						<div className="flex items-center gap-2 text-amber-600 dark:text-amber-500 font-bold">
 							<Clock size={18} />
@@ -481,7 +489,6 @@ function AdminDashboardPage() {
 						)}
 					</div>
 
-					{/* Confirmed Reservations */}
 					<div className="space-y-3">
 						<div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-500 font-bold">
 							<CheckCircle2 size={18} />
@@ -516,7 +523,6 @@ function AdminDashboardPage() {
 						)}
 					</div>
 
-					{/* Cancelled / Rejected Reservations */}
 					<div className="space-y-3">
 						<div className="flex items-center gap-2 text-rose-600 dark:text-rose-500 font-bold">
 							<XCircle size={18} />

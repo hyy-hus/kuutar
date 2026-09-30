@@ -12,6 +12,7 @@ export const Route = createFileRoute("/_app/admin/users/batch-register")({
 
 interface ParsedRow {
 	email: string;
+	name?: string;
 	password?: string;
 }
 
@@ -40,9 +41,10 @@ function BatchRegisterUserPage() {
 			setErrors(results.errors.map((e) => `Rivi ${e.row}: ${e.message}`));
 		}
 
-		// Parse TSV/CSV rows for email and optional password
+		// Parse TSV/CSV rows for email, name, and optional password
 		const rows: ParsedRow[] = results.data.map((row) => ({
 			email: row.email || row["sähköposti"] || Object.values(row)[0] || "",
+			name: row.name || row["nimi"] || row["etunimi"] || undefined,
 			password: row.password || row["salasana"] || undefined,
 		}));
 
@@ -91,6 +93,7 @@ function BatchRegisterUserPage() {
 
 		const payloads: CreateUserPayload[] = parsedRows.map((row) => ({
 			email: row.email,
+			name: row.name || undefined,
 			password: row.password,
 			group_id: selectedGroupId,
 		}));
@@ -115,7 +118,7 @@ function BatchRegisterUserPage() {
 				<p className="text-sm text-stone-500 dark:text-stone-400">
 					{t(
 						"batchRegisterDescription",
-						"Valitse kohderyhmä ja tuo käyttäjälista (email, salasana) CSV/TSV-tiedostosta tai leikepöydältä.",
+						"Valitse kohderyhmä ja tuo käyttäjälista (email, nimi, salasana) CSV/TSV-tiedostosta tai leikepöydältä.",
 					)}
 				</p>
 			</div>
@@ -170,7 +173,7 @@ function BatchRegisterUserPage() {
 				<textarea
 					value={rawText}
 					onChange={(e) => handleParseInput(e.target.value)}
-					placeholder="email, password&#10;matti@example.com, secret123&#10;maija@example.com, secret456"
+					placeholder="email, name, password&#10;matti@example.com, Matti Meikäläinen, secret123&#10;maija@example.com, Maija Mallikas, secret456"
 					rows={5}
 					className="w-full p-3 text-xs font-mono rounded-md border border-stone-300 dark:border-stone-700 bg-stone-50 dark:bg-stone-900 focus:outline-none focus:ring-1 focus:ring-purple-600"
 				/>
@@ -225,6 +228,9 @@ function BatchRegisterUserPage() {
 										Email
 									</th>
 									<th className="p-2 border-b border-stone-200 dark:border-stone-700">
+										Nimi
+									</th>
+									<th className="p-2 border-b border-stone-200 dark:border-stone-700">
 										Salasana
 									</th>
 								</tr>
@@ -237,6 +243,9 @@ function BatchRegisterUserPage() {
 									>
 										<td className="p-2 text-stone-400">{idx + 1}</td>
 										<td className="p-2 font-medium">{user.email}</td>
+										<td className="p-2 text-stone-700 dark:text-stone-300">
+											{user.name || t("noName", "(Ei asetettu)")}
+										</td>
 										<td className="p-2 text-stone-400">
 											{user.password
 												? "••••••••"

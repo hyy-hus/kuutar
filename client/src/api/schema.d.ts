@@ -480,6 +480,9 @@ export interface components {
         };
         CreateReservationPayload: {
             admin_notes?: string | null;
+            contact_email?: string | null;
+            contact_person?: string | null;
+            contact_phone?: string | null;
             /** Format: uuid */
             contract_id?: string | null;
             description?: string | null;
@@ -493,7 +496,10 @@ export interface components {
             /** Format: uuid */
             collection_id: string;
             contract_ids?: string[] | null;
+            is_public?: boolean;
             name: string;
+            /** Format: date-time */
+            reservable_until?: string | null;
         };
         CreateRestrictionOccurrencePayload: {
             /** Format: date-time */
@@ -514,6 +520,7 @@ export interface components {
             email: string;
             /** Format: uuid */
             group_id: string;
+            name: string;
             password: string;
         };
         Group: {
@@ -564,10 +571,14 @@ export interface components {
             email: string;
             /** Format: uuid */
             group_id: string;
+            name: string;
             password: string;
         };
         Reservation: {
             admin_notes?: string | null;
+            contact_email?: string | null;
+            contact_person?: string | null;
+            contact_phone?: string | null;
             /** Format: uuid */
             contract_id?: string | null;
             /** Format: date-time */
@@ -582,8 +593,10 @@ export interface components {
             title: string;
             /** Format: date-time */
             updated_at: string;
+            user_email?: string | null;
             /** Format: uuid */
             user_id: string;
+            user_name?: string | null;
         };
         /** @enum {string} */
         ReservationStatus: "pending" | "confirmed" | "cancelled";
@@ -600,7 +613,10 @@ export interface components {
             deleted_at?: string | null;
             /** Format: uuid */
             id: string;
+            is_public: boolean;
             name: string;
+            /** Format: date-time */
+            reservable_until?: string | null;
             /** Format: date-time */
             updated_at: string;
         };
@@ -671,10 +687,12 @@ export interface components {
         };
         UpdateReservationPayload: {
             admin_notes?: string | null;
+            contact_email?: string | null;
+            contact_person?: string | null;
+            contact_phone?: string | null;
             /** Format: uuid */
             contract_id?: string | null;
             description?: string | null;
-            /** @description When set to true, automatically sets `contract_printed_at` to `NOW()` */
             mark_printed?: boolean | null;
             occurrences?: components["schemas"]["CreateOccurrencePayload"][] | null;
             rrule?: string | null;
@@ -684,7 +702,10 @@ export interface components {
         UpdateResource: {
             allow_recurring?: boolean | null;
             contract_ids?: string[] | null;
+            is_public?: boolean | null;
             name?: string | null;
+            /** Format: date-time */
+            reservable_until?: string | null;
         };
         UpdateRestrictionPayload: {
             description?: string | null;
@@ -697,6 +718,7 @@ export interface components {
             email?: string | null;
             /** Format: uuid */
             group_id?: string | null;
+            name?: string | null;
             password?: string | null;
         };
         User: {
@@ -707,6 +729,7 @@ export interface components {
             group_id: string;
             /** Format: uuid */
             id: string;
+            name: string;
             role: components["schemas"]["Role"];
             /** Format: date-time */
             updated_at: string;
@@ -1587,7 +1610,7 @@ export interface operations {
                     "application/json": components["schemas"]["ReservationWithOccurrences"];
                 };
             };
-            /** @description Invalid occurrence interval times */
+            /** @description Invalid occurrence interval times or exceeds reservable_until date */
             400: {
                 headers: {
                     [name: string]: unknown;
@@ -1770,6 +1793,13 @@ export interface operations {
                     "application/json": components["schemas"]["ReservationWithOccurrences"];
                 };
             };
+            /** @description Exceeds reservable_until date boundary */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
             /** @description Unauthorized */
             401: {
                 headers: {
@@ -1809,7 +1839,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description List of active resources */
+            /** @description List of active resources (non-admins receive public resources only) */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -1893,7 +1923,7 @@ export interface operations {
                     "application/json": components["schemas"]["Resource"];
                 };
             };
-            /** @description Resource not found */
+            /** @description Resource not found or restricted */
             404: {
                 headers: {
                     [name: string]: unknown;

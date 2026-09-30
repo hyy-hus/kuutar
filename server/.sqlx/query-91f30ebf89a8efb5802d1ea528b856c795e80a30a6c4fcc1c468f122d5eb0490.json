@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        SELECT id, name, body, created_at, updated_at, deleted_at\n        FROM contracts\n        WHERE id = $1 AND deleted_at IS NULL\n        ",
+  "query": "\n        SELECT DISTINCT\n            c.id, c.title, c.s3_key, c.file_name, c.is_global, c.is_active,\n            c.created_at, c.updated_at, c.deleted_at\n        FROM contracts c\n        LEFT JOIN resource_contracts rc ON c.id = rc.contract_id\n        WHERE c.deleted_at IS NULL\n          AND c.is_active = true\n          AND (c.is_global = true OR rc.resource_id = $1)\n        ORDER BY c.created_at DESC\n        ",
   "describe": {
     "columns": [
       {
@@ -16,28 +16,61 @@
       },
       {
         "ordinal": 1,
-        "name": "name",
-        "type_info": "Text",
+        "name": "title",
+        "type_info": "Jsonb",
         "origin": {
           "Table": {
             "table": "contracts",
-            "name": "name"
+            "name": "title"
           }
         }
       },
       {
         "ordinal": 2,
-        "name": "body",
+        "name": "s3_key",
         "type_info": "Jsonb",
         "origin": {
           "Table": {
             "table": "contracts",
-            "name": "body"
+            "name": "s3_key"
           }
         }
       },
       {
         "ordinal": 3,
+        "name": "file_name",
+        "type_info": "Jsonb",
+        "origin": {
+          "Table": {
+            "table": "contracts",
+            "name": "file_name"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "is_global",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "contracts",
+            "name": "is_global"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "is_active",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "contracts",
+            "name": "is_active"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
         "name": "created_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -48,7 +81,7 @@
         }
       },
       {
-        "ordinal": 4,
+        "ordinal": 7,
         "name": "updated_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -59,7 +92,7 @@
         }
       },
       {
-        "ordinal": 5,
+        "ordinal": 8,
         "name": "deleted_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -81,8 +114,11 @@
       false,
       false,
       false,
+      false,
+      false,
+      false,
       true
     ]
   },
-  "hash": "74ae3975b09c4f6c14ecd2b3c4200b1dada60daecdeb821fe58530bdefa842c6"
+  "hash": "91f30ebf89a8efb5802d1ea528b856c795e80a30a6c4fcc1c468f122d5eb0490"
 }

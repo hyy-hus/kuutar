@@ -31,6 +31,7 @@ function EditUserPage() {
 		await updateUser.mutateAsync({
 			id: user.id,
 			payload: {
+				name: values.name,
 				email: values.email,
 				group_id: values.group_id,
 				...(values.password ? { password: values.password } : {}),
@@ -46,6 +47,7 @@ function EditUserPage() {
 			</h1>
 			<UserForm
 				defaultValues={{
+					name: user.name,
 					email: user.email,
 					group_id: user.group_id,
 				}}

@@ -27,7 +27,6 @@ pub async fn list_filtered(
           AND o.end_time > $1
           AND ($3::uuid IS NULL OR o.resource_id = $3)
           AND ($4::reservation_status IS NULL OR r.status = $4)
-          -- Filter by target_user_id if provided (mandatory for non-admins)
           AND ($5::uuid IS NULL OR r.user_id = $5)
         "#,
         start_date,
@@ -47,13 +46,26 @@ pub async fn list_filtered(
         Reservation,
         r#"
         SELECT 
-            id, user_id, title, description, admin_notes, rrule, 
-            status AS "status: ReservationStatus",
-            contract_id, contract_printed_at,
-            created_at, updated_at
-        FROM reservations
-        WHERE id = ANY($1) AND deleted_at IS NULL
-        ORDER BY created_at DESC
+            r.id, 
+            r.user_id,
+            u.name AS "user_name?",
+            u.email AS "user_email?",
+            r.title, 
+            r.description, 
+            r.admin_notes,
+            r.contact_person, 
+            r.contact_email, 
+            r.contact_phone,
+            r.rrule, 
+            r.status AS "status: ReservationStatus",
+            r.contract_id, 
+            r.contract_printed_at,
+            r.created_at, 
+            r.updated_at
+        FROM reservations r
+        LEFT JOIN users u ON u.id = r.user_id
+        WHERE r.id = ANY($1) AND r.deleted_at IS NULL
+        ORDER BY r.created_at DESC
         "#,
         &reservation_ids
     )
@@ -63,9 +75,15 @@ pub async fn list_filtered(
     let mut result = Vec::with_capacity(reservations.len());
 
     for mut reservation in reservations {
+        // Strip admin-only fields if requestor is not an admin
         if !is_admin {
+            reservation.user_email = None;
             reservation.admin_notes = None;
+            reservation.contact_person = None;
+            reservation.contact_email = None;
+            reservation.contact_phone = None;
         }
+
         let occurrences = fetch_occurrences_for_reservation_filtered(
             pool,
             reservation.id,
@@ -93,12 +111,25 @@ pub async fn find_by_id(
         Reservation,
         r#"
         SELECT 
-            id, user_id, title, description, admin_notes, rrule, 
-            status AS "status: ReservationStatus",
-            contract_id, contract_printed_at,
-            created_at, updated_at
-        FROM reservations
-        WHERE id = $1 AND deleted_at IS NULL
+            r.id, 
+            r.user_id,
+            u.name AS "user_name?",
+            u.email AS "user_email?",
+            r.title, 
+            r.description, 
+            r.admin_notes,
+            r.contact_person, 
+            r.contact_email, 
+            r.contact_phone,
+            r.rrule, 
+            r.status AS "status: ReservationStatus",
+            r.contract_id, 
+            r.contract_printed_at,
+            r.created_at, 
+            r.updated_at
+        FROM reservations r
+        LEFT JOIN users u ON u.id = r.user_id
+        WHERE r.id = $1 AND r.deleted_at IS NULL
         "#,
         id
     )
@@ -107,7 +138,11 @@ pub async fn find_by_id(
     .ok_or(AppError::NotFound)?;
 
     if !is_admin {
+        reservation.user_email = None;
         reservation.admin_notes = None;
+        reservation.contact_person = None;
+        reservation.contact_email = None;
+        reservation.contact_phone = None;
     }
 
     let occurrences = fetch_occurrences_for_reservation(pool, reservation.id).await?;
@@ -127,21 +162,23 @@ pub async fn create(
 
     let initial_status = dto.status.unwrap_or(ReservationStatus::Pending);
 
-    let reservation = sqlx::query_as!(
-        Reservation,
+    let reservation_id = sqlx::query_scalar!(
         r#"
-        INSERT INTO reservations (user_id, title, description, admin_notes, rrule, status, contract_id)
-        VALUES ($1, $2, $3, $4, $5, $6, $7)
-        RETURNING 
-            id, user_id, title, description, admin_notes, rrule, 
-            status AS "status: ReservationStatus",
-            contract_id, contract_printed_at,
-            created_at, updated_at
+        INSERT INTO reservations (
+            user_id, title, description, admin_notes, 
+            contact_person, contact_email, contact_phone, 
+            rrule, status, contract_id
+        )
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        RETURNING id
         "#,
         user_id,
         dto.title,
         dto.description,
         dto.admin_notes,
+        dto.contact_person,
+        dto.contact_email,
+        dto.contact_phone,
         dto.rrule,
         initial_status as ReservationStatus,
         dto.contract_id
@@ -149,33 +186,24 @@ pub async fn create(
     .fetch_one(&mut *tx)
     .await?;
 
-    let mut occurrences = Vec::with_capacity(dto.occurrences.len());
-
     for occ in dto.occurrences {
-        let inserted = sqlx::query_as!(
-            Occurrence,
+        sqlx::query!(
             r#"
             INSERT INTO occurrences (reservation_id, resource_id, start_time, end_time)
             VALUES ($1, $2, $3, $4)
-            RETURNING id, reservation_id, resource_id, start_time, end_time, created_at
             "#,
-            reservation.id,
+            reservation_id,
             occ.resource_id,
             occ.start_time,
             occ.end_time
         )
-        .fetch_one(&mut *tx)
+        .execute(&mut *tx)
         .await?;
-
-        occurrences.push(inserted);
     }
 
     tx.commit().await?;
 
-    Ok(ReservationWithOccurrences {
-        reservation,
-        occurrences,
-    })
+    find_by_id(pool, reservation_id, true).await
 }
 
 pub async fn update(
@@ -185,43 +213,45 @@ pub async fn update(
 ) -> Result<ReservationWithOccurrences, AppError> {
     let mut tx = pool.begin().await?;
 
-    // 1. Update reservation metadata
-    let reservation = sqlx::query_as!(
-        Reservation,
+    let result = sqlx::query!(
         r#"
         UPDATE reservations
-SET 
-    title = COALESCE($1, title),
-    description = COALESCE($2, description),
-    admin_notes = COALESCE($3, admin_notes),
-    rrule = COALESCE($4, rrule),
-    status = COALESCE($5, status),
-    contract_id = COALESCE($6, contract_id),
-    contract_printed_at = CASE 
-        WHEN $7 = TRUE THEN NOW() 
-        WHEN $7 = FALSE THEN NULL
-        ELSE contract_printed_at 
-    END,
-    updated_at = NOW()
-WHERE id = $8 AND deleted_at IS NULL
-RETURNING 
-    id, user_id, title, description, admin_notes, rrule, 
-    status AS "status: ReservationStatus",
-    contract_id, contract_printed_at,
-    created_at, updated_at
+        SET 
+            title = COALESCE($1, title),
+            description = COALESCE($2, description),
+            admin_notes = COALESCE($3, admin_notes),
+            contact_person = COALESCE($4, contact_person),
+            contact_email = COALESCE($5, contact_email),
+            contact_phone = COALESCE($6, contact_phone),
+            rrule = COALESCE($7, rrule),
+            status = COALESCE($8, status),
+            contract_id = COALESCE($9, contract_id),
+            contract_printed_at = CASE 
+                WHEN $10 = TRUE THEN NOW() 
+                WHEN $10 = FALSE THEN NULL
+                ELSE contract_printed_at 
+            END,
+            updated_at = NOW()
+        WHERE id = $11 AND deleted_at IS NULL
         "#,
         dto.title,
         dto.description,
         dto.admin_notes,
+        dto.contact_person,
+        dto.contact_email,
+        dto.contact_phone,
         dto.rrule,
         dto.status as Option<ReservationStatus>,
         dto.contract_id,
         dto.mark_printed,
         id
     )
-    .fetch_optional(&mut *tx)
-    .await?
-    .ok_or(AppError::NotFound)?;
+    .execute(&mut *tx)
+    .await?;
+
+    if result.rows_affected() == 0 {
+        return Err(AppError::NotFound);
+    }
 
     if let Some(new_occurrences) = dto.occurrences {
         sqlx::query!(r#"DELETE FROM occurrences WHERE reservation_id = $1"#, id)
@@ -246,12 +276,7 @@ RETURNING
 
     tx.commit().await?;
 
-    let occurrences = fetch_occurrences_for_reservation(pool, id).await?;
-
-    Ok(ReservationWithOccurrences {
-        reservation,
-        occurrences,
-    })
+    find_by_id(pool, id, true).await
 }
 
 pub async fn soft_delete(pool: &PgPool, id: Uuid) -> Result<(), AppError> {
@@ -405,6 +430,45 @@ pub async fn validate_occurrence_restrictions(
                 "Varaus osuu rajoitetulle ajanjaksolle: '{}'",
                 blocked.title
             )));
+        }
+    }
+
+    Ok(())
+}
+
+/// Validates proposed occurrences against the resource's `reservable_until` boundary.
+/// Admins bypass this check.
+pub async fn validate_resource_reservable_until(
+    pool: &PgPool,
+    is_admin: bool,
+    occurrences: &[CreateOccurrencePayload],
+) -> Result<(), AppError> {
+    if is_admin || occurrences.is_empty() {
+        return Ok(());
+    }
+
+    for occ in occurrences {
+        let resource_limit = sqlx::query!(
+            r#"
+            SELECT name, reservable_until
+            FROM resources
+            WHERE id = $1 AND deleted_at IS NULL
+            "#,
+            occ.resource_id
+        )
+        .fetch_optional(pool)
+        .await?;
+
+        if let Some(res) = resource_limit {
+            if let Some(until) = res.reservable_until {
+                if occ.end_time > until {
+                    return Err(AppError::BadRequest(format!(
+                        "Resurssia '{}' voi varata vain kuupäivään {} asti.",
+                        res.name,
+                        until.format("%d.%m.%Y")
+                    )));
+                }
+            }
         }
     }
 

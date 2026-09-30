@@ -11,6 +11,7 @@ pub struct User {
     pub id: Uuid,
     pub group_id: Uuid,
     pub role: Role,
+    pub name: String,
     pub email: String,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
@@ -19,6 +20,10 @@ pub struct User {
 #[derive(Debug, Deserialize, Validate, ToSchema)]
 pub struct CreateUser {
     pub group_id: Uuid,
+
+    #[serde(deserialize_with = "deserialize_trimmed_string")]
+    #[validate(length(min = 1, message = "Name is required"))]
+    pub name: String,
 
     #[serde(deserialize_with = "deserialize_trimmed_string")]
     #[validate(email(message = "Invalid email address format"))]
@@ -30,6 +35,9 @@ pub struct CreateUser {
 
 #[derive(Debug, Deserialize, Validate, ToSchema)]
 pub struct UpdateUser {
+    #[serde(default, deserialize_with = "deserialize_trimmed_option_string")]
+    pub name: Option<String>,
+
     #[serde(default, deserialize_with = "deserialize_trimmed_option_string")]
     #[validate(email(message = "Invalid email address format"))]
     pub email: Option<String>,

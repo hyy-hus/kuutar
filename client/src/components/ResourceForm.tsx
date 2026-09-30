@@ -1,6 +1,4 @@
-// client/src/components/ResourceForm.tsx
-
-import { FileText, Loader2, Save } from "lucide-react";
+import { FileText, Eye, Loader2, Save } from "lucide-react";
 import { Button } from "./Button";
 import type { CreateResource } from "#/hooks/useResorces";
 import { useTranslation } from "react-i18next";
@@ -9,7 +7,10 @@ import { useCollections } from "#/hooks/useCollections";
 import { useForm } from "@tanstack/react-form";
 import { Input } from "./Input";
 
-export interface ResourceFormValues extends CreateResource {
+export interface ResourceFormValues
+	extends Omit<CreateResource, "reservable_until"> {
+	reservable_until?: string | null;
+	is_public?: boolean;
 	contract_ids?: string[];
 }
 
@@ -19,6 +20,16 @@ interface ResourceFormProps {
 	isSubmitting?: boolean;
 	submitLabel?: string;
 }
+
+const formatYYYYMMDD = (isoStr?: string | null) => {
+	if (!isoStr) return "";
+	const date = new Date(isoStr);
+	if (Number.isNaN(date.getTime())) return "";
+	const year = date.getFullYear();
+	const month = String(date.getMonth() + 1).padStart(2, "0");
+	const day = String(date.getDate()).padStart(2, "0");
+	return `${year}-${month}-${day}`;
+};
 
 export function ResourceForm({
 	defaultValues,
@@ -39,10 +50,22 @@ export function ResourceForm({
 			name: defaultValues?.name ?? "",
 			collection_id: defaultValues?.collection_id ?? "",
 			allow_recurring: defaultValues?.allow_recurring ?? true,
+			is_public: defaultValues?.is_public ?? true,
+			reservable_until: formatYYYYMMDD(defaultValues?.reservable_until),
 			contract_ids: defaultValues?.contract_ids ?? [],
 		},
 		onSubmit: async ({ value }) => {
-			await onSubmit(value);
+			const formattedUntil = value.reservable_until
+				? new Date(`${value.reservable_until}T23:59:59.999Z`).toISOString()
+				: null;
+
+			console.log(value);
+
+			await onSubmit({
+				...value,
+				is_public: value.is_public ?? false,
+				reservable_until: formattedUntil,
+			});
 		},
 	});
 
@@ -142,29 +165,89 @@ export function ResourceForm({
 				}}
 			</form.Field>
 
-			{/* Allow Recurring Toggle */}
-			<form.Field name="allow_recurring">
+			{/* Reservable Until Cutoff Date */}
+			<form.Field name="reservable_until">
 				{(field) => (
-					<div className="flex items-center gap-3 p-3 bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-md">
-						<input
-							type="checkbox"
-							id={field.name}
-							checked={field.state.value}
-							onChange={(e) => field.handleChange(e.target.checked)}
-							className="w-4 h-4 text-purple-600 rounded border-stone-300 focus:ring-purple-500 dark:border-stone-700 dark:bg-stone-950"
-						/>
+					<div className="space-y-1">
 						<label
 							htmlFor={field.name}
-							className="text-xs font-medium text-stone-800 dark:text-stone-200 cursor-pointer select-none"
+							className="text-xs font-medium text-stone-700 dark:text-stone-300"
 						>
-							{t(
-								"salliToistuvatVarauksetTlleResurssille",
-								"Salli toistuvat varaukset tälle resurssille",
-							)}
+							{t("varattavissaAsti", "Varattavissa enintään päivämäärään asti")}
 						</label>
+						<Input
+							id={field.name}
+							type="date"
+							value={field.state.value}
+							onChange={(e) => field.handleChange(e.target.value)}
+							onBlur={field.handleBlur}
+						/>
+						<p className="text-[11px] text-stone-500 dark:text-stone-400">
+							{t(
+								"varattavissaAstiOhje",
+								"Jätä tyhjäksi, jos varauksille ei ole takarajaa.",
+							)}
+						</p>
 					</div>
 				)}
 			</form.Field>
+
+			{/* Visibility & Recurrence Toggles */}
+			<div className="space-y-2 pt-2 border-t border-stone-200 dark:border-stone-800">
+				{/* Is Public Toggle */}
+				<form.Field name="is_public">
+					{(field) => (
+						<div className="flex items-center gap-3 p-3 bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-md">
+							<input
+								type="checkbox"
+								id={field.name}
+								checked={field.state.value}
+								onChange={(e) => field.handleChange(e.target.checked)}
+								className="w-4 h-4 text-purple-600 rounded border-stone-300 focus:ring-purple-500 dark:border-stone-700 dark:bg-stone-950"
+							/>
+							<label
+								htmlFor={field.name}
+								className="text-xs font-medium text-stone-800 dark:text-stone-200 cursor-pointer select-none flex items-center gap-1.5"
+							>
+								<Eye
+									size={14}
+									className="text-purple-600 dark:text-purple-400"
+								/>
+								<span>
+									{t(
+										"julkinenResurssi",
+										"Julkinen resurssi (näkyy kaikille käyttäjille)",
+									)}
+								</span>
+							</label>
+						</div>
+					)}
+				</form.Field>
+
+				{/* Allow Recurring Toggle */}
+				<form.Field name="allow_recurring">
+					{(field) => (
+						<div className="flex items-center gap-3 p-3 bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-md">
+							<input
+								type="checkbox"
+								id={field.name}
+								checked={field.state.value}
+								onChange={(e) => field.handleChange(e.target.checked)}
+								className="w-4 h-4 text-purple-600 rounded border-stone-300 focus:ring-purple-500 dark:border-stone-700 dark:bg-stone-950"
+							/>
+							<label
+								htmlFor={field.name}
+								className="text-xs font-medium text-stone-800 dark:text-stone-200 cursor-pointer select-none"
+							>
+								{t(
+									"salliToistuvatVarauksetTlleResurssille",
+									"Salli toistuvat varaukset tälle resurssille",
+								)}
+							</label>
+						</div>
+					)}
+				</form.Field>
+			</div>
 
 			{/* Resource Contracts Selection */}
 			<form.Field name="contract_ids">

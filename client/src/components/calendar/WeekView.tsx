@@ -255,7 +255,7 @@ export function WeekView({
 						// biome-ignore lint/suspicious/noArrayIndexKey: Grid columns are static and non-reorderable
 						key={`day-${i}`}
 						className="pointer-events-none"
-						style={{ gridColumn: i + 2, gridRow: "1 / -1" }}
+						style={{ gridColumn: i + 2, gridRow: "2 / span 24" }}
 					>
 						<DayColumn events={eventsByDay[i]} columnIndex={i + 2} />
 					</div>

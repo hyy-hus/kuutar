@@ -16,12 +16,30 @@ pub enum ReservationStatus {
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct Reservation {
     pub id: Uuid,
-    pub user_id: Uuid, // Owned directly by user
+    pub user_id: Uuid,
+
+    // Creator Metadata (Publicly visible)
+    pub user_name: Option<String>,
+
+    // Admin-Only Creator Details
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub user_email: Option<String>,
+
     pub title: String,
     pub description: Option<String>,
 
+    // Admin-Only Contact Details & Notes
     #[serde(skip_serializing_if = "Option::is_none")]
     pub admin_notes: Option<String>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub contact_person: Option<String>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub contact_email: Option<String>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub contact_phone: Option<String>,
 
     pub rrule: Option<String>,
     pub status: ReservationStatus,
@@ -63,6 +81,12 @@ pub struct CreateReservationPayload {
     pub title: String,
     pub description: Option<String>,
     pub admin_notes: Option<String>,
+
+    // Optional Contact Info provided during creation
+    pub contact_person: Option<String>,
+    pub contact_email: Option<String>,
+    pub contact_phone: Option<String>,
+
     pub rrule: Option<String>,
     pub status: Option<ReservationStatus>,
 
@@ -87,11 +111,15 @@ pub struct UpdateReservationPayload {
     pub title: Option<String>,
     pub description: Option<String>,
     pub admin_notes: Option<String>,
+
+    pub contact_person: Option<String>,
+    pub contact_email: Option<String>,
+    pub contact_phone: Option<String>,
+
     pub rrule: Option<String>,
     pub status: Option<ReservationStatus>,
 
     pub contract_id: Option<Uuid>,
-    /// When set to true, automatically sets `contract_printed_at` to `NOW()`
     pub mark_printed: Option<bool>,
 
     #[validate(nested)]

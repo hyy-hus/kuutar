@@ -6,6 +6,7 @@ import {
 	RefreshCw,
 	Save,
 	ShieldAlert,
+	UserCheck,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -20,10 +21,7 @@ import {
 	useCheckConflicts,
 } from "#/hooks/useReservations";
 import { useResources } from "#/hooks/useResorces";
-import {
-	type RestrictionWithOccurrences,
-	useRestrictions,
-} from "#/hooks/useRestrictions";
+import { useRestrictions } from "#/hooks/useRestrictions";
 import { formatDate } from "#/utils/date";
 import { generateOccurrences, parseRRule } from "#/utils/rruleUtils";
 
@@ -32,6 +30,9 @@ export interface ReservationFormValues {
 	description?: string;
 	status?: ReservationStatus;
 	admin_notes?: string;
+	contact_person?: string;
+	contact_email?: string;
+	contact_phone?: string;
 	resource_ids?: string[];
 	start_time?: string;
 	end_time?: string;
@@ -59,7 +60,6 @@ export function ReservationForm({
 	const checkConflicts = useCheckConflicts();
 	const { isAdmin } = useIsAdmin();
 
-	// Parse initial rrule if present
 	const initialRule = parseRRule(defaultValues?.rrule);
 
 	const formatDateInput = (date?: Date | null) => {
@@ -100,6 +100,9 @@ export function ReservationForm({
 			description: defaultValues?.description ?? "",
 			status: defaultValues?.status ?? ("confirmed" as ReservationStatus),
 			admin_notes: defaultValues?.admin_notes ?? "",
+			contact_person: defaultValues?.contact_person ?? "",
+			contact_email: defaultValues?.contact_email ?? "",
+			contact_phone: defaultValues?.contact_phone ?? "",
 			resource_ids: initialResourceIds,
 			start_time: defaultValues?.start_time ?? "",
 			end_time: defaultValues?.end_time ?? "",
@@ -120,7 +123,16 @@ export function ReservationForm({
 			}
 
 			await onSubmit({
-				...value,
+				title: value.title,
+				description: value.description,
+				status: value.status,
+				admin_notes: value.admin_notes || undefined,
+				contact_person: value.contact_person || undefined,
+				contact_email: value.contact_email || undefined,
+				contact_phone: value.contact_phone || undefined,
+				resource_ids: value.resource_ids,
+				start_time: value.start_time,
+				end_time: value.end_time,
 				rrule: rruleString,
 				occurrences: allOccurrences,
 			});
@@ -195,61 +207,108 @@ export function ReservationForm({
 				)}
 			</form.Field>
 
-			{/* Status (Admin Only) */}
+			{/* Admin-Only Contact Details & Notes Section */}
 			{isAdmin && (
-				<form.Field name="status">
-					{(field) => (
-						<div className="space-y-1">
-							<label
-								htmlFor={field.name}
-								className="text-xs font-medium text-stone-700 dark:text-stone-300"
-							>
-								{t("tila", "Tila")}
-							</label>
-							<select
-								id={field.name}
-								value={field.state.value}
-								onChange={(e) =>
-									field.handleChange(e.target.value as ReservationStatus)
-								}
-								onBlur={field.handleBlur}
-								className="w-full px-3 py-2 text-sm bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-							>
-								<option value="confirmed">
-									{t("vahvistettu", "Vahvistettu")}
-								</option>
-								<option value="pending">{t("odottaa", "Odottaa")}</option>
-								<option value="cancelled">{t("peruttu", "Peruttu")}</option>
-							</select>
-						</div>
-					)}
-				</form.Field>
-			)}
+				<div className="p-3 bg-stone-100 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-md space-y-3">
+					<div className="flex items-center gap-1.5 text-xs font-bold text-purple-700 dark:text-purple-400">
+						<UserCheck size={14} />
+						<span>
+							{t("yhteystiedotYllapito", "Yhteystiedot (vain ylläpidolle)")}
+						</span>
+					</div>
 
-			{/* Admin Notes (Admin Only) */}
-			{isAdmin && (
-				<form.Field name="admin_notes">
-					{(field) => (
-						<div className="space-y-1">
-							<label
-								htmlFor={field.name}
-								className="text-xs font-medium text-stone-700 dark:text-stone-300"
-							>
-								{t("yllpitjnMuistiinpanot", "Ylläpitäjän muistiinpanot")}
-							</label>
-							<Input
-								id={field.name}
-								value={field.state.value}
-								onChange={(e) => field.handleChange(e.target.value)}
-								onBlur={field.handleBlur}
-								placeholder={t(
-									"vainYllpidolleNkyvtMerkinnt",
-									"Vain ylläpidolle näkyvät merkinnät",
+					<div className="space-y-2">
+						<form.Field name="contact_person">
+							{(field) => (
+								<div className="space-y-0.5">
+									<label className="text-[11px] text-stone-600 dark:text-stone-400">
+										{t("yhteyshenkilo", "Yhteyshenkilö")}
+									</label>
+									<Input
+										value={field.state.value}
+										onChange={(e) => field.handleChange(e.target.value)}
+										placeholder="Yhteyshenkilön nimi"
+									/>
+								</div>
+							)}
+						</form.Field>
+
+						<div className="grid grid-cols-2 gap-2">
+							<form.Field name="contact_email">
+								{(field) => (
+									<div className="space-y-0.5">
+										<label className="text-[11px] text-stone-600 dark:text-stone-400">
+											{t("yhteysSähköposti", "Sähköposti")}
+										</label>
+										<Input
+											type="email"
+											value={field.state.value}
+											onChange={(e) => field.handleChange(e.target.value)}
+											placeholder="yhteys@esimerkki.fi"
+										/>
+									</div>
 								)}
-							/>
+							</form.Field>
+
+							<form.Field name="contact_phone">
+								{(field) => (
+									<div className="space-y-0.5">
+										<label className="text-[11px] text-stone-600 dark:text-stone-400">
+											{t("puhelinnumero", "Puhelinnumero")}
+										</label>
+										<Input
+											type="tel"
+											value={field.state.value}
+											onChange={(e) => field.handleChange(e.target.value)}
+											placeholder="+358..."
+										/>
+									</div>
+								)}
+							</form.Field>
 						</div>
-					)}
-				</form.Field>
+
+						<form.Field name="admin_notes">
+							{(field) => (
+								<div className="space-y-0.5">
+									<label className="text-[11px] text-stone-600 dark:text-stone-400">
+										{t("yllpitjnMuistiinpanot", "Ylläpitäjän muistiinpanot")}
+									</label>
+									<Input
+										value={field.state.value}
+										onChange={(e) => field.handleChange(e.target.value)}
+										placeholder={t(
+											"vainYllpidolleNkyvtMerkinnt",
+											"Vain ylläpidolle näkyvät merkinnät",
+										)}
+									/>
+								</div>
+							)}
+						</form.Field>
+
+						<form.Field name="status">
+							{(field) => (
+								<div className="space-y-0.5">
+									<label className="text-[11px] text-stone-600 dark:text-stone-400">
+										{t("tila", "Tila")}
+									</label>
+									<select
+										value={field.state.value}
+										onChange={(e) =>
+											field.handleChange(e.target.value as ReservationStatus)
+										}
+										className="w-full px-2.5 py-1.5 text-xs bg-white dark:bg-stone-950 border border-stone-200 dark:border-stone-800 rounded focus:outline-none focus:ring-2 focus:ring-purple-500"
+									>
+										<option value="confirmed">
+											{t("vahvistettu", "Vahvistettu")}
+										</option>
+										<option value="pending">{t("odottaa", "Odottaa")}</option>
+										<option value="cancelled">{t("peruttu", "Peruttu")}</option>
+									</select>
+								</div>
+							)}
+						</form.Field>
+					</div>
+				</div>
 			)}
 
 			{/* Occurrence & Multi-Resource Selection Section */}
@@ -258,7 +317,6 @@ export function ReservationForm({
 					{t("ajanvarausJaResurssit", "Ajanvaraus ja Resurssit")}
 				</h3>
 
-				{/* Multi-Resource Selector */}
 				<form.Field
 					name="resource_ids"
 					validators={{
@@ -325,7 +383,6 @@ export function ReservationForm({
 				</form.Field>
 
 				<div className="grid grid-cols-2 gap-2">
-					{/* Start Time Field */}
 					<form.Field
 						name="start_time"
 						validators={{
@@ -371,11 +428,10 @@ export function ReservationForm({
 						}}
 					</form.Field>
 
-					{/* End Time Field */}
 					<form.Field
 						name="end_time"
 						validators={{
-							onChangeListenTo: ["start_time"],
+							onChangeListenTo: ["start_time", "resource_ids"],
 							onChange: ({ value, fieldApi }) => {
 								if (!value)
 									return t(
@@ -389,6 +445,27 @@ export function ReservationForm({
 										"Päättymisajan on oltava alkamisajan jälkeen.",
 									);
 								}
+
+								// Validate against selected resources' reservable_until date
+								const selectedResourceIds =
+									fieldApi.form.getFieldValue("resource_ids") || [];
+								for (const rId of selectedResourceIds) {
+									const res = resources?.find((r) => r.id === rId);
+									if (res && res.reservable_until) {
+										const limit = new Date(res.reservable_until).getTime();
+										if (new Date(value).getTime() > limit) {
+											return t(
+												"resurssiEiVarattavissaAsti",
+												"Resurssia '{{name}}' voi varata vain päivämäärään {{date}} asti.",
+												{
+													name: res.name,
+													date: formatDate(res.reservable_until),
+												},
+											);
+										}
+									}
+								}
+
 								return undefined;
 							},
 						}}
@@ -421,6 +498,7 @@ export function ReservationForm({
 						}}
 					</form.Field>
 				</div>
+
 				{/* Recurrence Rule Fields */}
 				<form.Subscribe selector={(state) => [state.values.resource_ids]}>
 					{([selectedResourceIds]) => {
@@ -448,7 +526,7 @@ export function ReservationForm({
 					}}
 				</form.Subscribe>
 
-				{/* Automatic Conflict & Restriction Checker */}
+				{/* Automatic Conflict Checker */}
 				<form.Subscribe
 					selector={(state) => [
 						state.values.resource_ids,
@@ -545,7 +623,6 @@ function AutomaticConflictChecker({
 	const { t } = useTranslation();
 	const mutateAsync = checkConflicts.mutateAsync;
 
-	// Query restrictions active around the selected dates
 	const { data: activeRestrictions } = useRestrictions({
 		start_date: startTime ? new Date(startTime).toISOString() : undefined,
 		end_date: untilStr
@@ -580,7 +657,6 @@ function AutomaticConflictChecker({
 			return;
 		}
 
-		// Check for overlapping restrictions (unless admin)
 		if (!isAdmin && activeRestrictions && activeRestrictions.length > 0) {
 			const foundRestrictions: {
 				title: string;
@@ -595,7 +671,6 @@ function AutomaticConflictChecker({
 
 				for (const restr of activeRestrictions) {
 					for (const rOcc of restr.occurrences || []) {
-						// Check resource scoping (NULL = global, or matching resourceId)
 						if (
 							!rOcc.resource_id ||
 							rOcc.resource_id === proposed.resource_id
@@ -622,7 +697,6 @@ function AutomaticConflictChecker({
 			setRestrictionConflicts(null);
 		}
 
-		// Check for overlapping reservations
 		let isCancelled = false;
 		mutateAsync(allOccurrences)
 			.then((results) => {
@@ -680,7 +754,6 @@ function AutomaticConflictChecker({
 
 	return (
 		<div className="space-y-2">
-			{/* Restriction Violations */}
 			{hasRestrictionViolations && (
 				<div className="p-3 bg-amber-100 dark:bg-amber-950/80 border-2 border-amber-600 text-amber-900 dark:text-amber-200 rounded-sm space-y-2 text-xs">
 					<div className="flex items-center gap-2 font-bold">
@@ -704,7 +777,6 @@ function AutomaticConflictChecker({
 				</div>
 			)}
 
-			{/* Reservation Conflicts */}
 			{hasReservationConflicts && (
 				<div className="p-3 bg-rose-100 dark:bg-rose-950/80 border-2 border-rose-600 text-rose-900 dark:text-rose-200 rounded-sm space-y-2 text-xs">
 					<div className="flex items-center gap-2 font-bold">

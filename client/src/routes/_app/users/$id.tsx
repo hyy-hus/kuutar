@@ -70,8 +70,11 @@ function ViewUserPage() {
 			<div className="flex items-center justify-between">
 				<div>
 					<h1 className="text-2xl font-bold text-stone-900 dark:text-stone-100">
-						{user.email}
+						{user.name}
 					</h1>
+					<p className="text-sm text-stone-500 dark:text-stone-400">
+						{user.email}
+					</p>
 					<span className="text-xs font-semibold uppercase tracking-wider text-purple-600 dark:text-purple-400">
 						{user.role}
 					</span>
@@ -106,7 +109,7 @@ function ViewUserPage() {
 				<p className="text-xs text-stone-500">
 					{t(
 						"kyttjllEiOleNkyviAktiivisiaIstuntojaTaiBackendEiTueSessionhallintaaViel",
-						"Käyttäjällä ei ole näkyviä aktiivisia istuntoja tai backend ei tue\n\t\t\t\t\tsessionhallintaa vielä.",
+						"Käyttäjällä ei ole näkyviä aktiivisia istuntoja tai backend ei tue sessionhallintaa vielä.",
 					)}
 				</p>
 				<Button

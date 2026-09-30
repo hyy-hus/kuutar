@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "DELETE FROM restriction_occurrences WHERE restriction_id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "3dfa013ad21893626a276df2fc3fbaf1e9f9d9ef77df3773ec754dae4435c7a6"
+}
