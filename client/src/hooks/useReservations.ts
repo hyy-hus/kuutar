@@ -3,6 +3,7 @@ import i18next from "i18next";
 import { api } from "#/api/client";
 import type { components } from "#/api/schema";
 
+// Schema Type Exports
 export type Reservation = components["schemas"]["Reservation"];
 export type ReservationWithOccurrences =
 	components["schemas"]["ReservationWithOccurrences"];
@@ -11,6 +12,16 @@ export type CreateReservationPayload =
 export type UpdateReservationPayload =
 	components["schemas"]["UpdateReservationPayload"];
 export type ReservationStatus = components["schemas"]["ReservationStatus"];
+export type CreateOccurrencePayload =
+	components["schemas"]["CreateOccurrencePayload"];
+export type Occurrence = components["schemas"]["Occurrence"];
+
+// Batch Import/Export Schema Types
+export type PortableReservationImport =
+	components["schemas"]["PortableReservationImport"];
+export type PortableOccurrenceImport =
+	components["schemas"]["PortableOccurrenceImport"];
+export type BatchImportReport = components["schemas"]["BatchImportReport"];
 
 export interface ReservationFilterParams {
 	startDate: string;
@@ -58,9 +69,9 @@ export function useReservations(params: ReservationFilterParams) {
 export function useMyReservations(params: ReservationFilterParams) {
 	const hasValidDates = Boolean(
 		params?.startDate &&
-			params?.endDate &&
-			params.startDate.trim() !== "" &&
-			params.endDate.trim() !== "",
+		params?.endDate &&
+		params.startDate.trim() !== "" &&
+		params.endDate.trim() !== "",
 	);
 
 	return useQuery({
@@ -109,14 +120,13 @@ export function useCreateReservation() {
 			});
 
 			if (error) {
-				// If backend returns a message object or string, propagate it
 				const message =
 					typeof error === "object" && error !== null && "message" in error
 						? (error as { message: string }).message
 						: i18next.t(
-								"varauksenLuominenEponnistui",
-								"Varauksen luominen epäonnistui.",
-							);
+							"varauksenLuominenEponnistui",
+							"Varauksen luominen epäonnistui.",
+						);
 				throw new Error(message);
 			}
 			if (!data) throw new Error("Varauksen luominen epäonnistui.");
@@ -176,10 +186,6 @@ export function useDeleteReservation() {
 	});
 }
 
-export type CreateOccurrencePayload =
-	components["schemas"]["CreateOccurrencePayload"];
-export type Occurrence = components["schemas"]["Occurrence"];
-
 export function useCheckConflicts() {
 	return useMutation({
 		mutationFn: async (occurrences: CreateOccurrencePayload[]) => {
@@ -191,4 +197,61 @@ export function useCheckConflicts() {
 			return data;
 		},
 	});
+}
+
+export function useBatchImportReservations() {
+	const queryClient = useQueryClient();
+
+	return useMutation({
+		mutationFn: async (payload: PortableReservationImport[]) => {
+			const { data, error } = await api.POST("/reservations/batch-import", {
+				body: payload,
+			});
+
+			if (error || !data) {
+				const message =
+					typeof error === "object" && error !== null && "message" in error
+						? String((error as { message: unknown }).message)
+						: "Varausten massatuonti epäonnistui.";
+				throw new Error(message);
+			}
+
+			return data;
+		},
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: reservationKeys.all });
+		},
+	});
+}
+
+export function exportReservationsToPortableJson(
+	reservations: ReservationWithOccurrences[],
+	resourceMap: Map<string, string>,
+) {
+	const exportData: PortableReservationImport[] = reservations.map((res) => ({
+		user_email: res.user_email ?? undefined,
+		title: res.title,
+		description: res.description ?? undefined,
+		admin_notes: res.admin_notes ?? undefined,
+		contact_person: res.contact_person ?? undefined,
+		contact_email: res.contact_email ?? undefined,
+		contact_phone: res.contact_phone ?? undefined,
+		rrule: res.rrule ?? undefined,
+		status: res.status,
+		occurrences: (res.occurrences || []).map((occ) => ({
+			resource_name: resourceMap.get(occ.resource_id) || "Tuntematon",
+			start_time: occ.start_time,
+			end_time: occ.end_time,
+		})),
+	}));
+
+	const jsonStr = JSON.stringify(exportData, null, 2);
+	const blob = new Blob([jsonStr], { type: "application/json" });
+	const url = URL.createObjectURL(blob);
+
+	const link = document.createElement("a");
+	link.href = url;
+	link.download = `reservations-export-${new Date().toISOString().slice(0, 10)}.json`;
+	link.click();
+	URL.revokeObjectURL(url);
 }

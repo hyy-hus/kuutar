@@ -14,6 +14,7 @@ import { Route as AppIndexRouteImport } from './routes/_app/index'
 import { Route as AppAdminRouteImport } from './routes/_app/admin'
 import { Route as AppSandboxRouteImport } from './routes/_app/sandbox'
 import { Route as ContractsBatchPrintRouteImport } from './routes/contracts/batch-print'
+import { Route as AppAdminReservationsRouteImport } from './routes/_app/admin/reservations'
 import { Route as AppCalendarIndexRouteImport } from './routes/_app/calendar/index'
 import { Route as AppCollectionsIndexRouteImport } from './routes/_app/collections/index'
 import { Route as AppCollectionsIdRouteImport } from './routes/_app/collections/$id'
@@ -69,6 +70,11 @@ const ContractsBatchPrintRoute = ContractsBatchPrintRouteImport.update({
   id: '/contracts/batch-print',
   path: '/contracts/batch-print',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AppAdminReservationsRoute = AppAdminReservationsRouteImport.update({
+  id: '/reservations',
+  path: '/reservations',
+  getParentRoute: () => AppAdminRoute,
 } as any)
 const AppCalendarIndexRoute = AppCalendarIndexRouteImport.update({
   id: '/calendar/',
@@ -232,6 +238,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AppAdminRouteWithChildren
   '/sandbox': typeof AppSandboxRoute
   '/contracts/batch-print': typeof ContractsBatchPrintRoute
+  '/admin/reservations': typeof AppAdminReservationsRoute
   '/collections/$id': typeof AppCollectionsIdRoute
   '/collections/create': typeof AppCollectionsCreateRoute
   '/contracts/$id': typeof AppContractsIdRoute
@@ -269,6 +276,7 @@ export interface FileRoutesByTo {
   '/sandbox': typeof AppSandboxRoute
   '/contracts/batch-print': typeof ContractsBatchPrintRoute
   '/': typeof AppIndexRoute
+  '/admin/reservations': typeof AppAdminReservationsRoute
   '/collections/$id': typeof AppCollectionsIdRoute
   '/collections/create': typeof AppCollectionsCreateRoute
   '/contracts/$id': typeof AppContractsIdRoute
@@ -308,6 +316,7 @@ export interface FileRoutesById {
   '/_app/sandbox': typeof AppSandboxRoute
   '/contracts/batch-print': typeof ContractsBatchPrintRoute
   '/_app/': typeof AppIndexRoute
+  '/_app/admin/reservations': typeof AppAdminReservationsRoute
   '/_app/collections/$id': typeof AppCollectionsIdRoute
   '/_app/collections/create': typeof AppCollectionsCreateRoute
   '/_app/contracts/$id': typeof AppContractsIdRoute
@@ -347,6 +356,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/sandbox'
     | '/contracts/batch-print'
+    | '/admin/reservations'
     | '/collections/$id'
     | '/collections/create'
     | '/contracts/$id'
@@ -384,6 +394,7 @@ export interface FileRouteTypes {
     | '/sandbox'
     | '/contracts/batch-print'
     | '/'
+    | '/admin/reservations'
     | '/collections/$id'
     | '/collections/create'
     | '/contracts/$id'
@@ -422,6 +433,7 @@ export interface FileRouteTypes {
     | '/_app/sandbox'
     | '/contracts/batch-print'
     | '/_app/'
+    | '/_app/admin/reservations'
     | '/_app/collections/$id'
     | '/_app/collections/create'
     | '/_app/contracts/$id'
@@ -496,6 +508,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/contracts/batch-print'
       preLoaderRoute: typeof ContractsBatchPrintRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_app/admin/reservations': {
+      id: '/_app/admin/reservations'
+      path: '/reservations'
+      fullPath: '/admin/reservations'
+      preLoaderRoute: typeof AppAdminReservationsRouteImport
+      parentRoute: typeof AppAdminRoute
     }
     '/_app/calendar/': {
       id: '/_app/calendar/'
@@ -718,11 +737,13 @@ declare module '@tanstack/react-router' {
 }
 
 interface AppAdminRouteChildren {
+  AppAdminReservationsRoute: typeof AppAdminReservationsRoute
   AppAdminUsersBatchRegisterRoute: typeof AppAdminUsersBatchRegisterRoute
   AppAdminDashboardIndexRoute: typeof AppAdminDashboardIndexRoute
 }
 
 const AppAdminRouteChildren: AppAdminRouteChildren = {
+  AppAdminReservationsRoute: AppAdminReservationsRoute,
   AppAdminUsersBatchRegisterRoute: AppAdminUsersBatchRegisterRoute,
   AppAdminDashboardIndexRoute: AppAdminDashboardIndexRoute,
 }

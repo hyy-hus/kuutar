@@ -75,6 +75,7 @@ impl Modify for SecurityAddon {
         reservations::routes::get_reservation,
         reservations::routes::create_reservation,
         reservations::routes::check_reservation_conflicts,
+        reservations::routes::batch_import_reservations,
         reservations::routes::update_reservation,
         reservations::routes::delete_reservation,
 
@@ -122,6 +123,9 @@ impl Modify for SecurityAddon {
             reservations::models::CreateReservationPayload,
             reservations::models::CreateOccurrencePayload,
             reservations::models::UpdateReservationPayload,
+            reservations::models::PortableReservationImport,
+            reservations::models::PortableOccurrenceImport,
+            reservations::models::BatchImportReport,
             restrictions::models::Restriction,
             restrictions::models::CreateRestrictionPayload,
             restrictions::models::UpdateRestrictionPayload,

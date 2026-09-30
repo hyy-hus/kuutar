@@ -18,8 +18,9 @@ use crate::{
     domains::{
         auth::{
             AuthState,
-            extractor::{AuthUser, OptionalAuthUser},
+            extractor::{AuthUser, OptionalAuthUser, RequireAdmin},
         },
+        reservations::models::{BatchImportReport, PortableReservationImport},
         users::models::Role,
     },
     errors::AppError,
@@ -394,4 +395,26 @@ pub async fn delete_reservation(
 ) -> Result<StatusCode, AppError> {
     db::soft_delete(&auth_state.pool, id).await?;
     Ok(StatusCode::NO_CONTENT)
+}
+
+#[utoipa::path(
+    post,
+    path = "/reservations/batch-import",
+    tag = "Reservations",
+    security(("bearer_auth" = [])),
+    request_body = [PortableReservationImport],
+    responses(
+        (status = 200, description = "Batch import complete", body = BatchImportReport),
+        (status = 400, description = "Unknown resource name or invalid data"),
+        (status = 403, description = "Admin required")
+    )
+)]
+#[tracing::instrument(skip(auth_state, admin))]
+pub async fn batch_import_reservations(
+    State(auth_state): State<AuthState>,
+    RequireAdmin(admin): RequireAdmin,
+    Json(payload): Json<Vec<super::models::PortableReservationImport>>,
+) -> Result<Json<super::models::BatchImportReport>, AppError> {
+    let report = db::batch_import(&auth_state.pool, admin.id, payload).await?;
+    Ok(Json(report))
 }

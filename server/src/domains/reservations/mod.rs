@@ -19,6 +19,7 @@ pub fn router(state: AuthState) -> Router {
             "/check-conflicts",
             post(routes::check_reservation_conflicts),
         )
+        .route("/batch-import", post(routes::batch_import_reservations))
         .route(
             "/{id}",
             get(routes::get_reservation)

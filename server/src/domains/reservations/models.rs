@@ -147,3 +147,30 @@ impl ListReservationsQuery {
         }
     }
 }
+
+#[derive(Debug, Serialize, Deserialize, utoipa::ToSchema)]
+pub struct PortableOccurrenceImport {
+    pub resource_name: String,
+    pub start_time: DateTime<Utc>,
+    pub end_time: DateTime<Utc>,
+}
+
+#[derive(Debug, Serialize, Deserialize, utoipa::ToSchema)]
+pub struct PortableReservationImport {
+    pub user_email: Option<String>,
+    pub title: String,
+    pub description: Option<String>,
+    pub admin_notes: Option<String>,
+    pub contact_person: Option<String>,
+    pub contact_email: Option<String>,
+    pub contact_phone: Option<String>,
+    pub rrule: Option<String>,
+    pub status: Option<ReservationStatus>,
+    pub occurrences: Vec<PortableOccurrenceImport>,
+}
+
+#[derive(Debug, Serialize, Deserialize, utoipa::ToSchema)]
+pub struct BatchImportReport {
+    pub imported_count: usize,
+    pub reservation_ids: Vec<Uuid>,
+}
