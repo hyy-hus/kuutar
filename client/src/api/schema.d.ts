@@ -233,6 +233,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/reservations/batch-import": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["batch_import_reservations"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/reservations/check-conflicts": {
         parameters: {
             query?: never;
@@ -426,6 +442,10 @@ export interface components {
             refresh_token: string;
             token_type: string;
         };
+        BatchImportReport: {
+            imported_count: number;
+            reservation_ids: string[];
+        };
         Collection: {
             /** Format: date-time */
             created_at: string;
@@ -552,6 +572,25 @@ export interface components {
             resource_id: string;
             /** Format: date-time */
             start_time: string;
+        };
+        PortableOccurrenceImport: {
+            /** Format: date-time */
+            end_time: string;
+            resource_name: string;
+            /** Format: date-time */
+            start_time: string;
+        };
+        PortableReservationImport: {
+            admin_notes?: string | null;
+            contact_email?: string | null;
+            contact_person?: string | null;
+            contact_phone?: string | null;
+            description?: string | null;
+            occurrences: components["schemas"]["PortableOccurrenceImport"][];
+            rrule?: string | null;
+            status?: null | components["schemas"]["ReservationStatus"];
+            title: string;
+            user_email?: string | null;
         };
         PresignedDownloadResponse: {
             download_url: string;
@@ -1633,6 +1672,44 @@ export interface operations {
             };
             /** @description Validation error */
             422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    batch_import_reservations: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PortableReservationImport"][];
+            };
+        };
+        responses: {
+            /** @description Batch import complete */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BatchImportReport"];
+                };
+            };
+            /** @description Unknown resource name or invalid data */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Admin required */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };

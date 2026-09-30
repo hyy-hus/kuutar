@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use chrono::{DateTime, Utc};
 use sqlx::PgPool;
 use uuid::Uuid;
@@ -6,7 +8,10 @@ use super::models::{
     CreateOccurrencePayload, CreateReservationPayload, Occurrence, Reservation, ReservationStatus,
     ReservationWithOccurrences, UpdateReservationPayload,
 };
-use crate::errors::AppError;
+use crate::{
+    domains::reservations::models::{BatchImportReport, PortableReservationImport},
+    errors::AppError,
+};
 
 pub async fn list_filtered(
     pool: &PgPool,
@@ -473,4 +478,106 @@ pub async fn validate_resource_reservable_until(
     }
 
     Ok(())
+}
+
+pub async fn batch_import(
+    pool: &PgPool,
+    fallback_admin_id: Uuid,
+    items: Vec<PortableReservationImport>,
+) -> Result<BatchImportReport, AppError> {
+    let mut tx = pool.begin().await?;
+
+    // 1. Pre-fetch resource map (name -> UUID)
+    let resources = sqlx::query!(r#"SELECT id, name FROM resources WHERE deleted_at IS NULL"#)
+        .fetch_all(&mut *tx)
+        .await?;
+
+    let resource_map: HashMap<String, Uuid> = resources
+        .into_iter()
+        .map(|r| (r.name.to_lowercase(), r.id))
+        .collect();
+
+    // 2. Pre-fetch user map (email -> UUID)
+    let users = sqlx::query!(r#"SELECT id, email FROM users WHERE deleted_at IS NULL"#)
+        .fetch_all(&mut *tx)
+        .await?;
+
+    let user_map: HashMap<String, Uuid> = users
+        .into_iter()
+        .map(|u| (u.email.to_lowercase(), u.id))
+        .collect();
+
+    let mut created_ids = Vec::with_capacity(items.len());
+
+    for (idx, item) in items.into_iter().enumerate() {
+        let line = idx + 1;
+
+        // Resolve user ID via email or default to current admin
+        let user_id = match item.user_email.as_ref() {
+            Some(email) => *user_map
+                .get(&email.to_lowercase())
+                .unwrap_or(&fallback_admin_id),
+            None => fallback_admin_id,
+        };
+
+        let status = item.status.unwrap_or(ReservationStatus::Confirmed);
+
+        // Create reservation
+        let res_id = sqlx::query_scalar!(
+            r#"
+            INSERT INTO reservations (
+                user_id, title, description, admin_notes,
+                contact_person, contact_email, contact_phone,
+                rrule, status
+            )
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+            RETURNING id
+            "#,
+            user_id,
+            item.title,
+            item.description,
+            item.admin_notes,
+            item.contact_person,
+            item.contact_email,
+            item.contact_phone,
+            item.rrule,
+            status as ReservationStatus
+        )
+        .fetch_one(&mut *tx)
+        .await?;
+
+        // Insert occurrences
+        for occ in item.occurrences {
+            let resource_id = resource_map
+                .get(&occ.resource_name.to_lowercase())
+                .ok_or_else(|| {
+                    AppError::BadRequest(format!(
+                        "Rivi {line}: Resurssia '{}' ei löytynyt järjestelmästä.",
+                        occ.resource_name
+                    ))
+                })?;
+
+            sqlx::query!(
+                r#"
+                INSERT INTO occurrences (reservation_id, resource_id, start_time, end_time)
+                VALUES ($1, $2, $3, $4)
+                "#,
+                res_id,
+                *resource_id,
+                occ.start_time,
+                occ.end_time
+            )
+            .execute(&mut *tx)
+            .await?;
+        }
+
+        created_ids.push(res_id);
+    }
+
+    tx.commit().await?;
+
+    Ok(BatchImportReport {
+        imported_count: created_ids.len(),
+        reservation_ids: created_ids,
+    })
 }
