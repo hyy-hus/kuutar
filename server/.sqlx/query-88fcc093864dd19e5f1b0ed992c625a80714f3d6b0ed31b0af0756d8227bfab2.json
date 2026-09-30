@@ -1,0 +1,17 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        UPDATE restrictions\n        SET \n            title = COALESCE($1, title),\n            description = COALESCE($2, description),\n            rrule = COALESCE($3, rrule),\n            updated_at = NOW()\n        WHERE id = $4 AND deleted_at IS NULL\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Varchar",
+        "Text",
+        "Varchar",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "88fcc093864dd19e5f1b0ed992c625a80714f3d6b0ed31b0af0756d8227bfab2"
+}

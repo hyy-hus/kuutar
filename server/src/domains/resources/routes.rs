@@ -11,7 +11,13 @@ use super::{
     models::{CreateResource, Resource, UpdateResource},
 };
 use crate::{
-    domains::auth::{AuthState, extractor::RequireAdmin},
+    domains::{
+        auth::{
+            AuthState,
+            extractor::{OptionalAuthUser, RequireAdmin},
+        },
+        users::models::Role,
+    },
     errors::AppError,
 };
 
@@ -21,14 +27,16 @@ use crate::{
     path = "/resources",
     tag = "Resources",
     responses(
-        (status = 200, description = "List of active resources", body = [Resource]),
+        (status = 200, description = "List of active resources (non-admins receive public resources only)", body = [Resource]),
     )
 )]
-#[tracing::instrument(skip(auth_state))]
+#[tracing::instrument(skip(auth_state, opt_user))]
 pub async fn list_resources(
     State(auth_state): State<AuthState>,
+    opt_user: OptionalAuthUser,
 ) -> Result<Json<Vec<Resource>>, AppError> {
-    let resources = db::list_all(&auth_state.pool).await?;
+    let is_admin = opt_user.0.map(|u| u.role == Role::Admin).unwrap_or(false);
+    let resources = db::list_all(&auth_state.pool, is_admin).await?;
     Ok(Json(resources))
 }
 
@@ -42,15 +50,17 @@ pub async fn list_resources(
     ),
     responses(
         (status = 200, description = "Resource details", body = Resource),
-        (status = 404, description = "Resource not found")
+        (status = 404, description = "Resource not found or restricted")
     )
 )]
-#[tracing::instrument(skip(auth_state))]
+#[tracing::instrument(skip(auth_state, opt_user))]
 pub async fn get_resource(
     State(auth_state): State<AuthState>,
     Path(id): Path<Uuid>,
+    opt_user: OptionalAuthUser,
 ) -> Result<Json<Resource>, AppError> {
-    let resource = db::find_by_id(&auth_state.pool, id).await?;
+    let is_admin = opt_user.0.map(|u| u.role == Role::Admin).unwrap_or(false);
+    let resource = db::find_by_id(&auth_state.pool, id, is_admin).await?;
     Ok(Json(resource))
 }
 

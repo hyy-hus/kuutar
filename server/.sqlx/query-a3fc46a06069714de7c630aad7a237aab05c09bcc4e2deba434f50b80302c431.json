@@ -1,0 +1,129 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        UPDATE contracts\n        SET title = COALESCE($1, title),\n            s3_key = COALESCE($2, s3_key),\n            file_name = COALESCE($3, file_name),\n            is_global = COALESCE($4, is_global),\n            is_active = COALESCE($5, is_active),\n            updated_at = NOW()\n        WHERE id = $6 AND deleted_at IS NULL\n        RETURNING id, title, s3_key, file_name, is_global, is_active, created_at, updated_at, deleted_at\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "contracts",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "title",
+        "type_info": "Jsonb",
+        "origin": {
+          "Table": {
+            "table": "contracts",
+            "name": "title"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "s3_key",
+        "type_info": "Jsonb",
+        "origin": {
+          "Table": {
+            "table": "contracts",
+            "name": "s3_key"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "file_name",
+        "type_info": "Jsonb",
+        "origin": {
+          "Table": {
+            "table": "contracts",
+            "name": "file_name"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "is_global",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "contracts",
+            "name": "is_global"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "is_active",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "contracts",
+            "name": "is_active"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "created_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "contracts",
+            "name": "created_at"
+          }
+        }
+      },
+      {
+        "ordinal": 7,
+        "name": "updated_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "contracts",
+            "name": "updated_at"
+          }
+        }
+      },
+      {
+        "ordinal": 8,
+        "name": "deleted_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "contracts",
+            "name": "deleted_at"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Jsonb",
+        "Jsonb",
+        "Jsonb",
+        "Bool",
+        "Bool",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true
+    ]
+  },
+  "hash": "a3fc46a06069714de7c630aad7a237aab05c09bcc4e2deba434f50b80302c431"
+}

@@ -6,6 +6,7 @@ export interface CalendarEvent {
 	restrictionId?: string;
 	isRestriction?: boolean;
 	title: string;
+	userName?: string;
 	start: Date;
 	end: Date;
 	resourceId: string;

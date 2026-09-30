@@ -8,6 +8,7 @@ import {
 	Eye,
 	Loader2,
 	RotateCcw,
+	User as UserIcon,
 	X,
 	XCircle,
 } from "lucide-react";
@@ -88,20 +89,28 @@ function UserReservationCard({
 			)}
 		>
 			<div className="flex items-start justify-between gap-2 min-w-0">
-				<Link
-					to="/reservations/$id"
-					params={{ id: reservationWithOcc.id }}
-					className="font-bold truncate hover:underline text-stone-900 dark:text-stone-100 flex-1"
-				>
-					{reservationWithOcc.title}
-				</Link>
+				<div className="flex-1 truncate">
+					<Link
+						to="/reservations/$id"
+						params={{ id: reservationWithOcc.id }}
+						className="font-bold truncate hover:underline text-stone-900 dark:text-stone-100 block"
+					>
+						{reservationWithOcc.title}
+					</Link>
+					{reservationWithOcc.user_name && (
+						<p className="text-[11px] text-stone-500 dark:text-stone-400 flex items-center gap-1 mt-0.5">
+							<UserIcon size={11} className="shrink-0 text-purple-600" />
+							<span className="truncate">{reservationWithOcc.user_name}</span>
+						</p>
+					)}
+				</div>
 				<Chip>{readable_uuid(reservationWithOcc.id)}</Chip>
 			</div>
 
 			<div className="flex flex-wrap items-center justify-between gap-2 min-w-0">
 				{firstOccurrence ? (
-					<div className="flex items-center gap-1 text-xs text-stone-500 dark:text-stone-400">
-						<Calendar size={14} />
+					<div className="flex items-center gap-1 text-xs text-stone-500 dark:text-stone-400 font-mono">
+						<Calendar size={14} className="shrink-0" />
 						<span>{formatDate(firstOccurrence.start_time)}</span>
 					</div>
 				) : (
@@ -190,7 +199,6 @@ function UserDashboardPage() {
 		};
 	}, [start, days]);
 
-	// Strictly fetch personal reservations via /reservations/me
 	const {
 		data: reservations,
 		isLoading,
@@ -265,7 +273,7 @@ function UserDashboardPage() {
 						e.target.valueAsDate &&
 						updateSearch({ start_date: formatYYYYMMDD(e.target.valueAsDate) })
 					}
-					className="px-3 py-1.5 text-xs bg-stone-50 dark:bg-stone-950 border border-stone-200 dark:border-stone-800 rounded-md"
+					className="px-3 py-1.5 text-xs bg-stone-50 dark:bg-stone-950 border border-stone-200 dark:border-stone-800 rounded-md font-mono"
 				/>
 
 				<Button variant="secondary" size="sm" onClick={() => moveStart(days)}>
@@ -275,7 +283,7 @@ function UserDashboardPage() {
 				<select
 					value={days}
 					onChange={(e) => updateSearch({ days: Number(e.target.value) })}
-					className="px-3 py-1.5 text-xs bg-stone-50 dark:bg-stone-950 border border-stone-200 dark:border-stone-800 rounded-md"
+					className="px-3 py-1.5 text-xs bg-stone-50 dark:bg-stone-950 border border-stone-200 dark:border-stone-800 rounded-md font-medium"
 				>
 					<option value={7}>{t("1Viikko", "1 viikko")}</option>
 					<option value={14}>{t("2Viikkoa", "2 viikkoa")}</option>
@@ -289,7 +297,7 @@ function UserDashboardPage() {
 						updateSearch({ resource_id: e.target.value || undefined })
 					}
 					disabled={loadingResources}
-					className="px-3 py-1.5 text-xs bg-stone-50 dark:bg-stone-950 border border-stone-200 dark:border-stone-800 rounded-md"
+					className="px-3 py-1.5 text-xs bg-stone-50 dark:bg-stone-950 border border-stone-200 dark:border-stone-800 rounded-md font-medium max-w-full truncate"
 				>
 					<option value="">{t("kaikkiResurssit", "Kaikki resurssit")}</option>
 					{resources?.map((res) => (

@@ -20,6 +20,7 @@ function CreateUserPage() {
 		if (!values.password) return;
 
 		await registerUser.mutateAsync({
+			name: values.name,
 			email: values.email,
 			group_id: values.group_id,
 			password: values.password,

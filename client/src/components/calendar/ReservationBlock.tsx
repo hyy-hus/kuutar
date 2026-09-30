@@ -1,7 +1,5 @@
-// src/components/calendar/ReservationBlock.tsx
-
 import { Link } from "@tanstack/react-router";
-import { AlertOctagon } from "lucide-react";
+import { AlertOctagon, User as UserIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { cn } from "#/utils/cn";
 import {
@@ -15,27 +13,46 @@ const timeFormatter = new Intl.DateTimeFormat("fi-FI", {
 	minute: "2-digit",
 });
 
-export function ReservationBlock({ event }: { event: PlacedEvent }) {
+interface ReservationBlockProps {
+	event: PlacedEvent;
+	maxCols: number;
+}
+
+export function ReservationBlock({ event, maxCols }: ReservationBlockProps) {
 	const { t } = useTranslation();
 	const startMins = getMinutesSinceMidnight(event.start);
 	const durationMins = getMinutesBetween(event.start, event.end);
 	const timeString = `${timeFormatter.format(event.start)} – ${timeFormatter.format(event.end)}`;
 
+	// Exact percentage math over 1440 minutes in a 24h day
+	const topPct = (startMins / 1440) * 100;
+	const heightPct = (durationMins / 1440) * 100;
+
+	// Column width calculation for overlapping events
+	const colWidthPct = 100 / maxCols;
+	const leftPct = (event.col - 1) * colWidthPct;
+	const widthPct = event.span * colWidthPct;
+
 	const isRestriction = Boolean(event.isRestriction);
+	const tooltipText = isRestriction
+		? `${event.resourceName ?? ""}: ${event.title} (${timeString})`
+		: `${event.resourceName ?? ""}: ${event.title}${event.userName ? ` [${event.userName}]` : ""} (${timeString})`;
 
 	return (
 		<div
 			className={cn(
-				"pointer-events-auto border relative text-xs p-1 rounded-xs overflow-hidden shadow-xs hover:z-20 transition-all z-15",
+				"absolute pointer-events-auto border text-xs p-1 rounded-xs overflow-hidden shadow-xs hover:z-20 transition-all z-15 box-border",
 				isRestriction
 					? "bg-amber-100 dark:bg-amber-950/80 border-amber-400 dark:border-amber-700 hover:bg-amber-200 dark:hover:bg-amber-900"
 					: "bg-stone-200 dark:bg-stone-800 border-stone-400 dark:border-stone-600 hover:bg-stone-300 dark:hover:bg-stone-700",
 			)}
 			style={{
-				gridColumn: `${event.col} / span ${event.span}`,
-				gridRow: `${startMins + 1} / span ${durationMins}`,
+				top: `${topPct}%`,
+				height: `${heightPct}%`,
+				left: `${leftPct}%`,
+				width: `${widthPct}%`,
 			}}
-			title={`${event.resourceName ?? ""}: ${event.title} (${timeString})`}
+			title={tooltipText}
 		>
 			{isRestriction ? (
 				<Link
@@ -63,12 +80,21 @@ export function ReservationBlock({ event }: { event: PlacedEvent }) {
 					className="flex flex-col h-full w-full overflow-hidden text-stone-900 dark:text-stone-100 hover:underline"
 				>
 					<span className="font-bold truncate">{event.title}</span>
+					{event.userName && (
+						<span className="text-[10px] text-stone-700 dark:text-stone-300 truncate flex items-center gap-0.5">
+							<UserIcon
+								size={10}
+								className="shrink-0 text-purple-600 dark:text-purple-400"
+							/>
+							<span className="truncate">{event.userName}</span>
+						</span>
+					)}
 					{event.resourceName && (
-						<span className="text-[10px] text-stone-700 dark:text-stone-300 truncate font-medium">
+						<span className="text-[10px] text-stone-600 dark:text-stone-400 truncate font-medium">
 							{event.resourceName}
 						</span>
 					)}
-					<span className="text-[10px] italic text-stone-600 dark:text-stone-400 truncate">
+					<span className="text-[10px] italic text-stone-500 dark:text-stone-400 truncate">
 						{timeString}
 					</span>
 				</Link>

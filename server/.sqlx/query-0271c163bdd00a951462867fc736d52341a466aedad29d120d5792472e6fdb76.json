@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        UPDATE users\n        SET \n            email = COALESCE($1, email),\n            password_hash = COALESCE($2, password_hash),\n            group_id = COALESCE($3, group_id),\n            updated_at = NOW()\n        WHERE id = $4 AND deleted_at IS NULL\n        RETURNING id, group_id, email, role AS \"role: Role\", created_at, updated_at\n        ",
+  "query": "\n        INSERT INTO users (group_id, name, email, password_hash)\n        VALUES ($1, $2, $3, $4)\n        RETURNING id, group_id, name, email, role AS \"role: Role\", created_at, updated_at\n        ",
   "describe": {
     "columns": [
       {
@@ -27,6 +27,17 @@
       },
       {
         "ordinal": 2,
+        "name": "name",
+        "type_info": "Varchar",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "name"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
         "name": "email",
         "type_info": "Text",
         "origin": {
@@ -37,7 +48,7 @@
         }
       },
       {
-        "ordinal": 3,
+        "ordinal": 4,
         "name": "role: Role",
         "type_info": {
           "Custom": {
@@ -58,7 +69,7 @@
         }
       },
       {
-        "ordinal": 4,
+        "ordinal": 5,
         "name": "created_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -69,7 +80,7 @@
         }
       },
       {
-        "ordinal": 5,
+        "ordinal": 6,
         "name": "updated_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -82,10 +93,10 @@
     ],
     "parameters": {
       "Left": [
-        "Text",
-        "Text",
         "Uuid",
-        "Uuid"
+        "Varchar",
+        "Text",
+        "Text"
       ]
     },
     "nullable": [
@@ -94,8 +105,9 @@
       false,
       false,
       false,
+      false,
       false
     ]
   },
-  "hash": "7b8f3b28b0ed29c27c3d30eef90341f0594a1b26e19e043834f4ad4ff350680a"
+  "hash": "0271c163bdd00a951462867fc736d52341a466aedad29d120d5792472e6fdb76"
 }

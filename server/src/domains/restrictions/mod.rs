@@ -2,10 +2,7 @@ pub mod db;
 pub mod models;
 pub mod routes;
 
-use axum::{
-    Router,
-    routing::{get, post},
-};
+use axum::{Router, routing::get};
 
 use crate::domains::auth::AuthState;
 

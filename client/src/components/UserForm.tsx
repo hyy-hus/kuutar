@@ -6,6 +6,7 @@ import { Input } from "#/components/Input";
 import { useGroups } from "#/hooks/useGroups";
 
 export interface UserFormValues {
+	name: string;
 	email: string;
 	group_id: string;
 	password?: string;
@@ -31,6 +32,7 @@ export function UserForm({
 
 	const form = useForm({
 		defaultValues: {
+			name: defaultValues?.name ?? "",
 			email: defaultValues?.email ?? "",
 			group_id: defaultValues?.group_id ?? "",
 			password: defaultValues?.password ?? "",
@@ -57,6 +59,43 @@ export function UserForm({
 			}}
 			className="space-y-4 max-w-md"
 		>
+			{/* Name Field */}
+			<form.Field
+				name="name"
+				validators={{
+					onChange: ({ value }) =>
+						!value ? t("nimiOnPakollinen", "Nimi on pakollinen") : undefined,
+				}}
+			>
+				{(field) => {
+					const hasError = Boolean(field.state.meta.errors.length);
+					return (
+						<div className="space-y-1">
+							<label
+								htmlFor={field.name}
+								className="text-xs font-medium text-stone-700 dark:text-stone-300"
+							>
+								{t("nimi", "Nimi")}
+							</label>
+							<Input
+								id={field.name}
+								type="text"
+								value={field.state.value}
+								onChange={(e) => field.handleChange(e.target.value)}
+								onBlur={field.handleBlur}
+								isError={hasError}
+								placeholder="Matti Meikäläinen"
+							/>
+							{hasError && (
+								<p className="text-[11px] text-red-500">
+									{field.state.meta.errors.join(", ")}
+								</p>
+							)}
+						</div>
+					);
+				}}
+			</form.Field>
+
 			{/* Email Field */}
 			<form.Field
 				name="email"
@@ -150,9 +189,9 @@ export function UserForm({
 							? t("salasanaOnPakollinen", "Salasana on pakollinen")
 							: value && value.length < 8
 								? t(
-										"salasananOnOltavaVhintn8Merkki",
-										"Salasanan on oltava vähintään 8 merkkiä",
-									)
+									"salasananOnOltavaVhintn8Merkki",
+									"Salasanan on oltava vähintään 8 merkkiä",
+								)
 								: undefined,
 				}}
 			>
@@ -167,9 +206,9 @@ export function UserForm({
 								{isCreate
 									? "Salasana"
 									: t(
-											"uusiSalasanaJtTyhjksiJosEiMuuteta",
-											"Uusi salasana (jätä tyhjäksi jos ei muuteta)",
-										)}
+										"uusiSalasanaJtTyhjksiJosEiMuuteta",
+										"Uusi salasana (jätä tyhjäksi jos ei muuteta)",
+									)}
 							</label>
 							<Input
 								id={field.name}

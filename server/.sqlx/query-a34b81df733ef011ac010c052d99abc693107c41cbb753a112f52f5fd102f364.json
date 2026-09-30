@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        SELECT \n            id, user_id, title, description, admin_notes, rrule, \n            status AS \"status: ReservationStatus\",\n            contract_id, contract_printed_at,\n            created_at, updated_at\n        FROM reservations\n        WHERE id = ANY($1) AND deleted_at IS NULL\n        ORDER BY created_at DESC\n        ",
+  "query": "\n        SELECT \n            r.id, \n            r.user_id,\n            u.name AS \"user_name?\",\n            u.email AS \"user_email?\",\n            r.title, \n            r.description, \n            r.admin_notes,\n            r.contact_person, \n            r.contact_email, \n            r.contact_phone,\n            r.rrule, \n            r.status AS \"status: ReservationStatus\",\n            r.contract_id, \n            r.contract_printed_at,\n            r.created_at, \n            r.updated_at\n        FROM reservations r\n        LEFT JOIN users u ON u.id = r.user_id\n        WHERE r.id = ANY($1) AND r.deleted_at IS NULL\n        ORDER BY r.created_at DESC\n        ",
   "describe": {
     "columns": [
       {
@@ -27,6 +27,28 @@
       },
       {
         "ordinal": 2,
+        "name": "user_name?",
+        "type_info": "Varchar",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "name"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "user_email?",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "email"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
         "name": "title",
         "type_info": "Text",
         "origin": {
@@ -37,7 +59,7 @@
         }
       },
       {
-        "ordinal": 3,
+        "ordinal": 5,
         "name": "description",
         "type_info": "Text",
         "origin": {
@@ -48,7 +70,7 @@
         }
       },
       {
-        "ordinal": 4,
+        "ordinal": 6,
         "name": "admin_notes",
         "type_info": "Text",
         "origin": {
@@ -59,7 +81,40 @@
         }
       },
       {
-        "ordinal": 5,
+        "ordinal": 7,
+        "name": "contact_person",
+        "type_info": "Varchar",
+        "origin": {
+          "Table": {
+            "table": "reservations",
+            "name": "contact_person"
+          }
+        }
+      },
+      {
+        "ordinal": 8,
+        "name": "contact_email",
+        "type_info": "Varchar",
+        "origin": {
+          "Table": {
+            "table": "reservations",
+            "name": "contact_email"
+          }
+        }
+      },
+      {
+        "ordinal": 9,
+        "name": "contact_phone",
+        "type_info": "Varchar",
+        "origin": {
+          "Table": {
+            "table": "reservations",
+            "name": "contact_phone"
+          }
+        }
+      },
+      {
+        "ordinal": 10,
         "name": "rrule",
         "type_info": "Text",
         "origin": {
@@ -70,7 +125,7 @@
         }
       },
       {
-        "ordinal": 6,
+        "ordinal": 11,
         "name": "status: ReservationStatus",
         "type_info": {
           "Custom": {
@@ -92,7 +147,7 @@
         }
       },
       {
-        "ordinal": 7,
+        "ordinal": 12,
         "name": "contract_id",
         "type_info": "Uuid",
         "origin": {
@@ -103,7 +158,7 @@
         }
       },
       {
-        "ordinal": 8,
+        "ordinal": 13,
         "name": "contract_printed_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -114,7 +169,7 @@
         }
       },
       {
-        "ordinal": 9,
+        "ordinal": 14,
         "name": "created_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -125,7 +180,7 @@
         }
       },
       {
-        "ordinal": 10,
+        "ordinal": 15,
         "name": "updated_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -145,6 +200,11 @@
       false,
       false,
       false,
+      false,
+      false,
+      true,
+      true,
+      true,
       true,
       true,
       true,
@@ -155,5 +215,5 @@
       false
     ]
   },
-  "hash": "b14f758672c20eb69f6d31437e1af110af4bd6e4ba0009747e06808a9aee9b4c"
+  "hash": "a34b81df733ef011ac010c052d99abc693107c41cbb753a112f52f5fd102f364"
 }

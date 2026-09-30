@@ -1,0 +1,31 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT r.title\n            FROM restrictions r\n            JOIN restriction_occurrences ro ON ro.restriction_id = r.id\n            WHERE r.deleted_at IS NULL\n              AND ro.start_time < $2\n              AND ro.end_time > $1\n              AND (ro.resource_id IS NULL OR ro.resource_id = $3)\n              AND NOT EXISTS (\n                  SELECT 1 \n                  FROM restriction_exemptions re \n                  WHERE re.restriction_id = r.id AND re.group_id = $4\n              )\n            LIMIT 1\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "title",
+        "type_info": "Varchar",
+        "origin": {
+          "Table": {
+            "table": "restrictions",
+            "name": "title"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Timestamptz",
+        "Timestamptz",
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "ca834112a1d5f0cb99f67c36971b8d5f8eb4b04d81b9167f3eb1e7dac9f56933"
+}

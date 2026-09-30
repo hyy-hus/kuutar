@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO resource_contracts (resource_id, contract_id) VALUES ($1, $2)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "5e8311ebbd6c6d4f008d346dfe9d2788d876dc3e1a9aba484589f8b5d5240cf6"
+}

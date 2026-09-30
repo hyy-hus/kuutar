@@ -68,6 +68,9 @@ function CreateReservationPage() {
 			description: values.description || null,
 			status: values.status,
 			admin_notes: values.admin_notes || null,
+			contact_person: values.contact_person || null,
+			contact_email: values.contact_email || null,
+			contact_phone: values.contact_phone || null,
 			rrule: values.rrule || null,
 			occurrences: values.occurrences ?? [],
 		});

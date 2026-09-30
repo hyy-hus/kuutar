@@ -73,6 +73,21 @@ async fn validate_recurring_permission(
     Ok(())
 }
 
+/// Helper function to strip admin-only fields for non-admin callers.
+fn sanitize_reservation_for_role(
+    mut res: ReservationWithOccurrences,
+    is_admin: bool,
+) -> ReservationWithOccurrences {
+    if !is_admin {
+        res.reservation.user_email = None;
+        res.reservation.admin_notes = None;
+        res.reservation.contact_person = None;
+        res.reservation.contact_email = None;
+        res.reservation.contact_phone = None;
+    }
+    res
+}
+
 #[utoipa::path(
     get,
     path = "/reservations",
@@ -195,7 +210,7 @@ pub async fn get_reservation(
     request_body = CreateReservationPayload,
     responses(
         (status = 201, description = "Reservation created successfully", body = ReservationWithOccurrences),
-        (status = 400, description = "Invalid occurrence interval times"),
+        (status = 400, description = "Invalid occurrence interval times or exceeds reservable_until date"),
         (status = 401, description = "Unauthorized"),
         (status = 403, description = "Forbidden - Recurrence disallowed for one or more resources"),
         (status = 422, description = "Validation error")
@@ -214,7 +229,11 @@ pub async fn create_reservation(
     // 1. Validate recurring permissions for non-admins
     validate_recurring_permission(&auth_state.pool, &payload, auth_user.role).await?;
 
-    // 2. Validate occurrences against time restrictions
+    // 2. Validate occurrences against resource's reservable_until date boundary
+    db::validate_resource_reservable_until(&auth_state.pool, is_admin, &payload.occurrences)
+        .await?;
+
+    // 3. Validate occurrences against time restrictions
     db::validate_occurrence_restrictions(
         &auth_state.pool,
         auth_user.id,
@@ -223,9 +242,13 @@ pub async fn create_reservation(
     )
     .await?;
 
-    // 3. Default status for non-admin users to Pending
+    // 4. Default status for non-admin users to Pending & clear admin-only fields if supplied
     if !is_admin {
         payload.status = Some(super::models::ReservationStatus::Pending);
+        payload.admin_notes = None;
+        payload.contact_person = None;
+        payload.contact_email = None;
+        payload.contact_phone = None;
     }
 
     if !payload.validate_occurrence_times() {
@@ -235,7 +258,9 @@ pub async fn create_reservation(
     }
 
     let reservation = db::create(&auth_state.pool, auth_user.id, payload).await?;
-    Ok((StatusCode::CREATED, Json(reservation)))
+    let sanitized = sanitize_reservation_for_role(reservation, is_admin);
+
+    Ok((StatusCode::CREATED, Json(sanitized)))
 }
 
 #[utoipa::path(
@@ -270,6 +295,7 @@ pub async fn check_reservation_conflicts(
     request_body = UpdateReservationPayload,
     responses(
         (status = 200, description = "Reservation updated successfully", body = ReservationWithOccurrences),
+        (status = 400, description = "Exceeds reservable_until date boundary"),
         (status = 401, description = "Unauthorized"),
         (status = 403, description = "Forbidden - Admin access required"),
         (status = 404, description = "Reservation not found"),
@@ -308,11 +334,17 @@ pub async fn update_reservation(
             payload.mark_printed = Some(false);
         }
 
+        // Non-admins cannot update admin notes or contact fields
         payload.admin_notes = None;
+        payload.contact_person = None;
+        payload.contact_email = None;
+        payload.contact_phone = None;
     }
 
-    // Validate new occurrences against time restrictions
+    // Validate new occurrences against reservable_until boundary and time restrictions
     if let Some(ref new_occurrences) = payload.occurrences {
+        db::validate_resource_reservable_until(&auth_state.pool, is_admin, new_occurrences).await?;
+
         db::validate_occurrence_restrictions(
             &auth_state.pool,
             auth_user.id,
@@ -323,7 +355,9 @@ pub async fn update_reservation(
     }
 
     let reservation = db::update(&auth_state.pool, id, payload).await?;
-    Ok(Json(reservation))
+    let sanitized = sanitize_reservation_for_role(reservation, is_admin);
+
+    Ok(Json(sanitized))
 }
 
 #[utoipa::path(

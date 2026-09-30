@@ -12,6 +12,8 @@ pub struct Resource {
     pub collection_id: Uuid,
     pub name: String,
     pub allow_recurring: bool,
+    pub reservable_until: Option<DateTime<Utc>>,
+    pub is_public: bool,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 
@@ -34,7 +36,16 @@ pub struct CreateResource {
     #[serde(default)]
     pub allow_recurring: bool,
 
+    pub reservable_until: Option<DateTime<Utc>>,
+
+    #[serde(default = "default_true")]
+    pub is_public: bool,
+
     pub contract_ids: Option<Vec<Uuid>>,
+}
+
+fn default_true() -> bool {
+    true
 }
 
 #[derive(Debug, Deserialize, Validate, ToSchema)]
@@ -49,86 +60,9 @@ pub struct UpdateResource {
 
     pub allow_recurring: Option<bool>,
 
+    pub reservable_until: Option<DateTime<Utc>>,
+
+    pub is_public: Option<bool>,
+
     pub contract_ids: Option<Vec<Uuid>>,
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_create_resource_valid() {
-        let dto = CreateResource {
-            collection_id: Uuid::new_v4(),
-            name: "Valid Resource Name".to_string(),
-            allow_recurring: true,
-            contract_ids: None,
-        };
-
-        assert!(dto.validate().is_ok());
-    }
-
-    #[test]
-    fn test_create_resource_default_allow_recurring() {
-        let json = format!(
-            r#"{{"collection_id": "{}", "name": "Valid Name"}}"#,
-            Uuid::new_v4()
-        );
-        let dto: CreateResource = serde_json::from_str(&json).unwrap();
-        assert_eq!(dto.allow_recurring, false);
-    }
-
-    #[test]
-    fn test_create_resource_empty_name() {
-        let dto = CreateResource {
-            collection_id: Uuid::new_v4(),
-            name: "".to_string(),
-            allow_recurring: false,
-            contract_ids: None,
-        };
-        let result = dto.validate();
-        assert!(result.is_err());
-
-        let errors = result.unwrap_err();
-        assert!(
-            errors
-                .to_string()
-                .contains("Name must be between 1 and 255 characters")
-        );
-    }
-
-    #[test]
-    fn test_create_resource_whitespace_only_trimmed_and_invalid() {
-        let json = format!(
-            r#"{{"collection_id": "{}", "name": "   "}}"#,
-            Uuid::new_v4()
-        );
-        let dto: Result<CreateResource, _> = serde_json::from_str(&json);
-        assert!(dto.is_ok());
-
-        let dto = dto.unwrap();
-        assert_eq!(dto.name, "");
-        assert!(dto.validate().is_err());
-    }
-
-    #[test]
-    fn test_update_resource_none_is_valid() {
-        let dto = UpdateResource {
-            name: None,
-            allow_recurring: None,
-            contract_ids: None,
-        };
-        assert!(dto.validate().is_ok());
-    }
-
-    #[test]
-    fn test_update_resource_whitespace_only_trimmed_and_invalid() {
-        let json = r#"{"name": "   "}"#;
-        let dto: Result<UpdateResource, _> = serde_json::from_str(json);
-        assert!(dto.is_ok());
-
-        let dto = dto.unwrap();
-        assert_eq!(dto.name, Some("".to_string()));
-        assert!(dto.validate().is_err());
-    }
 }

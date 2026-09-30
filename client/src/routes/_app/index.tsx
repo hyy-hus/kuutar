@@ -1,5 +1,3 @@
-// src/routes/_app/index.tsx
-
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
 	ArrowUpRight,
@@ -11,6 +9,7 @@ import {
 	Loader2,
 	Plus,
 	Shield,
+	User as UserIcon,
 } from "lucide-react";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
@@ -34,7 +33,6 @@ function HomePage() {
 	const { isAdmin } = useIsAdmin();
 	const { data: resources, isLoading: loadingResources } = useResources();
 
-	// 1. Compute current week bounds for resource popularity counting
 	const currentWeekStart = useMemo(() => startOfCurrentWeek(), []);
 	const currentWeekEnd = useMemo(() => {
 		const end = new Date(currentWeekStart);
@@ -43,7 +41,6 @@ function HomePage() {
 		return end;
 	}, [currentWeekStart]);
 
-	// Fetch reservations starting from current week start up to 30 days ahead
 	const thirtyDaysLater = useMemo(() => {
 		const d = new Date();
 		d.setDate(d.getDate() + 30);
@@ -56,7 +53,6 @@ function HomePage() {
 			endDate: thirtyDaysLater.toISOString(),
 		});
 
-	// Filter personal or pending reservations
 	const userReservations = useMemo(
 		() => reservations?.filter((r) => r.user_id === user?.id) || [],
 		[reservations, user?.id],
@@ -66,7 +62,6 @@ function HomePage() {
 		[reservations],
 	);
 
-	// 2. Sort resources by active occurrence count within the current week
 	const popularResources = useMemo(() => {
 		if (!resources) return [];
 		if (!reservations || reservations.length === 0)
@@ -112,7 +107,7 @@ function HomePage() {
 						<p className="text-sm text-stone-600 dark:text-stone-400">
 							{t(
 								"tarkasteleReaaliaikaistaKalenterivaraustilannettaTeeUusiaVarauksiaJaHallinnoiOmiaVarauksiasiHelposti",
-								"Tarkastele reaaliaikaista kalenterivaraustilannetta, tee uusia\n\t\t\t\t\t\t\tvarauksia ja hallinnoi omia varauksiasi helposti.",
+								"Tarkastele reaaliaikaista kalenterivaraustilannetta, tee uusia varauksia ja hallinnoi omia varauksiasi helposti.",
 							)}
 						</p>
 					</div>
@@ -141,7 +136,7 @@ function HomePage() {
 					</div>
 				</section>
 
-				{/* Admin Notice Panel (visible only for Admins when pending items exist) */}
+				{/* Admin Notice Panel */}
 				{isAdmin && pendingReservations.length > 0 && (
 					<section className="p-4 rounded-md bg-amber-50 dark:bg-amber-950/40 border-2 border-amber-400 dark:border-amber-700 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
 						<div className="flex items-center gap-3">
@@ -159,7 +154,7 @@ function HomePage() {
 								<p className="text-xs text-amber-700 dark:text-amber-400">
 									{t(
 										"jrjestelmssOnUusiaVarauspyyntjJotkaOdottavatYllpidonVahvistusta",
-										"Järjestelmässä on uusia varauspyyntöjä, jotka odottavat\n\t\t\t\t\t\t\t\t\tylläpidon vahvistusta.",
+										"Järjestelmässä on uusia varauspyyntöjä, jotka odottavat ylläpidon vahvistusta.",
 									)}
 								</p>
 							</div>
@@ -178,9 +173,8 @@ function HomePage() {
 					</section>
 				)}
 
-				{/* Grid Layout: Upcoming User Reservations & Resource Quick-Links */}
+				{/* Grid Layout */}
 				<div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-					{/* Left Column (2 cols): User's Upcoming Reservations */}
 					<div className="lg:col-span-2 space-y-3">
 						<div className="flex items-center justify-between">
 							<h2 className="text-lg font-bold text-stone-900 dark:text-stone-100 flex items-center gap-2">
@@ -208,7 +202,7 @@ function HomePage() {
 								<p className="text-xs text-stone-500">
 									{t(
 										"kirjauduSisnNhdksesiOmatTulevatVarauksesiJaTehdksesiUusiaVarauksia",
-										"Kirjaudu sisään nähdäksesi omat tulevat varauksesi ja\n\t\t\t\t\t\t\t\t\ttehdäksesi uusia varauksia.",
+										"Kirjaudu sisään nähdäksesi omat tulevat varauksesi ja tehdäksesi uusia varauksia.",
 									)}
 								</p>
 							</div>
@@ -240,6 +234,16 @@ function HomePage() {
 													</Link>
 													<Chip>{readable_uuid(res.id)}</Chip>
 												</div>
+
+												{res.user_name && (
+													<p className="text-[11px] text-stone-500 dark:text-stone-400 flex items-center gap-1 font-medium">
+														<UserIcon
+															size={11}
+															className="text-purple-600 shrink-0"
+														/>
+														<span className="truncate">{res.user_name}</span>
+													</p>
+												)}
 
 												{firstOcc && (
 													<p className="text-xs text-stone-500 font-mono">
@@ -290,7 +294,6 @@ function HomePage() {
 						)}
 					</div>
 
-					{/* Right Column (1 col): Popular Resources Quick View */}
 					<div className="space-y-3">
 						<div className="flex items-center justify-between">
 							<h2 className="text-lg font-bold text-stone-900 dark:text-stone-100 flex items-center gap-2">
@@ -350,7 +353,6 @@ function HomePage() {
 				</div>
 			</div>
 
-			{/* Rich Footer embedded naturally at page bottom */}
 			<Footer />
 		</div>
 	);

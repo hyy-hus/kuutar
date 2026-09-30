@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        SELECT DISTINCT r.id\n        FROM reservations r\n        LEFT JOIN occurrences o ON o.reservation_id = r.id\n        WHERE r.deleted_at IS NULL\n          AND o.start_time < $2\n          AND o.end_time > $1\n          AND ($3::uuid IS NULL OR o.resource_id = $3)\n          AND ($4::reservation_status IS NULL OR r.status = $4)\n          -- Filter by target_user_id if provided (mandatory for non-admins)\n          AND ($5::uuid IS NULL OR r.user_id = $5)\n        ",
+  "query": "\n        INSERT INTO reservations (\n            user_id, title, description, admin_notes, \n            contact_person, contact_email, contact_phone, \n            rrule, status, contract_id\n        )\n        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)\n        RETURNING id\n        ",
   "describe": {
     "columns": [
       {
@@ -17,9 +17,14 @@
     ],
     "parameters": {
       "Left": [
-        "Timestamptz",
-        "Timestamptz",
         "Uuid",
+        "Text",
+        "Text",
+        "Text",
+        "Varchar",
+        "Varchar",
+        "Varchar",
+        "Text",
         {
           "Custom": {
             "name": "reservation_status",
@@ -39,5 +44,5 @@
       false
     ]
   },
-  "hash": "08c43df97ce5954dd6ceefc558d5545ccee82171ebd31548e7f9c452dc9dad87"
+  "hash": "5f13b8482b17a88b14e33a48d83df3156c98dc7b789f35eae48a16e1cd3bcc71"
 }

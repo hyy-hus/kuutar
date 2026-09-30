@@ -58,8 +58,10 @@ function EditResourcePage() {
 			id: resource.id,
 			payload: {
 				name: values.name,
-				collection_id: values.collection_id,
+				// collection_id: values.collection_id,
 				allow_recurring: values.allow_recurring,
+				is_public: values.is_public ?? false,
+				reservable_until: values.reservable_until ?? null,
 				contract_ids: values.contract_ids,
 			},
 		});
@@ -77,6 +79,8 @@ function EditResourcePage() {
 					name: resource.name,
 					collection_id: resource.collection_id,
 					allow_recurring: resource.allow_recurring,
+					is_public: resource.is_public,
+					reservable_until: resource.reservable_until,
 					contract_ids: initialContractIds,
 				}}
 				onSubmit={handleSubmit}

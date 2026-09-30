@@ -1,0 +1,125 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT DISTINCT\n            c.id, c.title, c.s3_key, c.file_name, c.is_global, c.is_active,\n            c.created_at, c.updated_at, c.deleted_at\n        FROM contracts c\n        LEFT JOIN resource_contracts rc ON c.id = rc.contract_id\n        WHERE c.deleted_at IS NULL\n          AND ($1::uuid IS NULL OR c.is_global = true OR rc.resource_id = $1)\n          AND ($2 = false OR c.is_active = true)\n        ORDER BY c.created_at DESC\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "contracts",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "title",
+        "type_info": "Jsonb",
+        "origin": {
+          "Table": {
+            "table": "contracts",
+            "name": "title"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "s3_key",
+        "type_info": "Jsonb",
+        "origin": {
+          "Table": {
+            "table": "contracts",
+            "name": "s3_key"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "file_name",
+        "type_info": "Jsonb",
+        "origin": {
+          "Table": {
+            "table": "contracts",
+            "name": "file_name"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "is_global",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "contracts",
+            "name": "is_global"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "is_active",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "contracts",
+            "name": "is_active"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "created_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "contracts",
+            "name": "created_at"
+          }
+        }
+      },
+      {
+        "ordinal": 7,
+        "name": "updated_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "contracts",
+            "name": "updated_at"
+          }
+        }
+      },
+      {
+        "ordinal": 8,
+        "name": "deleted_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "contracts",
+            "name": "deleted_at"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Bool"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true
+    ]
+  },
+  "hash": "26b190354f83ec0bda832c9b9749b7b0e44877df476e213c5657181dc8d8bc91"
+}

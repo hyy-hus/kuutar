@@ -138,6 +138,7 @@ export function Calendar({
 		// 1. Process Reservations
 		if (reservations) {
 			reservations.forEach((res) => {
+				if (res.status === "cancelled") return;
 				if (!res.occurrences || res.occurrences.length === 0) return;
 
 				const timeGroups = new Map<string, typeof res.occurrences>();
@@ -174,35 +175,64 @@ export function Calendar({
 						end: new Date(firstOcc.end_time),
 						resourceId: firstOcc.resource_id,
 						resourceName: resourceNames,
+						userName: res.user_name ?? undefined,
 					});
 				});
 			});
 		}
 
 		// 2. Process Restrictions (global or specific resource bindings)
-		// Process Restriction Occurrences
-		if (restrictions) {
+		if (restrictions && activeResourceIds.length > 0) {
 			restrictions.forEach((restrWithOcc) => {
 				const occurrences = restrWithOcc.occurrences || [];
+				const timeGroups = new Map<
+					string,
+					{
+						occ: (typeof occurrences)[0];
+						isGlobal: boolean;
+						resourceNames: Set<string>;
+					}
+				>();
 
 				occurrences.forEach((occ) => {
-					const targetResourceIds = occ.resource_id
-						? activeResourceIds.includes(occ.resource_id)
-							? [occ.resource_id]
-							: []
-						: activeResourceIds;
+					const resId = occ.resource_id;
+					const isGlobal = !resId;
+					if (isGlobal || (resId && activeResourceIds.includes(resId))) {
+						const startMs = new Date(occ.start_time).getTime();
+						const endMs = new Date(occ.end_time).getTime();
+						const key = `${restrWithOcc.id}_${startMs}_${endMs}`;
 
-					targetResourceIds.forEach((resId) => {
-						events.push({
-							id: `restr-${occ.id}-${resId}`,
-							restrictionId: restrWithOcc.id,
-							isRestriction: true,
-							title: restrWithOcc.title,
-							start: new Date(occ.start_time),
-							end: new Date(occ.end_time),
-							resourceId: resId,
-							resourceName: resourcesMap.get(resId),
-						});
+						const entry = timeGroups.get(key) || {
+							occ,
+							isGlobal: false,
+							resourceNames: new Set<string>(),
+						};
+
+						if (isGlobal) {
+							entry.isGlobal = true;
+						} else if (resId) {
+							const name = resourcesMap.get(resId);
+							if (name) entry.resourceNames.add(name);
+						}
+
+						timeGroups.set(key, entry);
+					}
+				});
+
+				timeGroups.forEach((entry) => {
+					const resourceName = entry.isGlobal
+						? undefined
+						: Array.from(entry.resourceNames).join(", ");
+
+					events.push({
+						id: `restr-${entry.occ.id}`,
+						restrictionId: restrWithOcc.id,
+						isRestriction: true,
+						title: restrWithOcc.title,
+						start: new Date(entry.occ.start_time),
+						end: new Date(entry.occ.end_time),
+						resourceId: entry.occ.resource_id ?? "",
+						resourceName,
 					});
 				});
 			});
@@ -212,8 +242,8 @@ export function Calendar({
 		const uniqueEvents = new Map<string, CalendarEvent>();
 		events.forEach((evt) => {
 			const key = evt.isRestriction
-				? `${evt.restrictionId}_${evt.resourceId}_${evt.start.getTime()}`
-				: `${evt.reservationId}_${evt.start.getTime()}`;
+				? `restr_${evt.restrictionId}_${evt.start.getTime()}_${evt.end.getTime()}`
+				: `res_${evt.reservationId}_${evt.start.getTime()}_${evt.end.getTime()}`;
 
 			if (!uniqueEvents.has(key)) {
 				uniqueEvents.set(key, evt);

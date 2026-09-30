@@ -1,7 +1,10 @@
 // src/routes/resources/create.tsx
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
-import { ResourceForm } from "#/components/ResourceForm";
+import {
+	ResourceForm,
+	type ResourceFormValues,
+} from "#/components/ResourceForm";
 import { useCreateResource } from "#/hooks/useResorces";
 import { requireAuthGuard } from "#/utils/authGuard";
 
@@ -17,11 +20,15 @@ function CreateResourcePage() {
 	const navigate = useNavigate();
 	const createResource = useCreateResource();
 
-	const handleSubmit = async (values: {
-		name: string;
-		collection_id: string;
-	}) => {
-		const created = await createResource.mutateAsync(values);
+	const handleSubmit = async (values: ResourceFormValues) => {
+		const created = await createResource.mutateAsync({
+			name: values.name,
+			collection_id: values.collection_id,
+			allow_recurring: values.allow_recurring ?? true,
+			is_public: values.is_public ?? true,
+			reservable_until: values.reservable_until,
+			contract_ids: values.contract_ids,
+		});
 		navigate({ to: "/resources/$id", params: { id: created.id } });
 	};
 
