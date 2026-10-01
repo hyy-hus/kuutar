@@ -26,7 +26,7 @@ use crate::{
     errors::AppError,
 };
 
-const MAX_SEARCH_RANGE_DAYS: i64 = 91;
+const MAX_SEARCH_RANGE_DAYS: i64 = 365;
 
 /// Helper function to check if non-admin users are creating recurring reservations
 /// on resources that explicitly allow recurrence.
