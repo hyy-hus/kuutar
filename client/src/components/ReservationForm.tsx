@@ -230,10 +230,14 @@ export function ReservationForm({
 						<form.Field name="contact_person">
 							{(field) => (
 								<div className="space-y-0.5">
-									<label className="text-[11px] text-stone-600 dark:text-stone-400">
+									<label
+										htmlFor={field.name}
+										className="text-[11px] text-stone-600 dark:text-stone-400"
+									>
 										{t("yhteyshenkilo", "Yhteyshenkilö")}
 									</label>
 									<Input
+										id={field.name}
 										value={field.state.value}
 										onChange={(e) => field.handleChange(e.target.value)}
 										placeholder={t("yhteyshenkilonNimi", "Yhteyshenkilön nimi")}
@@ -246,10 +250,14 @@ export function ReservationForm({
 							<form.Field name="contact_email">
 								{(field) => (
 									<div className="space-y-0.5">
-										<label className="text-[11px] text-stone-600 dark:text-stone-400">
+										<label
+											htmlFor={field.name}
+											className="text-[11px] text-stone-600 dark:text-stone-400"
+										>
 											{t("yhteysSähköposti", "Sähköposti")}
 										</label>
 										<Input
+											id={field.name}
 											type="email"
 											value={field.state.value}
 											onChange={(e) => field.handleChange(e.target.value)}
@@ -265,10 +273,14 @@ export function ReservationForm({
 							<form.Field name="contact_phone">
 								{(field) => (
 									<div className="space-y-0.5">
-										<label className="text-[11px] text-stone-600 dark:text-stone-400">
+										<label
+											htmlFor={field.name}
+											className="text-[11px] text-stone-600 dark:text-stone-400"
+										>
 											{t("puhelinnumero", "Puhelinnumero")}
 										</label>
 										<Input
+											id={field.name}
 											type="tel"
 											value={field.state.value}
 											onChange={(e) => field.handleChange(e.target.value)}
@@ -282,10 +294,14 @@ export function ReservationForm({
 						<form.Field name="admin_notes">
 							{(field) => (
 								<div className="space-y-0.5">
-									<label className="text-[11px] text-stone-600 dark:text-stone-400">
+									<label
+										htmlFor={field.name}
+										className="text-[11px] text-stone-600 dark:text-stone-400"
+									>
 										{t("yllpitjnMuistiinpanot", "Ylläpitäjän muistiinpanot")}
 									</label>
 									<Input
+										id={field.name}
 										value={field.state.value}
 										onChange={(e) => field.handleChange(e.target.value)}
 										placeholder={t(
@@ -300,10 +316,14 @@ export function ReservationForm({
 						<form.Field name="status">
 							{(field) => (
 								<div className="space-y-0.5">
-									<label className="text-[11px] text-stone-600 dark:text-stone-400">
+									<label
+										htmlFor={field.name}
+										className="text-[11px] text-stone-600 dark:text-stone-400"
+									>
 										{t("tila", "Tila")}
 									</label>
 									<select
+										id={field.name}
 										value={field.state.value}
 										onChange={(e) =>
 											field.handleChange(e.target.value as ReservationStatus)
@@ -487,7 +507,7 @@ export function ReservationForm({
 									fieldApi.form.getFieldValue("resource_ids") || [];
 								for (const rId of selectedResourceIds) {
 									const res = resources?.find((r) => r.id === rId);
-									if (res && res.reservable_until) {
+									if (res?.reservable_until) {
 										const limit = new Date(res.reservable_until).getTime();
 										if (new Date(value).getTime() > limit) {
 											return t(
@@ -734,7 +754,8 @@ function ContractApprovalSection({
 								rel="noopener noreferrer"
 								className="text-[11px] font-semibold text-purple-600 hover:text-purple-700 dark:text-purple-400 hover:underline"
 							>
-								{t("lataaTaiLue", "Lue ehdot")} &rarr;
+								{t("lataaTaiLue", "Lue ehdot")}
+								{" →"}
 							</a>
 						</li>
 					);
@@ -848,7 +869,15 @@ function AutomaticConflictChecker({
 							const rStartMs = new Date(rOcc.start_time).getTime();
 							const rEndMs = new Date(rOcc.end_time).getTime();
 
-							if (pStart < rEndMs && pEndMs > rStartMs) {
+							// The same restriction can overlap once per selected resource;
+							// list each title/time pair only once
+							const isDuplicate = foundRestrictions.some(
+								(f) =>
+									f.title === restr.title &&
+									f.start_time === proposed.start_time &&
+									f.end_time === pEnd,
+							);
+							if (pStart < rEndMs && pEndMs > rStartMs && !isDuplicate) {
 								foundRestrictions.push({
 									title: restr.title,
 									start_time: proposed.start_time,
@@ -937,10 +966,15 @@ function AutomaticConflictChecker({
 						</span>
 					</div>
 					<ul className="list-disc list-inside space-y-1 font-mono text-[11px]">
-						{restrictionConflicts.map((item, idx) => (
-							<li key={`restr-conf-${idx}`}>
-								<span className="font-semibold font-sans">{item.title}:</span>{" "}
-								{formatDate(item.start_time)} – {formatDate(item.end_time)}
+						{restrictionConflicts.map((item) => (
+							<li key={`${item.title}-${item.start_time}-${item.end_time}`}>
+								<span className="font-semibold font-sans">
+									{item.title}
+									{":"}
+								</span>{" "}
+								{formatDate(item.start_time)}
+								{" – "}
+								{formatDate(item.end_time)}
 							</li>
 						))}
 					</ul>
@@ -962,7 +996,9 @@ function AutomaticConflictChecker({
 					<ul className="list-disc list-inside space-y-1 font-mono text-[11px]">
 						{conflicts.map((occ) => (
 							<li key={occ.id}>
-								{formatDate(occ.start_time)} – {formatDate(occ.end_time)}
+								{formatDate(occ.start_time)}
+								{" – "}
+								{formatDate(occ.end_time)}
 							</li>
 						))}
 					</ul>

@@ -1,22 +1,14 @@
 import { useForm } from "@tanstack/react-form";
-import {
-	AlertOctagon,
-	Loader2,
-	Plus,
-	RefreshCw,
-	Save,
-	Trash2,
-	Users,
-} from "lucide-react";
-import { useMemo, useState } from "react";
+import { AlertOctagon, Loader2, Save, Users } from "lucide-react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Frequency } from "rrule";
-import { Button } from "./Button";
-import { Input } from "./Input";
 import { useGroups } from "#/hooks/useGroups";
 import { useResources } from "#/hooks/useResorces";
 import { formatDateTimeLocal } from "#/utils/date";
 import { generateOccurrences, parseRRule } from "#/utils/rruleUtils";
+import { Button } from "./Button";
+import { Input } from "./Input";
 
 export interface RestrictionOccurrenceValue {
 	resource_id: string | null;
@@ -200,10 +192,14 @@ export function RestrictionForm({
 					<form.Field name="start_time">
 						{(field) => (
 							<div className="space-y-1">
-								<label className="text-[11px] text-stone-600 dark:text-stone-400">
+								<label
+									htmlFor={field.name}
+									className="text-[11px] text-stone-600 dark:text-stone-400"
+								>
 									{t("alkamisaika", "Alkamisaika")}
 								</label>
 								<Input
+									id={field.name}
 									type="datetime-local"
 									value={field.state.value}
 									onChange={(e) => {
@@ -237,10 +233,14 @@ export function RestrictionForm({
 					<form.Field name="end_time">
 						{(field) => (
 							<div className="space-y-1">
-								<label className="text-[11px] text-stone-600 dark:text-stone-400">
+								<label
+									htmlFor={field.name}
+									className="text-[11px] text-stone-600 dark:text-stone-400"
+								>
 									{t("paattymisaika", "Päättymisaika")}
 								</label>
 								<Input
+									id={field.name}
 									type="datetime-local"
 									value={field.state.value}
 									onChange={(e) => field.handleChange(e.target.value)}
@@ -260,30 +260,36 @@ export function RestrictionForm({
 									"Koskevat resurssit (Tyhjä = kaikkia koskeva)",
 								)}
 							</span>
-							<div className="flex flex-wrap gap-1.5 p-2 bg-stone-50 dark:bg-stone-950 border border-stone-200 dark:border-stone-800 rounded max-h-32 overflow-y-auto">
-								{resources?.map((res) => {
-									const isChecked = field.state.value.includes(res.id);
-									return (
-										<button
-											key={res.id}
-											type="button"
-											onClick={() => {
-												const next = isChecked
-													? field.state.value.filter((id) => id !== res.id)
-													: [...field.state.value, res.id];
-												field.handleChange(next);
-											}}
-											className={`px-2 py-1 text-xs font-medium rounded border ${
-												isChecked
-													? "bg-amber-600 text-white border-amber-600"
-													: "bg-white dark:bg-stone-900 border-stone-300 dark:border-stone-700"
-											}`}
-										>
-											{res.name}
-										</button>
-									);
-								})}
-							</div>
+							{loadingResources ? (
+								<div className="text-xs text-stone-500 py-2">
+									{t("ladataanResursseja", "Ladataan resursseja...")}
+								</div>
+							) : (
+								<div className="flex flex-wrap gap-1.5 p-2 bg-stone-50 dark:bg-stone-950 border border-stone-200 dark:border-stone-800 rounded max-h-32 overflow-y-auto">
+									{resources?.map((res) => {
+										const isChecked = field.state.value.includes(res.id);
+										return (
+											<button
+												key={res.id}
+												type="button"
+												onClick={() => {
+													const next = isChecked
+														? field.state.value.filter((id) => id !== res.id)
+														: [...field.state.value, res.id];
+													field.handleChange(next);
+												}}
+												className={`px-2 py-1 text-xs font-medium rounded border ${
+													isChecked
+														? "bg-amber-600 text-white border-amber-600"
+														: "bg-white dark:bg-stone-900 border-stone-300 dark:border-stone-700"
+												}`}
+											>
+												{res.name}
+											</button>
+										);
+									})}
+								</div>
+							)}
 						</div>
 					)}
 				</form.Field>
@@ -291,10 +297,14 @@ export function RestrictionForm({
 				{/* Recurrence Rule Controls */}
 				<div className="grid grid-cols-2 gap-2 pt-2 border-t border-stone-200 dark:border-stone-800">
 					<div className="space-y-1">
-						<label className="text-[11px] text-stone-600 dark:text-stone-400">
+						<label
+							htmlFor="recurrence_freq"
+							className="text-[11px] text-stone-600 dark:text-stone-400"
+						>
 							{t("toistuvuusjakso", "Toistuvuusjakso")}
 						</label>
 						<select
+							id="recurrence_freq"
 							value={freq === null ? "none" : freq}
 							onChange={(e) => {
 								const val = e.target.value;
@@ -320,10 +330,14 @@ export function RestrictionForm({
 
 					{freq !== null && (
 						<div className="space-y-1">
-							<label className="text-[11px] text-stone-600 dark:text-stone-400">
+							<label
+								htmlFor="recurrence_until"
+								className="text-[11px] text-stone-600 dark:text-stone-400"
+							>
 								{t("toistoPttyy", "Toisto päättyy")}
 							</label>
 							<Input
+								id="recurrence_until"
 								type="date"
 								value={untilStr}
 								onChange={(e) => setUntilStr(e.target.value)}
