@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        UPDATE groups\n        SET name = $1\n        WHERE id = $2 AND deleted_at IS NULL\n        RETURNING id, name, created_at, updated_at\n        ",
+  "query": "\n        INSERT INTO groups (name, description)\n        VALUES ($1, $2)\n        RETURNING id, name, description, created_at, updated_at\n        ",
   "describe": {
     "columns": [
       {
@@ -27,6 +27,17 @@
       },
       {
         "ordinal": 2,
+        "name": "description",
+        "type_info": "Jsonb",
+        "origin": {
+          "Table": {
+            "table": "groups",
+            "name": "description"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
         "name": "created_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -37,7 +48,7 @@
         }
       },
       {
-        "ordinal": 3,
+        "ordinal": 4,
         "name": "updated_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -51,15 +62,16 @@
     "parameters": {
       "Left": [
         "Text",
-        "Uuid"
+        "Jsonb"
       ]
     },
     "nullable": [
       false,
       false,
+      true,
       false,
       false
     ]
   },
-  "hash": "276a552ed3634cfe588d7f93ffd3fef52e2695bb67ef183d567df2de6233cbaf"
+  "hash": "235fc46ec7b743ddaf35ba41563ec9c6e959bbb8ac6078c8537c784f228ce4ff"
 }

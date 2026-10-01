@@ -21,6 +21,7 @@ import { useReservations } from "#/hooks/useReservations";
 import { useResources } from "#/hooks/useResorces";
 import { currentYearRange, startOfCurrentWeek } from "#/utils/calendarUtils";
 import { formatDate } from "#/utils/date";
+import { getLocalizedPlainText } from "#/utils/richText";
 import { readable_uuid } from "#/utils/uuid";
 
 export const Route = createFileRoute("/_app/")({
@@ -28,7 +29,7 @@ export const Route = createFileRoute("/_app/")({
 });
 
 function HomePage() {
-	const { t } = useTranslation();
+	const { t, i18n } = useTranslation();
 	const { user } = useAuth();
 	const { isAdmin } = useIsAdmin();
 	const { data: resources, isLoading: loadingResources } = useResources();
@@ -326,7 +327,10 @@ function HomePage() {
 												{res.name}
 											</h3>
 											<p className="text-[11px] text-stone-500 truncate">
-												{res.description ||
+												{getLocalizedPlainText(
+													res.description,
+													i18n.language,
+												) ||
 													t("eiKuvaustaSaatavilla", "Ei kuvausta saatavilla.")}
 											</p>
 										</div>

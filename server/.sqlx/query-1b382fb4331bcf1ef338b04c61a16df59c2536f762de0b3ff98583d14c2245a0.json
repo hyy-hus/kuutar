@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        SELECT id, collection_id, name, allow_recurring, reservable_until, is_public, created_at, updated_at, deleted_at\n        FROM resources\n        WHERE deleted_at IS NULL\n          AND ($1 = TRUE OR is_public = TRUE)\n        ORDER BY name ASC\n        ",
+  "query": "\n        SELECT id, collection_id, name, description, allow_recurring, reservable_until, is_public, created_at, updated_at, deleted_at\n        FROM resources\n        WHERE id = $1 \n          AND deleted_at IS NULL\n          AND ($2 = TRUE OR is_public = TRUE)\n        ",
   "describe": {
     "columns": [
       {
@@ -38,6 +38,17 @@
       },
       {
         "ordinal": 3,
+        "name": "description",
+        "type_info": "Jsonb",
+        "origin": {
+          "Table": {
+            "table": "resources",
+            "name": "description"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
         "name": "allow_recurring",
         "type_info": "Bool",
         "origin": {
@@ -48,7 +59,7 @@
         }
       },
       {
-        "ordinal": 4,
+        "ordinal": 5,
         "name": "reservable_until",
         "type_info": "Timestamptz",
         "origin": {
@@ -59,7 +70,7 @@
         }
       },
       {
-        "ordinal": 5,
+        "ordinal": 6,
         "name": "is_public",
         "type_info": "Bool",
         "origin": {
@@ -70,7 +81,7 @@
         }
       },
       {
-        "ordinal": 6,
+        "ordinal": 7,
         "name": "created_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -81,7 +92,7 @@
         }
       },
       {
-        "ordinal": 7,
+        "ordinal": 8,
         "name": "updated_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -92,7 +103,7 @@
         }
       },
       {
-        "ordinal": 8,
+        "ordinal": 9,
         "name": "deleted_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -105,6 +116,7 @@
     ],
     "parameters": {
       "Left": [
+        "Uuid",
         "Bool"
       ]
     },
@@ -112,6 +124,7 @@
       false,
       false,
       false,
+      true,
       false,
       true,
       false,
@@ -120,5 +133,5 @@
       true
     ]
   },
-  "hash": "c9bca264f10a13c3971770151374a070c959fa0107db19bc967462816eae767f"
+  "hash": "1b382fb4331bcf1ef338b04c61a16df59c2536f762de0b3ff98583d14c2245a0"
 }

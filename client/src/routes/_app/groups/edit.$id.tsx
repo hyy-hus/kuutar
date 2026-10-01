@@ -41,6 +41,7 @@ function EditGroupPage() {
 			<GroupForm
 				defaultValues={{
 					name: group.name,
+					description: group.description,
 				}}
 				onSubmit={handleSubmit}
 				isSubmitting={updateGroup.isPending}

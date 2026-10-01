@@ -20,8 +20,6 @@ import { Route as AppCollectionsIndexRouteImport } from './routes/_app/collectio
 import { Route as AppCollectionsIdRouteImport } from './routes/_app/collections/$id'
 import { Route as AppCollectionsCreateRouteImport } from './routes/_app/collections/create'
 import { Route as AppContractsIndexRouteImport } from './routes/_app/contracts/index'
-import { Route as AppContractsIdRouteImport } from './routes/_app/contracts/$id'
-import { Route as AppContractsCreateRouteImport } from './routes/_app/contracts/create'
 import { Route as AppGroupsIndexRouteImport } from './routes/_app/groups/index'
 import { Route as AppGroupsIdRouteImport } from './routes/_app/groups/$id'
 import { Route as AppGroupsCreateRouteImport } from './routes/_app/groups/create'
@@ -99,16 +97,6 @@ const AppCollectionsCreateRoute = AppCollectionsCreateRouteImport.update({
 const AppContractsIndexRoute = AppContractsIndexRouteImport.update({
   id: '/contracts/',
   path: '/contracts/',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppContractsIdRoute = AppContractsIdRouteImport.update({
-  id: '/contracts/$id',
-  path: '/contracts/$id',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppContractsCreateRoute = AppContractsCreateRouteImport.update({
-  id: '/contracts/create',
-  path: '/contracts/create',
   getParentRoute: () => AppRoute,
 } as any)
 const AppGroupsIndexRoute = AppGroupsIndexRouteImport.update({
@@ -241,8 +229,6 @@ export interface FileRoutesByFullPath {
   '/admin/reservations': typeof AppAdminReservationsRoute
   '/collections/$id': typeof AppCollectionsIdRoute
   '/collections/create': typeof AppCollectionsCreateRoute
-  '/contracts/$id': typeof AppContractsIdRoute
-  '/contracts/create': typeof AppContractsCreateRoute
   '/groups/$id': typeof AppGroupsIdRoute
   '/groups/create': typeof AppGroupsCreateRoute
   '/reservations/$id': typeof AppReservationsIdRoute
@@ -279,8 +265,6 @@ export interface FileRoutesByTo {
   '/admin/reservations': typeof AppAdminReservationsRoute
   '/collections/$id': typeof AppCollectionsIdRoute
   '/collections/create': typeof AppCollectionsCreateRoute
-  '/contracts/$id': typeof AppContractsIdRoute
-  '/contracts/create': typeof AppContractsCreateRoute
   '/groups/$id': typeof AppGroupsIdRoute
   '/groups/create': typeof AppGroupsCreateRoute
   '/reservations/$id': typeof AppReservationsIdRoute
@@ -319,8 +303,6 @@ export interface FileRoutesById {
   '/_app/admin/reservations': typeof AppAdminReservationsRoute
   '/_app/collections/$id': typeof AppCollectionsIdRoute
   '/_app/collections/create': typeof AppCollectionsCreateRoute
-  '/_app/contracts/$id': typeof AppContractsIdRoute
-  '/_app/contracts/create': typeof AppContractsCreateRoute
   '/_app/groups/$id': typeof AppGroupsIdRoute
   '/_app/groups/create': typeof AppGroupsCreateRoute
   '/_app/reservations/$id': typeof AppReservationsIdRoute
@@ -359,8 +341,6 @@ export interface FileRouteTypes {
     | '/admin/reservations'
     | '/collections/$id'
     | '/collections/create'
-    | '/contracts/$id'
-    | '/contracts/create'
     | '/groups/$id'
     | '/groups/create'
     | '/reservations/$id'
@@ -397,8 +377,6 @@ export interface FileRouteTypes {
     | '/admin/reservations'
     | '/collections/$id'
     | '/collections/create'
-    | '/contracts/$id'
-    | '/contracts/create'
     | '/groups/$id'
     | '/groups/create'
     | '/reservations/$id'
@@ -436,8 +414,6 @@ export interface FileRouteTypes {
     | '/_app/admin/reservations'
     | '/_app/collections/$id'
     | '/_app/collections/create'
-    | '/_app/contracts/$id'
-    | '/_app/contracts/create'
     | '/_app/groups/$id'
     | '/_app/groups/create'
     | '/_app/reservations/$id'
@@ -549,20 +525,6 @@ declare module '@tanstack/react-router' {
       path: '/contracts'
       fullPath: '/contracts/'
       preLoaderRoute: typeof AppContractsIndexRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/contracts/$id': {
-      id: '/_app/contracts/$id'
-      path: '/contracts/$id'
-      fullPath: '/contracts/$id'
-      preLoaderRoute: typeof AppContractsIdRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/contracts/create': {
-      id: '/_app/contracts/create'
-      path: '/contracts/create'
-      fullPath: '/contracts/create'
-      preLoaderRoute: typeof AppContractsCreateRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/groups/': {
@@ -758,8 +720,6 @@ interface AppRouteChildren {
   AppIndexRoute: typeof AppIndexRoute
   AppCollectionsIdRoute: typeof AppCollectionsIdRoute
   AppCollectionsCreateRoute: typeof AppCollectionsCreateRoute
-  AppContractsIdRoute: typeof AppContractsIdRoute
-  AppContractsCreateRoute: typeof AppContractsCreateRoute
   AppGroupsIdRoute: typeof AppGroupsIdRoute
   AppGroupsCreateRoute: typeof AppGroupsCreateRoute
   AppReservationsIdRoute: typeof AppReservationsIdRoute
@@ -793,8 +753,6 @@ const AppRouteChildren: AppRouteChildren = {
   AppIndexRoute: AppIndexRoute,
   AppCollectionsIdRoute: AppCollectionsIdRoute,
   AppCollectionsCreateRoute: AppCollectionsCreateRoute,
-  AppContractsIdRoute: AppContractsIdRoute,
-  AppContractsCreateRoute: AppContractsCreateRoute,
   AppGroupsIdRoute: AppGroupsIdRoute,
   AppGroupsCreateRoute: AppGroupsCreateRoute,
   AppReservationsIdRoute: AppReservationsIdRoute,

@@ -47,6 +47,7 @@ function EditCollectionPage() {
 			<CollectionForm
 				defaultValues={{
 					name: collection.name,
+					description: collection.description,
 				}}
 				onSubmit={handleSubmit}
 				isSubmitting={updateCollection.isPending}

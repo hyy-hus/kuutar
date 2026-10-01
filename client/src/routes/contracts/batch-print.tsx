@@ -7,7 +7,7 @@ import { useTranslation } from "react-i18next";
 import { api } from "#/api/client";
 import { Button } from "#/components/Button";
 import {
-	type Contract,
+	getApplicableContracts,
 	getLocalizedText,
 	useContracts,
 	usePresignDownload,
@@ -260,7 +260,7 @@ function BatchPrintPage() {
 	const { reservation_ids } = Route.useSearch();
 	const iframeRef = useRef<HTMLIFrameElement | null>(null);
 
-	const { data: globalContracts, isLoading: loadingContracts } = useContracts({
+	const { data: activeContracts, isLoading: loadingContracts } = useContracts({
 		active_only: true,
 	});
 	const { data: resources, isLoading: loadingResources } = useResources();
@@ -308,7 +308,7 @@ function BatchPrintPage() {
 		async function prepareBatchPdf() {
 			if (
 				hasRunRef.current ||
-				!globalContracts ||
+				!activeContracts ||
 				!resources ||
 				!activeReservations ||
 				activeReservations.length === 0
@@ -335,31 +335,11 @@ function BatchPrintPage() {
 						),
 					);
 
-					// 3. Fetch resource-specific contracts for all involved resources
-					const contractMap = new Map<string, Contract>();
-
-					// Add global active contracts
-					for (const gc of globalContracts) {
-						if (gc.is_global) {
-							contractMap.set(gc.id, gc);
-						}
-					}
-
-					// Query GET /contracts?resource_id={rId} to get resource-bound contracts
-					await Promise.all(
-						resourceIds.map(async (rId) => {
-							const { data, error } = await api.GET("/contracts", {
-								params: { query: { resource_id: rId, active_only: true } },
-							});
-							if (!error && data) {
-								for (const c of data as Contract[]) {
-									contractMap.set(c.id, c);
-								}
-							}
-						}),
+					// 3. Global contracts plus those linked to any involved resource
+					const applicableContracts = getApplicableContracts(
+						activeContracts,
+						resourceIds,
 					);
-
-					const applicableContracts = Array.from(contractMap.values());
 
 					// 4. Download and append all applicable contract PDFs
 					for (const contract of applicableContracts) {
@@ -417,7 +397,7 @@ function BatchPrintPage() {
 
 		prepareBatchPdf();
 	}, [
-		globalContracts,
+		activeContracts,
 		activeReservations,
 		resources,
 		resourceMap,

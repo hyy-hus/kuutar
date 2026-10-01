@@ -4,6 +4,7 @@ use utoipa::ToSchema;
 use uuid::Uuid;
 use validator::Validate;
 
+use crate::utils::rich_text::{LocalizedRichText, validate_localized_rich_text};
 use crate::utils::trim::{deserialize_trimmed_option_string, deserialize_trimmed_string};
 
 #[derive(Debug, Serialize, Deserialize, sqlx::FromRow, ToSchema)]
@@ -11,6 +12,9 @@ pub struct Resource {
     pub id: Uuid,
     pub collection_id: Uuid,
     pub name: String,
+    /// Localized Tiptap documents, e.g. {"fi": {"type": "doc", ...}}
+    #[schema(value_type = Option<HashMap<String, serde_json::Value>>)]
+    pub description: Option<serde_json::Value>,
     pub allow_recurring: bool,
     pub reservable_until: Option<DateTime<Utc>>,
     pub is_public: bool,
@@ -32,6 +36,11 @@ pub struct CreateResource {
         message = "Name must be between 1 and 255 characters"
     ))]
     pub name: String,
+
+    /// Localized Tiptap documents, e.g. {"fi": {"type": "doc", ...}}
+    #[schema(value_type = Option<HashMap<String, serde_json::Value>>)]
+    #[validate(custom(function = "validate_localized_rich_text"))]
+    pub description: Option<LocalizedRichText>,
 
     #[serde(default)]
     pub allow_recurring: bool,
@@ -57,6 +66,11 @@ pub struct UpdateResource {
         message = "Name must be between 1 and 255 characters"
     ))]
     pub name: Option<String>,
+
+    /// Localized Tiptap documents, e.g. {"fi": {"type": "doc", ...}}
+    #[schema(value_type = Option<HashMap<String, serde_json::Value>>)]
+    #[validate(custom(function = "validate_localized_rich_text"))]
+    pub description: Option<LocalizedRichText>,
 
     pub allow_recurring: Option<bool>,
 

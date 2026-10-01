@@ -58,6 +58,7 @@ function EditResourcePage() {
 			id: resource.id,
 			payload: {
 				name: values.name,
+				description: values.description,
 				// collection_id: values.collection_id,
 				allow_recurring: values.allow_recurring,
 				is_public: values.is_public ?? false,
@@ -77,6 +78,7 @@ function EditResourcePage() {
 			<ResourceForm
 				defaultValues={{
 					name: resource.name,
+					description: resource.description,
 					collection_id: resource.collection_id,
 					allow_recurring: resource.allow_recurring,
 					is_public: resource.is_public,

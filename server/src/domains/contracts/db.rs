@@ -13,13 +13,26 @@ pub async fn list_all(
     let contracts = sqlx::query_as!(
         Contract,
         r#"
-        SELECT DISTINCT
+        SELECT
             c.id, c.title, c.s3_key, c.file_name, c.is_global, c.is_active,
+            COALESCE(
+                (SELECT array_agg(rc.resource_id ORDER BY rc.resource_id)
+                 FROM resource_contracts rc
+                 JOIN resources r ON r.id = rc.resource_id AND r.deleted_at IS NULL
+                 WHERE rc.contract_id = c.id),
+                '{}'
+            ) AS "resource_ids!",
             c.created_at, c.updated_at, c.deleted_at
         FROM contracts c
-        LEFT JOIN resource_contracts rc ON c.id = rc.contract_id
         WHERE c.deleted_at IS NULL
-          AND ($1::uuid IS NULL OR c.is_global = true OR rc.resource_id = $1)
+          AND (
+            $1::uuid IS NULL
+            OR c.is_global = true
+            OR EXISTS (
+                SELECT 1 FROM resource_contracts rc
+                WHERE rc.contract_id = c.id AND rc.resource_id = $1
+            )
+          )
           AND ($2 = false OR c.is_active = true)
         ORDER BY c.created_at DESC
         "#,
@@ -37,11 +50,18 @@ pub async fn find_by_id(pool: &PgPool, id: Uuid) -> Result<Contract, AppError> {
     sqlx::query_as!(
         Contract,
         r#"
-        SELECT 
-            id, title, s3_key, file_name, is_global, is_active, 
-            created_at, updated_at, deleted_at
-        FROM contracts
-        WHERE id = $1 AND deleted_at IS NULL
+        SELECT
+            c.id, c.title, c.s3_key, c.file_name, c.is_global, c.is_active,
+            COALESCE(
+                (SELECT array_agg(rc.resource_id ORDER BY rc.resource_id)
+                 FROM resource_contracts rc
+                 JOIN resources r ON r.id = rc.resource_id AND r.deleted_at IS NULL
+                 WHERE rc.contract_id = c.id),
+                '{}'
+            ) AS "resource_ids!",
+            c.created_at, c.updated_at, c.deleted_at
+        FROM contracts c
+        WHERE c.id = $1 AND c.deleted_at IS NULL
         "#,
         id
     )
@@ -58,14 +78,26 @@ pub async fn list_for_resource(
     let contracts = sqlx::query_as!(
         Contract,
         r#"
-        SELECT DISTINCT
+        SELECT
             c.id, c.title, c.s3_key, c.file_name, c.is_global, c.is_active,
+            COALESCE(
+                (SELECT array_agg(rc.resource_id ORDER BY rc.resource_id)
+                 FROM resource_contracts rc
+                 JOIN resources r ON r.id = rc.resource_id AND r.deleted_at IS NULL
+                 WHERE rc.contract_id = c.id),
+                '{}'
+            ) AS "resource_ids!",
             c.created_at, c.updated_at, c.deleted_at
         FROM contracts c
-        LEFT JOIN resource_contracts rc ON c.id = rc.contract_id
         WHERE c.deleted_at IS NULL
           AND c.is_active = true
-          AND (c.is_global = true OR rc.resource_id = $1)
+          AND (
+            c.is_global = true
+            OR EXISTS (
+                SELECT 1 FROM resource_contracts rc
+                WHERE rc.contract_id = c.id AND rc.resource_id = $1
+            )
+          )
         ORDER BY c.created_at DESC
         "#,
         resource_id
@@ -87,12 +119,11 @@ pub async fn create(pool: &PgPool, dto: CreateContract) -> Result<Contract, AppE
     let file_name_json = serde_json::to_value(&dto.file_name)
         .map_err(|e| AppError::InternalServerError(e.to_string()))?;
 
-    let contract = sqlx::query_as!(
-        Contract,
+    let contract_id = sqlx::query_scalar!(
         r#"
         INSERT INTO contracts (title, s3_key, file_name, is_global, is_active)
         VALUES ($1, $2, $3, $4, $5)
-        RETURNING id, title, s3_key, file_name, is_global, is_active, created_at, updated_at, deleted_at
+        RETURNING id
         "#,
         title_json,
         s3_key_json,
@@ -112,7 +143,7 @@ pub async fn create(pool: &PgPool, dto: CreateContract) -> Result<Contract, AppE
                 ON CONFLICT DO NOTHING
                 "#,
                 res_id,
-                contract.id
+                contract_id
             )
             .execute(&mut *tx)
             .await?;
@@ -121,7 +152,8 @@ pub async fn create(pool: &PgPool, dto: CreateContract) -> Result<Contract, AppE
 
     tx.commit().await?;
 
-    Ok(contract)
+    // Reload so the response includes the resource links written above
+    find_by_id(pool, contract_id).await
 }
 
 /// Performs a partial update on an active contract document.
@@ -147,8 +179,7 @@ pub async fn update(pool: &PgPool, id: Uuid, dto: UpdateContract) -> Result<Cont
         None => None,
     };
 
-    let contract = sqlx::query_as!(
-        Contract,
+    let contract_id = sqlx::query_scalar!(
         r#"
         UPDATE contracts
         SET title = COALESCE($1, title),
@@ -158,7 +189,7 @@ pub async fn update(pool: &PgPool, id: Uuid, dto: UpdateContract) -> Result<Cont
             is_active = COALESCE($5, is_active),
             updated_at = NOW()
         WHERE id = $6 AND deleted_at IS NULL
-        RETURNING id, title, s3_key, file_name, is_global, is_active, created_at, updated_at, deleted_at
+        RETURNING id
         "#,
         title_json,
         s3_key_json,
@@ -174,7 +205,7 @@ pub async fn update(pool: &PgPool, id: Uuid, dto: UpdateContract) -> Result<Cont
     if let Some(resource_ids) = dto.resource_ids {
         sqlx::query!(
             "DELETE FROM resource_contracts WHERE contract_id = $1",
-            contract.id
+            contract_id
         )
         .execute(&mut *tx)
         .await?;
@@ -183,7 +214,7 @@ pub async fn update(pool: &PgPool, id: Uuid, dto: UpdateContract) -> Result<Cont
             sqlx::query!(
                 "INSERT INTO resource_contracts (resource_id, contract_id) VALUES ($1, $2)",
                 res_id,
-                contract.id
+                contract_id
             )
             .execute(&mut *tx)
             .await?;
@@ -192,7 +223,8 @@ pub async fn update(pool: &PgPool, id: Uuid, dto: UpdateContract) -> Result<Cont
 
     tx.commit().await?;
 
-    Ok(contract)
+    // Reload so the response includes the current resource links
+    find_by_id(pool, contract_id).await
 }
 
 /// Soft-deletes a contract document.

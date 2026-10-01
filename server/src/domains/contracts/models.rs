@@ -16,6 +16,8 @@ pub struct Contract {
     pub file_name: serde_json::Value, // LocalizedString
     pub is_global: bool,
     pub is_active: bool,
+    /// Resources this contract is linked to (excluding deleted ones); empty for global-only contracts
+    pub resource_ids: Vec<Uuid>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 

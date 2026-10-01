@@ -23,6 +23,7 @@ function CreateResourcePage() {
 	const handleSubmit = async (values: ResourceFormValues) => {
 		const created = await createResource.mutateAsync({
 			name: values.name,
+			description: values.description,
 			collection_id: values.collection_id,
 			allow_recurring: values.allow_recurring ?? true,
 			is_public: values.is_public ?? true,

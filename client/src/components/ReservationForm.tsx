@@ -1,4 +1,4 @@
-import { useForm } from "@tanstack/react-form";
+import { useForm, useStore } from "@tanstack/react-form";
 import {
 	AlertTriangle,
 	CheckCircle2,
@@ -16,6 +16,8 @@ import { Button } from "#/components/Button";
 import { Input } from "#/components/Input";
 import { useIsAdmin } from "#/hooks/useAuth";
 import {
+	type Contract,
+	getApplicableContracts,
 	getLocalizedText,
 	getStaticContractUrl,
 	useContracts,
@@ -62,7 +64,9 @@ export function ReservationForm({
 }: ReservationFormProps) {
 	const { t } = useTranslation();
 	const { data: resources, isLoading: loadingResources } = useResources();
-	const { data: allContracts, isLoading: loadingContracts } = useContracts();
+	const { data: activeContracts, isLoading: loadingContracts } = useContracts({
+		active_only: true,
+	});
 
 	const checkConflicts = useCheckConflicts();
 	const { isAdmin } = useIsAdmin();
@@ -147,6 +151,17 @@ export function ReservationForm({
 			});
 		},
 	});
+
+	const selectedResourceIds = useStore(
+		form.store,
+		(state) => state.values.resource_ids,
+	);
+	const applicableContracts = useMemo(
+		() => getApplicableContracts(activeContracts, selectedResourceIds),
+		[activeContracts, selectedResourceIds],
+	);
+	const needsContractApproval =
+		applicableContracts.length > 0 && !contractsApproved;
 
 	return (
 		<form
@@ -556,8 +571,8 @@ export function ReservationForm({
 				</div>
 
 				{/* Recurrence Rule Fields */}
-				<form.Subscribe selector={(state) => [state.values.resource_ids]}>
-					{([selectedResourceIds]) => {
+				<form.Subscribe selector={(state) => state.values.resource_ids}>
+					{(selectedResourceIds) => {
 						const canRecur =
 							isAdmin ||
 							(selectedResourceIds.length > 0 &&
@@ -584,11 +599,13 @@ export function ReservationForm({
 
 				{/* Automatic Conflict Checker */}
 				<form.Subscribe
-					selector={(state) => [
-						state.values.resource_ids,
-						state.values.start_time,
-						state.values.end_time,
-					]}
+					selector={(state) =>
+						[
+							state.values.resource_ids,
+							state.values.start_time,
+							state.values.end_time,
+						] as const
+					}
 				>
 					{([resourceIds, startTime, endTime]) => (
 						<AutomaticConflictChecker
@@ -609,41 +626,22 @@ export function ReservationForm({
 			</div>
 
 			{/* Contract Approval Section */}
-			<form.Subscribe selector={(state) => [state.values.resource_ids]}>
-				{([selectedResourceIds]) => (
-					<ContractApprovalSection
-						selectedResourceIds={selectedResourceIds}
-						allContracts={allContracts}
-						isLoading={loadingContracts}
-						approved={contractsApproved}
-						onApproveChange={setContractsApproved}
-					/>
-				)}
-			</form.Subscribe>
+			<ContractApprovalSection
+				contracts={applicableContracts}
+				isLoading={loadingContracts}
+				approved={contractsApproved}
+				onApproveChange={setContractsApproved}
+			/>
 
 			{/* Submit Button */}
 			<form.Subscribe
-				selector={(state) => [
-					state.canSubmit,
-					state.isSubmitting,
-					state.values.resource_ids,
-				]}
+				selector={(state) => [state.canSubmit, state.isSubmitting] as const}
 			>
-				{([canSubmit, formSubmitting, selectedResourceIds]) => {
+				{([canSubmit, formSubmitting]) => {
 					const hasRestrictionViolation =
 						!isAdmin &&
 						restrictionConflicts !== null &&
 						restrictionConflicts.length > 0;
-
-					const applicableContracts =
-						allContracts?.filter(
-							(c) =>
-								c.resource_id === null ||
-								selectedResourceIds.includes(c.resource_id),
-						) ?? [];
-
-					const needsContractApproval =
-						applicableContracts.length > 0 && !contractsApproved;
 
 					return (
 						<Button
@@ -674,38 +672,21 @@ export function ReservationForm({
 }
 
 interface ContractApprovalSectionProps {
-	selectedResourceIds: string[];
-	allContracts?: {
-		id: string;
-		title: unknown;
-		s3_key?: unknown;
-		file_url?: unknown;
-		resource_id?: string | null;
-	}[];
+	/** Contracts that apply to the selected resources */
+	contracts: Contract[];
 	isLoading: boolean;
 	approved: boolean;
 	onApproveChange: (approved: boolean) => void;
 }
 
 function ContractApprovalSection({
-	selectedResourceIds,
-	allContracts,
+	contracts,
 	isLoading,
 	approved,
 	onApproveChange,
 }: ContractApprovalSectionProps) {
 	const { t, i18n } = useTranslation();
 	const currentLocale = i18n.language || "fi";
-
-	const applicableContracts = useMemo(() => {
-		if (!allContracts) return [];
-		return allContracts.filter(
-			(c) =>
-				c.resource_id === null ||
-				c.resource_id === undefined ||
-				selectedResourceIds.includes(c.resource_id),
-		);
-	}, [allContracts, selectedResourceIds]);
 
 	if (isLoading) {
 		return (
@@ -716,7 +697,7 @@ function ContractApprovalSection({
 		);
 	}
 
-	if (applicableContracts.length === 0) {
+	if (contracts.length === 0) {
 		return null;
 	}
 
@@ -735,10 +716,8 @@ function ContractApprovalSection({
 			</p>
 
 			<ul className="space-y-1">
-				{applicableContracts.map((contract) => {
-					// Use contract.s3_key or fallback to file_url
-					const rawKey = contract.s3_key || contract.file_url;
-					const hrefUrl = getStaticContractUrl(rawKey, currentLocale);
+				{contracts.map((contract) => {
+					const hrefUrl = getStaticContractUrl(contract.s3_key, currentLocale);
 
 					return (
 						<li

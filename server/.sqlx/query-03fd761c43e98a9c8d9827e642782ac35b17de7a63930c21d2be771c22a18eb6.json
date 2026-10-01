@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        INSERT INTO contracts (title, s3_key, file_name, is_global, is_active)\n        VALUES ($1, $2, $3, $4, $5)\n        RETURNING id, title, s3_key, file_name, is_global, is_active, created_at, updated_at, deleted_at\n        ",
+  "query": "\n        SELECT\n            c.id, c.title, c.s3_key, c.file_name, c.is_global, c.is_active,\n            COALESCE(\n                (SELECT array_agg(rc.resource_id ORDER BY rc.resource_id)\n                 FROM resource_contracts rc\n                 JOIN resources r ON r.id = rc.resource_id AND r.deleted_at IS NULL\n                 WHERE rc.contract_id = c.id),\n                '{}'\n            ) AS \"resource_ids!\",\n            c.created_at, c.updated_at, c.deleted_at\n        FROM contracts c\n        WHERE c.deleted_at IS NULL\n          AND c.is_active = true\n          AND (\n            c.is_global = true\n            OR EXISTS (\n                SELECT 1 FROM resource_contracts rc\n                WHERE rc.contract_id = c.id AND rc.resource_id = $1\n            )\n          )\n        ORDER BY c.created_at DESC\n        ",
   "describe": {
     "columns": [
       {
@@ -71,6 +71,12 @@
       },
       {
         "ordinal": 6,
+        "name": "resource_ids!",
+        "type_info": "UuidArray",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 7,
         "name": "created_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -81,7 +87,7 @@
         }
       },
       {
-        "ordinal": 7,
+        "ordinal": 8,
         "name": "updated_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -92,7 +98,7 @@
         }
       },
       {
-        "ordinal": 8,
+        "ordinal": 9,
         "name": "deleted_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -105,11 +111,7 @@
     ],
     "parameters": {
       "Left": [
-        "Jsonb",
-        "Jsonb",
-        "Jsonb",
-        "Bool",
-        "Bool"
+        "Uuid"
       ]
     },
     "nullable": [
@@ -119,10 +121,11 @@
       false,
       false,
       false,
+      null,
       false,
       false,
       true
     ]
   },
-  "hash": "8c2db04dda3ee6e9cf951220d6309b69f54098ace4ad254354843d2dbf949081"
+  "hash": "03fd761c43e98a9c8d9827e642782ac35b17de7a63930c21d2be771c22a18eb6"
 }
