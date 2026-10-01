@@ -1,4 +1,4 @@
-import { useForm } from "@tanstack/react-form";
+import { useForm, useStore } from "@tanstack/react-form";
 import {
 	AlertTriangle,
 	CheckCircle2,
@@ -16,6 +16,8 @@ import { Button } from "#/components/Button";
 import { Input } from "#/components/Input";
 import { useIsAdmin } from "#/hooks/useAuth";
 import {
+	type Contract,
+	getApplicableContracts,
 	getLocalizedText,
 	getStaticContractUrl,
 	useContracts,
@@ -62,7 +64,9 @@ export function ReservationForm({
 }: ReservationFormProps) {
 	const { t } = useTranslation();
 	const { data: resources, isLoading: loadingResources } = useResources();
-	const { data: allContracts, isLoading: loadingContracts } = useContracts();
+	const { data: activeContracts, isLoading: loadingContracts } = useContracts({
+		active_only: true,
+	});
 
 	const checkConflicts = useCheckConflicts();
 	const { isAdmin } = useIsAdmin();
@@ -148,6 +152,17 @@ export function ReservationForm({
 		},
 	});
 
+	const selectedResourceIds = useStore(
+		form.store,
+		(state) => state.values.resource_ids,
+	);
+	const applicableContracts = useMemo(
+		() => getApplicableContracts(activeContracts, selectedResourceIds),
+		[activeContracts, selectedResourceIds],
+	);
+	const needsContractApproval =
+		applicableContracts.length > 0 && !contractsApproved;
+
 	return (
 		<form
 			onSubmit={(e) => {
@@ -230,10 +245,14 @@ export function ReservationForm({
 						<form.Field name="contact_person">
 							{(field) => (
 								<div className="space-y-0.5">
-									<label className="text-[11px] text-stone-600 dark:text-stone-400">
+									<label
+										htmlFor={field.name}
+										className="text-[11px] text-stone-600 dark:text-stone-400"
+									>
 										{t("yhteyshenkilo", "Yhteyshenkilö")}
 									</label>
 									<Input
+										id={field.name}
 										value={field.state.value}
 										onChange={(e) => field.handleChange(e.target.value)}
 										placeholder={t("yhteyshenkilonNimi", "Yhteyshenkilön nimi")}
@@ -246,10 +265,14 @@ export function ReservationForm({
 							<form.Field name="contact_email">
 								{(field) => (
 									<div className="space-y-0.5">
-										<label className="text-[11px] text-stone-600 dark:text-stone-400">
+										<label
+											htmlFor={field.name}
+											className="text-[11px] text-stone-600 dark:text-stone-400"
+										>
 											{t("yhteysSähköposti", "Sähköposti")}
 										</label>
 										<Input
+											id={field.name}
 											type="email"
 											value={field.state.value}
 											onChange={(e) => field.handleChange(e.target.value)}
@@ -265,10 +288,14 @@ export function ReservationForm({
 							<form.Field name="contact_phone">
 								{(field) => (
 									<div className="space-y-0.5">
-										<label className="text-[11px] text-stone-600 dark:text-stone-400">
+										<label
+											htmlFor={field.name}
+											className="text-[11px] text-stone-600 dark:text-stone-400"
+										>
 											{t("puhelinnumero", "Puhelinnumero")}
 										</label>
 										<Input
+											id={field.name}
 											type="tel"
 											value={field.state.value}
 											onChange={(e) => field.handleChange(e.target.value)}
@@ -282,10 +309,14 @@ export function ReservationForm({
 						<form.Field name="admin_notes">
 							{(field) => (
 								<div className="space-y-0.5">
-									<label className="text-[11px] text-stone-600 dark:text-stone-400">
+									<label
+										htmlFor={field.name}
+										className="text-[11px] text-stone-600 dark:text-stone-400"
+									>
 										{t("yllpitjnMuistiinpanot", "Ylläpitäjän muistiinpanot")}
 									</label>
 									<Input
+										id={field.name}
 										value={field.state.value}
 										onChange={(e) => field.handleChange(e.target.value)}
 										placeholder={t(
@@ -300,10 +331,14 @@ export function ReservationForm({
 						<form.Field name="status">
 							{(field) => (
 								<div className="space-y-0.5">
-									<label className="text-[11px] text-stone-600 dark:text-stone-400">
+									<label
+										htmlFor={field.name}
+										className="text-[11px] text-stone-600 dark:text-stone-400"
+									>
 										{t("tila", "Tila")}
 									</label>
 									<select
+										id={field.name}
 										value={field.state.value}
 										onChange={(e) =>
 											field.handleChange(e.target.value as ReservationStatus)
@@ -487,7 +522,7 @@ export function ReservationForm({
 									fieldApi.form.getFieldValue("resource_ids") || [];
 								for (const rId of selectedResourceIds) {
 									const res = resources?.find((r) => r.id === rId);
-									if (res && res.reservable_until) {
+									if (res?.reservable_until) {
 										const limit = new Date(res.reservable_until).getTime();
 										if (new Date(value).getTime() > limit) {
 											return t(
@@ -536,8 +571,8 @@ export function ReservationForm({
 				</div>
 
 				{/* Recurrence Rule Fields */}
-				<form.Subscribe selector={(state) => [state.values.resource_ids]}>
-					{([selectedResourceIds]) => {
+				<form.Subscribe selector={(state) => state.values.resource_ids}>
+					{(selectedResourceIds) => {
 						const canRecur =
 							isAdmin ||
 							(selectedResourceIds.length > 0 &&
@@ -564,11 +599,13 @@ export function ReservationForm({
 
 				{/* Automatic Conflict Checker */}
 				<form.Subscribe
-					selector={(state) => [
-						state.values.resource_ids,
-						state.values.start_time,
-						state.values.end_time,
-					]}
+					selector={(state) =>
+						[
+							state.values.resource_ids,
+							state.values.start_time,
+							state.values.end_time,
+						] as const
+					}
 				>
 					{([resourceIds, startTime, endTime]) => (
 						<AutomaticConflictChecker
@@ -589,41 +626,22 @@ export function ReservationForm({
 			</div>
 
 			{/* Contract Approval Section */}
-			<form.Subscribe selector={(state) => [state.values.resource_ids]}>
-				{([selectedResourceIds]) => (
-					<ContractApprovalSection
-						selectedResourceIds={selectedResourceIds}
-						allContracts={allContracts}
-						isLoading={loadingContracts}
-						approved={contractsApproved}
-						onApproveChange={setContractsApproved}
-					/>
-				)}
-			</form.Subscribe>
+			<ContractApprovalSection
+				contracts={applicableContracts}
+				isLoading={loadingContracts}
+				approved={contractsApproved}
+				onApproveChange={setContractsApproved}
+			/>
 
 			{/* Submit Button */}
 			<form.Subscribe
-				selector={(state) => [
-					state.canSubmit,
-					state.isSubmitting,
-					state.values.resource_ids,
-				]}
+				selector={(state) => [state.canSubmit, state.isSubmitting] as const}
 			>
-				{([canSubmit, formSubmitting, selectedResourceIds]) => {
+				{([canSubmit, formSubmitting]) => {
 					const hasRestrictionViolation =
 						!isAdmin &&
 						restrictionConflicts !== null &&
 						restrictionConflicts.length > 0;
-
-					const applicableContracts =
-						allContracts?.filter(
-							(c) =>
-								c.resource_id === null ||
-								selectedResourceIds.includes(c.resource_id),
-						) ?? [];
-
-					const needsContractApproval =
-						applicableContracts.length > 0 && !contractsApproved;
 
 					return (
 						<Button
@@ -654,38 +672,21 @@ export function ReservationForm({
 }
 
 interface ContractApprovalSectionProps {
-	selectedResourceIds: string[];
-	allContracts?: {
-		id: string;
-		title: unknown;
-		s3_key?: unknown;
-		file_url?: unknown;
-		resource_id?: string | null;
-	}[];
+	/** Contracts that apply to the selected resources */
+	contracts: Contract[];
 	isLoading: boolean;
 	approved: boolean;
 	onApproveChange: (approved: boolean) => void;
 }
 
 function ContractApprovalSection({
-	selectedResourceIds,
-	allContracts,
+	contracts,
 	isLoading,
 	approved,
 	onApproveChange,
 }: ContractApprovalSectionProps) {
 	const { t, i18n } = useTranslation();
 	const currentLocale = i18n.language || "fi";
-
-	const applicableContracts = useMemo(() => {
-		if (!allContracts) return [];
-		return allContracts.filter(
-			(c) =>
-				c.resource_id === null ||
-				c.resource_id === undefined ||
-				selectedResourceIds.includes(c.resource_id),
-		);
-	}, [allContracts, selectedResourceIds]);
 
 	if (isLoading) {
 		return (
@@ -696,7 +697,7 @@ function ContractApprovalSection({
 		);
 	}
 
-	if (applicableContracts.length === 0) {
+	if (contracts.length === 0) {
 		return null;
 	}
 
@@ -715,10 +716,8 @@ function ContractApprovalSection({
 			</p>
 
 			<ul className="space-y-1">
-				{applicableContracts.map((contract) => {
-					// Use contract.s3_key or fallback to file_url
-					const rawKey = contract.s3_key || contract.file_url;
-					const hrefUrl = getStaticContractUrl(rawKey, currentLocale);
+				{contracts.map((contract) => {
+					const hrefUrl = getStaticContractUrl(contract.s3_key, currentLocale);
 
 					return (
 						<li
@@ -734,7 +733,8 @@ function ContractApprovalSection({
 								rel="noopener noreferrer"
 								className="text-[11px] font-semibold text-purple-600 hover:text-purple-700 dark:text-purple-400 hover:underline"
 							>
-								{t("lataaTaiLue", "Lue ehdot")} &rarr;
+								{t("lataaTaiLue", "Lue ehdot")}
+								{" →"}
 							</a>
 						</li>
 					);
@@ -848,7 +848,15 @@ function AutomaticConflictChecker({
 							const rStartMs = new Date(rOcc.start_time).getTime();
 							const rEndMs = new Date(rOcc.end_time).getTime();
 
-							if (pStart < rEndMs && pEndMs > rStartMs) {
+							// The same restriction can overlap once per selected resource;
+							// list each title/time pair only once
+							const isDuplicate = foundRestrictions.some(
+								(f) =>
+									f.title === restr.title &&
+									f.start_time === proposed.start_time &&
+									f.end_time === pEnd,
+							);
+							if (pStart < rEndMs && pEndMs > rStartMs && !isDuplicate) {
 								foundRestrictions.push({
 									title: restr.title,
 									start_time: proposed.start_time,
@@ -937,10 +945,15 @@ function AutomaticConflictChecker({
 						</span>
 					</div>
 					<ul className="list-disc list-inside space-y-1 font-mono text-[11px]">
-						{restrictionConflicts.map((item, idx) => (
-							<li key={`restr-conf-${idx}`}>
-								<span className="font-semibold font-sans">{item.title}:</span>{" "}
-								{formatDate(item.start_time)} – {formatDate(item.end_time)}
+						{restrictionConflicts.map((item) => (
+							<li key={`${item.title}-${item.start_time}-${item.end_time}`}>
+								<span className="font-semibold font-sans">
+									{item.title}
+									{":"}
+								</span>{" "}
+								{formatDate(item.start_time)}
+								{" – "}
+								{formatDate(item.end_time)}
 							</li>
 						))}
 					</ul>
@@ -962,7 +975,9 @@ function AutomaticConflictChecker({
 					<ul className="list-disc list-inside space-y-1 font-mono text-[11px]">
 						{conflicts.map((occ) => (
 							<li key={occ.id}>
-								{formatDate(occ.start_time)} – {formatDate(occ.end_time)}
+								{formatDate(occ.start_time)}
+								{" – "}
+								{formatDate(occ.end_time)}
 							</li>
 						))}
 					</ul>

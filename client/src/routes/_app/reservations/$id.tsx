@@ -114,11 +114,15 @@ function ViewReservationPage() {
 							<p className="text-xs text-stone-600 dark:text-stone-400 flex items-center gap-1 mt-0.5">
 								<UserIcon size={12} className="text-purple-600 shrink-0" />
 								<span>
-									{t("varaaja", "Varaaja")}: {reservation.user_name}
+									{t("varaaja", "Varaaja")}
+									{": "}
+									{reservation.user_name}
 								</span>
 								{isAdmin && reservation.user_email && (
 									<span className="text-stone-400 font-mono">
-										({reservation.user_email})
+										{"("}
+										{reservation.user_email}
+										{")"}
 									</span>
 								)}
 							</p>
@@ -148,7 +152,10 @@ function ViewReservationPage() {
 
 							{reservation.contact_person && (
 								<p className="text-stone-800 dark:text-stone-200">
-									<strong>{t("yhteyshenkilo", "Yhteyshenkilö")}:</strong>{" "}
+									<strong>
+										{t("yhteyshenkilo", "Yhteyshenkilö")}
+										{":"}
+									</strong>{" "}
 									{reservation.contact_person}
 								</p>
 							)}
@@ -180,7 +187,10 @@ function ViewReservationPage() {
 
 							{reservation.admin_notes && (
 								<p className="italic text-stone-600 dark:text-stone-400 pt-1 border-t border-purple-200 dark:border-purple-900">
-									<strong>{t("muistiinpanot", "Muistiinpanot")}:</strong>{" "}
+									<strong>
+										{t("muistiinpanot", "Muistiinpanot")}
+										{":"}
+									</strong>{" "}
 									{reservation.admin_notes}
 								</p>
 							)}
@@ -204,8 +214,8 @@ function ViewReservationPage() {
 								<div className="flex items-center gap-1.5 text-stone-800 dark:text-stone-200">
 									<Clock size={14} className="text-purple-600 shrink-0" />
 									<span>
-										{formatDate(occ.start_time)} &rarr;{" "}
-										{formatDate(occ.end_time)}
+										{formatDate(occ.start_time)}
+										{" →"} {formatDate(occ.end_time)}
 									</span>
 								</div>
 								<span className="text-[10px] font-sans font-medium px-1.5 py-0.5 rounded bg-purple-100 dark:bg-purple-950 text-purple-800 dark:text-purple-300 border border-purple-300 dark:border-purple-800">

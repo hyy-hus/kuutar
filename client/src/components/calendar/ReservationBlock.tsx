@@ -1,13 +1,13 @@
 import { Link } from "@tanstack/react-router";
 import { AlertOctagon, Clock, User as UserIcon } from "lucide-react";
+import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { cn } from "#/utils/cn";
 import {
 	getMinutesBetween,
 	getMinutesSinceMidnight,
 	type PlacedEvent,
 } from "#/utils/calendarUtils";
-import { useEffect } from "react";
+import { cn } from "#/utils/cn";
 
 const timeFormatter = new Intl.DateTimeFormat("fi-FI", {
 	hour: "2-digit",

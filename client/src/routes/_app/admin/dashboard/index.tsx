@@ -53,6 +53,20 @@ const parseLocalDate = (dateStr: string): Date => {
 	return new Date(year, month - 1, day, 0, 0, 0, 0);
 };
 
+/** Orders reservations by their first occurrence; ones without times go last */
+const sortByDateAsc = (
+	a: ReservationWithOccurrences,
+	b: ReservationWithOccurrences,
+) => {
+	const timeA = a.occurrences?.[0]?.start_time
+		? new Date(a.occurrences[0].start_time).getTime()
+		: Number.MAX_SAFE_INTEGER;
+	const timeB = b.occurrences?.[0]?.start_time
+		? new Date(b.occurrences[0].start_time).getTime()
+		: Number.MAX_SAFE_INTEGER;
+	return timeA - timeB;
+};
+
 export const Route = createFileRoute("/_app/admin/dashboard/")({
 	validateSearch: (search: Record<string, unknown>): AdminDashboardSearch => {
 		return {
@@ -143,10 +157,10 @@ function AdminReservationRow({
 				isCancelled && "opacity-60 bg-stone-50/30 dark:bg-stone-950/30",
 				// Conflicting target rows: soft rose background and subtle inset shadow instead of outline
 				isConflict &&
-				"bg-rose-100/80 dark:bg-rose-950/60 shadow-[inset_0_0_0_1px_rgba(244,63,94,0.6)] z-10",
+					"bg-rose-100/80 dark:bg-rose-950/60 shadow-[inset_0_0_0_1px_rgba(244,63,94,0.6)] z-10",
 				// Active source row: soft amber background and subtle inset shadow
 				isHoveredSource &&
-				"bg-amber-100/80 dark:bg-amber-900/40 shadow-[inset_0_0_0_1px_rgba(245,158,11,0.8)] z-20",
+					"bg-amber-100/80 dark:bg-amber-900/40 shadow-[inset_0_0_0_1px_rgba(245,158,11,0.8)] z-20",
 			)}
 		>
 			{/* Reservation Title & User */}
@@ -169,7 +183,9 @@ function AdminReservationRow({
 							<span className="truncate">{reservationWithOcc.user_name}</span>
 							{reservationWithOcc.user_email && (
 								<span className="text-stone-400 font-mono text-[10px] truncate hidden xl:inline">
-									({reservationWithOcc.user_email})
+									{"("}
+									{reservationWithOcc.user_email}
+									{")"}
 								</span>
 							)}
 						</span>
@@ -184,7 +200,7 @@ function AdminReservationRow({
 						{resourceNames}
 					</span>
 				) : (
-					<span className="text-stone-400 italic text-[11px]">—</span>
+					<span className="text-stone-400 italic text-[11px]">{"—"}</span>
 				)}
 			</td>
 
@@ -327,19 +343,6 @@ function AdminDashboardPage() {
 	});
 
 	// Chronological sorter helper (earliest start_time first)
-	const sortByDateAsc = (
-		a: ReservationWithOccurrences,
-		b: ReservationWithOccurrences,
-	) => {
-		const timeA = a.occurrences?.[0]?.start_time
-			? new Date(a.occurrences[0].start_time).getTime()
-			: Number.MAX_SAFE_INTEGER;
-		const timeB = b.occurrences?.[0]?.start_time
-			? new Date(b.occurrences[0].start_time).getTime()
-			: Number.MAX_SAFE_INTEGER;
-		return timeA - timeB;
-	};
-
 	const { pendingReservations, confirmedReservations, cancelledReservations } =
 		useMemo(() => {
 			if (!reservations) {

@@ -1,6 +1,5 @@
-import Link from "@tiptap/extension-link";
+import type { JSONContent } from "@tiptap/core";
 import { EditorContent, useEditor, useEditorState } from "@tiptap/react";
-import StarterKit from "@tiptap/starter-kit";
 import {
 	Bold,
 	Italic,
@@ -11,10 +10,13 @@ import {
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { cn } from "#/utils/cn";
+import { richTextClassName, richTextExtensions } from "#/utils/richText";
 
-interface ContractEditorProps {
-	value: string;
-	onChange: (html: string) => void;
+interface RichTextEditorProps {
+	value?: JSONContent;
+	onChange: (doc: JSONContent) => void;
+	/** Accessible name for the editable area */
+	ariaLabel?: string;
 }
 
 /** Compact toolbar icon button with explicit active highlight */
@@ -33,6 +35,8 @@ function EditorButton({
 		<button
 			type="button"
 			title={title}
+			aria-label={title}
+			aria-pressed={active}
 			onMouseDown={(e) => {
 				// Prevent button click from taking focus away from editor text selection
 				e.preventDefault();
@@ -50,45 +54,26 @@ function EditorButton({
 	);
 }
 
-export function ContractEditor({ value, onChange }: ContractEditorProps) {
+/** Rich-text editor that reads and emits Tiptap JSON documents */
+export function RichTextEditor({
+	value,
+	onChange,
+	ariaLabel,
+}: RichTextEditorProps) {
 	const { t } = useTranslation();
 	const editor = useEditor({
-		extensions: [
-			StarterKit.configure({
-				heading: {
-					levels: [1, 2, 3],
-				},
-			}),
-			Link.configure({
-				openOnClick: false,
-				HTMLAttributes: {
-					class:
-						"text-amber-600 dark:text-amber-400 underline font-medium hover:text-amber-700 dark:hover:text-amber-300",
-				},
-			}),
-		],
+		extensions: richTextExtensions,
 		content: value,
 		onUpdate: ({ editor }) => {
-			onChange(editor.getHTML());
+			onChange(editor.getJSON());
 		},
 		editorProps: {
 			attributes: {
 				class: cn(
-					"min-h-[300px] p-4 border-none outline-none focus:outline-none focus:ring-0 bg-stone-50 dark:bg-stone-900 text-stone-900 dark:text-stone-100",
-					// Headings
-					"[&_h1]:text-2xl [&_h1]:font-extrabold [&_h1]:mt-4 [&_h1]:mb-2 [&_h1]:text-stone-900 [&_h1]:dark:text-stone-100",
-					"[&_h2]:text-xl [&_h2]:font-bold [&_h2]:mt-3 [&_h2]:mb-1 [&_h2]:text-stone-900 [&_h2]:dark:text-stone-100",
-					"[&_h3]:text-lg [&_h3]:font-semibold [&_h3]:mt-2 [&_h3]:mb-1 [&_h3]:text-stone-900 [&_h3]:dark:text-stone-100",
-					// Paragraphs & Inline elements
-					"[&_p]:my-1 [&_p]:leading-normal",
-					"[&_a]:text-amber-600 [&_a]:dark:text-amber-400 [&_a]:underline",
-					// Lists & List items
-					"[&_ul]:list-disc [&_ul]:pl-5 [&_ul]:my-2 [&_ul]:space-y-0.5",
-					"[&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:my-2 [&_ol]:space-y-0.5",
-					"[&_li_p]:m-0 [&_li_p]:inline",
-					// Formatting marks
-					"[&_strong]:font-bold [&_em]:italic",
+					"min-h-[160px] p-3 text-sm border-none outline-none focus:outline-none focus:ring-0 bg-stone-50 dark:bg-stone-900",
+					richTextClassName,
 				),
+				...(ariaLabel ? { "aria-label": ariaLabel } : {}),
 			},
 		},
 	});
@@ -115,18 +100,24 @@ export function ContractEditor({ value, onChange }: ContractEditorProps) {
 		return null;
 	}
 
-	const handleHeadingChange = (value: string) => {
-		if (value === "paragraph") {
+	const handleHeadingChange = (level: string) => {
+		if (level === "paragraph") {
 			editor.chain().focus().setParagraph().run();
 		} else {
-			const level = Number(value) as 1 | 2 | 3;
-			editor.chain().focus().toggleHeading({ level }).run();
+			editor
+				.chain()
+				.focus()
+				.toggleHeading({ level: Number(level) as 1 | 2 | 3 })
+				.run();
 		}
 	};
 
 	const setLink = () => {
 		const previousUrl = editor.getAttributes("link").href;
-		const url = window.prompt("Syötä osoite (URL):", previousUrl);
+		const url = window.prompt(
+			t("syotaOsoite", "Syötä osoite (URL):"),
+			previousUrl,
+		);
 
 		if (url === null) return;
 
@@ -142,8 +133,8 @@ export function ContractEditor({ value, onChange }: ContractEditorProps) {
 		<div className="flex flex-col border border-stone-200 dark:border-stone-800 rounded-sm focus-within:border-stone-700 dark:focus-within:border-stone-600 transition-colors">
 			{/* Toolbar */}
 			<div className="flex flex-wrap items-center gap-0.5 p-1 bg-stone-100 dark:bg-stone-950 border-b border-stone-200 dark:border-stone-800 rounded-t-sm">
-				{/* Heading Dropdown */}
 				<select
+					aria-label={t("tekstityyli", "Tekstityyli")}
 					value={activeStates?.headingLevel ?? "paragraph"}
 					onChange={(e) => handleHeadingChange(e.target.value)}
 					className="px-2 py-1 text-xs bg-stone-50 dark:bg-stone-900 border border-stone-300 dark:border-stone-700 rounded-md text-stone-900 dark:text-stone-100 mr-1 font-medium"
@@ -210,7 +201,6 @@ export function ContractEditor({ value, onChange }: ContractEditorProps) {
 				</EditorButton>
 			</div>
 
-			{/* Editor Content Area */}
 			<EditorContent editor={editor} />
 		</div>
 	);

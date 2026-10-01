@@ -1,13 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { AlertTriangle, Loader2, Printer } from "lucide-react";
-import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
-import { useEffect, useRef, useState } from "react";
+import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "#/api/client";
 import { Button } from "#/components/Button";
 import {
-	type Contract,
+	getApplicableContracts,
 	getLocalizedText,
 	useContracts,
 	usePresignDownload,
@@ -260,7 +260,7 @@ function BatchPrintPage() {
 	const { reservation_ids } = Route.useSearch();
 	const iframeRef = useRef<HTMLIFrameElement | null>(null);
 
-	const { data: globalContracts, isLoading: loadingContracts } = useContracts({
+	const { data: activeContracts, isLoading: loadingContracts } = useContracts({
 		active_only: true,
 	});
 	const { data: resources, isLoading: loadingResources } = useResources();
@@ -270,7 +270,11 @@ function BatchPrintPage() {
 	const [isMerging, setIsMerging] = useState(false);
 	const [mergeError, setMergeError] = useState<string | null>(null);
 
-	const resourceMap = new Map(resources?.map((r) => [r.id, r.name]) ?? []);
+	const resourceMap = useMemo(
+		() => new Map(resources?.map((r) => [r.id, r.name]) ?? []),
+		[resources],
+	);
+	const presignDownloadAsync = presignDownload.mutateAsync;
 
 	const {
 		data: activeReservations,
@@ -299,13 +303,13 @@ function BatchPrintPage() {
 	});
 
 	const hasRunRef = useRef(false);
-	const reservationIdsKey = reservation_ids.sort().join(",");
 
 	useEffect(() => {
 		async function prepareBatchPdf() {
 			if (
 				hasRunRef.current ||
-				!globalContracts ||
+				!activeContracts ||
+				!resources ||
 				!activeReservations ||
 				activeReservations.length === 0
 			) {
@@ -331,31 +335,11 @@ function BatchPrintPage() {
 						),
 					);
 
-					// 3. Fetch resource-specific contracts for all involved resources
-					const contractMap = new Map<string, Contract>();
-
-					// Add global active contracts
-					for (const gc of globalContracts) {
-						if (gc.is_global) {
-							contractMap.set(gc.id, gc);
-						}
-					}
-
-					// Query GET /contracts?resource_id={rId} to get resource-bound contracts
-					await Promise.all(
-						resourceIds.map(async (rId) => {
-							const { data, error } = await api.GET("/contracts", {
-								params: { query: { resource_id: rId, active_only: true } },
-							});
-							if (!error && data) {
-								for (const c of data as Contract[]) {
-									contractMap.set(c.id, c);
-								}
-							}
-						}),
+					// 3. Global contracts plus those linked to any involved resource
+					const applicableContracts = getApplicableContracts(
+						activeContracts,
+						resourceIds,
 					);
-
-					const applicableContracts = Array.from(contractMap.values());
 
 					// 4. Download and append all applicable contract PDFs
 					for (const contract of applicableContracts) {
@@ -368,7 +352,7 @@ function BatchPrintPage() {
 
 						if (!s3Key) continue;
 
-						const downloadUrl = await presignDownload.mutateAsync(s3Key);
+						const downloadUrl = await presignDownloadAsync(s3Key);
 						const pdfResponse = await fetch(downloadUrl);
 
 						if (!pdfResponse.ok) {
@@ -412,7 +396,22 @@ function BatchPrintPage() {
 		}
 
 		prepareBatchPdf();
-	}, [globalContracts, activeReservations, i18n.language, reservationIdsKey]);
+	}, [
+		activeContracts,
+		activeReservations,
+		resources,
+		resourceMap,
+		presignDownloadAsync,
+		i18n.language,
+		t,
+	]);
+
+	// Release the generated PDF blob when it is replaced or the page unmounts
+	useEffect(() => {
+		return () => {
+			if (mergedPdfUrl) URL.revokeObjectURL(mergedPdfUrl);
+		};
+	}, [mergedPdfUrl]);
 
 	const handleTriggerPrint = () => {
 		if (iframeRef.current?.contentWindow) {

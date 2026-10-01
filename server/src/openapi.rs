@@ -32,6 +32,9 @@ impl Modify for SecurityAddon {
 #[derive(OpenApi)]
 #[openapi(
     paths(
+        // Health
+        crate::health_check,
+
         // Auth
         auth::routes::register,
         auth::routes::login,
@@ -102,6 +105,7 @@ impl Modify for SecurityAddon {
     ),
     components(
         schemas(
+            crate::HealthStatus,
             auth::models::AuthTokens,
             auth::models::RegisterPayload,
             auth::models::LoginPayload,

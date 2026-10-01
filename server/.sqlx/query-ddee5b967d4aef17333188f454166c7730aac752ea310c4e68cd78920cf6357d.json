@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        SELECT id, name, created_at, updated_at\n        FROM groups\n        WHERE id = $1 AND deleted_at IS NULL\n        ",
+  "query": "\n        UPDATE groups\n        SET\n            name = $1,\n            description = COALESCE($2, description)\n        WHERE id = $3 AND deleted_at IS NULL\n        RETURNING id, name, description, created_at, updated_at\n        ",
   "describe": {
     "columns": [
       {
@@ -27,6 +27,17 @@
       },
       {
         "ordinal": 2,
+        "name": "description",
+        "type_info": "Jsonb",
+        "origin": {
+          "Table": {
+            "table": "groups",
+            "name": "description"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
         "name": "created_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -37,7 +48,7 @@
         }
       },
       {
-        "ordinal": 3,
+        "ordinal": 4,
         "name": "updated_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -50,15 +61,18 @@
     ],
     "parameters": {
       "Left": [
+        "Text",
+        "Jsonb",
         "Uuid"
       ]
     },
     "nullable": [
       false,
       false,
+      true,
       false,
       false
     ]
   },
-  "hash": "0142d42ddad99b727dc6bf638530aeea22afa33b186b58510fb20193b941e53b"
+  "hash": "ddee5b967d4aef17333188f454166c7730aac752ea310c4e68cd78920cf6357d"
 }

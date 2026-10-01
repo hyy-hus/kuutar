@@ -1,10 +1,15 @@
-import { FileText, Eye, Loader2, Save } from "lucide-react";
-import { Button } from "./Button";
-import type { CreateResource } from "#/hooks/useResorces";
-import { useTranslation } from "react-i18next";
-import { getLocalizedText, useContracts } from "#/hooks/useContracts";
-import { useCollections } from "#/hooks/useCollections";
 import { useForm } from "@tanstack/react-form";
+import { Eye, FileText, Loader2, Save } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { LocalizedRichTextEditor } from "#/components/LocalizedRichTextEditor";
+import { useCollections } from "#/hooks/useCollections";
+import { getLocalizedText, useContracts } from "#/hooks/useContracts";
+import type { CreateResource } from "#/hooks/useResorces";
+import {
+	compactLocalizedRichText,
+	toLocalizedRichText,
+} from "#/utils/richText";
+import { Button } from "./Button";
 import { Input } from "./Input";
 
 export interface ResourceFormValues
@@ -48,6 +53,7 @@ export function ResourceForm({
 	const form = useForm({
 		defaultValues: {
 			name: defaultValues?.name ?? "",
+			description: toLocalizedRichText(defaultValues?.description),
 			collection_id: defaultValues?.collection_id ?? "",
 			allow_recurring: defaultValues?.allow_recurring ?? true,
 			is_public: defaultValues?.is_public ?? true,
@@ -59,10 +65,10 @@ export function ResourceForm({
 				? new Date(`${value.reservable_until}T23:59:59.999Z`).toISOString()
 				: null;
 
-			console.log(value);
-
 			await onSubmit({
 				...value,
+				// An empty object clears a stored description; null would keep it
+				description: compactLocalizedRichText(value.description) ?? {},
 				is_public: value.is_public ?? false,
 				reservable_until: formattedUntil,
 			});
@@ -120,6 +126,21 @@ export function ResourceForm({
 						</div>
 					);
 				}}
+			</form.Field>
+
+			<form.Field name="description">
+				{(field) => (
+					<div className="space-y-1">
+						<span className="text-xs font-medium text-stone-700 dark:text-stone-300">
+							{t("kuvaus", "Kuvaus")}
+						</span>
+						<LocalizedRichTextEditor
+							value={field.state.value}
+							onChange={field.handleChange}
+							label={t("kuvaus", "Kuvaus")}
+						/>
+					</div>
+				)}
 			</form.Field>
 
 			{/* Collection Selection */}

@@ -2,7 +2,7 @@
 
 import { SiGithub } from "@icons-pack/react-simple-icons";
 import { Link } from "@tanstack/react-router";
-import { Info, Loader2, Newspaper, ShieldCheck } from "lucide-react";
+import { Loader2, ShieldCheck } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useHealth } from "#/hooks/useHealth";
 
@@ -80,24 +80,6 @@ export function Footer() {
 					</h4>
 					<ul className="space-y-2 text-xs">
 						<li>
-							<Link
-								to="/about"
-								className="hover:underline flex items-center gap-2 text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100"
-							>
-								<Info size={14} className="shrink-0 text-stone-400" />
-								<span>{t("tietoaMeist", "Tietoa meistä")}</span>
-							</Link>
-						</li>
-						<li>
-							<Link
-								to="/news"
-								className="hover:underline flex items-center gap-2 text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100"
-							>
-								<Newspaper size={14} className="shrink-0 text-stone-400" />
-								<span>{t("tiedotteet", "Tiedotteet")}</span>
-							</Link>
-						</li>
-						<li>
 							<a
 								href="https://hyy.fi/fi/ylioppilaskunta/helsingin-yliopiston-ylioppilaskunnan-dokumentit/tietosuojailmoitus/"
 								className="hover:underline flex items-start gap-2 text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100"
@@ -158,7 +140,8 @@ export function Footer() {
 			{/* Bottom Copyright Strip */}
 			<div className="border-t border-stone-200 dark:border-stone-800 py-3 px-6 text-center sm:text-left text-[11px] text-stone-500 dark:text-stone-400 flex flex-col sm:flex-row items-center justify-between gap-2 font-mono max-w-6xl mx-auto">
 				<span>
-					&copy; {new Date().getFullYear()}{" "}
+					{"© "}
+					{new Date().getFullYear()}{" "}
 					{t(
 						"helsinginYliopistonYlioppilaskuntaHyy",
 						"Helsingin yliopiston ylioppilaskunta (HYY)",

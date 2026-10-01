@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        INSERT INTO collections (name)\n        VALUES ($1)\n        RETURNING id, name, created_at, updated_at, deleted_at\n        ",
+  "query": "\n        SELECT id, name, description, created_at, updated_at\n        FROM groups\n        WHERE id = $1 AND deleted_at IS NULL\n        ",
   "describe": {
     "columns": [
       {
@@ -9,7 +9,7 @@
         "type_info": "Uuid",
         "origin": {
           "Table": {
-            "table": "collections",
+            "table": "groups",
             "name": "id"
           }
         }
@@ -20,57 +20,57 @@
         "type_info": "Text",
         "origin": {
           "Table": {
-            "table": "collections",
+            "table": "groups",
             "name": "name"
           }
         }
       },
       {
         "ordinal": 2,
-        "name": "created_at",
-        "type_info": "Timestamptz",
+        "name": "description",
+        "type_info": "Jsonb",
         "origin": {
           "Table": {
-            "table": "collections",
-            "name": "created_at"
+            "table": "groups",
+            "name": "description"
           }
         }
       },
       {
         "ordinal": 3,
-        "name": "updated_at",
+        "name": "created_at",
         "type_info": "Timestamptz",
         "origin": {
           "Table": {
-            "table": "collections",
-            "name": "updated_at"
+            "table": "groups",
+            "name": "created_at"
           }
         }
       },
       {
         "ordinal": 4,
-        "name": "deleted_at",
+        "name": "updated_at",
         "type_info": "Timestamptz",
         "origin": {
           "Table": {
-            "table": "collections",
-            "name": "deleted_at"
+            "table": "groups",
+            "name": "updated_at"
           }
         }
       }
     ],
     "parameters": {
       "Left": [
-        "Text"
+        "Uuid"
       ]
     },
     "nullable": [
       false,
       false,
+      true,
       false,
-      false,
-      true
+      false
     ]
   },
-  "hash": "e0c68068132934232ad9b77cafd1cb409696258a7078a754e1808b1d7ce716a2"
+  "hash": "c7d91054305ac3fa695f053425908f1d0337c67e1d2ce8c5747f8e9e293d1aa0"
 }

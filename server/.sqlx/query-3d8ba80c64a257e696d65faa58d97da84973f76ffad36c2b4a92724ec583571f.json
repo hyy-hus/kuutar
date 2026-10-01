@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        UPDATE collections\n        SET name = COALESCE($1, name)\n        WHERE id = $2 AND deleted_at IS NULL\n        RETURNING id, name, created_at, updated_at, deleted_at\n        ",
+  "query": "\n        INSERT INTO collections (name, description)\n        VALUES ($1, $2)\n        RETURNING id, name, description, created_at, updated_at, deleted_at\n        ",
   "describe": {
     "columns": [
       {
@@ -27,6 +27,17 @@
       },
       {
         "ordinal": 2,
+        "name": "description",
+        "type_info": "Jsonb",
+        "origin": {
+          "Table": {
+            "table": "collections",
+            "name": "description"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
         "name": "created_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -37,7 +48,7 @@
         }
       },
       {
-        "ordinal": 3,
+        "ordinal": 4,
         "name": "updated_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -48,7 +59,7 @@
         }
       },
       {
-        "ordinal": 4,
+        "ordinal": 5,
         "name": "deleted_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -62,16 +73,17 @@
     "parameters": {
       "Left": [
         "Text",
-        "Uuid"
+        "Jsonb"
       ]
     },
     "nullable": [
       false,
       false,
+      true,
       false,
       false,
       true
     ]
   },
-  "hash": "25d2c150b3459223b18caf616eb1619b4e56f13257049a8b4d817e85b9a5038b"
+  "hash": "3d8ba80c64a257e696d65faa58d97da84973f76ffad36c2b4a92724ec583571f"
 }

@@ -305,8 +305,10 @@ export function ContractForm({
 									htmlFor={inputId}
 									className="text-xs font-medium text-stone-700 dark:text-stone-300"
 								>
-									{t("asiakirjanOtsikko", "Asiakirjan otsikko")} (
-									{activeLang.toUpperCase()})
+									{t("asiakirjanOtsikko", "Asiakirjan otsikko")}
+									{" ("}
+									{activeLang.toUpperCase()}
+									{")"}
 								</label>
 								<Input
 									id={inputId}
@@ -341,8 +343,10 @@ export function ContractForm({
 									htmlFor={fileInputId}
 									className="text-xs font-medium text-stone-700 dark:text-stone-300"
 								>
-									{t("pdfTiedosto", "PDF-tiedosto")} ({activeLang.toUpperCase()}
-									)
+									{t("pdfTiedosto", "PDF-tiedosto")}
+									{" ("}
+									{activeLang.toUpperCase()}
+									{")"}
 								</label>
 
 								{currentS3Key && !field.state.value[activeLang] && (

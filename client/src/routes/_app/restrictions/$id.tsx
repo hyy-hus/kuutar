@@ -11,8 +11,8 @@ import { useTranslation } from "react-i18next";
 import { Button } from "#/components/Button";
 import { Chip } from "#/components/Chip";
 import { useGroups } from "#/hooks/useGroups";
-import { useDeleteRestriction, useRestriction } from "#/hooks/useRestrictions";
 import { useResources } from "#/hooks/useResorces";
+import { useDeleteRestriction, useRestriction } from "#/hooks/useRestrictions";
 import { formatDate } from "#/utils/date";
 import { readable_uuid } from "#/utils/uuid";
 
@@ -50,7 +50,8 @@ function ViewRestrictionPage() {
 		);
 	}
 
-	if (isLoading) {
+	// Also narrows restrictionWithOcc for the rest of the component
+	if (isLoading || !restrictionWithOcc) {
 		return (
 			<div className="p-8 text-xs text-stone-500">
 				{t("ladataanRajoitusta", "Ladataan rajoitusta...")}
@@ -161,8 +162,8 @@ function ViewRestrictionPage() {
 									<div className="flex items-center gap-1.5 text-stone-800 dark:text-stone-200">
 										<Clock size={14} className="text-amber-600 shrink-0" />
 										<span>
-											{formatDate(occ.start_time)} &rarr;{" "}
-											{formatDate(occ.end_time)}
+											{formatDate(occ.start_time)}
+											{" →"} {formatDate(occ.end_time)}
 										</span>
 									</div>
 									<span className="text-[10px] font-sans font-medium px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800">
@@ -182,7 +183,8 @@ function ViewRestrictionPage() {
 					/>
 					<div>
 						<span className="font-semibold text-stone-700 dark:text-stone-300">
-							{t("sallitutRyhmat", "Sallitut käyttäjäryhmät")}:{" "}
+							{t("sallitutRyhmat", "Sallitut käyttäjäryhmät")}
+							{":"}{" "}
 						</span>
 						<span className="text-stone-900 dark:text-stone-100">
 							{exemptGroups}

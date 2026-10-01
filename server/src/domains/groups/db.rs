@@ -2,13 +2,13 @@ use sqlx::PgPool;
 use uuid::Uuid;
 
 use super::models::{CreateGroup, Group, UpdateGroup};
-use crate::errors::AppError;
+use crate::{errors::AppError, utils::rich_text};
 
 pub async fn list_groups(pool: &PgPool) -> Result<Vec<Group>, AppError> {
     let groups = sqlx::query_as!(
         Group,
         r#"
-        SELECT id, name, created_at, updated_at
+        SELECT id, name, description, created_at, updated_at
         FROM groups
         WHERE deleted_at IS NULL
         ORDER BY name ASC
@@ -24,7 +24,7 @@ pub async fn get_group(pool: &PgPool, id: Uuid) -> Result<Group, AppError> {
     let group = sqlx::query_as!(
         Group,
         r#"
-        SELECT id, name, created_at, updated_at
+        SELECT id, name, description, created_at, updated_at
         FROM groups
         WHERE id = $1 AND deleted_at IS NULL
         "#,
@@ -41,11 +41,12 @@ pub async fn create_group(pool: &PgPool, payload: &CreateGroup) -> Result<Group,
     let group = sqlx::query_as!(
         Group,
         r#"
-        INSERT INTO groups (name)
-        VALUES ($1)
-        RETURNING id, name, created_at, updated_at
+        INSERT INTO groups (name, description)
+        VALUES ($1, $2)
+        RETURNING id, name, description, created_at, updated_at
         "#,
-        payload.name
+        payload.name,
+        payload.description.clone().map(rich_text::to_json)
     )
     .fetch_one(pool)
     .await?;
@@ -62,11 +63,14 @@ pub async fn update_group(
         Group,
         r#"
         UPDATE groups
-        SET name = $1
-        WHERE id = $2 AND deleted_at IS NULL
-        RETURNING id, name, created_at, updated_at
+        SET
+            name = $1,
+            description = COALESCE($2, description)
+        WHERE id = $3 AND deleted_at IS NULL
+        RETURNING id, name, description, created_at, updated_at
         "#,
         payload.name,
+        payload.description.clone().map(rich_text::to_json),
         id
     )
     .fetch_optional(pool)
@@ -104,6 +108,7 @@ mod tests {
     async fn test_db_create_and_get_group(pool: PgPool) {
         let payload = CreateGroup {
             name: "Engineering".to_string(),
+            description: None,
         };
 
         let created = create_group(&pool, &payload)
@@ -127,6 +132,7 @@ mod tests {
             &pool,
             &CreateGroup {
                 name: "Zeta".to_string(),
+                description: None,
             },
         )
         .await
@@ -135,6 +141,7 @@ mod tests {
             &pool,
             &CreateGroup {
                 name: "Alpha".to_string(),
+                description: None,
             },
         )
         .await
@@ -143,6 +150,7 @@ mod tests {
             &pool,
             &CreateGroup {
                 name: "Beta".to_string(),
+                description: None,
             },
         )
         .await
@@ -165,6 +173,7 @@ mod tests {
             &pool,
             &CreateGroup {
                 name: "Old Name".to_string(),
+                description: None,
             },
         )
         .await
@@ -175,6 +184,7 @@ mod tests {
             created.id,
             &UpdateGroup {
                 name: "New Name".to_string(),
+                description: None,
             },
         )
         .await

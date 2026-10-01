@@ -69,7 +69,7 @@ export function SearchBar({ onSearch }: SearchBarProps) {
 		setQuery("");
 		navigate({
 			to: "/calendar",
-			search: { resources: [resourceId] } as any,
+			search: { resources: [resourceId] },
 		});
 	};
 

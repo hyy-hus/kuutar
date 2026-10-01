@@ -157,8 +157,6 @@ export function useBatchCreateUsers() {
 
 	return useMutation({
 		mutationFn: async (payloads: CreateUserPayload[]) => {
-			const errorMessages: string[] = [];
-
 			const results = await Promise.allSettled(
 				payloads.map(async (payload) => {
 					const { data, error } = await api.POST("/users", { body: payload });
@@ -177,7 +175,9 @@ export function useBatchCreateUsers() {
 					}
 
 					if (!data)
-						throw new Error(`${payload.email}: Ei vastausta palvelimelta.`);
+						throw new Error(
+							`${payload.email}: ${i18next.t("eiVastaustaPalvelimelta", "Ei vastausta palvelimelta.")}`,
+						);
 					return data;
 				}),
 			);

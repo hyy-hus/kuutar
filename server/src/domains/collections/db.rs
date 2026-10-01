@@ -4,14 +4,14 @@ use sqlx::PgPool;
 use uuid::Uuid;
 
 use super::models::{Collection, CreateCollection, UpdateCollection};
-use crate::errors::AppError;
+use crate::{errors::AppError, utils::rich_text};
 
 /// Fetches all active collections.
 pub async fn list_all(pool: &PgPool) -> Result<Vec<Collection>, AppError> {
     let collections = sqlx::query_as!(
         Collection,
         r#"
-        SELECT id, name, created_at, updated_at, deleted_at
+        SELECT id, name, description, created_at, updated_at, deleted_at
         FROM collections
         WHERE deleted_at IS NULL
         "#
@@ -27,7 +27,7 @@ pub async fn find_by_id(pool: &PgPool, id: Uuid) -> Result<Collection, AppError>
     sqlx::query_as!(
         Collection,
         r#"
-        SELECT id, name, created_at, updated_at, deleted_at
+        SELECT id, name, description, created_at, updated_at, deleted_at
         FROM collections
         WHERE id = $1 AND deleted_at IS NULL
         "#,
@@ -43,11 +43,12 @@ pub async fn create(pool: &PgPool, dto: CreateCollection) -> Result<Collection, 
     let collection = sqlx::query_as!(
         Collection,
         r#"
-        INSERT INTO collections (name)
-        VALUES ($1)
-        RETURNING id, name, created_at, updated_at, deleted_at
+        INSERT INTO collections (name, description)
+        VALUES ($1, $2)
+        RETURNING id, name, description, created_at, updated_at, deleted_at
         "#,
-        dto.name
+        dto.name,
+        dto.description.map(rich_text::to_json)
     )
     .fetch_one(pool)
     .await?;
@@ -65,11 +66,14 @@ pub async fn update(
         Collection,
         r#"
         UPDATE collections
-        SET name = COALESCE($1, name)
-        WHERE id = $2 AND deleted_at IS NULL
-        RETURNING id, name, created_at, updated_at, deleted_at
+        SET
+            name = COALESCE($1, name),
+            description = COALESCE($2, description)
+        WHERE id = $3 AND deleted_at IS NULL
+        RETURNING id, name, description, created_at, updated_at, deleted_at
         "#,
         dto.name,
+        dto.description.map(rich_text::to_json),
         id
     )
     .fetch_optional(pool)
