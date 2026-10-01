@@ -2,7 +2,7 @@
 
 import { SiGithub } from "@icons-pack/react-simple-icons";
 import { Link } from "@tanstack/react-router";
-import { Info, Loader2, Newspaper, ShieldCheck } from "lucide-react";
+import { Loader2, ShieldCheck } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useHealth } from "#/hooks/useHealth";
 
@@ -79,24 +79,6 @@ export function Footer() {
 						{t("tiedotEhdot", "Tiedot & Ehdot")}
 					</h4>
 					<ul className="space-y-2 text-xs">
-						<li>
-							<Link
-								to="/about"
-								className="hover:underline flex items-center gap-2 text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100"
-							>
-								<Info size={14} className="shrink-0 text-stone-400" />
-								<span>{t("tietoaMeist", "Tietoa meistä")}</span>
-							</Link>
-						</li>
-						<li>
-							<Link
-								to="/news"
-								className="hover:underline flex items-center gap-2 text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100"
-							>
-								<Newspaper size={14} className="shrink-0 text-stone-400" />
-								<span>{t("tiedotteet", "Tiedotteet")}</span>
-							</Link>
-						</li>
 						<li>
 							<a
 								href="https://hyy.fi/fi/ylioppilaskunta/helsingin-yliopiston-ylioppilaskunnan-dokumentit/tietosuojailmoitus/"
