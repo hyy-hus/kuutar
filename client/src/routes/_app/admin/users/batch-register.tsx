@@ -1,10 +1,10 @@
-import { useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useTranslation } from "react-i18next";
+import { AlertCircle, CheckCircle2, Trash2, Upload, Users } from "lucide-react";
 import Papa from "papaparse";
-import { Upload, CheckCircle2, AlertCircle, Trash2, Users } from "lucide-react";
-import { useBatchCreateUsers, type CreateUserPayload } from "#/hooks/useUsers";
+import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useGroups } from "#/hooks/useGroups";
+import { type CreateUserPayload, useBatchCreateUsers } from "#/hooks/useUsers";
 
 export const Route = createFileRoute("/_app/admin/users/batch-register")({
 	component: BatchRegisterUserPage,
@@ -50,9 +50,9 @@ function BatchRegisterUserPage() {
 
 		// Parse TSV/CSV rows for email, name, and optional password
 		const rows: ParsedRow[] = results.data.map((row) => ({
-			email: row.email || row["sähköposti"] || Object.values(row)[0] || "",
-			name: row.name || row["nimi"] || row["etunimi"] || undefined,
-			password: row.password || row["salasana"] || undefined,
+			email: row.email || row.sähköposti || Object.values(row)[0] || "",
+			name: row.name || row.nimi || row.etunimi || undefined,
+			password: row.password || row.salasana || undefined,
 		}));
 
 		const validationErrors: string[] = [];
@@ -167,7 +167,10 @@ function BatchRegisterUserPage() {
 					</option>
 					{groups?.map((group) => (
 						<option key={group.id} value={group.id}>
-							{group.name} ({group.id})
+							{group.name}
+							{" ("}
+							{group.id}
+							{")"}
 						</option>
 					))}
 				</select>
@@ -245,7 +248,7 @@ function BatchRegisterUserPage() {
 							<thead className="bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300">
 								<tr>
 									<th className="p-2 border-b border-stone-200 dark:border-stone-700">
-										#
+										{"#"}
 									</th>
 									<th className="p-2 border-b border-stone-200 dark:border-stone-700">
 										{t("shkposti", "Sähköposti")}
@@ -261,6 +264,7 @@ function BatchRegisterUserPage() {
 							<tbody>
 								{parsedRows.map((user, idx) => (
 									<tr
+										// biome-ignore lint/suspicious/noArrayIndexKey: static preview rows may repeat; the index is the displayed row number
 										key={`import-${user.email}-${idx}`}
 										className="border-b border-stone-100 dark:border-stone-800/60 hover:bg-stone-50 dark:hover:bg-stone-900/50"
 									>

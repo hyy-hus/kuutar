@@ -17,12 +17,12 @@ import { useTranslation } from "react-i18next";
 import { Button } from "#/components/Button";
 import { Chip } from "#/components/Chip";
 import { useGroups } from "#/hooks/useGroups";
+import { useResources } from "#/hooks/useResorces";
 import {
 	type RestrictionWithOccurrences,
 	useDeleteRestriction,
 	useRestrictions,
 } from "#/hooks/useRestrictions";
-import { useResources } from "#/hooks/useResorces";
 import { requireAuthGuard } from "#/utils/authGuard";
 import { startOfCurrentWeek } from "#/utils/calendarUtils";
 import { formatDate } from "#/utils/date";
@@ -74,13 +74,8 @@ function RestrictionCard({
 	isDeleting: boolean;
 }) {
 	const { t } = useTranslation();
-	const { data: resources } = useResources();
 	const { data: groups } = useGroups();
 
-	const resourceMap = useMemo(
-		() => new Map(resources?.map((r) => [r.id, r.name])),
-		[resources],
-	);
 	const groupMap = useMemo(
 		() => new Map(groups?.map((g) => [g.id, g.name])),
 		[groups],
@@ -113,12 +108,13 @@ function RestrictionCard({
 				<div className="flex items-center gap-1 text-xs font-mono text-stone-600 dark:text-stone-300">
 					<Calendar size={14} className="text-amber-600 shrink-0" />
 					<span>
-						{formatDate(firstOcc.start_time)} &rarr;{" "}
-						{formatDate(firstOcc.end_time)}
+						{formatDate(firstOcc.start_time)}
+						{" →"} {formatDate(firstOcc.end_time)}
 					</span>
 					{occurrences.length > 1 && (
 						<span className="text-[10px] font-sans px-1 rounded bg-amber-200 dark:bg-amber-950 font-bold ml-auto">
-							+{occurrences.length - 1}
+							{"+"}
+							{occurrences.length - 1}
 						</span>
 					)}
 				</div>

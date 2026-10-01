@@ -51,6 +51,7 @@
 	"eiToistoa": "No recurrence",
 	"eiTuloksiaHakusanallaQuotqueryquot": "No results found for \"{{query}}\"",
 	"eiVahvistettujaVarauksiaValitullaAikavlill": "No confirmed bookings in the selected time period.",
+	"eiVastaustaPalvelimelta": "No response from the server.",
 	"eiVielVaraustilastojaSaatavilla": "No booking statistics available yet.",
 	"endingAt": "Until",
 	"esimHuoltotyo": "e.g. Sauna maintenance",
@@ -465,6 +466,7 @@
 	"yhteystiedotYllapidolle": "Contact details for administrators",
 	"yhteystiedotYllapito": "Contact details (administrators only)",
 	"yleinen": "General",
+	"yllapitajaOletuksena": "(Defaults to administrator)",
 	"yllpidonHallintapaneeli": "Admin Dashboard",
 	"yllpitjnMuistiinpanot": "Administrator Notes",
 	"yllpito": "Administration"

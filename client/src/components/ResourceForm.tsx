@@ -1,10 +1,10 @@
-import { FileText, Eye, Loader2, Save } from "lucide-react";
-import { Button } from "./Button";
-import type { CreateResource } from "#/hooks/useResorces";
-import { useTranslation } from "react-i18next";
-import { getLocalizedText, useContracts } from "#/hooks/useContracts";
-import { useCollections } from "#/hooks/useCollections";
 import { useForm } from "@tanstack/react-form";
+import { Eye, FileText, Loader2, Save } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { useCollections } from "#/hooks/useCollections";
+import { getLocalizedText, useContracts } from "#/hooks/useContracts";
+import type { CreateResource } from "#/hooks/useResorces";
+import { Button } from "./Button";
 import { Input } from "./Input";
 
 export interface ResourceFormValues

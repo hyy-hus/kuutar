@@ -51,6 +51,7 @@
 	"eiToistoa": "Ei toistoa",
 	"eiTuloksiaHakusanallaQuotqueryquot": "Ei tuloksia hakusanalla \"{{query}}\"",
 	"eiVahvistettujaVarauksiaValitullaAikavlill": "Ei vahvistettuja varauksia valitulla aikavälillä.",
+	"eiVastaustaPalvelimelta": "Ei vastausta palvelimelta.",
 	"eiVielVaraustilastojaSaatavilla": "Ei vielä varaustilastoja saatavilla.",
 	"endingAt": "Päättyen",
 	"esimHuoltotyo": "esim. Saunan huoltotyöt",
@@ -465,6 +466,7 @@
 	"yhteystiedotYllapidolle": "Ylläpidon yhteystiedot",
 	"yhteystiedotYllapito": "Yhteystiedot (vain ylläpidolle)",
 	"yleinen": "Yleinen",
+	"yllapitajaOletuksena": "(Ylläpitäjä oletuksena)",
 	"yllpidonHallintapaneeli": "Ylläpidon hallintapaneeli",
 	"yllpitjnMuistiinpanot": "Ylläpitäjän muistiinpanot",
 	"yllpito": "Ylläpito"

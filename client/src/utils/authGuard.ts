@@ -5,7 +5,7 @@ import { authKeys, fetchMe } from "#/hooks/useAuth";
 
 export async function requireAuthGuard(context: {
 	queryClient: QueryClient;
-	user?: any;
+	user?: Awaited<ReturnType<typeof fetchMe>>;
 }) {
 	let user = context.user;
 

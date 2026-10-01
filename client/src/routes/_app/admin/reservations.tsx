@@ -203,10 +203,14 @@ function AdminReservationsSyncPage() {
 
 				<div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
 					<div className="space-y-1">
-						<label className="text-[11px] font-mono text-stone-600 dark:text-stone-400">
+						<label
+							htmlFor="export_start_date"
+							className="text-[11px] font-mono text-stone-600 dark:text-stone-400"
+						>
 							{t("alstartingFrom", "Alkaen")}
 						</label>
 						<input
+							id="export_start_date"
 							type="date"
 							value={exportStartDate}
 							onChange={(e) => setExportStartDate(e.target.value)}
@@ -215,10 +219,14 @@ function AdminReservationsSyncPage() {
 					</div>
 
 					<div className="space-y-1">
-						<label className="text-[11px] font-mono text-stone-600 dark:text-stone-400">
+						<label
+							htmlFor="export_end_date"
+							className="text-[11px] font-mono text-stone-600 dark:text-stone-400"
+						>
 							{t("endingAt", "Päättyen")}
 						</label>
 						<input
+							id="export_end_date"
 							type="date"
 							value={exportEndDate}
 							onChange={(e) => setExportEndDate(e.target.value)}
@@ -227,10 +235,14 @@ function AdminReservationsSyncPage() {
 					</div>
 
 					<div className="space-y-1">
-						<label className="text-[11px] font-mono text-stone-600 dark:text-stone-400">
+						<label
+							htmlFor="export_resource_id"
+							className="text-[11px] font-mono text-stone-600 dark:text-stone-400"
+						>
 							{t("resurssi", "Resurssi")}
 						</label>
 						<select
+							id="export_resource_id"
 							value={exportResourceId}
 							onChange={(e) => setExportResourceId(e.target.value)}
 							className="w-full h-8 px-2.5 text-xs font-mono bg-white dark:bg-stone-950 border border-stone-300 dark:border-stone-700 rounded-md truncate"
@@ -365,7 +377,7 @@ function AdminReservationsSyncPage() {
 							<table className="w-full text-left text-xs font-mono">
 								<thead className="bg-stone-200/70 dark:bg-stone-800 text-stone-700 dark:text-stone-300 sticky top-0">
 									<tr>
-										<th className="p-2">#</th>
+										<th className="p-2">{"#"}</th>
 										<th className="p-2">{t("otsikko", "Otsikko")}</th>
 										<th className="p-2">{t("kyttj", "Käyttäjä")}</th>
 										<th className="p-2">{t("resurssi", "Resurssi")}</th>
@@ -375,13 +387,15 @@ function AdminReservationsSyncPage() {
 								<tbody>
 									{parsedImportData.map((item, idx) => (
 										<tr
+											// biome-ignore lint/suspicious/noArrayIndexKey: static preview rows may repeat; the index is the displayed row number
 											key={`import-preview-${item.title}-${idx}`}
 											className="border-b border-stone-200/60 dark:border-stone-800 hover:bg-stone-100/50 dark:hover:bg-stone-800/50"
 										>
 											<td className="p-2 text-stone-400">{idx + 1}</td>
 											<td className="p-2 font-bold">{item.title}</td>
 											<td className="p-2 text-stone-600 dark:text-stone-400">
-												{item.user_email || "(Admin fallback)"}
+												{item.user_email ||
+													t("yllapitajaOletuksena", "(Ylläpitäjä oletuksena)")}
 											</td>
 											<td className="p-2 font-semibold text-purple-700 dark:text-purple-300">
 												{item.occurrences

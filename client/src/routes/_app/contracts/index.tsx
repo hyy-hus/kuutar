@@ -16,8 +16,8 @@ import { ContractForm } from "#/components/ContractForm";
 import {
 	type Contract,
 	type CreateContractPayload,
-	type UpdateContractPayload,
 	getLocalizedText,
+	type UpdateContractPayload,
 	useContracts,
 	useCreateContract,
 	useUpdateContract,

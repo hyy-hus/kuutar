@@ -158,7 +158,8 @@ export function Footer() {
 			{/* Bottom Copyright Strip */}
 			<div className="border-t border-stone-200 dark:border-stone-800 py-3 px-6 text-center sm:text-left text-[11px] text-stone-500 dark:text-stone-400 flex flex-col sm:flex-row items-center justify-between gap-2 font-mono max-w-6xl mx-auto">
 				<span>
-					&copy; {new Date().getFullYear()}{" "}
+					{"© "}
+					{new Date().getFullYear()}{" "}
 					{t(
 						"helsinginYliopistonYlioppilaskuntaHyy",
 						"Helsingin yliopiston ylioppilaskunta (HYY)",

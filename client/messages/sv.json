@@ -51,6 +51,7 @@
 	"eiToistoa": "Ingen upprepning",
 	"eiTuloksiaHakusanallaQuotqueryquot": "Inga resultat hittades för \"{{query}}\"",
 	"eiVahvistettujaVarauksiaValitullaAikavlill": "Inga bekräftade bokningar under den valda tidsperioden.",
+	"eiVastaustaPalvelimelta": "Inget svar från servern.",
 	"eiVielVaraustilastojaSaatavilla": "Ingen bokningsstatistik tillgänglig ännu.",
 	"endingAt": "Till",
 	"esimHuoltotyo": "t.ex. Underhåll av bastun",
@@ -465,6 +466,7 @@
 	"yhteystiedotYllapidolle": "Kontaktuppgifter för administratörer",
 	"yhteystiedotYllapito": "Kontaktuppgifter (endast för administratörer)",
 	"yleinen": "Allmän",
+	"yllapitajaOletuksena": "(Administratör som standard)",
 	"yllpidonHallintapaneeli": "Administrativ kontrollpanel",
 	"yllpitjnMuistiinpanot": "Administratörens anteckningar",
 	"yllpito": "Administration"
