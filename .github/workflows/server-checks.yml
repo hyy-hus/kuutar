@@ -1,0 +1,53 @@
+name: Server checks
+
+on:
+  pull_request:
+    paths:
+      - "server/**"
+      - ".github/workflows/server-checks.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "server/**"
+      - ".github/workflows/server-checks.yml"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: kuutar_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    defaults:
+      run:
+        working-directory: ./server
+    env:
+      # Queries compile against the committed .sqlx cache; #[sqlx::test]
+      # uses DATABASE_URL at runtime to create a fresh database per test.
+      SQLX_OFFLINE: "true"
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432/kuutar_test
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Cargo
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: server
+
+      - name: Run tests
+        run: cargo test --locked --no-fail-fast
