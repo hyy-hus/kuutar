@@ -72,6 +72,18 @@ export function getStaticContractUrl(
 	return `${cleanBaseUrl}/contracts/static/${encodeURIComponent(cleanS3Key)}`;
 }
 
+/** Active contracts that apply to a reservation: global ones plus those linked to any selected resource */
+export function getApplicableContracts(
+	contracts: Contract[] | undefined,
+	resourceIds: string[],
+): Contract[] {
+	return (contracts ?? []).filter(
+		(c) =>
+			c.is_active &&
+			(c.is_global || c.resource_ids.some((id) => resourceIds.includes(id))),
+	);
+}
+
 export function useContracts(params?: {
 	resource_id?: string;
 	active_only?: boolean;
