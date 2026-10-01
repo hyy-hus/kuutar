@@ -97,7 +97,11 @@ function AdminReservationsSyncPage() {
 			json.forEach((item: Partial<PortableReservationImport>, idx: number) => {
 				const row = idx + 1;
 				if (!item.title) {
-					errs.push(`Rivi ${row}: Puuttuva otsikko (title)`);
+					errs.push(
+						t("riviPuuttuvaOtsikko", "Rivi {{row}}: Puuttuva otsikko (title)", {
+							row,
+						}),
+					);
 				}
 				if (
 					!item.occurrences ||
@@ -105,18 +109,30 @@ function AdminReservationsSyncPage() {
 					item.occurrences.length === 0
 				) {
 					errs.push(
-						`Rivi ${row} (${item.title || "Tuntematon"}): Ei määriteltyjä ajankohtia (occurrences)`,
+						t(
+							"riviEiAjankohtia",
+							"Rivi {{row}} ({{title}}): Ei määriteltyjä ajankohtia (occurrences)",
+							{ row, title: item.title || t("tuntematon", "Tuntematon") },
+						),
 					);
 				} else {
 					item.occurrences.forEach((occ, oIdx) => {
 						if (!occ.resource_name) {
 							errs.push(
-								`Rivi ${row}, tapahtuma ${oIdx + 1}: Puuttuva resurssin nimi (resource_name)`,
+								t(
+									"riviPuuttuvaResurssinNimi",
+									"Rivi {{row}}, tapahtuma {{occurrence}}: Puuttuva resurssin nimi (resource_name)",
+									{ row, occurrence: oIdx + 1 },
+								),
 							);
 						}
 						if (!occ.start_time || !occ.end_time) {
 							errs.push(
-								`Rivi ${row}, tapahtuma ${oIdx + 1}: Puuttuva aloitus- tai lopetusaika`,
+								t(
+									"riviPuuttuvaAika",
+									"Rivi {{row}}, tapahtuma {{occurrence}}: Puuttuva aloitus- tai lopetusaika",
+									{ row, occurrence: oIdx + 1 },
+								),
 							);
 						}
 					});
@@ -131,8 +147,9 @@ function AdminReservationsSyncPage() {
 			}
 		} catch (err) {
 			setValidationErrors([
-				t("invalidJsonFormat", "Virheellinen JSON-muoto: ") +
-				(err as Error).message,
+				t("invalidJsonFormat", "Virheellinen JSON-muoto: {{message}}", {
+					message: (err as Error).message,
+				}),
 			]);
 			setParsedImportData([]);
 		}
@@ -235,8 +252,8 @@ function AdminReservationsSyncPage() {
 						{isFetchingExport
 							? t("ladataan", "Ladataan...")
 							: t("foundReservationsCount", "Löytyi {{count}} varausta", {
-								count: exportReservations?.length || 0,
-							})}
+									count: exportReservations?.length || 0,
+								})}
 					</span>
 
 					<Button
@@ -339,7 +356,7 @@ function AdminReservationsSyncPage() {
 									<Upload size={14} />
 								)}
 								<span>
-									{t("confirmBatchImport", "Vahvista ja tuo varaukset")}
+									{t("vahvistaJaTuoVaraukset", "Vahvista ja tuo varaukset")}
 								</span>
 							</Button>
 						</div>
@@ -350,7 +367,7 @@ function AdminReservationsSyncPage() {
 									<tr>
 										<th className="p-2">#</th>
 										<th className="p-2">{t("otsikko", "Otsikko")}</th>
-										<th className="p-2">{t("sähköposti", "Käyttäjä")}</th>
+										<th className="p-2">{t("kyttj", "Käyttäjä")}</th>
 										<th className="p-2">{t("resurssi", "Resurssi")}</th>
 										<th className="p-2">{t("aika", "Aika")}</th>
 									</tr>

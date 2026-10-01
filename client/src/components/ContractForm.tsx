@@ -34,7 +34,7 @@ export function ContractForm({
 	initialData,
 	onSubmit,
 	isSubmitting = false,
-	submitLabel = "Tallenna asiakirja",
+	submitLabel,
 }: ContractFormProps) {
 	const { t, i18n } = useTranslation();
 	const presignUpload = usePresignUpload();
@@ -106,7 +106,7 @@ export function ContractForm({
 							throw new Error(
 								t(
 									"tiedostonLatausEpäonnistui",
-									"Tiedoston {{name}} lataus S3-ämpäriin epäonnistui.",
+									"Tiedoston {{name}} lataus palvelimelle epäonnistui.",
 									{ name: file.name },
 								),
 							);
@@ -194,19 +194,20 @@ export function ContractForm({
 						);
 						const hasFile = Boolean(
 							form.getFieldValue("fileMap")?.[lang] ||
-							form.getFieldValue("s3KeyMap")?.[lang],
+								form.getFieldValue("s3KeyMap")?.[lang],
 						);
 						const isLive = hasTitle && hasFile;
 
 						return (
 							<div
 								key={lang}
-								className={`px-2.5 py-1 text-xs font-bold font-mono uppercase rounded transition-all flex items-center gap-1.5 shrink-0 ${isCurrent
+								className={`px-2.5 py-1 text-xs font-bold font-mono uppercase rounded transition-all flex items-center gap-1.5 shrink-0 ${
+									isCurrent
 										? "bg-amber-600 text-white shadow-sm dark:bg-amber-500"
 										: isLive
 											? "bg-stone-200 dark:bg-stone-800 text-stone-800 dark:text-stone-200 hover:bg-stone-300 dark:hover:bg-stone-700"
 											: "bg-stone-200/50 dark:bg-stone-800/40 text-stone-400 dark:text-stone-500 hover:bg-stone-200 dark:hover:bg-stone-800"
-									}`}
+								}`}
 							>
 								{/* Active tab select trigger */}
 								<button
@@ -218,12 +219,13 @@ export function ContractForm({
 
 									{/* Live status indicator dot */}
 									<span
-										className={`w-1.5 h-1.5 rounded-full shrink-0 ${isLive
+										className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+											isLive
 												? isCurrent
 													? "bg-emerald-300"
 													: "bg-emerald-500"
 												: "bg-stone-300 dark:bg-stone-600"
-											}`}
+										}`}
 									/>
 								</button>
 
@@ -234,10 +236,11 @@ export function ContractForm({
 										onClick={(e) => handleRemoveLanguage(lang, e)}
 										aria-label={`${t("poistaKieli", "Poista kieli")}: ${lang.toUpperCase()}`}
 										title={`${t("poistaKieli", "Poista kieli")}: ${lang.toUpperCase()}`}
-										className={`p-0.5 rounded hover:bg-black/20 dark:hover:bg-white/20 transition-colors focus:outline-none ${isCurrent
+										className={`p-0.5 rounded hover:bg-black/20 dark:hover:bg-white/20 transition-colors focus:outline-none ${
+											isCurrent
 												? "text-white/80 hover:text-white"
 												: "text-stone-400 hover:text-stone-700 dark:hover:text-stone-200"
-											}`}
+										}`}
 									>
 										<X size={12} />
 									</button>
@@ -262,7 +265,7 @@ export function ContractForm({
 								handleAddLanguage();
 							}
 						}}
-						placeholder="ESIM. DE"
+						placeholder={t("esimKielikoodi", "esim. DE")}
 						className="w-20 text-xs uppercase h-8 px-2"
 					/>
 					<Button
@@ -447,7 +450,9 @@ export function ContractForm({
 						) : (
 							<>
 								<Save size={16} />
-								<span>{submitLabel}</span>
+								<span>
+									{submitLabel ?? t("tallennaAsiakirja", "Tallenna asiakirja")}
+								</span>
 							</>
 						)}
 					</Button>

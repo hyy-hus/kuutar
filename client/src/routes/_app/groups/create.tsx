@@ -29,7 +29,7 @@ function CreateGroupPage() {
 			<GroupForm
 				onSubmit={handleSubmit}
 				isSubmitting={createGroup.isPending}
-				submitLabel="Luo ryhmä"
+				submitLabel={t("luoRyhma", "Luo ryhmä")}
 			/>
 		</div>
 	);

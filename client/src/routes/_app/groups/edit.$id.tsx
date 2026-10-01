@@ -44,7 +44,7 @@ function EditGroupPage() {
 				}}
 				onSubmit={handleSubmit}
 				isSubmitting={updateGroup.isPending}
-				submitLabel="Tallenna muutokset"
+				submitLabel={t("tallennaMuutokset", "Tallenna muutokset")}
 			/>
 		</div>
 	);

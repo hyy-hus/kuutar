@@ -40,7 +40,7 @@ function CreateResourcePage() {
 			<ResourceForm
 				onSubmit={handleSubmit}
 				isSubmitting={createResource.isPending}
-				submitLabel="Luo resurssi"
+				submitLabel={t("luoResurssi", "Luo resurssi")}
 			/>
 		</div>
 	);

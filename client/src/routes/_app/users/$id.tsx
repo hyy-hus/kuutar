@@ -38,7 +38,14 @@ function ViewUserPage() {
 		);
 
 	const handleDelete = async () => {
-		if (confirm("Haluatko varmasti poistaa tämän käyttäjän?")) {
+		if (
+			confirm(
+				t(
+					"vahvistaKayttajanPoisto",
+					"Haluatko varmasti poistaa tämän käyttäjän?",
+				),
+			)
+		) {
 			await deleteUser.mutateAsync(id);
 			navigate({ to: "/users" });
 		}
@@ -53,7 +60,12 @@ function ViewUserPage() {
 				),
 			)
 		) {
-			alert("Toteuta sessioiden mitätöinti backend-päätepisteen valmistuttua.");
+			alert(
+				t(
+					"istuntojenMitatointiEiKaytettavissa",
+					"Istuntojen mitätöinti ei ole vielä käytettävissä.",
+				),
+			);
 		}
 	};
 

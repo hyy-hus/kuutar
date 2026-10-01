@@ -50,7 +50,7 @@ function EditCollectionPage() {
 				}}
 				onSubmit={handleSubmit}
 				isSubmitting={updateCollection.isPending}
-				submitLabel="Tallenna muutokset"
+				submitLabel={t("tallennaMuutokset", "Tallenna muutokset")}
 			/>
 		</div>
 	);

@@ -120,8 +120,9 @@ function UserList() {
 						<span>{t("kyttjt", "Käyttäjät")}</span>
 					</h1>
 					<p className="text-xs text-stone-500">
-						{t("yhteens", "Yhteensä")} {users?.length || 0}{" "}
-						{t("kyttj2", "käyttäjää")}
+						{t("yhteensaKayttajia", "Yhteensä {{count}} käyttäjää", {
+							count: users?.length || 0,
+						})}
 					</p>
 				</div>
 

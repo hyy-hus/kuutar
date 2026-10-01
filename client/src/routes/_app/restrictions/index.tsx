@@ -229,7 +229,10 @@ function RestrictionsDashboardPage() {
 	const handleDelete = async (id: string) => {
 		if (
 			confirm(
-				t("vahvistaPoisto", "Haluatko varmasti poistaa tämän rajoituksen?"),
+				t(
+					"vahvistaRajoituksenPoisto",
+					"Haluatko varmasti poistaa tämän rajoituksen?",
+				),
 			)
 		) {
 			await deleteRestriction.mutateAsync(id);

@@ -35,7 +35,14 @@ function ViewResourcePage() {
 		);
 
 	const handleDelete = async () => {
-		if (confirm("Haluatko varmasti poistaa tämän resurssin?")) {
+		if (
+			confirm(
+				t(
+					"vahvistaResurssinPoisto",
+					"Haluatko varmasti poistaa tämän resurssin?",
+				),
+			)
+		) {
 			await deleteResource.mutateAsync(id);
 			navigate({ to: "/resources" });
 		}

@@ -46,7 +46,7 @@ export function RestrictionForm({
 	defaultValues,
 	onSubmit,
 	isSubmitting = false,
-	submitLabel = "Tallenna rajoitus",
+	submitLabel,
 }: RestrictionFormProps) {
 	const { t } = useTranslation();
 	const { data: resources, isLoading: loadingResources } = useResources();
@@ -169,7 +169,7 @@ export function RestrictionForm({
 							htmlFor={field.name}
 							className="text-xs font-medium text-stone-700 dark:text-stone-300"
 						>
-							{t("kuvaus", "Kuvaus (valinnainen)")}
+							{t("kuvausValinnainen", "Kuvaus (valinnainen)")}
 						</label>
 						<textarea
 							id={field.name}
@@ -273,10 +273,11 @@ export function RestrictionForm({
 													: [...field.state.value, res.id];
 												field.handleChange(next);
 											}}
-											className={`px-2 py-1 text-xs font-medium rounded border ${isChecked
+											className={`px-2 py-1 text-xs font-medium rounded border ${
+												isChecked
 													? "bg-amber-600 text-white border-amber-600"
 													: "bg-white dark:bg-stone-900 border-stone-300 dark:border-stone-700"
-												}`}
+											}`}
 										>
 											{res.name}
 										</button>
@@ -395,7 +396,9 @@ export function RestrictionForm({
 						) : (
 							<>
 								<Save size={16} />
-								<span>{submitLabel}</span>
+								<span>
+									{submitLabel ?? t("tallennaRajoitus", "Tallenna rajoitus")}
+								</span>
 							</>
 						)}
 					</Button>

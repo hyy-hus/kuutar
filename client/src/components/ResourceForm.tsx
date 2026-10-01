@@ -35,7 +35,7 @@ export function ResourceForm({
 	defaultValues,
 	onSubmit,
 	isSubmitting = false,
-	submitLabel = "Tallenna",
+	submitLabel,
 }: ResourceFormProps) {
 	const { t, i18n } = useTranslation();
 	const { data: collections, isLoading: loadingCollections } = useCollections();
@@ -126,7 +126,8 @@ export function ResourceForm({
 			<form.Field
 				name="collection_id"
 				validators={{
-					onChange: ({ value }) => (!value ? "Valitse kokoelma" : undefined),
+					onChange: ({ value }) =>
+						!value ? t("kokoelmaOnPakollinen", "Valitse kokoelma") : undefined,
 				}}
 			>
 				{(field) => {
@@ -294,8 +295,8 @@ export function ResourceForm({
 													const next = e.target.checked
 														? [...field.state.value, contract.id]
 														: field.state.value.filter(
-															(id) => id !== contract.id,
-														);
+																(id) => id !== contract.id,
+															);
 													field.handleChange(next);
 												}}
 												className="w-4 h-4 text-amber-600 rounded border-stone-300 focus:ring-amber-500 dark:border-stone-700 dark:bg-stone-950"
@@ -337,7 +338,7 @@ export function ResourceForm({
 						) : (
 							<>
 								<Save size={16} />
-								<span>{submitLabel}</span>
+								<span>{submitLabel ?? t("tallenna", "Tallenna")}</span>
 							</>
 						)}
 					</Button>

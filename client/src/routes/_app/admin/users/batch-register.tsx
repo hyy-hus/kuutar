@@ -38,7 +38,14 @@ function BatchRegisterUserPage() {
 		});
 
 		if (results.errors.length > 0) {
-			setErrors(results.errors.map((e) => `Rivi ${e.row}: ${e.message}`));
+			setErrors(
+				results.errors.map((e) =>
+					t("riviVirhe", "Rivi {{row}}: {{message}}", {
+						row: e.row,
+						message: e.message,
+					}),
+				),
+			);
 		}
 
 		// Parse TSV/CSV rows for email, name, and optional password
@@ -52,12 +59,23 @@ function BatchRegisterUserPage() {
 		rows.forEach((u, idx) => {
 			if (!u.email || !u.email.includes("@")) {
 				validationErrors.push(
-					`Rivi ${idx + 1}: Virheellinen sähköposti (${u.email || "tyhjä"})`,
+					t(
+						"riviVirheellinenSahkoposti",
+						"Rivi {{row}}: Virheellinen sähköposti ({{email}})",
+						{
+							row: idx + 1,
+							email: u.email || t("tyhja", "tyhjä"),
+						},
+					),
 				);
 			}
 			if (u.password && u.password.length < 8) {
 				validationErrors.push(
-					`Rivi ${idx + 1} (${u.email}): Salasana on liian lyhyt (vähintään 8 merkkiä required).`,
+					t(
+						"riviSalasanaLiianLyhyt",
+						"Rivi {{row}} ({{email}}): Salasana on liian lyhyt (vähintään 8 merkkiä).",
+						{ row: idx + 1, email: u.email },
+					),
 				);
 			}
 		});
@@ -113,7 +131,7 @@ function BatchRegisterUserPage() {
 		<div className="max-w-4xl mx-auto space-y-6 p-6">
 			<div>
 				<h1 className="text-xl font-bold tracking-tight">
-					{t("batchRegisterUsers", "Käyttäjien massa-rekisteröinti")}
+					{t("batchRegisterUsers", "Käyttäjien massarekisteröinti")}
 				</h1>
 				<p className="text-sm text-stone-500 dark:text-stone-400">
 					{t(
@@ -132,7 +150,7 @@ function BatchRegisterUserPage() {
 					<Users size={14} />
 					{t(
 						"targetGroup",
-						"Valitse kohderyhmä kaikkille lisättäville käyttäjille:",
+						"Valitse kohderyhmä kaikille lisättäville käyttäjille:",
 					)}
 				</label>
 				<select
@@ -144,7 +162,7 @@ function BatchRegisterUserPage() {
 				>
 					<option value="">
 						{isLoadingGroups
-							? t("loadingGroups", "Ladataan ryhmiä...")
+							? t("ladataanRyhmia", "Ladataan ryhmiä...")
 							: t("selectGroupPlaceholder", "-- Valitse ryhmä --")}
 					</option>
 					{groups?.map((group) => (
@@ -160,7 +178,7 @@ function BatchRegisterUserPage() {
 				<label className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-stone-300 dark:border-stone-700 rounded-lg cursor-pointer hover:bg-stone-100 dark:hover:bg-stone-900 transition-colors">
 					<Upload size={24} className="text-stone-400 mb-2" />
 					<span className="text-xs font-mono text-stone-600 dark:text-stone-300">
-						{t("uploadCsvFile", "Lataa .csv tai .tsv tiedosto")}
+						{t("uploadCsvFile", "Lataa .csv- tai .tsv-tiedosto")}
 					</span>
 					<input
 						type="file"
@@ -200,8 +218,13 @@ function BatchRegisterUserPage() {
 					<div className="flex items-center justify-between">
 						<span className="text-xs font-mono font-semibold flex items-center gap-1.5">
 							<CheckCircle2 size={14} className="text-green-600" />
-							{t("parsedCount", "Valmiina tuotavaksi")}: {parsedRows.length}{" "}
-							{t("users", "käyttäjää")}
+							{t(
+								"valmiinaTuotavaksiKayttajia",
+								"Valmiina tuotavaksi: {{count}} käyttäjää",
+								{
+									count: parsedRows.length,
+								},
+							)}
 						</span>
 						<button
 							type="button"
@@ -225,13 +248,13 @@ function BatchRegisterUserPage() {
 										#
 									</th>
 									<th className="p-2 border-b border-stone-200 dark:border-stone-700">
-										Email
+										{t("shkposti", "Sähköposti")}
 									</th>
 									<th className="p-2 border-b border-stone-200 dark:border-stone-700">
-										Nimi
+										{t("nimi", "Nimi")}
 									</th>
 									<th className="p-2 border-b border-stone-200 dark:border-stone-700">
-										Salasana
+										{t("salasana", "Salasana")}
 									</th>
 								</tr>
 							</thead>
@@ -244,12 +267,12 @@ function BatchRegisterUserPage() {
 										<td className="p-2 text-stone-400">{idx + 1}</td>
 										<td className="p-2 font-medium">{user.email}</td>
 										<td className="p-2 text-stone-700 dark:text-stone-300">
-											{user.name || t("noName", "(Ei asetettu)")}
+											{user.name || t("eiAsetettu", "(Ei asetettu)")}
 										</td>
 										<td className="p-2 text-stone-400">
 											{user.password
 												? "••••••••"
-												: t("noPassword", "(Ei asetettu)")}
+												: t("eiAsetettu", "(Ei asetettu)")}
 										</td>
 									</tr>
 								))}
@@ -275,7 +298,7 @@ function BatchRegisterUserPage() {
 						>
 							{batchCreate.isPending
 								? t("registering", "Luodaan käyttäjiä...")
-								: t("confirmBatchImport", "Vahvista ja luo käyttäjät")}
+								: t("vahvistaJaLuoKayttajat", "Vahvista ja luo käyttäjät")}
 						</button>
 					</div>
 				</div>

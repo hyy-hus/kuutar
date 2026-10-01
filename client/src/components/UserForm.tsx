@@ -24,7 +24,7 @@ export function UserForm({
 	defaultValues,
 	onSubmit,
 	isSubmitting = false,
-	submitLabel = "Tallenna",
+	submitLabel,
 	isCreate = false,
 }: UserFormProps) {
 	const { t } = useTranslation();
@@ -84,7 +84,7 @@ export function UserForm({
 								onChange={(e) => field.handleChange(e.target.value)}
 								onBlur={field.handleBlur}
 								isError={hasError}
-								placeholder="Matti Meikäläinen"
+								placeholder={t("esimNimi", "Matti Meikäläinen")}
 							/>
 							{hasError && (
 								<p className="text-[11px] text-red-500">
@@ -104,7 +104,10 @@ export function UserForm({
 						!value
 							? t("shkpostiOnPakollinen", "Sähköposti on pakollinen")
 							: !/\S+@\S+\.\S+/.test(value)
-								? "Anna kelvollinen sähköpostiosoite"
+								? t(
+										"annaKelvollinenSahkoposti",
+										"Anna kelvollinen sähköpostiosoite",
+									)
 								: undefined,
 				}}
 			>
@@ -125,7 +128,7 @@ export function UserForm({
 								onChange={(e) => field.handleChange(e.target.value)}
 								onBlur={field.handleBlur}
 								isError={hasError}
-								placeholder="nimi@esimerkki.fi"
+								placeholder={t("esimSahkoposti", "nimi@esimerkki.fi")}
 							/>
 							{hasError && (
 								<p className="text-[11px] text-red-500">
@@ -141,7 +144,8 @@ export function UserForm({
 			<form.Field
 				name="group_id"
 				validators={{
-					onChange: ({ value }) => (!value ? "Valitse ryhmä" : undefined),
+					onChange: ({ value }) =>
+						!value ? t("valitseRyhma", "Valitse ryhmä") : undefined,
 				}}
 			>
 				{(field) => {
@@ -189,9 +193,9 @@ export function UserForm({
 							? t("salasanaOnPakollinen", "Salasana on pakollinen")
 							: value && value.length < 8
 								? t(
-									"salasananOnOltavaVhintn8Merkki",
-									"Salasanan on oltava vähintään 8 merkkiä",
-								)
+										"salasananOnOltavaVhintn8Merkki",
+										"Salasanan on oltava vähintään 8 merkkiä",
+									)
 								: undefined,
 				}}
 			>
@@ -204,11 +208,11 @@ export function UserForm({
 								className="text-xs font-medium text-stone-700 dark:text-stone-300"
 							>
 								{isCreate
-									? "Salasana"
+									? t("salasana", "Salasana")
 									: t(
-										"uusiSalasanaJtTyhjksiJosEiMuuteta",
-										"Uusi salasana (jätä tyhjäksi jos ei muuteta)",
-									)}
+											"uusiSalasanaJtTyhjksiJosEiMuuteta",
+											"Uusi salasana (jätä tyhjäksi jos ei muuteta)",
+										)}
 							</label>
 							<Input
 								id={field.name}
@@ -244,7 +248,7 @@ export function UserForm({
 						) : (
 							<>
 								<Save size={16} />
-								<span>{submitLabel}</span>
+								<span>{submitLabel ?? t("tallenna", "Tallenna")}</span>
 							</>
 						)}
 					</Button>

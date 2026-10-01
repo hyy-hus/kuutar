@@ -32,7 +32,14 @@ function ViewCollectionPage() {
 		);
 
 	const handleDelete = async () => {
-		if (confirm("Haluatko varmasti poistaa tämän kokoelman?")) {
+		if (
+			confirm(
+				t(
+					"vahvistaKokoelmanPoisto",
+					"Haluatko varmasti poistaa tämän kokoelman?",
+				),
+			)
+		) {
 			await deleteCollection.mutateAsync(id);
 			navigate({ to: "/collections" });
 		}
