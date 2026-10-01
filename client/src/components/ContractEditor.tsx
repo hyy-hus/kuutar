@@ -62,10 +62,8 @@ export function ContractEditor({ value, onChange }: ContractEditorProps) {
 			Link.configure({
 				openOnClick: false,
 				HTMLAttributes: {
-					class: t(
-						"textamber600Darktextamber400UnderlineFontmediumHovertextamber700Darkhovertextamber300",
+					class:
 						"text-amber-600 dark:text-amber-400 underline font-medium hover:text-amber-700 dark:hover:text-amber-300",
-					),
 				},
 			}),
 		],
@@ -76,38 +74,17 @@ export function ContractEditor({ value, onChange }: ContractEditorProps) {
 		editorProps: {
 			attributes: {
 				class: cn(
-					t(
-						"minh300pxP4BordernoneOutlinenoneFocusoutlinenoneFocusring0Bgstone50Darkbgstone900Textstone900Darktextstone100",
-						"min-h-[300px] p-4 border-none outline-none focus:outline-none focus:ring-0 bg-stone-50 dark:bg-stone-900 text-stone-900 dark:text-stone-100",
-					),
+					"min-h-[300px] p-4 border-none outline-none focus:outline-none focus:ring-0 bg-stone-50 dark:bg-stone-900 text-stone-900 dark:text-stone-100",
 					// Headings
-					t(
-						"_h1text2xl_h1fontextrabold_h1mt4_h1mb2_h1textstone900_h1darktextstone100",
-						"[&_h1]:text-2xl [&_h1]:font-extrabold [&_h1]:mt-4 [&_h1]:mb-2 [&_h1]:text-stone-900 [&_h1]:dark:text-stone-100",
-					),
-					t(
-						"_h2textxl_h2fontbold_h2mt3_h2mb1_h2textstone900_h2darktextstone100",
-						"[&_h2]:text-xl [&_h2]:font-bold [&_h2]:mt-3 [&_h2]:mb-1 [&_h2]:text-stone-900 [&_h2]:dark:text-stone-100",
-					),
-					t(
-						"_h3textlg_h3fontsemibold_h3mt2_h3mb1_h3textstone900_h3darktextstone100",
-						"[&_h3]:text-lg [&_h3]:font-semibold [&_h3]:mt-2 [&_h3]:mb-1 [&_h3]:text-stone-900 [&_h3]:dark:text-stone-100",
-					),
+					"[&_h1]:text-2xl [&_h1]:font-extrabold [&_h1]:mt-4 [&_h1]:mb-2 [&_h1]:text-stone-900 [&_h1]:dark:text-stone-100",
+					"[&_h2]:text-xl [&_h2]:font-bold [&_h2]:mt-3 [&_h2]:mb-1 [&_h2]:text-stone-900 [&_h2]:dark:text-stone-100",
+					"[&_h3]:text-lg [&_h3]:font-semibold [&_h3]:mt-2 [&_h3]:mb-1 [&_h3]:text-stone-900 [&_h3]:dark:text-stone-100",
 					// Paragraphs & Inline elements
 					"[&_p]:my-1 [&_p]:leading-normal",
-					t(
-						"_atextamber600_adarktextamber400_aunderline",
-						"[&_a]:text-amber-600 [&_a]:dark:text-amber-400 [&_a]:underline",
-					),
+					"[&_a]:text-amber-600 [&_a]:dark:text-amber-400 [&_a]:underline",
 					// Lists & List items
-					t(
-						"_ullistdisc_ulpl5_ulmy2_ulspacey05",
-						"[&_ul]:list-disc [&_ul]:pl-5 [&_ul]:my-2 [&_ul]:space-y-0.5",
-					),
-					t(
-						"_ollistdecimal_olpl5_olmy2_olspacey05",
-						"[&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:my-2 [&_ol]:space-y-0.5",
-					),
+					"[&_ul]:list-disc [&_ul]:pl-5 [&_ul]:my-2 [&_ul]:space-y-0.5",
+					"[&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:my-2 [&_ol]:space-y-0.5",
 					"[&_li_p]:m-0 [&_li_p]:inline",
 					// Formatting marks
 					"[&_strong]:font-bold [&_em]:italic",
@@ -182,7 +159,7 @@ export function ContractEditor({ value, onChange }: ContractEditorProps) {
 				<div className="w-px h-4 bg-stone-300 dark:bg-stone-800 mx-1" />
 
 				<EditorButton
-					title="Lihavointi"
+					title={t("lihavointi", "Lihavointi")}
 					active={activeStates?.isBold}
 					onClick={() => editor.chain().focus().toggleBold().run()}
 				>
@@ -190,7 +167,7 @@ export function ContractEditor({ value, onChange }: ContractEditorProps) {
 				</EditorButton>
 
 				<EditorButton
-					title="Kursiivi"
+					title={t("kursiivi", "Kursiivi")}
 					active={activeStates?.isItalic}
 					onClick={() => editor.chain().focus().toggleItalic().run()}
 				>
@@ -217,7 +194,7 @@ export function ContractEditor({ value, onChange }: ContractEditorProps) {
 				<div className="w-px h-4 bg-stone-300 dark:bg-stone-800 mx-1" />
 
 				<EditorButton
-					title="Luettelo"
+					title={t("luettelo", "Luettelo")}
 					active={activeStates?.isBulletList}
 					onClick={() => editor.chain().focus().toggleBulletList().run()}
 				>

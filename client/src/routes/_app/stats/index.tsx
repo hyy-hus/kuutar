@@ -10,7 +10,7 @@ import {
 	TrendingUp,
 	Users,
 } from "lucide-react";
-import { Trans, useTranslation } from "react-i18next";
+import { useTranslation } from "react-i18next";
 import { useStats } from "#/hooks/useStats";
 
 export const Route = createFileRoute("/_app/stats/")({
@@ -182,10 +182,8 @@ function StatsPage() {
 								<div className="space-y-3 text-xs font-mono">
 									<div className="p-3 border border-stone-200 dark:border-stone-800 rounded bg-stone-100 dark:bg-stone-950 flex items-center justify-between">
 										<span className="flex items-center gap-2 text-emerald-700 dark:text-emerald-400">
-											<Trans i18nKey="spanClassnamew2H2RoundedfullBgemerald500VahvistetutVaraukset">
-												<span className="w-2 h-2 rounded-full bg-emerald-500" />
-												Vahvistetut varaukset
-											</Trans>
+											<span className="w-2 h-2 rounded-full bg-emerald-500" />
+											{t("vahvistetutVaraukset", "Vahvistetut varaukset")}
 										</span>
 										<span className="font-bold text-stone-900 dark:text-stone-100">
 											{stats?.confirmed_reservations ?? 0}
@@ -194,10 +192,8 @@ function StatsPage() {
 
 									<div className="p-3 border border-stone-200 dark:border-stone-800 rounded bg-stone-100 dark:bg-stone-950 flex items-center justify-between">
 										<span className="flex items-center gap-2 text-amber-700 dark:text-amber-400">
-											<Trans i18nKey="spanClassnamew2H2RoundedfullBgamber500OdottavatPyynnt">
-												<span className="w-2 h-2 rounded-full bg-amber-500" />
-												Odottavat pyynnöt
-											</Trans>
+											<span className="w-2 h-2 rounded-full bg-amber-500" />
+											{t("odottavatPyynnt", "Odottavat pyynnöt")}
 										</span>
 										<span className="font-bold text-stone-900 dark:text-stone-100">
 											{stats?.pending_reservations ?? 0}

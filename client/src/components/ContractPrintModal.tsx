@@ -138,7 +138,7 @@ export function ContractPrintModal({
 						<div className="p-8 text-center text-sm text-stone-400 border border-dashed border-stone-300 rounded-md print:hidden">
 							{t(
 								"valitseSopimuspohjaValikostaEsikatsellaksesiTytettyAsiakirjaa",
-								"Valitse sopimuspohja valikosta esikatsellaksesi täytettyä\n\t\t\t\t\t\t\tasiakirjaa.",
+								"Valitse sopimuspohja valikosta esikatsellaksesi täytettyä asiakirjaa.",
 							)}
 						</div>
 					) : (

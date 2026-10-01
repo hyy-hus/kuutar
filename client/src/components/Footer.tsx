@@ -3,7 +3,7 @@
 import { SiGithub } from "@icons-pack/react-simple-icons";
 import { Link } from "@tanstack/react-router";
 import { Info, Loader2, Newspaper, ShieldCheck } from "lucide-react";
-import { Trans, useTranslation } from "react-i18next";
+import { useTranslation } from "react-i18next";
 import { useHealth } from "#/hooks/useHealth";
 
 export function Footer() {
@@ -141,17 +141,13 @@ export function Footer() {
 								</span>
 							) : isError ? (
 								<span className="inline-flex items-center gap-1.5 font-bold text-rose-700 dark:text-rose-400 bg-rose-100 dark:bg-rose-950/60 px-2 py-0.5 rounded border border-rose-300 dark:border-rose-800 text-[11px]">
-									<Trans i18nKey="spanClassnamew15H15RoundedfullBgrose500Hiri">
-										<span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
-										Häiriö
-									</Trans>
+									<span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+									{t("hiri", "Häiriö")}
 								</span>
 							) : (
 								<span className="inline-flex items-center gap-1.5 font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-300 dark:border-emerald-800 text-[11px]">
-									<Trans i18nKey="spanClassnamew15H15RoundedfullBgemerald500AnimatepulseNormaali">
-										<span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-										Normaali
-									</Trans>
+									<span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+									{t("normaali", "Normaali")}
 								</span>
 							)}
 						</div>
@@ -162,10 +158,10 @@ export function Footer() {
 			{/* Bottom Copyright Strip */}
 			<div className="border-t border-stone-200 dark:border-stone-800 py-3 px-6 text-center sm:text-left text-[11px] text-stone-500 dark:text-stone-400 flex flex-col sm:flex-row items-center justify-between gap-2 font-mono max-w-6xl mx-auto">
 				<span>
-					{t("copy", "&copy;")} {new Date().getFullYear()}{" "}
+					&copy; {new Date().getFullYear()}{" "}
 					{t(
 						"helsinginYliopistonYlioppilaskuntaHyy",
-						"Helsingin yliopiston ylioppilaskunta\n\t\t\t\t\t(HYY)",
+						"Helsingin yliopiston ylioppilaskunta (HYY)",
 					)}
 				</span>
 			</div>
