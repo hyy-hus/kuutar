@@ -28,7 +28,7 @@ import {
 } from "#/hooks/useReservations";
 import { useResources } from "#/hooks/useResorces";
 import { useRestrictions } from "#/hooks/useRestrictions";
-import { formatDate } from "#/utils/date";
+import { formatDate, formatDateTimeLocal } from "#/utils/date";
 import { generateOccurrences, parseRRule } from "#/utils/rruleUtils";
 
 export interface ReservationFormValues {
@@ -424,7 +424,30 @@ export function ReservationForm({
 										id={field.name}
 										type="datetime-local"
 										value={field.state.value}
-										onChange={(e) => field.handleChange(e.target.value)}
+										onChange={(e) => {
+											const nextStart = e.target.value;
+											const prevStart = new Date(field.state.value);
+											const prevEnd = new Date(
+												field.form.getFieldValue("end_time"),
+											);
+											const duration = prevEnd.getTime() - prevStart.getTime();
+
+											// Keep the previous duration when the new start passes the end.
+											// End is updated first so the start validator sees the new end.
+											if (
+												nextStart &&
+												duration > 0 &&
+												new Date(nextStart) >= prevEnd
+											) {
+												field.form.setFieldValue(
+													"end_time",
+													formatDateTimeLocal(
+														new Date(new Date(nextStart).getTime() + duration),
+													),
+												);
+											}
+											field.handleChange(nextStart);
+										}}
 										onBlur={field.handleBlur}
 										isError={hasError}
 									/>
