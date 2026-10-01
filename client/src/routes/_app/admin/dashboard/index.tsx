@@ -4,8 +4,6 @@ import {
 	Calendar,
 	Check,
 	CheckCircle2,
-	ChevronLeft,
-	ChevronRight,
 	Clock,
 	FileText,
 	Loader2,
@@ -17,6 +15,7 @@ import {
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "#/components/Button";
+import { PeriodNavigator } from "#/components/PeriodNavigator";
 import {
 	type ReservationStatus,
 	type ReservationWithOccurrences,
@@ -24,33 +23,25 @@ import {
 	useUpdateReservation,
 } from "#/hooks/useReservations";
 import { useResources } from "#/hooks/useResorces";
-import { startOfCurrentWeek } from "#/utils/calendarUtils";
 import { cn } from "#/utils/cn";
 import { formatDate } from "#/utils/date";
+import {
+	getPeriodRange,
+	type PeriodMonths,
+	parsePeriodMonths,
+} from "#/utils/period";
 
 export interface AdminDashboardSearch {
 	start_date?: string;
-	days?: number;
+	months?: PeriodMonths;
 	resource_id?: string;
 }
-
-const formatYYYYMMDD = (d: Date) => {
-	const year = d.getFullYear();
-	const month = String(d.getMonth() + 1).padStart(2, "0");
-	const day = String(d.getDate()).padStart(2, "0");
-	return `${year}-${month}-${day}`;
-};
 
 const formatTimeOnly = (isoStr: string) => {
 	const d = new Date(isoStr);
 	const hours = String(d.getHours()).padStart(2, "0");
 	const minutes = String(d.getMinutes()).padStart(2, "0");
 	return `${hours}.${minutes}`;
-};
-
-const parseLocalDate = (dateStr: string): Date => {
-	const [year, month, day] = dateStr.split("-").map(Number);
-	return new Date(year, month - 1, day, 0, 0, 0, 0);
 };
 
 /** Orders reservations by their first occurrence; ones without times go last */
@@ -72,7 +63,7 @@ export const Route = createFileRoute("/_app/admin/dashboard/")({
 		return {
 			start_date:
 				typeof search.start_date === "string" ? search.start_date : undefined,
-			days: typeof search.days === "number" ? search.days : undefined,
+			months: parsePeriodMonths(search.months),
 			resource_id:
 				typeof search.resource_id === "string" ? search.resource_id : undefined,
 		};
@@ -311,26 +302,14 @@ function AdminDashboardPage() {
 		return new Map(resources?.map((r) => [r.id, r.name]) || []);
 	}, [resources]);
 
-	const defaultStartStr = formatYYYYMMDD(startOfCurrentWeek());
-	const startStr = search.start_date || defaultStartStr;
-	const days = search.days || 14;
+	// Admins review the whole current year by default
+	const months = search.months ?? 12;
 	const resourceId = search.resource_id;
 
-	const start = useMemo(() => parseLocalDate(startStr), [startStr]);
-
-	const { startDateISO, endDateISO } = useMemo(() => {
-		const startDate = new Date(start);
-		startDate.setHours(0, 0, 0, 0);
-
-		const endDate = new Date(start);
-		endDate.setDate(endDate.getDate() + days);
-		endDate.setHours(23, 59, 59, 999);
-
-		return {
-			startDateISO: startDate.toISOString(),
-			endDateISO: endDate.toISOString(),
-		};
-	}, [start, days]);
+	const { start, startDateISO, endDateISO } = useMemo(
+		() => getPeriodRange(search.start_date, months),
+		[search.start_date, months],
+	);
 
 	const {
 		data: reservations,
@@ -371,12 +350,6 @@ function AdminDashboardPage() {
 			search: (prev) => ({ ...prev, ...next }),
 			replace: true,
 		});
-	};
-
-	const moveStart = (deltaDays: number) => {
-		const next = new Date(start);
-		next.setDate(next.getDate() + deltaDays);
-		updateSearch({ start_date: formatYYYYMMDD(next) });
 	};
 
 	const handleStatusChange = async (id: string, status: ReservationStatus) => {
@@ -435,40 +408,11 @@ function AdminDashboardPage() {
 			</div>
 
 			<div className="flex flex-wrap items-center gap-2 shrink-0 p-2 bg-stone-100 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-md">
-				<div className="flex items-center gap-1">
-					<Button
-						variant="secondary"
-						size="sm"
-						onClick={() => moveStart(-days)}
-					>
-						<ChevronLeft size={16} />
-					</Button>
-
-					<input
-						type="date"
-						value={formatYYYYMMDD(start)}
-						onChange={(e) =>
-							e.target.valueAsDate &&
-							updateSearch({ start_date: formatYYYYMMDD(e.target.valueAsDate) })
-						}
-						className="px-2.5 py-1 text-xs bg-stone-50 dark:bg-stone-950 border border-stone-200 dark:border-stone-800 rounded-md font-mono"
-					/>
-
-					<Button variant="secondary" size="sm" onClick={() => moveStart(days)}>
-						<ChevronRight size={16} />
-					</Button>
-				</div>
-
-				<select
-					value={days}
-					onChange={(e) => updateSearch({ days: Number(e.target.value) })}
-					className="px-2.5 py-1 text-xs bg-stone-50 dark:bg-stone-950 border border-stone-200 dark:border-stone-800 rounded-md font-medium"
-				>
-					<option value={7}>{t("1Viikko", "1 viikko")}</option>
-					<option value={14}>{t("2Viikkoa", "2 viikkoa")}</option>
-					<option value={30}>{t("1Kuukausi", "1 kuukausi")}</option>
-					<option value={90}>{t("3Kuukautta", "3 kuukautta")}</option>
-				</select>
+				<PeriodNavigator
+					start={start}
+					months={months}
+					onChange={updateSearch}
+				/>
 
 				<select
 					value={resourceId || ""}

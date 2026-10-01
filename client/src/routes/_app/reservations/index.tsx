@@ -2,8 +2,6 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import {
 	Calendar,
 	CheckCircle2,
-	ChevronLeft,
-	ChevronRight,
 	Clock,
 	Eye,
 	Loader2,
@@ -16,6 +14,7 @@ import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "#/components/Button";
 import { Chip } from "#/components/Chip";
+import { PeriodNavigator } from "#/components/PeriodNavigator";
 import {
 	type ReservationStatus,
 	type ReservationWithOccurrences,
@@ -26,40 +25,25 @@ import { useResources } from "#/hooks/useResorces";
 import { requireAuthGuard } from "#/utils/authGuard";
 import { cn } from "#/utils/cn";
 import { formatDate } from "#/utils/date";
+import {
+	getPeriodRange,
+	type PeriodMonths,
+	parsePeriodMonths,
+} from "#/utils/period";
 import { readable_uuid } from "#/utils/uuid";
 
 export interface UserDashboardSearch {
 	start_date?: string;
-	months?: number;
+	months?: PeriodMonths;
 	resource_id?: string;
 }
-
-const PERIOD_MONTHS = [1, 3, 6, 12] as const;
-
-/** Snaps a date to the start of its month, or to the start of its year for 12-month periods */
-const startOfPeriod = (d: Date, months: number): Date =>
-	new Date(d.getFullYear(), months === 12 ? 0 : d.getMonth(), 1);
-
-const formatYYYYMMDD = (d: Date) => {
-	const year = d.getFullYear();
-	const month = String(d.getMonth() + 1).padStart(2, "0");
-	const day = String(d.getDate()).padStart(2, "0");
-	return `${year}-${month}-${day}`;
-};
-
-const parseLocalDate = (dateStr: string): Date => {
-	const [year, month, day] = dateStr.split("-").map(Number);
-	return new Date(year, month - 1, day, 0, 0, 0, 0);
-};
 
 export const Route = createFileRoute("/_app/reservations/")({
 	validateSearch: (search: Record<string, unknown>): UserDashboardSearch => {
 		return {
 			start_date:
 				typeof search.start_date === "string" ? search.start_date : undefined,
-			months: PERIOD_MONTHS.includes(search.months as 1 | 3 | 6 | 12)
-				? (search.months as number)
-				: undefined,
+			months: parsePeriodMonths(search.months),
 			resource_id:
 				typeof search.resource_id === "string" ? search.resource_id : undefined,
 		};
@@ -185,29 +169,13 @@ function UserDashboardPage() {
 	const { data: resources, isLoading: loadingResources } = useResources();
 	const updateReservation = useUpdateReservation();
 
-	const months = search.months || 1;
+	const months = search.months ?? 1;
 	const resourceId = search.resource_id;
 
-	const start = useMemo(
-		() =>
-			startOfPeriod(
-				search.start_date ? parseLocalDate(search.start_date) : new Date(),
-				months,
-			),
+	const { start, startDateISO, endDateISO } = useMemo(
+		() => getPeriodRange(search.start_date, months),
 		[search.start_date, months],
 	);
-
-	const { startDateISO, endDateISO } = useMemo(() => {
-		// End is the last millisecond before the next period starts
-		const endDate = new Date(start);
-		endDate.setMonth(endDate.getMonth() + months);
-		endDate.setMilliseconds(-1);
-
-		return {
-			startDateISO: start.toISOString(),
-			endDateISO: endDate.toISOString(),
-		};
-	}, [start, months]);
 
 	const {
 		data: reservations,
@@ -247,12 +215,6 @@ function UserDashboardPage() {
 		});
 	};
 
-	const moveStart = (deltaMonths: number) => {
-		const next = new Date(start);
-		next.setMonth(next.getMonth() + deltaMonths);
-		updateSearch({ start_date: formatYYYYMMDD(next) });
-	};
-
 	const handleStatusToggle = async (
 		id: string,
 		nextStatus: ReservationStatus,
@@ -272,38 +234,11 @@ function UserDashboardPage() {
 			</div>
 
 			<div className="flex flex-wrap items-center gap-2 shrink-0 p-2 bg-stone-100 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-md">
-				<Button
-					variant="secondary"
-					size="sm"
-					onClick={() => moveStart(-months)}
-				>
-					<ChevronLeft size={18} />
-				</Button>
-
-				<input
-					type="date"
-					value={formatYYYYMMDD(start)}
-					onChange={(e) =>
-						e.target.valueAsDate &&
-						updateSearch({ start_date: formatYYYYMMDD(e.target.valueAsDate) })
-					}
-					className="px-3 py-1.5 text-xs bg-stone-50 dark:bg-stone-950 border border-stone-200 dark:border-stone-800 rounded-md font-mono"
+				<PeriodNavigator
+					start={start}
+					months={months}
+					onChange={updateSearch}
 				/>
-
-				<Button variant="secondary" size="sm" onClick={() => moveStart(months)}>
-					<ChevronRight size={18} />
-				</Button>
-
-				<select
-					value={months}
-					onChange={(e) => updateSearch({ months: Number(e.target.value) })}
-					className="px-3 py-1.5 text-xs bg-stone-50 dark:bg-stone-950 border border-stone-200 dark:border-stone-800 rounded-md font-medium"
-				>
-					<option value={1}>{t("1Kuukausi", "1 kuukausi")}</option>
-					<option value={3}>{t("3Kuukautta", "3 kuukautta")}</option>
-					<option value={6}>{t("6Kuukautta", "6 kuukautta")}</option>
-					<option value={12}>{t("1Vuosi", "1 vuosi")}</option>
-				</select>
 
 				<select
 					value={resourceId || ""}
