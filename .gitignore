@@ -1,4 +1,5 @@
 server/target
+reservations_backup.json
 .env*
 .cors.json
 deploy.sh

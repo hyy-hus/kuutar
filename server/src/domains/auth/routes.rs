@@ -1,3 +1,4 @@
+use crate::utils::resend;
 use axum::{Json, extract::State, http::StatusCode};
 use sqlx::PgPool;
 use uuid::Uuid;
@@ -8,7 +9,14 @@ use super::{
     models::{AuthTokens, LoginPayload, RefreshPayload, RegisterPayload},
     password,
 };
-use crate::{config::Config, domains::users::models::Role, errors::AppError};
+use crate::{
+    config::Config,
+    domains::{
+        auth::models::{RequestOtpPayload, VerifyOtpPayload},
+        users::models::Role,
+    },
+    errors::AppError,
+};
 
 #[derive(Clone)]
 pub struct AuthState {
@@ -142,4 +150,73 @@ async fn issue_token_pair(
         token_type: "Bearer".to_string(),
         expires_in: state.config.jwt_expiration_seconds,
     })
+}
+
+/// Request OTP Login Code via Email
+#[utoipa::path(
+    post,
+    path = "/auth/otp/request",
+    tag = "Auth",
+    request_body = RequestOtpPayload,
+    responses(
+        (status = 200, description = "OTP sent to email if account exists"),
+        (status = 422, description = "Validation error"),
+        (status = 429, description = "Account temporarily locked due to too many failed attempts")
+    )
+)]
+#[tracing::instrument(skip(state))]
+pub async fn request_otp(
+    State(state): State<AuthState>,
+    Json(payload): Json<RequestOtpPayload>,
+) -> Result<axum::http::StatusCode, AppError> {
+    payload.validate()?;
+
+    // Check if account is locked out due to too many failed attempts
+    db::check_email_lockout(&state.pool, &payload.email).await?;
+
+    if let Some(user) = db::find_user_by_email(&state.pool, &payload.email).await? {
+        let raw_code = db::create_otp_code(&state.pool, &user.email).await?;
+
+        if let Some(resend_key) = &state.config.resend_api_key {
+            resend::send_otp_email(
+                resend_key,
+                &state.config.resend_from_email,
+                &user.email,
+                &raw_code,
+            )
+            .await?;
+        } else {
+            tracing::warn!(
+                "Resend API Key missing in config! Could not send OTP email to {}",
+                user.email
+            );
+        }
+    }
+
+    Ok(axum::http::StatusCode::OK)
+}
+
+/// Verify OTP Login Code and Issue Access Token
+#[utoipa::path(
+    post,
+    path = "/auth/otp/verify",
+    tag = "Auth",
+    request_body = VerifyOtpPayload,
+    responses(
+        (status = 200, description = "OTP verified successfully", body = AuthTokens),
+        (status = 401, description = "Invalid or expired OTP code"),
+        (status = 429, description = "Account temporarily locked due to too many failed attempts")
+    )
+)]
+#[tracing::instrument(skip(state))]
+pub async fn verify_otp(
+    State(state): State<AuthState>,
+    Json(payload): Json<VerifyOtpPayload>,
+) -> Result<Json<AuthTokens>, AppError> {
+    payload.validate()?;
+
+    let user = db::verify_and_consume_otp(&state.pool, &payload.email, &payload.code).await?;
+    let tokens = issue_token_pair(&state, user.id, user.group_id, user.role).await?;
+
+    Ok(Json(tokens))
 }

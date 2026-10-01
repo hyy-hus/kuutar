@@ -19,15 +19,56 @@ export const contractKeys = {
 	detail: (id: string) => [...contractKeys.details(), id] as const,
 };
 
-/** Helper to extract localized text from contract JSONB fields with locale fallback */
+/** Helper to extract localized text from contract JSONB fields with locale & language fallbacks */
 export function getLocalizedText(
 	field: unknown,
 	locale = "fi",
 	fallback = "-",
 ): string {
-	if (!field || typeof field !== "object") return fallback;
-	const map = field as Record<string, string>;
-	return map[locale] || map.fi || map.en || Object.values(map)[0] || fallback;
+	if (!field) return fallback;
+	if (typeof field === "string") return field;
+
+	if (typeof field === "object" && field !== null) {
+		const map = field as Record<string, string>;
+		// Priority: Requested locale -> Finnish -> English -> Swedish -> First available key
+		return (
+			map[locale] ||
+			map.fi ||
+			map.en ||
+			map.sv ||
+			Object.values(map).find((val) => typeof val === "string") ||
+			fallback
+		);
+	}
+
+	return String(field);
+}
+
+/** Constructs full URL pointing to Axum's /contracts/static/{*s3_key} redirect endpoint */
+export function getStaticContractUrl(
+	s3KeyObj?: unknown,
+	locale = "fi",
+): string {
+	if (!s3KeyObj) return "#";
+
+	// Extract localized string (e.g. { fi: "contracts/68fa42e2-..." })
+	const s3Key = getLocalizedText(s3KeyObj, locale, "");
+
+	if (!s3Key || s3Key === "-") return "#";
+
+	// If it's already an absolute URL, return directly
+	if (s3Key.startsWith("http://") || s3Key.startsWith("https://")) {
+		return s3Key;
+	}
+
+	const baseUrl =
+		(api as { baseUrl?: string }).baseUrl || import.meta.env.VITE_API_URL || "";
+
+	const cleanBaseUrl = baseUrl.replace(/\/+$/, "");
+	const cleanS3Key = s3Key.replace(/^\/+/, "");
+
+	// 👈 encodeURIComponent turns 'contracts/' into 'contracts%2F'
+	return `${cleanBaseUrl}/contracts/static/${encodeURIComponent(cleanS3Key)}`;
 }
 
 export function useContracts(params?: {

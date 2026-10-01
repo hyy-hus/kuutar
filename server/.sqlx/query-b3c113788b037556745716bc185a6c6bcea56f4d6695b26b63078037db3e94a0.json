@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        DELETE FROM otp_fails\n        WHERE LOWER(email) = LOWER($1)\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "b3c113788b037556745716bc185a6c6bcea56f4d6695b26b63078037db3e94a0"
+}

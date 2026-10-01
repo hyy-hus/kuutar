@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        INSERT INTO otp_codes (email, code_hash, expires_at)\n        VALUES ($1, $2, NOW() + INTERVAL '10 minutes')\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Varchar",
+        "Varchar"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "5306fcd67c6376c35efde5982e492ede1422beabe9e018b178dd3e53cecdf93e"
+}

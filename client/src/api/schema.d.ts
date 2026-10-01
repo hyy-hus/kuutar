@@ -38,6 +38,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/auth/otp/request": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Request OTP Login Code via Email */
+        post: operations["request_otp"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/otp/verify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Verify OTP Login Code and Issue Access Token */
+        post: operations["verify_otp"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/auth/refresh": {
         parameters: {
             query?: never;
@@ -613,6 +647,9 @@ export interface components {
             name: string;
             password: string;
         };
+        RequestOtpPayload: {
+            email: string;
+        };
         Reservation: {
             admin_notes?: string | null;
             contact_email?: string | null;
@@ -773,6 +810,10 @@ export interface components {
             /** Format: date-time */
             updated_at: string;
         };
+        VerifyOtpPayload: {
+            code: string;
+            email: string;
+        };
     };
     responses: never;
     parameters: never;
@@ -828,6 +869,80 @@ export interface operations {
         responses: {
             /** @description Logged out successfully */
             204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    request_otp: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RequestOtpPayload"];
+            };
+        };
+        responses: {
+            /** @description OTP sent to email if account exists */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Account temporarily locked due to too many failed attempts */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    verify_otp: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VerifyOtpPayload"];
+            };
+        };
+        responses: {
+            /** @description OTP verified successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuthTokens"];
+                };
+            };
+            /** @description Invalid or expired OTP code */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Account temporarily locked due to too many failed attempts */
+            429: {
                 headers: {
                     [name: string]: unknown;
                 };

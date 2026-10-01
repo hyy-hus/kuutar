@@ -41,25 +41,21 @@ pub struct UpdateCollection {
 
 #[cfg(test)]
 mod tests {
-    use crate::domains::resources::models::{CreateResource, UpdateResource};
-
     use super::*;
     use validator::Validate;
 
     #[test]
-    fn test_create_resource_valid() {
-        let dto = CreateResource {
-            collection_id: Uuid::new_v4(),
-            name: "Valid Resource Name".to_string(),
+    fn test_create_collection_valid() {
+        let dto = CreateCollection {
+            name: "Valid Collection Name".to_string(),
         };
 
         assert!(dto.validate().is_ok());
     }
 
     #[test]
-    fn test_create_resource_empty_name() {
-        let dto = CreateResource {
-            collection_id: Uuid::new_v4(),
+    fn test_create_collection_empty_name() {
+        let dto = CreateCollection {
             name: "".to_string(),
         };
         let result = dto.validate();
@@ -74,8 +70,8 @@ mod tests {
     }
 
     #[test]
-    fn test_update_resource_none_is_valid() {
-        let dto = UpdateResource { name: None };
+    fn test_update_collection_none_is_valid() {
+        let dto = UpdateCollection { name: None };
         // Option::None should pass validation for partial updates
         assert!(dto.validate().is_ok());
     }

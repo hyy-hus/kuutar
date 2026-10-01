@@ -1,6 +1,6 @@
 import { LogOut, User } from "lucide-react";
 import { Dialog } from "radix-ui";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "#/components/Button";
 import { SignInForm } from "#/components/SignInForm";
@@ -11,13 +11,22 @@ export function AuthDialog() {
 	const [isOpen, setIsOpen] = useState(false);
 	const { user, isAuthenticated, logout } = useAuth();
 
+	useEffect(() => {
+		const handleOpen = () => setIsOpen(true);
+
+		window.addEventListener("kuutar:open-auth-dialog", handleOpen);
+		return () => {
+			window.removeEventListener("kuutar:open-auth-dialog", handleOpen);
+		};
+	}, []);
+
 	return (
 		<Dialog.Root open={isOpen} onOpenChange={setIsOpen}>
 			<Dialog.Trigger asChild>
 				<Button variant="ghost" size="icon">
 					{isAuthenticated ? (
 						<span className="font-bold text-xs uppercase text-purple-600 dark:text-purple-400">
-							{user?.email[0]}
+							{user?.email?.charAt(0)}
 						</span>
 					) : (
 						<User size={20} />
@@ -33,6 +42,11 @@ export function AuthDialog() {
 				<Dialog.Content className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-80 p-5 bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-lg shadow-xl z-50 focus:outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95">
 					{isAuthenticated ? (
 						<div className="space-y-4">
+							{/* 👈 Added Dialog.Title for Radix accessibility */}
+							<Dialog.Title className="text-base font-semibold text-stone-900 dark:text-stone-100">
+								{t("kayttajatili", "Käyttäjätili")}
+							</Dialog.Title>
+
 							<div className="border-b border-stone-200 dark:border-stone-800 pb-3">
 								<p className="text-xs text-stone-500">
 									{t("kirjautunutSisn", "Kirjautunut sisään")}
