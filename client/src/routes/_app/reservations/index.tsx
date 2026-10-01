@@ -24,16 +24,21 @@ import {
 } from "#/hooks/useReservations";
 import { useResources } from "#/hooks/useResorces";
 import { requireAuthGuard } from "#/utils/authGuard";
-import { startOfCurrentWeek } from "#/utils/calendarUtils";
 import { cn } from "#/utils/cn";
 import { formatDate } from "#/utils/date";
 import { readable_uuid } from "#/utils/uuid";
 
 export interface UserDashboardSearch {
 	start_date?: string;
-	days?: number;
+	months?: number;
 	resource_id?: string;
 }
+
+const PERIOD_MONTHS = [1, 3, 6, 12] as const;
+
+/** Snaps a date to the start of its month, or to the start of its year for 12-month periods */
+const startOfPeriod = (d: Date, months: number): Date =>
+	new Date(d.getFullYear(), months === 12 ? 0 : d.getMonth(), 1);
 
 const formatYYYYMMDD = (d: Date) => {
 	const year = d.getFullYear();
@@ -52,7 +57,9 @@ export const Route = createFileRoute("/_app/reservations/")({
 		return {
 			start_date:
 				typeof search.start_date === "string" ? search.start_date : undefined,
-			days: typeof search.days === "number" ? search.days : undefined,
+			months: PERIOD_MONTHS.includes(search.months as 1 | 3 | 6 | 12)
+				? (search.months as number)
+				: undefined,
 			resource_id:
 				typeof search.resource_id === "string" ? search.resource_id : undefined,
 		};
@@ -178,26 +185,29 @@ function UserDashboardPage() {
 	const { data: resources, isLoading: loadingResources } = useResources();
 	const updateReservation = useUpdateReservation();
 
-	const defaultStartStr = formatYYYYMMDD(startOfCurrentWeek());
-	const startStr = search.start_date || defaultStartStr;
-	const days = search.days || 14;
+	const months = search.months || 1;
 	const resourceId = search.resource_id;
 
-	const start = useMemo(() => parseLocalDate(startStr), [startStr]);
+	const start = useMemo(
+		() =>
+			startOfPeriod(
+				search.start_date ? parseLocalDate(search.start_date) : new Date(),
+				months,
+			),
+		[search.start_date, months],
+	);
 
 	const { startDateISO, endDateISO } = useMemo(() => {
-		const startDate = new Date(start);
-		startDate.setHours(0, 0, 0, 0);
-
+		// End is the last millisecond before the next period starts
 		const endDate = new Date(start);
-		endDate.setDate(endDate.getDate() + days);
-		endDate.setHours(23, 59, 59, 999);
+		endDate.setMonth(endDate.getMonth() + months);
+		endDate.setMilliseconds(-1);
 
 		return {
-			startDateISO: startDate.toISOString(),
+			startDateISO: start.toISOString(),
 			endDateISO: endDate.toISOString(),
 		};
-	}, [start, days]);
+	}, [start, months]);
 
 	const {
 		data: reservations,
@@ -237,9 +247,9 @@ function UserDashboardPage() {
 		});
 	};
 
-	const moveStart = (deltaDays: number) => {
+	const moveStart = (deltaMonths: number) => {
 		const next = new Date(start);
-		next.setDate(next.getDate() + deltaDays);
+		next.setMonth(next.getMonth() + deltaMonths);
 		updateSearch({ start_date: formatYYYYMMDD(next) });
 	};
 
@@ -262,7 +272,11 @@ function UserDashboardPage() {
 			</div>
 
 			<div className="flex flex-wrap items-center gap-2 shrink-0 p-2 bg-stone-100 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-md">
-				<Button variant="secondary" size="sm" onClick={() => moveStart(-days)}>
+				<Button
+					variant="secondary"
+					size="sm"
+					onClick={() => moveStart(-months)}
+				>
 					<ChevronLeft size={18} />
 				</Button>
 
@@ -276,19 +290,19 @@ function UserDashboardPage() {
 					className="px-3 py-1.5 text-xs bg-stone-50 dark:bg-stone-950 border border-stone-200 dark:border-stone-800 rounded-md font-mono"
 				/>
 
-				<Button variant="secondary" size="sm" onClick={() => moveStart(days)}>
+				<Button variant="secondary" size="sm" onClick={() => moveStart(months)}>
 					<ChevronRight size={18} />
 				</Button>
 
 				<select
-					value={days}
-					onChange={(e) => updateSearch({ days: Number(e.target.value) })}
+					value={months}
+					onChange={(e) => updateSearch({ months: Number(e.target.value) })}
 					className="px-3 py-1.5 text-xs bg-stone-50 dark:bg-stone-950 border border-stone-200 dark:border-stone-800 rounded-md font-medium"
 				>
-					<option value={7}>{t("1Viikko", "1 viikko")}</option>
-					<option value={14}>{t("2Viikkoa", "2 viikkoa")}</option>
-					<option value={30}>{t("1Kuukausi", "1 kuukausi")}</option>
-					<option value={90}>{t("3Kuukautta", "3 kuukautta")}</option>
+					<option value={1}>{t("1Kuukausi", "1 kuukausi")}</option>
+					<option value={3}>{t("3Kuukautta", "3 kuukautta")}</option>
+					<option value={6}>{t("6Kuukautta", "6 kuukautta")}</option>
+					<option value={12}>{t("1Vuosi", "1 vuosi")}</option>
 				</select>
 
 				<select
