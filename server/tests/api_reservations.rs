@@ -12,9 +12,10 @@ use sqlx::PgPool;
 use tower::ServiceExt;
 use uuid::Uuid;
 
-/// Helper to seed group, collection, resource, user, and valid JWT
-async fn setup_test_environment(pool: &PgPool) -> (Uuid, Uuid, Uuid, Uuid, String) {
-    let (auth_header, user_id, group_id) = setup_user_token(pool, Role::User).await;
+/// Helper to seed group, collection, a recurrence-enabled resource, a user with
+/// the given role, and a valid JWT
+async fn setup_test_environment(pool: &PgPool, role: Role) -> (Uuid, Uuid, Uuid, Uuid, String) {
+    let (auth_header, user_id, group_id) = setup_user_token(pool, role).await;
 
     // Strip "Bearer " prefix for tests that format it manually
     let token = auth_header.trim_start_matches("Bearer ").to_string();
@@ -28,7 +29,7 @@ async fn setup_test_environment(pool: &PgPool) -> (Uuid, Uuid, Uuid, Uuid, Strin
     .unwrap();
 
     let resource = sqlx::query!(
-        "INSERT INTO resources (collection_id, name) VALUES ($1, $2) RETURNING id",
+        "INSERT INTO resources (collection_id, name, allow_recurring) VALUES ($1, $2, TRUE) RETURNING id",
         collection.id,
         format!("Resource {}", Uuid::new_v4())
     )
@@ -42,7 +43,7 @@ async fn setup_test_environment(pool: &PgPool) -> (Uuid, Uuid, Uuid, Uuid, Strin
 #[sqlx::test]
 async fn test_create_and_get_reservation(pool: PgPool) {
     let (_group_id, _user_id, resource_id, _collection_id, token) =
-        setup_test_environment(&pool).await;
+        setup_test_environment(&pool, Role::User).await;
     let app = app(pool, test_config());
 
     let now = Utc::now();
@@ -91,7 +92,8 @@ async fn test_create_and_get_reservation(pool: PgPool) {
 
     let reservation_id = json["id"].as_str().unwrap();
     assert_eq!(json["title"], "Team Sync");
-    assert_eq!(json["status"], "confirmed");
+    // Reservations by regular users always start as pending, even if "confirmed" is requested
+    assert_eq!(json["status"], "pending");
     assert_eq!(json["occurrences"].as_array().unwrap().len(), 1);
 
     // 2. Get reservation details by ID
@@ -113,14 +115,15 @@ async fn test_create_and_get_reservation(pool: PgPool) {
 #[sqlx::test]
 async fn test_check_reservation_conflicts(pool: PgPool) {
     let (_group_id, _user_id, resource_id, _collection_id, token) =
-        setup_test_environment(&pool).await;
+        setup_test_environment(&pool, Role::Admin).await;
     let app = app(pool, test_config());
 
     let base_time = Utc::now() + Duration::hours(10);
     let start_time = base_time;
     let end_time = base_time + Duration::hours(1);
 
-    // Create an existing reservation from 10:00 to 11:00
+    // Create an existing reservation from 10:00 to 11:00. Only confirmed
+    // reservations count as conflicts, and only admins can create them confirmed.
     let payload = json!({
         "title": "Existing Booking",
         "status": "confirmed",
@@ -208,7 +211,7 @@ async fn test_check_reservation_conflicts(pool: PgPool) {
 #[sqlx::test]
 async fn test_soft_delete_reservation(pool: PgPool) {
     let (_group_id, _user_id, resource_id, _collection_id, token) =
-        setup_test_environment(&pool).await;
+        setup_test_environment(&pool, Role::User).await;
     let app = app(pool.clone(), test_config());
 
     let now = Utc::now();
@@ -290,7 +293,7 @@ async fn test_soft_delete_reservation(pool: PgPool) {
 #[sqlx::test]
 async fn test_list_and_update_reservation(pool: PgPool) {
     let (_group_id, _user_id, resource_id, _collection_id, token) =
-        setup_test_environment(&pool).await;
+        setup_test_environment(&pool, Role::User).await;
     let app = app(pool, test_config());
 
     let now = Utc::now();
@@ -367,13 +370,14 @@ async fn test_list_and_update_reservation(pool: PgPool) {
     let patch_body = to_bytes(patch_res.into_body(), usize::MAX).await.unwrap();
     let updated_json: Value = serde_json::from_slice(&patch_body).unwrap();
     assert_eq!(updated_json["title"], "Updated Title");
-    assert_eq!(updated_json["status"], "confirmed");
+    // Edits by regular users need re-approval, so the requested "confirmed" is ignored
+    assert_eq!(updated_json["status"], "pending");
 }
 
 #[sqlx::test]
 async fn test_create_reservation_invalid_times(pool: PgPool) {
     let (_group_id, _user_id, resource_id, _collection_id, token) =
-        setup_test_environment(&pool).await;
+        setup_test_environment(&pool, Role::User).await;
     let app = app(pool, test_config());
 
     let now = Utc::now();
@@ -404,4 +408,116 @@ async fn test_create_reservation_invalid_times(pool: PgPool) {
         .unwrap();
 
     assert_eq!(res.status(), StatusCode::BAD_REQUEST);
+}
+
+#[sqlx::test]
+async fn test_recurring_reservation_forbidden_on_non_recurring_resource(pool: PgPool) {
+    let (_group_id, _user_id, resource_id, _collection_id, token) =
+        setup_test_environment(&pool, Role::User).await;
+
+    sqlx::query!(
+        "UPDATE resources SET allow_recurring = FALSE WHERE id = $1",
+        resource_id
+    )
+    .execute(&pool)
+    .await
+    .unwrap();
+
+    let app = app(pool, test_config());
+    let now = Utc::now();
+    let payload = json!({
+        "title": "Weekly Sauna",
+        "rrule": "FREQ=WEEKLY;COUNT=2",
+        "occurrences": [
+            {
+                "resource_id": resource_id,
+                "start_time": now + Duration::hours(1),
+                "end_time": now + Duration::hours(2)
+            }
+        ]
+    });
+
+    let response = app
+        .oneshot(
+            Request::builder()
+                .method("POST")
+                .uri("/reservations")
+                .header(header::AUTHORIZATION, format!("Bearer {token}"))
+                .header(header::CONTENT_TYPE, "application/json")
+                .body(Body::from(payload.to_string()))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(response.status(), StatusCode::FORBIDDEN);
+}
+
+#[sqlx::test]
+async fn test_delete_reservation_requires_owner_or_admin(pool: PgPool) {
+    let (_group_id, _owner_id, resource_id, _collection_id, owner_token) =
+        setup_test_environment(&pool, Role::User).await;
+    let (other_user_auth, _, _) = setup_user_token(&pool, Role::User).await;
+    let (admin_auth, _, _) = setup_user_token(&pool, Role::Admin).await;
+    let app = app(pool.clone(), test_config());
+
+    let now = Utc::now();
+    let payload = json!({
+        "title": "Owner's Booking",
+        "occurrences": [
+            {
+                "resource_id": resource_id,
+                "start_time": now + Duration::hours(1),
+                "end_time": now + Duration::hours(2)
+            }
+        ]
+    });
+
+    let create_res = app
+        .clone()
+        .oneshot(
+            Request::builder()
+                .method("POST")
+                .uri("/reservations")
+                .header(header::AUTHORIZATION, format!("Bearer {owner_token}"))
+                .header(header::CONTENT_TYPE, "application/json")
+                .body(Body::from(payload.to_string()))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(create_res.status(), StatusCode::CREATED);
+    let body = to_bytes(create_res.into_body(), usize::MAX).await.unwrap();
+    let created: Value = serde_json::from_slice(&body).unwrap();
+    let reservation_id = created["id"].as_str().unwrap().to_string();
+
+    let delete_as = |auth: String| {
+        Request::builder()
+            .method("DELETE")
+            .uri(format!("/reservations/{reservation_id}"))
+            .header(header::AUTHORIZATION, auth)
+            .body(Body::empty())
+            .unwrap()
+    };
+
+    // Another regular user must not be able to delete it
+    let res = app
+        .clone()
+        .oneshot(delete_as(other_user_auth))
+        .await
+        .unwrap();
+    assert_eq!(res.status(), StatusCode::FORBIDDEN);
+
+    let still_active = sqlx::query_scalar!(
+        "SELECT deleted_at IS NULL FROM reservations WHERE id = $1",
+        Uuid::parse_str(&reservation_id).unwrap()
+    )
+    .fetch_one(&pool)
+    .await
+    .unwrap();
+    assert_eq!(still_active, Some(true));
+
+    // An admin can delete any reservation
+    let res = app.oneshot(delete_as(admin_auth)).await.unwrap();
+    assert_eq!(res.status(), StatusCode::NO_CONTENT);
 }

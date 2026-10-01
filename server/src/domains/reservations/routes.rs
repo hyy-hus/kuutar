@@ -384,15 +384,25 @@ pub async fn update_reservation(
     responses(
         (status = 204, description = "Reservation soft-deleted successfully"),
         (status = 401, description = "Unauthorized"),
+        (status = 403, description = "Forbidden - Only the owner or an admin can delete"),
         (status = 404, description = "Reservation not found")
     )
 )]
-#[tracing::instrument(skip(auth_state, _auth_user))]
+#[tracing::instrument(skip(auth_state, auth_user))]
 pub async fn delete_reservation(
     State(auth_state): State<AuthState>,
     Path(id): Path<Uuid>,
-    _auth_user: AuthUser,
+    auth_user: AuthUser,
 ) -> Result<StatusCode, AppError> {
+    if auth_user.role != Role::Admin {
+        let existing = db::find_by_id(&auth_state.pool, id, true).await?;
+        if existing.reservation.user_id != auth_user.id {
+            return Err(AppError::Forbidden(
+                "Et voi poistaa toisen käyttäjän varausta.".to_string(),
+            ));
+        }
+    }
+
     db::soft_delete(&auth_state.pool, id).await?;
     Ok(StatusCode::NO_CONTENT)
 }
