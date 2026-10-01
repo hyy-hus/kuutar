@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        UPDATE otp_codes\n        SET used_at = NOW()\n        WHERE LOWER(email) = LOWER($1) AND used_at IS NULL\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "dfc2bf1d18af13e7e71b9ab0f91d56913fa292a2c6e15fb6ee6150ec62c07b88"
+}

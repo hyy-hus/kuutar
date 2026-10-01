@@ -55,6 +55,24 @@ pub struct RefreshPayload {
     pub refresh_token: String,
 }
 
+#[derive(Debug, Deserialize, Validate, ToSchema)]
+pub struct RequestOtpPayload {
+    #[serde(deserialize_with = "deserialize_trimmed_string")]
+    #[validate(email(message = "Invalid email address format"))]
+    pub email: String,
+}
+
+#[derive(Debug, Deserialize, Validate, ToSchema)]
+pub struct VerifyOtpPayload {
+    #[serde(deserialize_with = "deserialize_trimmed_string")]
+    #[validate(email(message = "Invalid email address format"))]
+    pub email: String,
+
+    #[serde(deserialize_with = "deserialize_trimmed_string")]
+    #[validate(length(min = 6, max = 6, message = "OTP code must be 6 digits"))]
+    pub code: String,
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -67,6 +85,7 @@ mod tests {
     fn test_register_payload_valid() {
         let payload = RegisterPayload {
             group_id: Uuid::new_v4(),
+            name: "Test User".to_string(),
             email: "user@example.com".to_string(),
             password: "securepassword123".to_string(),
         };
@@ -78,6 +97,7 @@ mod tests {
     fn test_register_payload_invalid_email() {
         let payload = RegisterPayload {
             group_id: Uuid::new_v4(),
+            name: "Test User".to_string(),
             email: "not-an-email".to_string(),
             password: "securepassword123".to_string(),
         };
@@ -93,6 +113,7 @@ mod tests {
     fn test_register_payload_short_password() {
         let payload = RegisterPayload {
             group_id: Uuid::new_v4(),
+            name: "Test User".to_string(),
             email: "user@example.com".to_string(),
             password: "short".to_string(), // < 8 characters
         };
@@ -102,6 +123,34 @@ mod tests {
 
         let errors = result.unwrap_err().to_string();
         assert!(errors.contains("Password must be at least 8 characters"));
+    }
+
+    #[test]
+    fn test_request_otp_payload_validation() {
+        let valid = RequestOtpPayload {
+            email: "valid@example.com".to_string(),
+        };
+        assert!(valid.validate().is_ok());
+
+        let invalid = RequestOtpPayload {
+            email: "not-an-email".to_string(),
+        };
+        assert!(invalid.validate().is_err());
+    }
+
+    #[test]
+    fn test_verify_otp_payload_validation() {
+        let valid = VerifyOtpPayload {
+            email: "valid@example.com".to_string(),
+            code: "123456".to_string(),
+        };
+        assert!(valid.validate().is_ok());
+
+        let short_code = VerifyOtpPayload {
+            email: "valid@example.com".to_string(),
+            code: "123".to_string(),
+        };
+        assert!(short_code.validate().is_err());
     }
 
     // --- LoginPayload Tests ---

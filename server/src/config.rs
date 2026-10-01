@@ -25,6 +25,17 @@ pub struct Config {
     #[arg(long, env = "SEED_ADMIN_PASSWORD", default_value = "Admin")]
     pub seed_admin_password: String,
 
+    // --- Resend Email / OTP Configuration ---
+    #[arg(long, env = "RESEND_API_KEY")]
+    pub resend_api_key: Option<String>,
+
+    #[arg(
+        long,
+        env = "RESEND_FROM_EMAIL",
+        default_value = "Kuutar <noreply@kuutar.fi>"
+    )]
+    pub resend_from_email: String,
+
     // --- S3 / Scaleway Object Storage Configuration ---
     #[arg(long, env = "S3_BUCKET_NAME")]
     pub s3_bucket_name: String,

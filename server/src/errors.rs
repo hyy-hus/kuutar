@@ -22,6 +22,9 @@ pub enum AppError {
     #[error("Conflict: {0}")]
     Conflict(String),
 
+    #[error("Too many requests: {0}")]
+    TooManyRequests(String),
+
     #[error("Validation error: {0}")]
     ValidationError(#[from] validator::ValidationErrors),
 
@@ -88,6 +91,7 @@ impl IntoResponse for AppError {
             AppError::Forbidden(ref msg) => (StatusCode::FORBIDDEN, msg.clone()),
             AppError::NotFound => (StatusCode::NOT_FOUND, self.to_string()),
             AppError::Conflict(ref msg) => (StatusCode::CONFLICT, msg.clone()),
+            AppError::TooManyRequests(ref msg) => (StatusCode::TOO_MANY_REQUESTS, msg.clone()),
 
             AppError::ValidationError(ref errs) => (
                 StatusCode::UNPROCESSABLE_ENTITY,
@@ -202,6 +206,18 @@ mod tests {
         let body = to_bytes(res.into_body(), usize::MAX).await.unwrap();
         let json: Value = serde_json::from_slice(&body).unwrap();
         assert_eq!(json["error"], "Resource conflict");
+    }
+
+    #[tokio::test]
+    async fn test_into_response_too_many_requests() {
+        let err = AppError::TooManyRequests("Too many requests".to_string());
+        let res = err.into_response();
+
+        assert_eq!(res.status(), StatusCode::TOO_MANY_REQUESTS);
+
+        let body = to_bytes(res.into_body(), usize::MAX).await.unwrap();
+        let json: Value = serde_json::from_slice(&body).unwrap();
+        assert_eq!(json["error"], "Too many requests");
     }
 
     #[tokio::test]

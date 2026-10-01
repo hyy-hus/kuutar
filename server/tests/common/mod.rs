@@ -9,6 +9,15 @@ pub fn test_config() -> Config {
         max_db_connections: 5,
         jwt_secret: "test_secret_key_12345_super_secret".to_string(),
         jwt_expiration_seconds: 900,
+        seed_admin_email: "admin@localhost".to_string(),
+        seed_admin_password: "Admin".to_string(),
+        resend_api_key: None,
+        resend_from_email: "Kuutar <noreply@kuutar.fi>".to_string(),
+        s3_bucket_name: "test-bucket".to_string(),
+        s3_endpoint: "https://s3.fr-par.scw.cloud".to_string(),
+        s3_region: "fr-par".to_string(),
+        aws_access_key_id: "test_key".to_string(),
+        aws_secret_access_key: "test_secret".to_string(),
     }
 }
 

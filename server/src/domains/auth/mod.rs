@@ -14,6 +14,8 @@ pub fn router(state: AuthState) -> Router {
     Router::new()
         .route("/register", post(routes::register))
         .route("/login", post(routes::login))
+        .route("/otp/request", post(routes::request_otp))
+        .route("/otp/verify", post(routes::verify_otp))
         .route("/refresh", post(routes::refresh))
         .route("/logout", post(routes::logout))
         .with_state(state)

@@ -1,0 +1,23 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT COUNT(*)\n        FROM otp_fails\n        WHERE LOWER(email) = LOWER($1)\n          AND attempted_at > NOW() - INTERVAL '5 minutes'\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "count",
+        "type_info": "Int8",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "db768c07ad91dd3cc679b5c3d81b1f7dc32b25956d79490545760eb57b9e8776"
+}

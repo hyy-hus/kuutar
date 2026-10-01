@@ -37,6 +37,8 @@ impl Modify for SecurityAddon {
         auth::routes::login,
         auth::routes::refresh,
         auth::routes::logout,
+        auth::routes::request_otp,
+    auth::routes::verify_otp,
 
         // Users
         users::routes::list_users,
@@ -104,6 +106,8 @@ impl Modify for SecurityAddon {
             auth::models::RegisterPayload,
             auth::models::LoginPayload,
             auth::models::RefreshPayload,
+            auth::models::RequestOtpPayload,
+        auth::models::VerifyOtpPayload,
             users::models::User,
             users::models::CreateUser,
             users::models::UpdateUser,
