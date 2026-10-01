@@ -1,5 +1,6 @@
 // src/hooks/useCollections.ts
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import i18next from "i18next";
 import { api } from "#/api/client";
 import type { components } from "#/api/schema";
 
@@ -26,7 +27,12 @@ export function useCollections() {
 			const { data, error } = await api.GET("/collections");
 
 			if (error || !data) {
-				throw new Error("Kokoelmien hakeminen epäonnistui.");
+				throw new Error(
+					i18next.t(
+						"kokoelmienHakuEpaonnistui",
+						"Kokoelmien hakeminen epäonnistui.",
+					),
+				);
 			}
 
 			return data;
@@ -47,7 +53,9 @@ export function useCollection(id: string) {
 			});
 
 			if (error || !data) {
-				throw new Error("Kokoelman tiedot ei löytynyt.");
+				throw new Error(
+					i18next.t("kokoelmaaEiLoytynyt", "Kokoelman tiedot ei löytynyt."),
+				);
 			}
 
 			return data;
@@ -69,7 +77,12 @@ export function useCreateCollection() {
 			});
 
 			if (error || !data) {
-				throw new Error("Kokoelman luominen epäonnistui.");
+				throw new Error(
+					i18next.t(
+						"kokoelmanLuominenEpaonnistui",
+						"Kokoelman luominen epäonnistui.",
+					),
+				);
 			}
 
 			return data;
@@ -101,7 +114,12 @@ export function useUpdateCollection() {
 			});
 
 			if (error || !data) {
-				throw new Error("Kokoelman päivitys epäonnistui.");
+				throw new Error(
+					i18next.t(
+						"kokoelmanPaivitysEpaonnistui",
+						"Kokoelman päivitys epäonnistui.",
+					),
+				);
 			}
 
 			return data;
@@ -130,7 +148,12 @@ export function useDeleteCollection() {
 			});
 
 			if (error) {
-				throw new Error("Kokoelman poisto epäonnistui.");
+				throw new Error(
+					i18next.t(
+						"kokoelmanPoistoEpaonnistui",
+						"Kokoelman poisto epäonnistui.",
+					),
+				);
 			}
 
 			return id;

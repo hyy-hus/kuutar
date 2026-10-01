@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import i18next from "i18next";
 import { api } from "#/api/client";
 import type { components } from "#/api/schema";
 
@@ -23,7 +24,13 @@ export function useResources() {
 		queryKey: resourceKeys.all,
 		queryFn: async () => {
 			const { data, error } = await api.GET("/resources");
-			if (error || !data) throw new Error("Resurssien hakeminen epäonnistui.");
+			if (error || !data)
+				throw new Error(
+					i18next.t(
+						"resurssienHakuEpaonnistui",
+						"Resurssien hakeminen epäonnistui.",
+					),
+				);
 			return data;
 		},
 		staleTime: 1000 * 60 * 15, // Cache resources for 15 mins
@@ -42,7 +49,9 @@ export function useResource(id: string) {
 			});
 
 			if (error || !data) {
-				throw new Error("Resurssin tiedot ei löytynyt.");
+				throw new Error(
+					i18next.t("resurssiaEiLoytynyt", "Resurssin tiedot ei löytynyt."),
+				);
 			}
 
 			return data;
@@ -64,7 +73,12 @@ export function useCreateResource() {
 			});
 
 			if (error || !data) {
-				throw new Error("Resurssin luominen epäonnistui.");
+				throw new Error(
+					i18next.t(
+						"resurssinLuominenEpaonnistui",
+						"Resurssin luominen epäonnistui.",
+					),
+				);
 			}
 
 			return data;
@@ -96,7 +110,12 @@ export function useUpdateResource() {
 			});
 
 			if (error || !data) {
-				throw new Error("Resurssin päivitys epäonnistui.");
+				throw new Error(
+					i18next.t(
+						"resurssinPaivitysEpaonnistui",
+						"Resurssin päivitys epäonnistui.",
+					),
+				);
 			}
 
 			return data;
@@ -125,7 +144,12 @@ export function useDeleteResource() {
 			});
 
 			if (error) {
-				throw new Error("Resurssin poisto epäonnistui.");
+				throw new Error(
+					i18next.t(
+						"resurssinPoistoEpaonnistui",
+						"Resurssin poisto epäonnistui.",
+					),
+				);
 			}
 
 			return id;
