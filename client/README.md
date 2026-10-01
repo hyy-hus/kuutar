@@ -10,7 +10,7 @@ pnpm install
 pnpm run dev
 ```
 
-Kehityspalvelin yrittää käyttää porttia 3000. Jos palvelin käyttää jo sitä, Vite valitsee seuraavan vapaan portin (yleensä http://localhost:3001).
+Kehityspalvelin käynnistyy osoitteeseen http://localhost:5173. Portti on kiinteä (`--strictPort`): jos se on varattu, Vite pysähtyy virheeseen eikä vaihda porttia.
 
 ## Komennot
 

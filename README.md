@@ -109,7 +109,7 @@ pnpm install
 pnpm run dev
 ```
 
-Vite yrittää käyttää porttia 3000. Koska palvelin käyttää jo sitä, Vite valitsee seuraavan vapaan portin, yleensä http://localhost:3001. Osoite näkyy terminaalissa.
+Käyttöliittymä aukeaa osoitteeseen http://localhost:5173. Jos portti on jo varattu, Vite kertoo siitä virheilmoituksella eikä vaihda porttia, joten osoite pysyy aina samana.
 
 Kirjaudu sisään palvelimen luomilla ylläpitäjän tunnuksilla.
 
