@@ -3,6 +3,7 @@ import { ArrowLeft, Edit, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "#/components/Button";
 import { Chip } from "#/components/Chip";
+import { RichTextContent } from "#/components/RichTextContent";
 import { useCollection, useDeleteCollection } from "#/hooks/useCollections";
 import { formatDate } from "#/utils/date";
 import { readable_uuid } from "#/utils/uuid";
@@ -62,6 +63,12 @@ function ViewCollectionPage() {
 				</h1>
 				<Chip>{readable_uuid(collection.id)}</Chip>
 			</div>
+
+			{/* 2. Localized rich-text description */}
+			<RichTextContent
+				value={collection.description}
+				className="p-3 rounded-md border border-stone-200 dark:border-stone-800 bg-stone-50 dark:bg-stone-900"
+			/>
 
 			<div className="space-y-2">
 				<div className="text-md">
