@@ -1,8 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { AlertTriangle, Loader2, Printer } from "lucide-react";
-import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
-import { useEffect, useRef, useState } from "react";
+import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "#/api/client";
 import { Button } from "#/components/Button";
@@ -270,7 +270,11 @@ function BatchPrintPage() {
 	const [isMerging, setIsMerging] = useState(false);
 	const [mergeError, setMergeError] = useState<string | null>(null);
 
-	const resourceMap = new Map(resources?.map((r) => [r.id, r.name]) ?? []);
+	const resourceMap = useMemo(
+		() => new Map(resources?.map((r) => [r.id, r.name]) ?? []),
+		[resources],
+	);
+	const presignDownloadAsync = presignDownload.mutateAsync;
 
 	const {
 		data: activeReservations,
@@ -299,13 +303,13 @@ function BatchPrintPage() {
 	});
 
 	const hasRunRef = useRef(false);
-	const reservationIdsKey = reservation_ids.sort().join(",");
 
 	useEffect(() => {
 		async function prepareBatchPdf() {
 			if (
 				hasRunRef.current ||
 				!globalContracts ||
+				!resources ||
 				!activeReservations ||
 				activeReservations.length === 0
 			) {
@@ -368,7 +372,7 @@ function BatchPrintPage() {
 
 						if (!s3Key) continue;
 
-						const downloadUrl = await presignDownload.mutateAsync(s3Key);
+						const downloadUrl = await presignDownloadAsync(s3Key);
 						const pdfResponse = await fetch(downloadUrl);
 
 						if (!pdfResponse.ok) {
@@ -412,7 +416,22 @@ function BatchPrintPage() {
 		}
 
 		prepareBatchPdf();
-	}, [globalContracts, activeReservations, i18n.language, reservationIdsKey]);
+	}, [
+		globalContracts,
+		activeReservations,
+		resources,
+		resourceMap,
+		presignDownloadAsync,
+		i18n.language,
+		t,
+	]);
+
+	// Release the generated PDF blob when it is replaced or the page unmounts
+	useEffect(() => {
+		return () => {
+			if (mergedPdfUrl) URL.revokeObjectURL(mergedPdfUrl);
+		};
+	}, [mergedPdfUrl]);
 
 	const handleTriggerPrint = () => {
 		if (iframeRef.current?.contentWindow) {
