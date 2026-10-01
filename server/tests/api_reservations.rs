@@ -452,3 +452,72 @@ async fn test_recurring_reservation_forbidden_on_non_recurring_resource(pool: Pg
 
     assert_eq!(response.status(), StatusCode::FORBIDDEN);
 }
+
+#[sqlx::test]
+async fn test_delete_reservation_requires_owner_or_admin(pool: PgPool) {
+    let (_group_id, _owner_id, resource_id, _collection_id, owner_token) =
+        setup_test_environment(&pool, Role::User).await;
+    let (other_user_auth, _, _) = setup_user_token(&pool, Role::User).await;
+    let (admin_auth, _, _) = setup_user_token(&pool, Role::Admin).await;
+    let app = app(pool.clone(), test_config());
+
+    let now = Utc::now();
+    let payload = json!({
+        "title": "Owner's Booking",
+        "occurrences": [
+            {
+                "resource_id": resource_id,
+                "start_time": now + Duration::hours(1),
+                "end_time": now + Duration::hours(2)
+            }
+        ]
+    });
+
+    let create_res = app
+        .clone()
+        .oneshot(
+            Request::builder()
+                .method("POST")
+                .uri("/reservations")
+                .header(header::AUTHORIZATION, format!("Bearer {owner_token}"))
+                .header(header::CONTENT_TYPE, "application/json")
+                .body(Body::from(payload.to_string()))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(create_res.status(), StatusCode::CREATED);
+    let body = to_bytes(create_res.into_body(), usize::MAX).await.unwrap();
+    let created: Value = serde_json::from_slice(&body).unwrap();
+    let reservation_id = created["id"].as_str().unwrap().to_string();
+
+    let delete_as = |auth: String| {
+        Request::builder()
+            .method("DELETE")
+            .uri(format!("/reservations/{reservation_id}"))
+            .header(header::AUTHORIZATION, auth)
+            .body(Body::empty())
+            .unwrap()
+    };
+
+    // Another regular user must not be able to delete it
+    let res = app
+        .clone()
+        .oneshot(delete_as(other_user_auth))
+        .await
+        .unwrap();
+    assert_eq!(res.status(), StatusCode::FORBIDDEN);
+
+    let still_active = sqlx::query_scalar!(
+        "SELECT deleted_at IS NULL FROM reservations WHERE id = $1",
+        Uuid::parse_str(&reservation_id).unwrap()
+    )
+    .fetch_one(&pool)
+    .await
+    .unwrap();
+    assert_eq!(still_active, Some(true));
+
+    // An admin can delete any reservation
+    let res = app.oneshot(delete_as(admin_auth)).await.unwrap();
+    assert_eq!(res.status(), StatusCode::NO_CONTENT);
+}
