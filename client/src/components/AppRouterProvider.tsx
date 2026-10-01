@@ -1,4 +1,5 @@
 import { RouterProvider } from "@tanstack/react-router";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "#/hooks/useAuth";
 import { getContext } from "#/integrations/tanstack-query/root-provider";
 import { getRouter } from "#/router";
@@ -6,6 +7,7 @@ import { getRouter } from "#/router";
 const router = getRouter();
 
 export function AppRouterProvider() {
+	const { t } = useTranslation();
 	const auth = useAuth();
 	const { queryClient } = getContext();
 
@@ -13,7 +15,9 @@ export function AppRouterProvider() {
 	if (auth.isLoading) {
 		return (
 			<div className="flex h-screen items-center justify-center bg-stone-50 dark:bg-stone-950">
-				<span className="text-sm font-medium text-stone-500">Ladataan...</span>
+				<span className="text-sm font-medium text-stone-500">
+					{t("ladataan", "Ladataan...")}
+				</span>
 			</div>
 		);
 	}

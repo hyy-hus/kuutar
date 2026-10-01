@@ -58,7 +58,7 @@ export function ReservationForm({
 	defaultValues,
 	onSubmit,
 	isSubmitting = false,
-	submitLabel = "Tallenna",
+	submitLabel,
 }: ReservationFormProps) {
 	const { t } = useTranslation();
 	const { data: resources, isLoading: loadingResources } = useResources();
@@ -210,7 +210,7 @@ export function ReservationForm({
 							value={field.state.value}
 							onChange={(e) => field.handleChange(e.target.value)}
 							onBlur={field.handleBlur}
-							placeholder="Lisätiedot..."
+							placeholder={t("lisatiedot", "Lisätiedot...")}
 						/>
 					</div>
 				)}
@@ -236,7 +236,7 @@ export function ReservationForm({
 									<Input
 										value={field.state.value}
 										onChange={(e) => field.handleChange(e.target.value)}
-										placeholder="Yhteyshenkilön nimi"
+										placeholder={t("yhteyshenkilonNimi", "Yhteyshenkilön nimi")}
 									/>
 								</div>
 							)}
@@ -253,7 +253,10 @@ export function ReservationForm({
 											type="email"
 											value={field.state.value}
 											onChange={(e) => field.handleChange(e.target.value)}
-											placeholder="yhteys@esimerkki.fi"
+											placeholder={t(
+												"esimYhteysSahkoposti",
+												"yhteys@esimerkki.fi",
+											)}
 										/>
 									</div>
 								)}
@@ -332,9 +335,9 @@ export function ReservationForm({
 						onChange: ({ value }) =>
 							!value || value.length === 0
 								? t(
-									"valitseVhintnYksiResurssi",
-									"Valitse vähintään yksi resurssi",
-								)
+										"valitseVhintnYksiResurssi",
+										"Valitse vähintään yksi resurssi",
+									)
 								: undefined,
 					}}
 				>
@@ -368,10 +371,11 @@ export function ReservationForm({
 														field.handleChange(nextValue);
 														setContractsApproved(false);
 													}}
-													className={`px-3 py-1.5 text-xs font-medium rounded-md border transition-colors flex items-center gap-1.5 ${isChecked
+													className={`px-3 py-1.5 text-xs font-medium rounded-md border transition-colors flex items-center gap-1.5 ${
+														isChecked
 															? "bg-purple-600 text-white border-purple-600 dark:bg-purple-500 dark:border-purple-500"
 															: "bg-white dark:bg-stone-800 text-stone-700 dark:text-stone-300 border-stone-300 dark:border-stone-700 hover:bg-stone-100 dark:hover:bg-stone-700"
-														}`}
+													}`}
 												>
 													<span
 														className={`w-2 h-2 rounded-full ${isChecked ? "bg-white" : "bg-stone-400"}`}
@@ -638,7 +642,7 @@ export function ReservationForm({
 							) : (
 								<>
 									<Save size={16} />
-									<span>{submitLabel}</span>
+									<span>{submitLabel ?? t("tallenna", "Tallenna")}</span>
 								</>
 							)}
 						</Button>
@@ -765,8 +769,8 @@ interface AutomaticConflictCheckerProps {
 	conflicts: Occurrence[] | null;
 	setConflicts: (conflicts: Occurrence[] | null) => void;
 	restrictionConflicts:
-	| { title: string; start_time: string; end_time: string }[]
-	| null;
+		| { title: string; start_time: string; end_time: string }[]
+		| null;
 	setRestrictionConflicts: (
 		items: { title: string; start_time: string; end_time: string }[] | null,
 	) => void;

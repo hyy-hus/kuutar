@@ -32,7 +32,7 @@ function GroupCard({ group }: { group: Group }) {
 				{/* Description */}
 				<p className="text-xs text-stone-600 dark:text-stone-400 line-clamp-2 min-h-8">
 					{group.description ||
-						t("eiKuvaustaSaatavilla2", "Ei kuvausta saatavilla.")}
+						t("eiKuvaustaSaatavilla", "Ei kuvausta saatavilla.")}
 				</p>
 			</div>
 
@@ -90,8 +90,9 @@ function GroupList() {
 						<span>{t("ryhmt", "Ryhmät")}</span>
 					</h1>
 					<p className="text-xs text-stone-500">
-						{t("yhteens", "Yhteensä")} {groups?.length || 0}{" "}
-						{t("ryhm3", "ryhmää")}
+						{t("yhteensaRyhmia", "Yhteensä {{count}} ryhmää", {
+							count: groups?.length || 0,
+						})}
 					</p>
 				</div>
 

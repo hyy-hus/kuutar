@@ -57,7 +57,13 @@ export function useReservations(params: ReservationFilterParams) {
 					},
 				},
 			});
-			if (error || !data) throw new Error("Varauksien hakeminen epäonnistui.");
+			if (error || !data)
+				throw new Error(
+					i18next.t(
+						"varaustenHakuEpaonnistui",
+						"Varauksien hakeminen epäonnistui.",
+					),
+				);
 			return data;
 		},
 		enabled: Boolean(params.startDate && params.endDate),
@@ -69,9 +75,9 @@ export function useReservations(params: ReservationFilterParams) {
 export function useMyReservations(params: ReservationFilterParams) {
 	const hasValidDates = Boolean(
 		params?.startDate &&
-		params?.endDate &&
-		params.startDate.trim() !== "" &&
-		params.endDate.trim() !== "",
+			params?.endDate &&
+			params.startDate.trim() !== "" &&
+			params.endDate.trim() !== "",
 	);
 
 	return useQuery({
@@ -88,7 +94,12 @@ export function useMyReservations(params: ReservationFilterParams) {
 				},
 			});
 			if (error || !data)
-				throw new Error("Omien varausten hakeminen epäonnistui.");
+				throw new Error(
+					i18next.t(
+						"omienVaraustenHakuEpaonnistui",
+						"Omien varausten hakeminen epäonnistui.",
+					),
+				);
 			return data;
 		},
 		enabled: hasValidDates,
@@ -103,7 +114,10 @@ export function useReservation(id: string) {
 			const { data, error } = await api.GET("/reservations/{id}", {
 				params: { path: { id } },
 			});
-			if (error || !data) throw new Error("Varauksen tiedot ei löytynyt.");
+			if (error || !data)
+				throw new Error(
+					i18next.t("varaustaEiLoytynyt", "Varauksen tiedot ei löytynyt."),
+				);
 			return data;
 		},
 		enabled: Boolean(id),
@@ -124,12 +138,18 @@ export function useCreateReservation() {
 					typeof error === "object" && error !== null && "message" in error
 						? (error as { message: string }).message
 						: i18next.t(
-							"varauksenLuominenEponnistui",
-							"Varauksen luominen epäonnistui.",
-						);
+								"varauksenLuominenEponnistui",
+								"Varauksen luominen epäonnistui.",
+							);
 				throw new Error(message);
 			}
-			if (!data) throw new Error("Varauksen luominen epäonnistui.");
+			if (!data)
+				throw new Error(
+					i18next.t(
+						"varauksenLuominenEponnistui",
+						"Varauksen luominen epäonnistui.",
+					),
+				);
 			return data;
 		},
 		onSuccess: () => {
@@ -153,7 +173,13 @@ export function useUpdateReservation() {
 				params: { path: { id } },
 				body: payload,
 			});
-			if (error || !data) throw new Error("Varauksen päivitys epäonnistui.");
+			if (error || !data)
+				throw new Error(
+					i18next.t(
+						"varauksenPaivitysEpaonnistui",
+						"Varauksen päivitys epäonnistui.",
+					),
+				);
 			return data;
 		},
 		onSuccess: (updatedReservation) => {
@@ -174,7 +200,13 @@ export function useDeleteReservation() {
 			const { error } = await api.DELETE("/reservations/{id}", {
 				params: { path: { id } },
 			});
-			if (error) throw new Error("Varauksen poisto epäonnistui.");
+			if (error)
+				throw new Error(
+					i18next.t(
+						"varauksenPoistoEpaonnistui",
+						"Varauksen poisto epäonnistui.",
+					),
+				);
 			return id;
 		},
 		onSuccess: (deletedId) => {
@@ -193,7 +225,12 @@ export function useCheckConflicts() {
 				body: occurrences,
 			});
 			if (error || !data)
-				throw new Error("Ristiriitojen tarkistus epäonnistui.");
+				throw new Error(
+					i18next.t(
+						"ristiriitojenTarkistusEpaonnistui",
+						"Ristiriitojen tarkistus epäonnistui.",
+					),
+				);
 			return data;
 		},
 	});
@@ -212,7 +249,10 @@ export function useBatchImportReservations() {
 				const message =
 					typeof error === "object" && error !== null && "message" in error
 						? String((error as { message: unknown }).message)
-						: "Varausten massatuonti epäonnistui.";
+						: i18next.t(
+								"varaustenMassatuontiEpaonnistui",
+								"Varausten massatuonti epäonnistui.",
+							);
 				throw new Error(message);
 			}
 

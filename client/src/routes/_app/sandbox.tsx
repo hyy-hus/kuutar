@@ -36,9 +36,9 @@ function SandboxPage() {
 					<Button size="icon">
 						<Plus size={16} />
 					</Button>
-					<Button size="sm"> small </Button>
-					<Button size="md"> medium </Button>
-					<Button size="lg"> large </Button>
+					<Button size="sm">{t("pieni", "Pieni")}</Button>
+					<Button size="md">{t("keskikokoinen", "Keskikokoinen")}</Button>
+					<Button size="lg">{t("suuri", "Suuri")}</Button>
 				</div>
 			</section>
 
@@ -49,7 +49,7 @@ function SandboxPage() {
 				{/* Sizes */}
 				<div className="space-y-3">
 					<span className="text-xs font-mono text-stone-500">
-						{t("sizesSmMdLg", "Sizes (sm, md, lg)")}
+						{t("sizesSmMdLg", "Koot (sm, md, lg)")}
 					</span>
 					<Input
 						size="sm"
@@ -68,11 +68,14 @@ function SandboxPage() {
 				{/* States */}
 				<div className="space-y-3">
 					<span className="text-xs font-mono text-stone-500">
-						{t("statesErrorDisabled", "States (Error, Disabled)")}
+						{t("statesErrorDisabled", "Tilat (virhe, ei käytössä)")}
 					</span>
 					<Input
 						isError
-						defaultValue="Virheellinen sähköposti"
+						defaultValue={t(
+							"virheellinenSahkoposti",
+							"Virheellinen sähköposti",
+						)}
 						placeholder={t("sytShkposti", "Syötä sähköposti...")}
 					/>
 					<Input disabled value="Pois käytöstä" />
@@ -81,10 +84,10 @@ function SandboxPage() {
 				{/* Form Group Examples */}
 				<div className="space-y-3">
 					<span className="text-xs font-mono text-stone-500">
-						{t("inlineFormAlignment", "Inline Form Alignment")}
+						{t("inlineFormAlignment", "Lomakkeen rivitasaus")}
 					</span>
 					<div className="flex gap-2">
-						<Input placeholder="Etsi..." />
+						<Input placeholder={t("etsi", "Etsi...")} />
 						<Button>
 							<Search size={16} />
 							<span>{t("hae", "Hae")}</span>

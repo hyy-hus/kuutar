@@ -327,7 +327,7 @@ function HomePage() {
 											</h3>
 											<p className="text-[11px] text-stone-500 truncate">
 												{res.description ||
-													t("eiKuvaustaSaatavilla", "Ei kuvausta saatavilla")}
+													t("eiKuvaustaSaatavilla", "Ei kuvausta saatavilla.")}
 											</p>
 										</div>
 

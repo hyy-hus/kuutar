@@ -67,9 +67,7 @@ export const MentionList = forwardRef(
 						}`}
 					>
 						{item.label}{" "}
-						<span className="opacity-60 font-mono">
-							{i18next.t("id", "([[${{id}}]])", { id: item.id })}
-						</span>
+						<span className="opacity-60 font-mono">{`([[$${item.id}]])`}</span>
 					</button>
 				))}
 			</div>

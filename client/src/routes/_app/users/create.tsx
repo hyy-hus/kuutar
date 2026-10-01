@@ -37,7 +37,7 @@ function CreateUserPage() {
 			<UserForm
 				onSubmit={handleSubmit}
 				isSubmitting={registerUser.isPending}
-				submitLabel="Rekisteröi käyttäjä"
+				submitLabel={t("rekisteriKyttj", "Rekisteröi käyttäjä")}
 				isCreate={true}
 			/>
 		</div>

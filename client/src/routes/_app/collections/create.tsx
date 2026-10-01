@@ -29,7 +29,7 @@ function CreateCollectionPage() {
 			<CollectionForm
 				onSubmit={handleSubmit}
 				isSubmitting={createCollection.isPending}
-				submitLabel="Luo kokoelma"
+				submitLabel={t("luoKokoelma", "Luo kokoelma")}
 			/>
 		</div>
 	);

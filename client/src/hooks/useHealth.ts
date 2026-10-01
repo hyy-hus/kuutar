@@ -1,5 +1,6 @@
 // client/src/hooks/useHealth.ts
 import { useQuery } from "@tanstack/react-query";
+import i18next from "i18next";
 import { api } from "#/api/client";
 import type { components } from "#/api/schema";
 
@@ -22,7 +23,12 @@ export function useHealth() {
 						response?.status,
 						error,
 					);
-					throw new Error("Järjestelmätilan haku epäonnistui.");
+					throw new Error(
+						i18next.t(
+							"jarjestelmatilanHakuEpaonnistui",
+							"Järjestelmätilan haku epäonnistui.",
+						),
+					);
 				}
 				console.log("Healthcheck success:", data);
 				return data;

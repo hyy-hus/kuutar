@@ -36,7 +36,11 @@ function ViewGroupPage() {
 		);
 
 	const handleDelete = async () => {
-		if (confirm("Haluatko varmasti poistaa tämän ryhmän?")) {
+		if (
+			confirm(
+				t("vahvistaRyhmanPoisto", "Haluatko varmasti poistaa tämän ryhmän?"),
+			)
+		) {
 			await deleteGroup.mutateAsync(id);
 			navigate({ to: "/groups" });
 		}

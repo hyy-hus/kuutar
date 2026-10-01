@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import i18next from "i18next";
 import { api } from "#/api/client";
 import type { components } from "#/api/schema";
 
@@ -81,7 +82,13 @@ export function useContracts(params?: {
 			const { data, error } = await api.GET("/contracts", {
 				params: { query: params },
 			});
-			if (error || !data) throw new Error("Sopimusten hakeminen epäonnistui.");
+			if (error || !data)
+				throw new Error(
+					i18next.t(
+						"sopimustenHakuEpaonnistui",
+						"Sopimusten hakeminen epäonnistui.",
+					),
+				);
 			return data;
 		},
 		staleTime: 1000 * 60 * 5,
@@ -95,7 +102,13 @@ export function useContract(id: string) {
 			const { data, error } = await api.GET("/contracts/{id}", {
 				params: { path: { id } },
 			});
-			if (error || !data) throw new Error("Sopimuksen haku epäonnistui.");
+			if (error || !data)
+				throw new Error(
+					i18next.t(
+						"sopimuksenHakuEpaonnistui",
+						"Sopimuksen haku epäonnistui.",
+					),
+				);
 			return data;
 		},
 		enabled: Boolean(id),
@@ -109,7 +122,12 @@ export function usePresignUpload() {
 				body: payload,
 			});
 			if (error || !data)
-				throw new Error("Latausosoitteen hakeminen epäonnistui.");
+				throw new Error(
+					i18next.t(
+						"latausosoitteenHakuEpaonnistui",
+						"Latausosoitteen hakeminen epäonnistui.",
+					),
+				);
 			return data;
 		},
 	});
@@ -121,7 +139,13 @@ export function useCreateContract() {
 	return useMutation({
 		mutationFn: async (payload: CreateContractPayload) => {
 			const { data, error } = await api.POST("/contracts", { body: payload });
-			if (error || !data) throw new Error("Sopimuksen luominen epäonnistui.");
+			if (error || !data)
+				throw new Error(
+					i18next.t(
+						"sopimuksenLuominenEpaonnistui",
+						"Sopimuksen luominen epäonnistui.",
+					),
+				);
 			return data;
 		},
 		onSuccess: () => {
@@ -145,7 +169,13 @@ export function useUpdateContract() {
 				params: { path: { id } },
 				body: payload,
 			});
-			if (error || !data) throw new Error("Sopimuksen päivitys epäonnistui.");
+			if (error || !data)
+				throw new Error(
+					i18next.t(
+						"sopimuksenPaivitysEpaonnistui",
+						"Sopimuksen päivitys epäonnistui.",
+					),
+				);
 			return data;
 		},
 		onSuccess: (updatedContract) => {
@@ -165,7 +195,12 @@ export function usePresignDownload() {
 				params: { query: { s3_key: s3Key } },
 			});
 			if (error || !data)
-				throw new Error("Latausosoitteen hakeminen epäonnistui.");
+				throw new Error(
+					i18next.t(
+						"latausosoitteenHakuEpaonnistui",
+						"Latausosoitteen hakeminen epäonnistui.",
+					),
+				);
 			return data.download_url;
 		},
 	});

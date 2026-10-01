@@ -87,7 +87,7 @@ function EditReservationPage() {
 				}}
 				onSubmit={handleSubmit}
 				isSubmitting={updateReservation.isPending}
-				submitLabel="Tallenna muutokset"
+				submitLabel={t("tallennaMuutokset", "Tallenna muutokset")}
 				isCreate={false}
 			/>
 		</div>

@@ -49,7 +49,7 @@ function ResourceCard({
 				{/* Description */}
 				<p className="text-xs text-stone-600 dark:text-stone-400 line-clamp-2 min-h-8">
 					{resource.description ||
-						t("eiKuvaustaSaantiilla", "Ei kuvausta saantiilla.")}
+						t("eiKuvaustaSaatavilla", "Ei kuvausta saatavilla.")}
 				</p>
 			</div>
 
@@ -123,7 +123,9 @@ function ResourceList() {
 						{t("resurssit", "Resurssit")}
 					</h1>
 					<p className="text-xs text-stone-500">
-						{t("yhteens", "Yhteensä")} {resources?.length || 0} resurssia
+						{t("yhteensaResursseja", "Yhteensä {{count}} resurssia", {
+							count: resources?.length || 0,
+						})}
 					</p>
 				</div>
 

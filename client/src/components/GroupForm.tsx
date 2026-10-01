@@ -16,7 +16,7 @@ export function GroupForm({
 	defaultValues,
 	onSubmit,
 	isSubmitting = false,
-	submitLabel = "Tallenna",
+	submitLabel,
 }: GroupFormProps) {
 	const { t } = useTranslation();
 	const form = useForm({
@@ -86,7 +86,7 @@ export function GroupForm({
 						) : (
 							<>
 								<Save size={16} />
-								<span>{submitLabel}</span>
+								<span>{submitLabel ?? t("tallenna", "Tallenna")}</span>
 							</>
 						)}
 					</Button>

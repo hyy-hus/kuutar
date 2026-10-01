@@ -127,7 +127,7 @@ export function SignInForm({ onSuccess }: SignInFormProps) {
 								required
 								value={email}
 								onChange={(e) => setEmail(e.target.value)}
-								placeholder="nimi@esimerkki.fi"
+								placeholder={t("esimSahkoposti", "nimi@esimerkki.fi")}
 							/>
 						</div>
 						<Button
@@ -197,7 +197,7 @@ export function SignInForm({ onSuccess }: SignInFormProps) {
 							required
 							value={email}
 							onChange={(e) => setEmail(e.target.value)}
-							placeholder="nimi@esimerkki.fi"
+							placeholder={t("esimSahkoposti", "nimi@esimerkki.fi")}
 						/>
 					</div>
 					<div>

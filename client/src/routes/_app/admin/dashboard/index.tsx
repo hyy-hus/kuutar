@@ -424,7 +424,7 @@ function AdminDashboardPage() {
 					<span className="truncate">
 						{t(
 							"tulostaKaikkiSopimukset",
-							"Tulosta vahvistettujen sopimukset ({{length}})",
+							"Tulosta vahvistettujen varausten sopimukset ({{length}})",
 							{ length: confirmedReservations.length },
 						)}
 					</span>

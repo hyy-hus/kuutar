@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import i18next from "i18next";
 import { api } from "#/api/client";
 import type { components } from "#/api/schema";
 
@@ -20,7 +21,9 @@ export function useGroups() {
 			const { data, error } = await api.GET("/groups");
 
 			if (error || !data) {
-				throw new Error("Ryhmien hakeminen epäonnistui.");
+				throw new Error(
+					i18next.t("ryhmienHakuEpaonnistui", "Ryhmien hakeminen epäonnistui."),
+				);
 			}
 
 			return data;
@@ -38,7 +41,9 @@ export function useGroup(id: string) {
 			});
 
 			if (error || !data) {
-				throw new Error("Ryhmän tiedot ei löytynyt.");
+				throw new Error(
+					i18next.t("ryhmaaEiLoytynyt", "Ryhmän tiedot ei löytynyt."),
+				);
 			}
 
 			return data;
@@ -57,7 +62,12 @@ export function useCreateGroup() {
 			});
 
 			if (error || !data) {
-				throw new Error("Ryhmän luominen epäonnistui.");
+				throw new Error(
+					i18next.t(
+						"ryhmanLuominenEpaonnistui",
+						"Ryhmän luominen epäonnistui.",
+					),
+				);
 			}
 
 			return data;
@@ -85,7 +95,12 @@ export function useUpdateGroup() {
 			});
 
 			if (error || !data) {
-				throw new Error("Ryhmän päivitys epäonnistui.");
+				throw new Error(
+					i18next.t(
+						"ryhmanPaivitysEpaonnistui",
+						"Ryhmän päivitys epäonnistui.",
+					),
+				);
 			}
 
 			return data;
@@ -107,7 +122,9 @@ export function useDeleteGroup() {
 			});
 
 			if (error) {
-				throw new Error("Ryhmän poisto epäonnistui.");
+				throw new Error(
+					i18next.t("ryhmanPoistoEpaonnistui", "Ryhmän poisto epäonnistui."),
+				);
 			}
 
 			return id;

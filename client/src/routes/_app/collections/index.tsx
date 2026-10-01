@@ -45,7 +45,7 @@ function CollectionCard({
 				{/* Description */}
 				<p className="text-xs text-stone-600 dark:text-stone-400 line-clamp-2 min-h-8">
 					{collection.description ||
-						t("eiKuvaustaSaatavilla2", "Ei kuvausta saatavilla.")}
+						t("eiKuvaustaSaatavilla", "Ei kuvausta saatavilla.")}
 				</p>
 			</div>
 
@@ -114,7 +114,9 @@ function CollectionList() {
 						{t("kokoelmat", "Kokoelmat")}
 					</h1>
 					<p className="text-xs text-stone-500">
-						{t("yhteens", "Yhteensä")} {collections?.length || 0} kokoelmaa
+						{t("yhteensaKokoelmia", "Yhteensä {{count}} kokoelmaa", {
+							count: collections?.length || 0,
+						})}
 					</p>
 				</div>
 

@@ -66,14 +66,20 @@ function ViewRestrictionPage() {
 	const exemptGroups =
 		restrictionWithOcc.exempt_group_ids.length > 0
 			? restrictionWithOcc.exempt_group_ids
-				.map((gId) => groupMap.get(gId) || gId)
-				.join(", ")
-			: t("eiPoikkeuksia", "Ei sallittuja ryhmiä (kaikki estetyn piirissä)");
+					.map((gId) => groupMap.get(gId) || gId)
+					.join(", ")
+			: t(
+					"eiPoikkeuksiaKaikkiEstetty",
+					"Ei sallittuja ryhmiä (rajoitus koskee kaikkia)",
+				);
 
 	const handleDelete = async () => {
 		if (
 			confirm(
-				t("vahvistaPoisto", "Haluatko varmasti poistaa tämän rajoituksen?"),
+				t(
+					"vahvistaRajoituksenPoisto",
+					"Haluatko varmasti poistaa tämän rajoituksen?",
+				),
 			)
 		) {
 			await deleteRestriction.mutateAsync(id);
@@ -90,7 +96,7 @@ function ViewRestrictionPage() {
 					className="inline-flex items-center gap-1 text-xs text-stone-500 hover:text-stone-800 dark:hover:text-stone-200"
 				>
 					<ArrowLeft size={14} />
-					<span>{t("palaaHallintaan", "Palaa hallintapaneeliin")}</span>
+					<span>{t("palaaHallintapaneeliin", "Palaa hallintapaneeliin")}</span>
 				</Link>
 
 				<div className="flex items-center gap-2">

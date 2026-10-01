@@ -59,7 +59,12 @@ function ViewReservationPage() {
 
 	const handleDelete = async () => {
 		if (
-			confirm(t("vahvistaPoisto", "Haluatko varmasti poistaa tämän varauksen?"))
+			confirm(
+				t(
+					"vahvistaVarauksenPoisto",
+					"Haluatko varmasti poistaa tämän varauksen?",
+				),
+			)
 		) {
 			await deleteReservation.mutateAsync(id);
 			navigate({ to: "/calendar" });

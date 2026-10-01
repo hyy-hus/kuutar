@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import i18next from "i18next";
 import { api } from "#/api/client";
 import type { components } from "#/api/schema";
 
@@ -35,7 +36,13 @@ export function useRestrictions(params?: {
 			const { data, error } = await api.GET("/restrictions", {
 				params: { query: params },
 			});
-			if (error || !data) throw new Error("Rajoitusten lataus epäonnistui.");
+			if (error || !data)
+				throw new Error(
+					i18next.t(
+						"rajoitustenHakuEpaonnistui",
+						"Rajoitusten lataus epäonnistui.",
+					),
+				);
 			return data as RestrictionWithOccurrences[];
 		},
 	});
@@ -48,7 +55,13 @@ export function useRestriction(id: string) {
 			const { data, error } = await api.GET("/restrictions/{id}", {
 				params: { path: { id } },
 			});
-			if (error || !data) throw new Error("Rajoituksen lataus epäonnistui.");
+			if (error || !data)
+				throw new Error(
+					i18next.t(
+						"rajoituksenHakuEpaonnistui",
+						"Rajoituksen lataus epäonnistui.",
+					),
+				);
 			return data as RestrictionWithOccurrences;
 		},
 		enabled: Boolean(id),
@@ -63,7 +76,13 @@ export function useCreateRestriction() {
 			const { data, error } = await api.POST("/restrictions", {
 				body: payload,
 			});
-			if (error || !data) throw new Error("Rajoituksen luonti epäonnistui.");
+			if (error || !data)
+				throw new Error(
+					i18next.t(
+						"rajoituksenLuominenEpaonnistui",
+						"Rajoituksen luonti epäonnistui.",
+					),
+				);
 			return data as RestrictionWithOccurrences;
 		},
 		onSuccess: () => {
@@ -87,7 +106,13 @@ export function useUpdateRestriction() {
 				params: { path: { id } },
 				body: payload,
 			});
-			if (error || !data) throw new Error("Rajoituksen päivitys epäonnistui.");
+			if (error || !data)
+				throw new Error(
+					i18next.t(
+						"rajoituksenPaivitysEpaonnistui",
+						"Rajoituksen päivitys epäonnistui.",
+					),
+				);
 			return data as RestrictionWithOccurrences;
 		},
 		onSuccess: (updated) => {
@@ -105,7 +130,13 @@ export function useDeleteRestriction() {
 			const { error } = await api.DELETE("/restrictions/{id}", {
 				params: { path: { id } },
 			});
-			if (error) throw new Error("Rajoituksen poisto epäonnistui.");
+			if (error)
+				throw new Error(
+					i18next.t(
+						"rajoituksenPoistoEpaonnistui",
+						"Rajoituksen poisto epäonnistui.",
+					),
+				);
 			return id;
 		},
 		onSuccess: (id) => {

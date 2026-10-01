@@ -1,5 +1,6 @@
 // client/src/hooks/useStats.ts
 import { useQuery } from "@tanstack/react-query";
+import i18next from "i18next";
 import { api } from "#/api/client";
 import type { components } from "#/api/schema";
 
@@ -16,7 +17,13 @@ export function useStats() {
 		queryKey: statsKeys.summary(),
 		queryFn: async () => {
 			const { data, error } = await api.GET("/stats");
-			if (error || !data) throw new Error("Tilastojen haku epäonnistui.");
+			if (error || !data)
+				throw new Error(
+					i18next.t(
+						"tilastojenHakuEpaonnistui",
+						"Tilastojen haku epäonnistui.",
+					),
+				);
 			return data;
 		},
 		staleTime: 1000 * 60 * 5, // Cache stats for 5 minutes

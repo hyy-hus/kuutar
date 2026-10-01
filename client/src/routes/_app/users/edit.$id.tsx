@@ -53,7 +53,7 @@ function EditUserPage() {
 				}}
 				onSubmit={handleSubmit}
 				isSubmitting={updateUser.isPending}
-				submitLabel="Tallenna muutokset"
+				submitLabel={t("tallennaMuutokset", "Tallenna muutokset")}
 				isCreate={false}
 			/>
 		</div>

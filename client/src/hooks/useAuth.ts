@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import i18next from "i18next";
 import { useEffect } from "react";
 import { api, refreshAuthToken } from "#/api/client";
 import type { components } from "#/api/schema";
@@ -140,7 +141,10 @@ export function useAuth() {
 			if (error) {
 				const msg =
 					(error as { error?: string })?.error ||
-					"Virheellinen sähköposti tai salasana.";
+					i18next.t(
+						"virheellinenSahkopostiTaiSalasana",
+						"Virheellinen sähköposti tai salasana.",
+					);
 				throw new Error(msg);
 			}
 			return data;
@@ -154,7 +158,10 @@ export function useAuth() {
 			if (error) {
 				const msg =
 					(error as { error?: string })?.error ||
-					"Sähköpostikoodin lähetys epäonnistui.";
+					i18next.t(
+						"sahkopostikoodinLahetysEpaonnistui",
+						"Sähköpostikoodin lähetys epäonnistui.",
+					);
 				throw new Error(msg);
 			}
 		},
@@ -168,7 +175,10 @@ export function useAuth() {
 			if (error) {
 				const msg =
 					(error as { error?: string })?.error ||
-					"Virheellinen tai vanhentunut koodi.";
+					i18next.t(
+						"virheellinenTaiVanhentunutKoodi",
+						"Virheellinen tai vanhentunut koodi.",
+					);
 				throw new Error(msg);
 			}
 			return data;
@@ -184,7 +194,10 @@ export function useAuth() {
 			if (error) {
 				const msg =
 					(error as { error?: string })?.error ||
-					"Käyttäjätilin luonti epäonnistui.";
+					i18next.t(
+						"kayttajatilinLuominenEpaonnistui",
+						"Käyttäjätilin luonti epäonnistui.",
+					);
 				throw new Error(msg);
 			}
 			return data;

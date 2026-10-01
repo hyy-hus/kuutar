@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import i18next from "i18next";
 import { api } from "#/api/client";
 import type { components } from "#/api/schema";
 
@@ -20,7 +21,13 @@ export function useUsers() {
 		queryKey: userKeys.lists(),
 		queryFn: async () => {
 			const { data, error } = await api.GET("/users");
-			if (error || !data) throw new Error("Käyttäjien hakeminen epäonnistui.");
+			if (error || !data)
+				throw new Error(
+					i18next.t(
+						"kayttajienHakuEpaonnistui",
+						"Käyttäjien hakeminen epäonnistui.",
+					),
+				);
 			return data;
 		},
 		staleTime: 1000 * 60 * 5,
@@ -34,7 +41,10 @@ export function useUser(id: string) {
 			const { data, error } = await api.GET("/users/{id}", {
 				params: { path: { id } },
 			});
-			if (error || !data) throw new Error("Käyttäjän tiedot ei löytynyt.");
+			if (error || !data)
+				throw new Error(
+					i18next.t("kayttajaaEiLoytynyt", "Käyttäjän tiedot ei löytynyt."),
+				);
 			return data;
 		},
 		enabled: Boolean(id),
@@ -48,7 +58,13 @@ export function useCreateUser() {
 	return useMutation({
 		mutationFn: async (payload: CreateUserPayload) => {
 			const { data, error } = await api.POST("/users", { body: payload });
-			if (error || !data) throw new Error("Käyttäjän luominen epäonnistui.");
+			if (error || !data)
+				throw new Error(
+					i18next.t(
+						"kayttajanLuominenEpaonnistui",
+						"Käyttäjän luominen epäonnistui.",
+					),
+				);
 			return data;
 		},
 		onSuccess: () => {
@@ -66,7 +82,13 @@ export function useRegisterUser() {
 			const { data, error } = await api.POST("/auth/register", {
 				body: payload,
 			});
-			if (error || !data) throw new Error("Rekisteröityminen epäonnistui.");
+			if (error || !data)
+				throw new Error(
+					i18next.t(
+						"rekisteroityminenEpaonnistui",
+						"Rekisteröityminen epäonnistui.",
+					),
+				);
 			return data;
 		},
 		onSuccess: () => {
@@ -90,7 +112,13 @@ export function useUpdateUser() {
 				params: { path: { id } },
 				body: payload,
 			});
-			if (error || !data) throw new Error("Käyttäjän päivitys epäonnistui.");
+			if (error || !data)
+				throw new Error(
+					i18next.t(
+						"kayttajanPaivitysEpaonnistui",
+						"Käyttäjän päivitys epäonnistui.",
+					),
+				);
 			return data;
 		},
 		onSuccess: (updatedUser) => {
@@ -108,7 +136,13 @@ export function useDeleteUser() {
 			const { error } = await api.DELETE("/users/{id}", {
 				params: { path: { id } },
 			});
-			if (error) throw new Error("Käyttäjän poisto epäonnistui.");
+			if (error)
+				throw new Error(
+					i18next.t(
+						"kayttajanPoistoEpaonnistui",
+						"Käyttäjän poisto epäonnistui.",
+					),
+				);
 			return id;
 		},
 		onSuccess: (deletedId) => {
@@ -134,7 +168,10 @@ export function useBatchCreateUsers() {
 						const apiMessage =
 							typeof error === "object" && error !== null && "error" in error
 								? String((error as { error: unknown }).error)
-								: "Käyttäjän luonti epäonnistui.";
+								: i18next.t(
+										"kayttajanLuominenEpaonnistui",
+										"Käyttäjän luominen epäonnistui.",
+									);
 
 						throw new Error(`${payload.email}: ${apiMessage}`);
 					}

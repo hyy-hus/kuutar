@@ -1,22 +1,13 @@
 // src/components/calendar/WeekView.tsx
 
-import i18next from "i18next";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { CalendarEvent } from "#/utils/calendarUtils";
 import { DayColumn } from "./DayColumn";
 
-const weekdays = [
-	"Maanantai",
-	"Tiistai",
-	"Keskiviikko",
-	"Torstai",
-	"Perjantai",
-	"Lauantai",
-	"Sunnuntai",
-];
-const hours = Array.from({ length: 24 }).map((_, i) =>
-	i18next.t("val00", "{{val}}:00", { val: i.toString().padStart(2, "0") }),
+const hours = Array.from(
+	{ length: 24 },
+	(_, i) => `${i.toString().padStart(2, "0")}:00`,
 );
 
 interface WeekViewProps {
@@ -27,7 +18,6 @@ interface WeekViewProps {
 }
 
 function CurrentTimeIndicator({ start, days }: { start: Date; days: number }) {
-	const { t } = useTranslation();
 	const [now, setNow] = useState(() => new Date());
 
 	useEffect(() => {
@@ -54,9 +44,7 @@ function CurrentTimeIndicator({ start, days }: { start: Date; days: number }) {
 	if (!isTodayVisible) return null;
 
 	const minutesSinceMidnight = now.getHours() * 60 + now.getMinutes();
-	const topOffset = t("calc3remValrem", "calc(3rem + {{val}}rem)", {
-		val: (minutesSinceMidnight / 60) * 5,
-	});
+	const topOffset = `calc(3rem + ${(minutesSinceMidnight / 60) * 5}rem)`;
 
 	return (
 		<div
@@ -82,7 +70,7 @@ export function WeekView({
 	events,
 	onSlotDoubleClick,
 }: WeekViewProps) {
-	const { t } = useTranslation();
+	const { t, i18n } = useTranslation();
 	const scrollRef = useRef<HTMLDivElement>(null);
 	const [hoveredCell, setHoveredCell] = useState<{
 		row: number;
@@ -144,12 +132,11 @@ export function WeekView({
 		const targetDate = new Date(start);
 		targetDate.setDate(targetDate.getDate() + colIndex);
 
-		const startDayIndex = (targetDate.getDay() + 6) % 7;
-		const dayName = weekdays[startDayIndex];
-		const dateFormatted = t("valval2", "{{val}}.{{val2}}.", {
-			val: targetDate.getDate(),
-			val2: targetDate.getMonth() + 1,
-		});
+		const weekday = new Intl.DateTimeFormat(i18n.language, {
+			weekday: "long",
+		}).format(targetDate);
+		const dayName = weekday.charAt(0).toUpperCase() + weekday.slice(1);
+		const dateFormatted = `${targetDate.getDate()}.${targetDate.getMonth() + 1}.`;
 
 		return { dayName, dateFormatted };
 	};

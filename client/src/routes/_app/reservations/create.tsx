@@ -91,7 +91,7 @@ function CreateReservationPage() {
 				}}
 				onSubmit={handleSubmit}
 				isSubmitting={createReservation.isPending}
-				submitLabel="Luo varaus"
+				submitLabel={t("luoVaraus", "Luo varaus")}
 				isCreate={true}
 			/>
 		</div>

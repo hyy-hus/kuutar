@@ -487,7 +487,7 @@ function BatchPrintPage() {
 				<iframe
 					ref={iframeRef}
 					src={mergedPdfUrl}
-					title="Batch PDF Print"
+					title={t("sopimustenEratulostus", "Sopimusten erätulostus")}
 					className="w-full h-[80vh] border border-stone-300 dark:border-stone-800 rounded-md"
 				/>
 			)}
