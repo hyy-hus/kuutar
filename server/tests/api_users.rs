@@ -128,6 +128,7 @@ async fn test_create_user(pool: PgPool) {
 
     let payload = json!({
         "group_id": group_id,
+        "name": "Test User",
         "email": "new_created_user@example.com",
         "password": "Password123!"
     });
@@ -379,6 +380,7 @@ async fn test_create_user_validation_error(pool: PgPool) {
 
     let payload = json!({
         "group_id": group_id,
+        "name": "Test User",
         "email": "invalid-email-format",
         "password": "short"
     });
@@ -406,6 +408,7 @@ async fn test_create_user_non_existent_group(pool: PgPool) {
 
     let payload = json!({
         "group_id": Uuid::new_v4(),
+        "name": "Test User",
         "email": "valid_email@example.com",
         "password": "ValidPassword123"
     });

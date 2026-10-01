@@ -38,6 +38,7 @@ async fn test_auth_full_lifecycle(pool: PgPool) {
         .body(Body::from(
             json!({
                 "group_id": group_id,
+                "name": "Test User",
                 "email": "  user@example.com  ", // Tests custom trim deserializer
                 "password": "securepassword123"
             })
@@ -155,6 +156,7 @@ async fn test_auth_error_handling(pool: PgPool) {
         .body(Body::from(
             json!({
                 "group_id": group_id,
+                "name": "Test User",
                 "email": "user@example.com",
                 "password": "123" // < 8 characters
             })
@@ -172,6 +174,7 @@ async fn test_auth_error_handling(pool: PgPool) {
         .body(Body::from(
             json!({
                 "group_id": group_id,
+                "name": "Test User",
                 "email": "not-an-email",
                 "password": "validpassword123"
             })
@@ -205,6 +208,7 @@ async fn test_auth_error_handling(pool: PgPool) {
         .body(Body::from(
             json!({
                 "group_id": group_id,
+                "name": "Test User",
                 "email": "valid@example.com",
                 "password": "correctpassword123"
             })
