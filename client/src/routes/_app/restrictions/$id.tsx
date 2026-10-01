@@ -50,7 +50,8 @@ function ViewRestrictionPage() {
 		);
 	}
 
-	if (isLoading) {
+	// Also narrows restrictionWithOcc for the rest of the component
+	if (isLoading || !restrictionWithOcc) {
 		return (
 			<div className="p-8 text-xs text-stone-500">
 				{t("ladataanRajoitusta", "Ladataan rajoitusta...")}
