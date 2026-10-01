@@ -69,7 +69,24 @@ function BatchRegisterUserPage() {
 					),
 				);
 			}
-			if (u.password && u.password.length < 8) {
+			// The API requires both a name and a password for every new user
+			if (!u.name) {
+				validationErrors.push(
+					t("riviPuuttuvaNimi", "Rivi {{row}} ({{email}}): Nimi puuttuu.", {
+						row: idx + 1,
+						email: u.email,
+					}),
+				);
+			}
+			if (!u.password) {
+				validationErrors.push(
+					t(
+						"riviPuuttuvaSalasana",
+						"Rivi {{row}} ({{email}}): Salasana puuttuu.",
+						{ row: idx + 1, email: u.email },
+					),
+				);
+			} else if (u.password.length < 8) {
 				validationErrors.push(
 					t(
 						"riviSalasanaLiianLyhyt",
@@ -109,10 +126,11 @@ function BatchRegisterUserPage() {
 
 		if (parsedRows.length === 0 || errors.length > 0) return;
 
+		// Validation above rejects rows without a name or password
 		const payloads: CreateUserPayload[] = parsedRows.map((row) => ({
 			email: row.email,
-			name: row.name || undefined,
-			password: row.password,
+			name: row.name ?? "",
+			password: row.password ?? "",
 			group_id: selectedGroupId,
 		}));
 
