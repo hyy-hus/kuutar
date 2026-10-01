@@ -251,6 +251,22 @@ export interface paths {
         patch: operations["update_group"];
         trace?: never;
     };
+    "/health": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["health_check"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/reservations": {
         parameters: {
             query?: never;
@@ -610,6 +626,10 @@ export interface components {
         };
         HashMap: {
             [key: string]: string;
+        };
+        HealthStatus: {
+            status: string;
+            version: string;
         };
         LoginPayload: {
             email: string;
@@ -1738,6 +1758,26 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    health_check: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Service is up */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HealthStatus"];
+                };
             };
         };
     };

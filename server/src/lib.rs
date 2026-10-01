@@ -58,12 +58,20 @@ pub fn app(pool: PgPool, config: Config) -> Router {
         .layer(cors)
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, utoipa::ToSchema)]
 pub struct HealthStatus {
     pub status: &'static str,
     pub version: &'static str,
 }
 
+#[utoipa::path(
+    get,
+    path = "/health",
+    tag = "Health",
+    responses(
+        (status = 200, description = "Service is up", body = HealthStatus)
+    )
+)]
 pub async fn health_check() -> impl IntoResponse {
     Json(HealthStatus {
         status: "ok",
