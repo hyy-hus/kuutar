@@ -485,6 +485,10 @@ export interface components {
             created_at: string;
             /** Format: date-time */
             deleted_at?: string | null;
+            /** @description Localized Tiptap documents, e.g. {"fi": {"type": "doc", ...}} */
+            description?: {
+                [key: string]: unknown;
+            } | null;
             /** Format: uuid */
             id: string;
             name: string;
@@ -507,6 +511,10 @@ export interface components {
             updated_at: string;
         };
         CreateCollection: {
+            /** @description Localized Tiptap documents, e.g. {"fi": {"type": "doc", ...}} */
+            description?: {
+                [key: string]: unknown;
+            } | null;
             name: string;
         };
         CreateContract: {
@@ -522,6 +530,10 @@ export interface components {
             title: components["schemas"]["HashMap"];
         };
         CreateGroup: {
+            /** @description Localized Tiptap documents, e.g. {"fi": {"type": "doc", ...}} */
+            description?: {
+                [key: string]: unknown;
+            } | null;
             name: string;
         };
         CreateOccurrencePayload: {
@@ -550,6 +562,10 @@ export interface components {
             /** Format: uuid */
             collection_id: string;
             contract_ids?: string[] | null;
+            /** @description Localized Tiptap documents, e.g. {"fi": {"type": "doc", ...}} */
+            description?: {
+                [key: string]: unknown;
+            } | null;
             is_public?: boolean;
             name: string;
             /** Format: date-time */
@@ -580,6 +596,10 @@ export interface components {
         Group: {
             /** Format: date-time */
             created_at: string;
+            /** @description Localized Tiptap documents, e.g. {"fi": {"type": "doc", ...}} */
+            description?: {
+                [key: string]: unknown;
+            } | null;
             /** Format: uuid */
             id: string;
             name: string;
@@ -687,6 +707,10 @@ export interface components {
             created_at: string;
             /** Format: date-time */
             deleted_at?: string | null;
+            /** @description Localized Tiptap documents, e.g. {"fi": {"type": "doc", ...}} */
+            description?: {
+                [key: string]: unknown;
+            } | null;
             /** Format: uuid */
             id: string;
             is_public: boolean;
@@ -748,6 +772,10 @@ export interface components {
             resource_name: string;
         };
         UpdateCollection: {
+            /** @description Localized Tiptap documents, e.g. {"fi": {"type": "doc", ...}} */
+            description?: {
+                [key: string]: unknown;
+            } | null;
             name?: string | null;
         };
         UpdateContract: {
@@ -759,6 +787,10 @@ export interface components {
             title?: null | components["schemas"]["HashMap"];
         };
         UpdateGroup: {
+            /** @description Localized Tiptap documents, e.g. {"fi": {"type": "doc", ...}} */
+            description?: {
+                [key: string]: unknown;
+            } | null;
             name: string;
         };
         UpdateReservationPayload: {
@@ -778,6 +810,10 @@ export interface components {
         UpdateResource: {
             allow_recurring?: boolean | null;
             contract_ids?: string[] | null;
+            /** @description Localized Tiptap documents, e.g. {"fi": {"type": "doc", ...}} */
+            description?: {
+                [key: string]: unknown;
+            } | null;
             is_public?: boolean | null;
             name?: string | null;
             /** Format: date-time */
