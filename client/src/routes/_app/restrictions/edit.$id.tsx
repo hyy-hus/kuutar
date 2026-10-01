@@ -6,6 +6,7 @@ import {
 } from "#/components/RestrictionForm";
 import { useRestriction, useUpdateRestriction } from "#/hooks/useRestrictions";
 import { requireAuthGuard } from "#/utils/authGuard";
+import { formatDateTimeLocal } from "#/utils/date";
 
 export const Route = createFileRoute("/_app/restrictions/edit/$id")({
 	beforeLoad: async ({ context }) => {
@@ -13,12 +14,6 @@ export const Route = createFileRoute("/_app/restrictions/edit/$id")({
 	},
 	component: EditRestrictionPage,
 });
-
-const formatDateTimeLocal = (isoString: string) => {
-	const d = new Date(isoString);
-	const pad = (n: number) => String(n).padStart(2, "0");
-	return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-};
 
 function EditRestrictionPage() {
 	const { t } = useTranslation();
@@ -51,6 +46,7 @@ function EditRestrictionPage() {
 				title: values.title,
 				description: values.description || null,
 				exempt_group_ids: values.exempt_group_ids,
+				rrule: values.rrule ?? null,
 				occurrences: values.occurrences.map((occ) => ({
 					resource_id: occ.resource_id || null,
 					start_time: new Date(occ.start_time).toISOString(),
@@ -62,6 +58,17 @@ function EditRestrictionPage() {
 		navigate({ to: "/restrictions/$id", params: { id } });
 	};
 
+	const occurrences = restrictionWithOcc.occurrences || [];
+	const firstOccurrence = occurrences[0];
+	// Global restrictions have a null resource_id and map to an empty selection
+	const resourceIds = Array.from(
+		new Set(
+			occurrences
+				.map((occ) => occ.resource_id)
+				.filter((rid): rid is string => Boolean(rid)),
+		),
+	);
+
 	return (
 		<div className="max-w-xl mx-auto p-4 space-y-4">
 			<h1 className="text-xl font-bold text-stone-900 dark:text-stone-100">
@@ -72,10 +79,18 @@ function EditRestrictionPage() {
 					title: restrictionWithOcc.title,
 					description: restrictionWithOcc.description || "",
 					exempt_group_ids: restrictionWithOcc.exempt_group_ids,
-					occurrences: (restrictionWithOcc.occurrences || []).map((occ) => ({
+					rrule: restrictionWithOcc.rrule,
+					resource_ids: resourceIds,
+					start_time: firstOccurrence
+						? formatDateTimeLocal(new Date(firstOccurrence.start_time))
+						: "",
+					end_time: firstOccurrence
+						? formatDateTimeLocal(new Date(firstOccurrence.end_time))
+						: "",
+					occurrences: occurrences.map((occ) => ({
 						resource_id: occ.resource_id || null,
-						start_time: formatDateTimeLocal(occ.start_time),
-						end_time: formatDateTimeLocal(occ.end_time),
+						start_time: formatDateTimeLocal(new Date(occ.start_time)),
+						end_time: formatDateTimeLocal(new Date(occ.end_time)),
 					})),
 				}}
 				onSubmit={handleSubmit}

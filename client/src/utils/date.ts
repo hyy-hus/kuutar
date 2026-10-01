@@ -22,3 +22,9 @@ export function formatDate(
 		minute: "2-digit",
 	}).format(date);
 }
+
+/** Formats a Date for input[type="datetime-local"] (YYYY-MM-DDTHH:mm) in local time */
+export function formatDateTimeLocal(date: Date): string {
+	const pad = (n: number) => String(n).padStart(2, "0");
+	return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}

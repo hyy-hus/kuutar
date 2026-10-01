@@ -19,7 +19,7 @@ import { Footer } from "#/components/Footer";
 import { useAuth, useIsAdmin } from "#/hooks/useAuth";
 import { useReservations } from "#/hooks/useReservations";
 import { useResources } from "#/hooks/useResorces";
-import { startOfCurrentWeek } from "#/utils/calendarUtils";
+import { currentYearRange, startOfCurrentWeek } from "#/utils/calendarUtils";
 import { formatDate } from "#/utils/date";
 import { readable_uuid } from "#/utils/uuid";
 
@@ -41,16 +41,12 @@ function HomePage() {
 		return end;
 	}, [currentWeekStart]);
 
-	const thirtyDaysLater = useMemo(() => {
-		const d = new Date();
-		d.setDate(d.getDate() + 30);
-		return d;
-	}, []);
+	const yearRange = useMemo(() => currentYearRange(), []);
 
 	const { data: reservations, isLoading: loadingReservations } =
 		useReservations({
-			startDate: currentWeekStart.toISOString(),
-			endDate: thirtyDaysLater.toISOString(),
+			startDate: yearRange.start.toISOString(),
+			endDate: yearRange.end.toISOString(),
 		});
 
 	const userReservations = useMemo(

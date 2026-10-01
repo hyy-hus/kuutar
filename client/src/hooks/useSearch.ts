@@ -2,6 +2,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { api } from "#/api/client";
 import type { components } from "#/api/schema";
+import { currentYearRange } from "#/utils/calendarUtils";
 import { useResources } from "./useResorces";
 
 export type Reservation = components["schemas"]["Reservation"];
@@ -13,7 +14,15 @@ export function useSearch(query: string) {
 		queryKey: ["search", "reservations", query],
 		queryFn: async () => {
 			if (!query.trim()) return [];
-			const { data, error } = await api.GET("/reservations");
+			const { start, end } = currentYearRange();
+			const { data, error } = await api.GET("/reservations", {
+				params: {
+					query: {
+						start_date: start.toISOString(),
+						end_date: end.toISOString(),
+					},
+				},
+			});
 			if (error || !data) return [];
 			return data;
 		},

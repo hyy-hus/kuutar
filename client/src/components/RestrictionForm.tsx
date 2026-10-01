@@ -15,6 +15,7 @@ import { Button } from "./Button";
 import { Input } from "./Input";
 import { useGroups } from "#/hooks/useGroups";
 import { useResources } from "#/hooks/useResorces";
+import { formatDateTimeLocal } from "#/utils/date";
 import { generateOccurrences, parseRRule } from "#/utils/rruleUtils";
 
 export interface RestrictionOccurrenceValue {
@@ -205,7 +206,29 @@ export function RestrictionForm({
 								<Input
 									type="datetime-local"
 									value={field.state.value}
-									onChange={(e) => field.handleChange(e.target.value)}
+									onChange={(e) => {
+										const nextStart = e.target.value;
+										const prevStart = new Date(field.state.value);
+										const prevEnd = new Date(
+											field.form.getFieldValue("end_time"),
+										);
+										const duration = prevEnd.getTime() - prevStart.getTime();
+
+										// Keep the previous duration when the new start passes the end
+										if (
+											nextStart &&
+											duration > 0 &&
+											new Date(nextStart) >= prevEnd
+										) {
+											field.form.setFieldValue(
+												"end_time",
+												formatDateTimeLocal(
+													new Date(new Date(nextStart).getTime() + duration),
+												),
+											);
+										}
+										field.handleChange(nextStart);
+									}}
 								/>
 							</div>
 						)}

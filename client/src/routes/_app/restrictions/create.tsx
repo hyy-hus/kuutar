@@ -61,6 +61,7 @@ function CreateRestrictionPage() {
 			description: values.description || null,
 			exempt_group_ids:
 				values.exempt_group_ids.length > 0 ? values.exempt_group_ids : null,
+			rrule: values.rrule ?? null,
 			occurrences: values.occurrences.map((occ) => ({
 				resource_id: occ.resource_id || null,
 				start_time: new Date(occ.start_time).toISOString(),
