@@ -35,6 +35,15 @@ export const startOfCurrentWeek = (): Date => {
 	return new Date(now.setDate(diff));
 };
 
+/** Range from Jan 1 00:00 to Dec 31 23:59:59.999 of the current year, in local time */
+export const currentYearRange = (): { start: Date; end: Date } => {
+	const year = new Date().getFullYear();
+	return {
+		start: new Date(year, 0, 1),
+		end: new Date(year + 1, 0, 1, 0, 0, 0, -1),
+	};
+};
+
 export function layoutDay(events: CalendarEvent[]) {
 	if (!events.length) return { maxCols: 1, placed: [] };
 
