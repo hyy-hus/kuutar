@@ -2,6 +2,7 @@ import { useForm } from "@tanstack/react-form";
 import {
 	AlertTriangle,
 	CheckCircle2,
+	FileText,
 	Loader2,
 	RefreshCw,
 	Save,
@@ -14,6 +15,11 @@ import { Frequency } from "rrule";
 import { Button } from "#/components/Button";
 import { Input } from "#/components/Input";
 import { useIsAdmin } from "#/hooks/useAuth";
+import {
+	getLocalizedText,
+	getStaticContractUrl,
+	useContracts,
+} from "#/hooks/useContracts";
 import {
 	type CreateOccurrencePayload,
 	type Occurrence,
@@ -56,6 +62,7 @@ export function ReservationForm({
 }: ReservationFormProps) {
 	const { t } = useTranslation();
 	const { data: resources, isLoading: loadingResources } = useResources();
+	const { data: allContracts, isLoading: loadingContracts } = useContracts();
 
 	const checkConflicts = useCheckConflicts();
 	const { isAdmin } = useIsAdmin();
@@ -78,6 +85,8 @@ export function ReservationForm({
 	const [restrictionConflicts, setRestrictionConflicts] = useState<
 		{ title: string; start_time: string; end_time: string }[] | null
 	>(null);
+
+	const [contractsApproved, setContractsApproved] = useState(false);
 
 	const initialResourceIds = useMemo(() => {
 		if (defaultValues?.resource_ids && defaultValues.resource_ids.length > 0) {
@@ -357,6 +366,7 @@ export function ReservationForm({
 															? field.state.value.filter((id) => id !== res.id)
 															: [...field.state.value, res.id];
 														field.handleChange(nextValue);
+														setContractsApproved(false);
 													}}
 													className={`px-3 py-1.5 text-xs font-medium rounded-md border transition-colors flex items-center gap-1.5 ${isChecked
 															? "bg-purple-600 text-white border-purple-600 dark:bg-purple-500 dark:border-purple-500"
@@ -446,7 +456,6 @@ export function ReservationForm({
 									);
 								}
 
-								// Validate against selected resources' reservable_until date
 								const selectedResourceIds =
 									fieldApi.form.getFieldValue("resource_ids") || [];
 								for (const rId of selectedResourceIds) {
@@ -552,15 +561,42 @@ export function ReservationForm({
 				</form.Subscribe>
 			</div>
 
+			{/* Contract Approval Section */}
+			<form.Subscribe selector={(state) => [state.values.resource_ids]}>
+				{([selectedResourceIds]) => (
+					<ContractApprovalSection
+						selectedResourceIds={selectedResourceIds}
+						allContracts={allContracts}
+						isLoading={loadingContracts}
+						approved={contractsApproved}
+						onApproveChange={setContractsApproved}
+					/>
+				)}
+			</form.Subscribe>
+
 			{/* Submit Button */}
 			<form.Subscribe
-				selector={(state) => [state.canSubmit, state.isSubmitting]}
+				selector={(state) => [
+					state.canSubmit,
+					state.isSubmitting,
+					state.values.resource_ids,
+				]}
 			>
-				{([canSubmit, formSubmitting]) => {
+				{([canSubmit, formSubmitting, selectedResourceIds]) => {
 					const hasRestrictionViolation =
 						!isAdmin &&
 						restrictionConflicts !== null &&
 						restrictionConflicts.length > 0;
+
+					const applicableContracts =
+						allContracts?.filter(
+							(c) =>
+								c.resource_id === null ||
+								selectedResourceIds.includes(c.resource_id),
+						) ?? [];
+
+					const needsContractApproval =
+						applicableContracts.length > 0 && !contractsApproved;
 
 					return (
 						<Button
@@ -569,7 +605,8 @@ export function ReservationForm({
 								!canSubmit ||
 								isSubmitting ||
 								formSubmitting ||
-								hasRestrictionViolation
+								hasRestrictionViolation ||
+								needsContractApproval
 							}
 							className="w-full flex items-center justify-center gap-2 mt-4"
 						>
@@ -586,6 +623,112 @@ export function ReservationForm({
 				}}
 			</form.Subscribe>
 		</form>
+	);
+}
+
+interface ContractApprovalSectionProps {
+	selectedResourceIds: string[];
+	allContracts?: {
+		id: string;
+		title: unknown;
+		s3_key?: unknown;
+		file_url?: unknown;
+		resource_id?: string | null;
+	}[];
+	isLoading: boolean;
+	approved: boolean;
+	onApproveChange: (approved: boolean) => void;
+}
+
+function ContractApprovalSection({
+	selectedResourceIds,
+	allContracts,
+	isLoading,
+	approved,
+	onApproveChange,
+}: ContractApprovalSectionProps) {
+	const { t, i18n } = useTranslation();
+	const currentLocale = i18n.language || "fi";
+
+	const applicableContracts = useMemo(() => {
+		if (!allContracts) return [];
+		return allContracts.filter(
+			(c) =>
+				c.resource_id === null ||
+				c.resource_id === undefined ||
+				selectedResourceIds.includes(c.resource_id),
+		);
+	}, [allContracts, selectedResourceIds]);
+
+	if (isLoading) {
+		return (
+			<div className="flex items-center gap-2 text-xs text-stone-500 py-2">
+				<Loader2 className="animate-spin" size={14} />
+				<span>{t("ladataanSopimusehtoja", "Ladataan sopimusehtoja...")}</span>
+			</div>
+		);
+	}
+
+	if (applicableContracts.length === 0) {
+		return null;
+	}
+
+	return (
+		<div className="p-3 bg-stone-100 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-md space-y-2">
+			<div className="flex items-center gap-1.5 text-xs font-bold text-stone-900 dark:text-stone-100">
+				<FileText size={15} className="text-purple-600 dark:text-purple-400" />
+				<span>{t("sopimuksetJaEhot", "Sopimukset ja ehdot")}</span>
+			</div>
+
+			<p className="text-[11px] text-stone-600 dark:text-stone-400">
+				{t(
+					"tutustuJaHyvksySeuraavatEhot",
+					"Tutustu ja hyväksy seuraavat varaukseen liittyvät ehdot ennen lähettämistä:",
+				)}
+			</p>
+
+			<ul className="space-y-1">
+				{applicableContracts.map((contract) => {
+					// Use contract.s3_key or fallback to file_url
+					const rawKey = contract.s3_key || contract.file_url;
+					const hrefUrl = getStaticContractUrl(rawKey, currentLocale);
+
+					return (
+						<li
+							key={contract.id}
+							className="flex items-center justify-between p-2 bg-white dark:bg-stone-950 border border-stone-200 dark:border-stone-800 rounded text-xs"
+						>
+							<span className="font-medium text-stone-800 dark:text-stone-200 truncate max-w-[200px]">
+								{getLocalizedText(contract.title, currentLocale)}
+							</span>
+							<a
+								href={hrefUrl}
+								target="_blank"
+								rel="noopener noreferrer"
+								className="text-[11px] font-semibold text-purple-600 hover:text-purple-700 dark:text-purple-400 hover:underline"
+							>
+								{t("lataaTaiLue", "Lue ehdot")} &rarr;
+							</a>
+						</li>
+					);
+				})}
+			</ul>
+
+			<label className="flex items-start gap-2.5 pt-2 cursor-pointer select-none">
+				<input
+					type="checkbox"
+					checked={approved}
+					onChange={(e) => onApproveChange(e.target.checked)}
+					className="mt-0.5 h-4 w-4 rounded border-stone-300 text-purple-600 focus:ring-purple-500"
+				/>
+				<span className="text-xs font-medium text-stone-800 dark:text-stone-200 leading-tight">
+					{t(
+						"hyvksynSopimusehdot",
+						"Olen lukenut ja hyväksyn sovellettavat sopimusehdot.",
+					)}
+				</span>
+			</label>
+		</div>
 	);
 }
 
