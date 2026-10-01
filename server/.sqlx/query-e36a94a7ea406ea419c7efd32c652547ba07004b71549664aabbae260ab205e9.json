@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        SELECT DISTINCT\n            c.id, c.title, c.s3_key, c.file_name, c.is_global, c.is_active,\n            c.created_at, c.updated_at, c.deleted_at\n        FROM contracts c\n        LEFT JOIN resource_contracts rc ON c.id = rc.contract_id\n        WHERE c.deleted_at IS NULL\n          AND c.is_active = true\n          AND (c.is_global = true OR rc.resource_id = $1)\n        ORDER BY c.created_at DESC\n        ",
+  "query": "\n        SELECT\n            c.id, c.title, c.s3_key, c.file_name, c.is_global, c.is_active,\n            COALESCE(\n                (SELECT array_agg(rc.resource_id ORDER BY rc.resource_id)\n                 FROM resource_contracts rc\n                 JOIN resources r ON r.id = rc.resource_id AND r.deleted_at IS NULL\n                 WHERE rc.contract_id = c.id),\n                '{}'\n            ) AS \"resource_ids!\",\n            c.created_at, c.updated_at, c.deleted_at\n        FROM contracts c\n        WHERE c.deleted_at IS NULL\n          AND (\n            $1::uuid IS NULL\n            OR c.is_global = true\n            OR EXISTS (\n                SELECT 1 FROM resource_contracts rc\n                WHERE rc.contract_id = c.id AND rc.resource_id = $1\n            )\n          )\n          AND ($2 = false OR c.is_active = true)\n        ORDER BY c.created_at DESC\n        ",
   "describe": {
     "columns": [
       {
@@ -71,6 +71,12 @@
       },
       {
         "ordinal": 6,
+        "name": "resource_ids!",
+        "type_info": "UuidArray",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 7,
         "name": "created_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -81,7 +87,7 @@
         }
       },
       {
-        "ordinal": 7,
+        "ordinal": 8,
         "name": "updated_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -92,7 +98,7 @@
         }
       },
       {
-        "ordinal": 8,
+        "ordinal": 9,
         "name": "deleted_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -105,7 +111,8 @@
     ],
     "parameters": {
       "Left": [
-        "Uuid"
+        "Uuid",
+        "Bool"
       ]
     },
     "nullable": [
@@ -115,10 +122,11 @@
       false,
       false,
       false,
+      null,
       false,
       false,
       true
     ]
   },
-  "hash": "91f30ebf89a8efb5802d1ea528b856c795e80a30a6c4fcc1c468f122d5eb0490"
+  "hash": "e36a94a7ea406ea419c7efd32c652547ba07004b71549664aabbae260ab205e9"
 }

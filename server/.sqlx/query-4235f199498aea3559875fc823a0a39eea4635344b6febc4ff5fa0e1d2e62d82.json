@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        SELECT \n            id, title, s3_key, file_name, is_global, is_active, \n            created_at, updated_at, deleted_at\n        FROM contracts\n        WHERE id = $1 AND deleted_at IS NULL\n        ",
+  "query": "\n        SELECT\n            c.id, c.title, c.s3_key, c.file_name, c.is_global, c.is_active,\n            COALESCE(\n                (SELECT array_agg(rc.resource_id ORDER BY rc.resource_id)\n                 FROM resource_contracts rc\n                 JOIN resources r ON r.id = rc.resource_id AND r.deleted_at IS NULL\n                 WHERE rc.contract_id = c.id),\n                '{}'\n            ) AS \"resource_ids!\",\n            c.created_at, c.updated_at, c.deleted_at\n        FROM contracts c\n        WHERE c.id = $1 AND c.deleted_at IS NULL\n        ",
   "describe": {
     "columns": [
       {
@@ -71,6 +71,12 @@
       },
       {
         "ordinal": 6,
+        "name": "resource_ids!",
+        "type_info": "UuidArray",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 7,
         "name": "created_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -81,7 +87,7 @@
         }
       },
       {
-        "ordinal": 7,
+        "ordinal": 8,
         "name": "updated_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -92,7 +98,7 @@
         }
       },
       {
-        "ordinal": 8,
+        "ordinal": 9,
         "name": "deleted_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -115,10 +121,11 @@
       false,
       false,
       false,
+      null,
       false,
       false,
       true
     ]
   },
-  "hash": "8592aad69da507ef7f192a1b8d1ff0f88fc249c9d7dc1e5a9dd271f0a6d4a980"
+  "hash": "4235f199498aea3559875fc823a0a39eea4635344b6febc4ff5fa0e1d2e62d82"
 }
