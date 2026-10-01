@@ -98,8 +98,8 @@ export function Footer() {
 							</Link>
 						</li>
 						<li>
-							<Link
-								to="/privacy"
+							<a
+								href="https://hyy.fi/fi/ylioppilaskunta/helsingin-yliopiston-ylioppilaskunnan-dokumentit/tietosuojailmoitus/"
 								className="hover:underline flex items-start gap-2 text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100"
 							>
 								<ShieldCheck
@@ -112,7 +112,7 @@ export function Footer() {
 										"Tietosuoja & Rekisteriseloste",
 									)}
 								</span>
-							</Link>
+							</a>
 						</li>
 					</ul>
 				</div>
