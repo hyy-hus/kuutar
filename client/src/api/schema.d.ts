@@ -505,6 +505,8 @@ export interface components {
             id: string;
             is_active: boolean;
             is_global: boolean;
+            /** @description Resources this contract is linked to (excluding deleted ones); empty for global-only contracts */
+            resource_ids: string[];
             s3_key: unknown;
             title: unknown;
             /** Format: date-time */
