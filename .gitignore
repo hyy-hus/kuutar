@@ -1,6 +1,7 @@
 server/target
 reservations_backup.json
 .env*
+!.env.example
 .cors.json
 deploy.sh
 todo.md
