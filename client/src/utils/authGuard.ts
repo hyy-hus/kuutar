@@ -1,7 +1,6 @@
-// src/utils/authGuard.ts
-
 import type { QueryClient } from "@tanstack/react-query";
 import { redirect } from "@tanstack/react-router";
+import { openAuthDialog } from "#/api/client";
 import { authKeys, fetchMe } from "#/hooks/useAuth";
 
 export async function requireAuthGuard(context: {
@@ -23,6 +22,8 @@ export async function requireAuthGuard(context: {
 	}
 
 	if (!user) {
+		openAuthDialog();
+
 		throw redirect({
 			to: "/",
 			replace: true,
