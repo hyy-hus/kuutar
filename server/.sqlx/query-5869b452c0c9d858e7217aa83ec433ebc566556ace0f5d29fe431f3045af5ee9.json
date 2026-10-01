@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        INSERT INTO resources (collection_id, name, allow_recurring, reservable_until, is_public)\n        VALUES ($1, $2, $3, $4, $5)\n        RETURNING id, collection_id, name, allow_recurring, reservable_until, is_public, created_at, updated_at, deleted_at\n        ",
+  "query": "\n        INSERT INTO resources (collection_id, name, description, allow_recurring, reservable_until, is_public)\n        VALUES ($1, $2, $3, $4, $5, $6)\n        RETURNING id, collection_id, name, description, allow_recurring, reservable_until, is_public, created_at, updated_at, deleted_at\n        ",
   "describe": {
     "columns": [
       {
@@ -38,6 +38,17 @@
       },
       {
         "ordinal": 3,
+        "name": "description",
+        "type_info": "Jsonb",
+        "origin": {
+          "Table": {
+            "table": "resources",
+            "name": "description"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
         "name": "allow_recurring",
         "type_info": "Bool",
         "origin": {
@@ -48,7 +59,7 @@
         }
       },
       {
-        "ordinal": 4,
+        "ordinal": 5,
         "name": "reservable_until",
         "type_info": "Timestamptz",
         "origin": {
@@ -59,7 +70,7 @@
         }
       },
       {
-        "ordinal": 5,
+        "ordinal": 6,
         "name": "is_public",
         "type_info": "Bool",
         "origin": {
@@ -70,7 +81,7 @@
         }
       },
       {
-        "ordinal": 6,
+        "ordinal": 7,
         "name": "created_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -81,7 +92,7 @@
         }
       },
       {
-        "ordinal": 7,
+        "ordinal": 8,
         "name": "updated_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -92,7 +103,7 @@
         }
       },
       {
-        "ordinal": 8,
+        "ordinal": 9,
         "name": "deleted_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -107,6 +118,7 @@
       "Left": [
         "Uuid",
         "Text",
+        "Jsonb",
         "Bool",
         "Timestamptz",
         "Bool"
@@ -116,6 +128,7 @@
       false,
       false,
       false,
+      true,
       false,
       true,
       false,
@@ -124,5 +137,5 @@
       true
     ]
   },
-  "hash": "d88b437a9896ebc7bb9a0101ca29744b8a76ee57a8c3e31fc8e73bf194b69910"
+  "hash": "5869b452c0c9d858e7217aa83ec433ebc566556ace0f5d29fe431f3045af5ee9"
 }

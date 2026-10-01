@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        SELECT id, name, created_at, updated_at\n        FROM groups\n        WHERE deleted_at IS NULL\n        ORDER BY name ASC\n        ",
+  "query": "\n        SELECT id, name, description, created_at, updated_at, deleted_at\n        FROM collections\n        WHERE deleted_at IS NULL\n        ",
   "describe": {
     "columns": [
       {
@@ -9,7 +9,7 @@
         "type_info": "Uuid",
         "origin": {
           "Table": {
-            "table": "groups",
+            "table": "collections",
             "name": "id"
           }
         }
@@ -20,30 +20,52 @@
         "type_info": "Text",
         "origin": {
           "Table": {
-            "table": "groups",
+            "table": "collections",
             "name": "name"
           }
         }
       },
       {
         "ordinal": 2,
-        "name": "created_at",
-        "type_info": "Timestamptz",
+        "name": "description",
+        "type_info": "Jsonb",
         "origin": {
           "Table": {
-            "table": "groups",
-            "name": "created_at"
+            "table": "collections",
+            "name": "description"
           }
         }
       },
       {
         "ordinal": 3,
+        "name": "created_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "collections",
+            "name": "created_at"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
         "name": "updated_at",
         "type_info": "Timestamptz",
         "origin": {
           "Table": {
-            "table": "groups",
+            "table": "collections",
             "name": "updated_at"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "deleted_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "collections",
+            "name": "deleted_at"
           }
         }
       }
@@ -54,9 +76,11 @@
     "nullable": [
       false,
       false,
+      true,
       false,
-      false
+      false,
+      true
     ]
   },
-  "hash": "ac56088286fc74eb68cdd86955145689da1c920395282745460932d7d8566531"
+  "hash": "821d9c5acbc941de9e3da15da3da0d959153cf4d43fd66a31c95d2dbbd85a5e2"
 }

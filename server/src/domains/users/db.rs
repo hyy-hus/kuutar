@@ -138,6 +138,7 @@ mod tests {
             pool,
             &CreateGroup {
                 name: format!("Test Group {}", Uuid::new_v4()),
+                description: None,
             },
         )
         .await

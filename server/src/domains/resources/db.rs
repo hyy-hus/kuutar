@@ -2,14 +2,14 @@ use sqlx::PgPool;
 use uuid::Uuid;
 
 use super::models::{CreateResource, Resource, UpdateResource};
-use crate::errors::AppError;
+use crate::{errors::AppError, utils::rich_text};
 
 /// Fetches resources. If `is_admin` is false, only public resources (`is_public = TRUE`) are returned.
 pub async fn list_all(pool: &PgPool, is_admin: bool) -> Result<Vec<Resource>, AppError> {
     let resources = sqlx::query_as!(
         Resource,
         r#"
-        SELECT id, collection_id, name, allow_recurring, reservable_until, is_public, created_at, updated_at, deleted_at
+        SELECT id, collection_id, name, description, allow_recurring, reservable_until, is_public, created_at, updated_at, deleted_at
         FROM resources
         WHERE deleted_at IS NULL
           AND ($1 = TRUE OR is_public = TRUE)
@@ -28,7 +28,7 @@ pub async fn find_by_id(pool: &PgPool, id: Uuid, is_admin: bool) -> Result<Resou
     sqlx::query_as!(
         Resource,
         r#"
-        SELECT id, collection_id, name, allow_recurring, reservable_until, is_public, created_at, updated_at, deleted_at
+        SELECT id, collection_id, name, description, allow_recurring, reservable_until, is_public, created_at, updated_at, deleted_at
         FROM resources
         WHERE id = $1 
           AND deleted_at IS NULL
@@ -48,12 +48,13 @@ pub async fn create(pool: &PgPool, dto: CreateResource) -> Result<Resource, AppE
     let resource = sqlx::query_as!(
         Resource,
         r#"
-        INSERT INTO resources (collection_id, name, allow_recurring, reservable_until, is_public)
-        VALUES ($1, $2, $3, $4, $5)
-        RETURNING id, collection_id, name, allow_recurring, reservable_until, is_public, created_at, updated_at, deleted_at
+        INSERT INTO resources (collection_id, name, description, allow_recurring, reservable_until, is_public)
+        VALUES ($1, $2, $3, $4, $5, $6)
+        RETURNING id, collection_id, name, description, allow_recurring, reservable_until, is_public, created_at, updated_at, deleted_at
         "#,
         dto.collection_id,
         dto.name,
+        dto.description.map(rich_text::to_json),
         dto.allow_recurring,
         dto.reservable_until,
         dto.is_public
@@ -93,14 +94,16 @@ pub async fn update(pool: &PgPool, id: Uuid, dto: UpdateResource) -> Result<Reso
                 ELSE reservable_until 
             END,
             is_public = COALESCE($4, is_public),
+            description = COALESCE($5, description),
             updated_at = NOW()
-        WHERE id = $5 AND deleted_at IS NULL
-        RETURNING id, collection_id, name, allow_recurring, reservable_until, is_public, created_at, updated_at, deleted_at
+        WHERE id = $6 AND deleted_at IS NULL
+        RETURNING id, collection_id, name, description, allow_recurring, reservable_until, is_public, created_at, updated_at, deleted_at
         "#,
         dto.name,
         dto.allow_recurring,
         dto.reservable_until,
         dto.is_public,
+        dto.description.map(rich_text::to_json),
         id
     )
     .fetch_optional(&mut *tx)
