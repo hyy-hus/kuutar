@@ -39,7 +39,8 @@ pub struct CreateCollection {
 
 #[derive(Debug, Deserialize, Validate, ToSchema)]
 pub struct UpdateCollection {
-    #[serde(deserialize_with = "deserialize_trimmed_option_string")]
+    // `default` lets partial updates omit the field entirely
+    #[serde(default, deserialize_with = "deserialize_trimmed_option_string")]
     #[validate(length(
         min = 1,
         max = 255,
@@ -93,5 +94,12 @@ mod tests {
         };
         // Option::None should pass validation for partial updates
         assert!(dto.validate().is_ok());
+    }
+
+    #[test]
+    fn test_update_collection_allows_omitted_name() {
+        let dto: UpdateCollection =
+            serde_json::from_str(r#"{"description": {}}"#).expect("name should be optional");
+        assert!(dto.name.is_none());
     }
 }

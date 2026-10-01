@@ -59,7 +59,8 @@ fn default_true() -> bool {
 
 #[derive(Debug, Deserialize, Validate, ToSchema)]
 pub struct UpdateResource {
-    #[serde(deserialize_with = "deserialize_trimmed_option_string")]
+    // `default` lets partial updates omit the field entirely
+    #[serde(default, deserialize_with = "deserialize_trimmed_option_string")]
     #[validate(length(
         min = 1,
         max = 255,
@@ -79,4 +80,17 @@ pub struct UpdateResource {
     pub is_public: Option<bool>,
 
     pub contract_ids: Option<Vec<Uuid>>,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_update_resource_allows_omitted_name() {
+        let dto: UpdateResource =
+            serde_json::from_str(r#"{"is_public": false}"#).expect("name should be optional");
+        assert!(dto.name.is_none());
+        assert_eq!(dto.is_public, Some(false));
+    }
 }
