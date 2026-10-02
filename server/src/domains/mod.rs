@@ -1,6 +1,7 @@
 pub mod auth;
 pub mod collections;
 pub mod contracts;
+pub mod email_templates;
 pub mod groups;
 pub mod reservations;
 pub mod resources;

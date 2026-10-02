@@ -1,4 +1,4 @@
-use crate::utils::resend;
+use crate::utils::mail;
 use axum::{Json, extract::State, http::StatusCode};
 use sqlx::PgPool;
 use uuid::Uuid;
@@ -13,6 +13,7 @@ use crate::{
     config::Config,
     domains::{
         auth::models::{RequestOtpPayload, VerifyOtpPayload},
+        email_templates::notify,
         users::models::Role,
     },
     errors::AppError,
@@ -45,6 +46,7 @@ pub async fn register(
 
     let password_hash = password::hash_password(&payload.password)?;
     let user = db::create_user(&state.pool, &payload, &password_hash).await?;
+    notify::spawn_welcome_email(&state.pool, &state.config, user.id);
 
     let tokens = issue_token_pair(&state, user.id, user.group_id, user.role).await?;
     Ok((StatusCode::CREATED, Json(tokens)))
@@ -177,17 +179,11 @@ pub async fn request_otp(
     if let Some(user) = db::find_user_by_email(&state.pool, &payload.email).await? {
         let raw_code = db::create_otp_code(&state.pool, &user.email).await?;
 
-        if let Some(resend_key) = &state.config.resend_api_key {
-            resend::send_otp_email(
-                resend_key,
-                &state.config.resend_from_email,
-                &user.email,
-                &raw_code,
-            )
-            .await?;
+        if state.config.smtp_host.is_some() {
+            mail::send_otp_email(&state.config, &user.email, &raw_code).await?;
         } else {
             tracing::warn!(
-                "Resend API Key missing in config! Could not send OTP email to {}",
+                "SMTP_HOST missing in config! Could not send OTP email to {}",
                 user.email
             );
         }

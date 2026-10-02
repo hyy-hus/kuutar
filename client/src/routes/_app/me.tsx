@@ -5,6 +5,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "#/components/Button";
 import { Input } from "#/components/Input";
+import { LanguageSelect } from "#/components/LanguageSelect";
 import { useAuth } from "#/hooks/useAuth";
 import { useUpdateMe } from "#/hooks/useUsers";
 import { requireAuthGuard } from "#/utils/authGuard";
@@ -32,6 +33,7 @@ function MePage() {
 			name: user?.name ?? "",
 			email: user?.email ?? "",
 			password: "",
+			language: user?.language ?? "fi",
 			default_contact_person: user?.default_contact_person ?? "",
 			default_contact_email: user?.default_contact_email ?? "",
 			default_contact_phone: user?.default_contact_phone ?? "",
@@ -121,6 +123,28 @@ function MePage() {
 								isError={field.state.meta.errors.length > 0}
 							/>
 							<FieldError errors={field.state.meta.errors} />
+						</div>
+					)}
+				</form.Field>
+
+				<form.Field name="language">
+					{(field) => (
+						<div className="space-y-1">
+							<label htmlFor={field.name} className={labelClass}>
+								{t("kieli", "Kieli")}
+							</label>
+							<LanguageSelect
+								id={field.name}
+								value={field.state.value}
+								onChange={field.handleChange}
+								onBlur={field.handleBlur}
+							/>
+							<p className="text-[11px] text-stone-500">
+								{t(
+									"kieliKuvausSahkoposti",
+									"Käyttäjän sähköpostiviestit lähetetään tällä kielellä.",
+								)}
+							</p>
 						</div>
 					)}
 				</form.Field>

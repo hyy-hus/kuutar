@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        SELECT id, group_id, name, email, default_contact_person, default_contact_email, default_contact_phone, role AS \"role: Role\", created_at, updated_at\n        FROM users\n        WHERE deleted_at IS NULL\n        ORDER BY name ASC, email ASC\n        ",
+  "query": "\n        UPDATE users\n        SET \n            name = COALESCE($1, name),\n            email = COALESCE($2, email),\n            password_hash = COALESCE($3, password_hash),\n            group_id = COALESCE($4, group_id),\n            default_contact_person = CASE WHEN $5::text IS NULL THEN default_contact_person ELSE NULLIF($5, '') END,\n            default_contact_email = CASE WHEN $6::text IS NULL THEN default_contact_email ELSE NULLIF($6, '') END,\n            default_contact_phone = CASE WHEN $7::text IS NULL THEN default_contact_phone ELSE NULLIF($7, '') END,\n            language = COALESCE($8, language),\n            updated_at = NOW()\n        WHERE id = $9 AND deleted_at IS NULL\n        RETURNING id, group_id, name, email, default_contact_person, default_contact_email, default_contact_phone, language, role AS \"role: Role\", created_at, updated_at\n        ",
   "describe": {
     "columns": [
       {
@@ -82,6 +82,17 @@
       },
       {
         "ordinal": 7,
+        "name": "language",
+        "type_info": "Varchar",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "language"
+          }
+        }
+      },
+      {
+        "ordinal": 8,
         "name": "role: Role",
         "type_info": {
           "Custom": {
@@ -102,7 +113,7 @@
         }
       },
       {
-        "ordinal": 8,
+        "ordinal": 9,
         "name": "created_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -113,7 +124,7 @@
         }
       },
       {
-        "ordinal": 9,
+        "ordinal": 10,
         "name": "updated_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -125,7 +136,17 @@
       }
     ],
     "parameters": {
-      "Left": []
+      "Left": [
+        "Varchar",
+        "Text",
+        "Text",
+        "Uuid",
+        "Text",
+        "Text",
+        "Text",
+        "Varchar",
+        "Uuid"
+      ]
     },
     "nullable": [
       false,
@@ -137,8 +158,9 @@
       true,
       false,
       false,
+      false,
       false
     ]
   },
-  "hash": "533e786e24b5419ae5d21cfe49c642327dcb86ea4702c2edf545d12e790cfff9"
+  "hash": "251bb8a476d76aaac14b61604a2a9b0cbaa5c8544f7eb3d4163028b7ea697afd"
 }

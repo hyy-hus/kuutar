@@ -153,6 +153,47 @@ async fn test_create_user(pool: PgPool) {
 
     assert_eq!(json["email"], "new_created_user@example.com");
     assert_eq!(json["role"], "user");
+    assert_eq!(json["language"], "fi");
+}
+
+#[sqlx::test]
+async fn test_create_user_with_language(pool: PgPool) {
+    let (_user_id, group_id, token) = setup_authenticated_user(&pool).await;
+    let app = app(pool, test_config());
+
+    for (language, expected) in [
+        ("sv", StatusCode::CREATED),
+        ("xx", StatusCode::UNPROCESSABLE_ENTITY),
+    ] {
+        let payload = json!({
+            "group_id": group_id,
+            "name": "Lang User",
+            "email": format!("lang_{language}@example.com"),
+            "password": "Password123!",
+            "language": language
+        });
+
+        let response = app
+            .clone()
+            .oneshot(
+                Request::builder()
+                    .method("POST")
+                    .uri("/users")
+                    .header(header::AUTHORIZATION, format!("Bearer {token}"))
+                    .header(header::CONTENT_TYPE, "application/json")
+                    .body(Body::from(payload.to_string()))
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+
+        assert_eq!(response.status(), expected);
+        if expected == StatusCode::CREATED {
+            let body = to_bytes(response.into_body(), usize::MAX).await.unwrap();
+            let json: Value = serde_json::from_slice(&body).unwrap();
+            assert_eq!(json["language"], language);
+        }
+    }
 }
 
 #[sqlx::test]

@@ -17,6 +17,8 @@ interface RichTextEditorProps {
 	onChange: (doc: JSONContent) => void;
 	/** Accessible name for the editable area */
 	ariaLabel?: string;
+	/** Snippets (e.g. `{{title}}`) offered in a dropdown that inserts them at the cursor */
+	insertables?: { label: string; text: string }[];
 }
 
 /** Compact toolbar icon button with explicit active highlight */
@@ -59,6 +61,7 @@ export function RichTextEditor({
 	value,
 	onChange,
 	ariaLabel,
+	insertables,
 }: RichTextEditorProps) {
 	const { t } = useTranslation();
 	const editor = useEditor({
@@ -199,6 +202,29 @@ export function RichTextEditor({
 				>
 					<ListOrdered size={16} />
 				</EditorButton>
+
+				{insertables && insertables.length > 0 && (
+					<>
+						<div className="w-px h-4 bg-stone-300 dark:bg-stone-800 mx-1" />
+						<select
+							aria-label={t("lisMuuttuja", "Lisää muuttuja")}
+							value=""
+							onChange={(e) => {
+								if (e.target.value) {
+									editor.chain().focus().insertContent(e.target.value).run();
+								}
+							}}
+							className="px-2 py-1 text-xs bg-stone-50 dark:bg-stone-900 border border-stone-300 dark:border-stone-700 rounded-md text-stone-900 dark:text-stone-100 font-medium"
+						>
+							<option value="">{t("lisMuuttuja", "Lisää muuttuja")}</option>
+							{insertables.map((item) => (
+								<option key={item.text} value={item.text}>
+									{item.label}
+								</option>
+							))}
+						</select>
+					</>
+				)}
 			</div>
 
 			<EditorContent editor={editor} />

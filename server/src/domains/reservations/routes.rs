@@ -11,8 +11,8 @@ use super::{
     db,
     models::{
         CheckConflictsQuery, CreateOccurrencePayload, CreateReservationPayload,
-        ListReservationsQuery, Occurrence,
-        ReservationWithOccurrences, UpdateReservationPayload,
+        ListReservationsQuery, Occurrence, ReservationStatus, ReservationWithOccurrences,
+        UpdateReservationPayload,
     },
 };
 use crate::{
@@ -21,8 +21,9 @@ use crate::{
             AuthState,
             extractor::{AuthUser, OptionalAuthUser, RequireAdmin},
         },
+        email_templates::{models::EmailTemplateKey, notify},
         reservations::models::{BatchImportReport, PortableReservationImport},
-        users::models::Role,
+        users::{db as users_db, models::Role},
     },
     errors::AppError,
 };
@@ -133,7 +134,7 @@ pub async fn list_reservations(
         if is_admin {
             None
         } else {
-            Some(super::models::ReservationStatus::Confirmed)
+            Some(ReservationStatus::Confirmed)
         }
     });
 
@@ -253,6 +254,19 @@ pub async fn create_reservation(
 
     let is_admin = auth_user.role == Role::Admin;
 
+    // Admins can reserve on behalf of another user; everyone else only for themselves
+    let owner_id = match payload.user_id {
+        Some(user_id) if user_id != auth_user.id => {
+            if !is_admin {
+                return Err(AppError::Forbidden(
+                    "Vain ylläpitäjä voi tehdä varauksen toisen käyttäjän puolesta.".to_string(),
+                ));
+            }
+            users_db::get_user(&auth_state.pool, user_id).await?.id
+        }
+        _ => auth_user.id,
+    };
+
     // 1. Validate recurring permissions for non-admins
     validate_recurring_permission(&auth_state.pool, &payload, auth_user.role).await?;
 
@@ -263,7 +277,7 @@ pub async fn create_reservation(
     // 3. Validate occurrences against time restrictions
     db::validate_occurrence_restrictions(
         &auth_state.pool,
-        auth_user.id,
+        owner_id,
         is_admin,
         &payload.occurrences,
     )
@@ -271,7 +285,7 @@ pub async fn create_reservation(
 
     // 4. Default status for non-admin users to Pending & clear admin-only fields if supplied
     if !is_admin {
-        payload.status = Some(super::models::ReservationStatus::Pending);
+        payload.status = Some(ReservationStatus::Pending);
         payload.admin_notes = None;
     }
 
@@ -281,7 +295,24 @@ pub async fn create_reservation(
         ));
     }
 
-    let reservation = db::create(&auth_state.pool, auth_user.id, payload).await?;
+    let reservation = db::create(&auth_state.pool, owner_id, payload).await?;
+
+    // Pending reservations get an acknowledgement; ones an admin creates as
+    // confirmed get the confirmation straight away.
+    let template = match reservation.reservation.status {
+        ReservationStatus::Pending => Some(EmailTemplateKey::ReservationCreated),
+        ReservationStatus::Confirmed => Some(EmailTemplateKey::ReservationConfirmed),
+        ReservationStatus::Cancelled => None,
+    };
+    if let Some(key) = template {
+        notify::spawn_reservation_email(
+            &auth_state.pool,
+            &auth_state.config,
+            key,
+            reservation.reservation.id,
+        );
+    }
+
     let sanitized = sanitize_reservation_for_role(reservation, is_admin, Some(auth_user.id));
 
     Ok((StatusCode::CREATED, Json(sanitized)))
@@ -355,16 +386,16 @@ pub async fn update_reservation(
             ));
         }
 
-        let is_cancelling = payload.status == Some(super::models::ReservationStatus::Cancelled)
+        let is_cancelling = payload.status == Some(ReservationStatus::Cancelled)
             && payload.title.is_none()
             && payload.description.is_none()
             && payload.occurrences.is_none()
             && payload.rrule.is_none();
 
         if is_cancelling {
-            payload.status = Some(super::models::ReservationStatus::Cancelled);
+            payload.status = Some(ReservationStatus::Cancelled);
         } else {
-            payload.status = Some(super::models::ReservationStatus::Pending);
+            payload.status = Some(ReservationStatus::Pending);
             payload.mark_printed = Some(false);
         }
 
@@ -386,6 +417,20 @@ pub async fn update_reservation(
     }
 
     let reservation = db::update(&auth_state.pool, id, payload).await?;
+
+    // Notify on confirmation and cancellation. Falling back to pending (e.g. after
+    // an edit that needs re-approval) is deliberately silent.
+    if reservation.reservation.status != existing.reservation.status {
+        let template = match reservation.reservation.status {
+            ReservationStatus::Confirmed => Some(EmailTemplateKey::ReservationConfirmed),
+            ReservationStatus::Cancelled => Some(EmailTemplateKey::ReservationCancelled),
+            ReservationStatus::Pending => None,
+        };
+        if let Some(key) = template {
+            notify::spawn_reservation_email(&auth_state.pool, &auth_state.config, key, id);
+        }
+    }
+
     let sanitized = sanitize_reservation_for_role(reservation, is_admin, Some(auth_user.id));
 
     Ok(Json(sanitized))

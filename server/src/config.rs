@@ -1,5 +1,15 @@
-use clap::Parser;
+use clap::{Parser, ValueEnum};
 use std::net::SocketAddr;
+
+#[derive(ValueEnum, Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SmtpTls {
+    /// Plain connection upgraded with STARTTLS (required).
+    Starttls,
+    /// Implicit TLS from the first byte.
+    Tls,
+    /// No encryption; only for local development servers.
+    None,
+}
 
 #[derive(Parser, Debug, Clone)]
 #[command(author, version, about = "Kuutar Web Server", long_about = None)]
@@ -25,16 +35,34 @@ pub struct Config {
     #[arg(long, env = "SEED_ADMIN_PASSWORD", default_value = "Admin")]
     pub seed_admin_password: String,
 
-    // --- Resend Email / OTP Configuration ---
-    #[arg(long, env = "RESEND_API_KEY")]
-    pub resend_api_key: Option<String>,
+    // --- SMTP Email / OTP Configuration ---
+    /// SMTP server hostname. Without it, sign-in by email code is unavailable.
+    #[arg(long, env = "SMTP_HOST")]
+    pub smtp_host: Option<String>,
+
+    #[arg(long, env = "SMTP_PORT", default_value_t = 587)]
+    pub smtp_port: u16,
+
+    /// Connection security: `starttls` (typically port 587), `tls` (implicit TLS, port 465) or `none`.
+    #[arg(long, env = "SMTP_TLS", value_enum, default_value_t = SmtpTls::Starttls)]
+    pub smtp_tls: SmtpTls,
+
+    #[arg(long, env = "SMTP_USERNAME")]
+    pub smtp_username: Option<String>,
+
+    #[arg(long, env = "SMTP_PASSWORD")]
+    pub smtp_password: Option<String>,
 
     #[arg(
         long,
-        env = "RESEND_FROM_EMAIL",
+        env = "SMTP_FROM_EMAIL",
         default_value = "Kuutar <noreply@kuutar.fi>"
     )]
-    pub resend_from_email: String,
+    pub smtp_from_email: String,
+
+    /// Public URL of the web app, used for links in emails.
+    #[arg(long, env = "APP_BASE_URL", default_value = "http://localhost:5173")]
+    pub app_base_url: String,
 
     // --- S3 / Scaleway Object Storage Configuration ---
     #[arg(long, env = "S3_BUCKET_NAME")]
