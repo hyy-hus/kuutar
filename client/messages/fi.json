@@ -485,5 +485,9 @@
 	"yllapitajaOletuksena": "(Ylläpitäjä oletuksena)",
 	"yllpidonHallintapaneeli": "Ylläpidon hallintapaneeli",
 	"yllpitjnMuistiinpanot": "Ylläpitäjän muistiinpanot",
-	"yllpito": "Ylläpito"
+	"yllpito": "Ylläpito",
+	"varaussopimus": "Varaussopimus",
+	"sahkoposti": "Sähköposti",
+	"puhelin": "Puhelin",
+	"tulostuksenKieli": "Tulostuksen kieli"
 }
