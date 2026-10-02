@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import i18next from "i18next";
 import { api } from "#/api/client";
 import type { components } from "#/api/schema";
+import { formatYYYYMMDD } from "#/utils/date";
 
 // Schema Type Exports
 export type Reservation = components["schemas"]["Reservation"];
@@ -291,7 +292,7 @@ export function exportReservationsToPortableJson(
 
 	const link = document.createElement("a");
 	link.href = url;
-	link.download = `reservations-export-${new Date().toISOString().slice(0, 10)}.json`;
+	link.download = `reservations-export-${formatYYYYMMDD(new Date())}.json`;
 	link.click();
 	URL.revokeObjectURL(url);
 }

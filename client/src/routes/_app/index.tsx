@@ -19,8 +19,8 @@ import { Footer } from "#/components/Footer";
 import { useAuth, useIsAdmin } from "#/hooks/useAuth";
 import { useReservations } from "#/hooks/useReservations";
 import { useResources } from "#/hooks/useResorces";
-import { currentYearRange, startOfCurrentWeek } from "#/utils/calendarUtils";
-import { useDateFormatter } from "#/utils/date";
+import { currentYearRange } from "#/utils/calendarUtils";
+import { addDays, startOfWeek, useDateFormatter } from "#/utils/date";
 import { getLocalizedPlainText } from "#/utils/richText";
 import { readable_uuid } from "#/utils/uuid";
 
@@ -35,13 +35,12 @@ function HomePage() {
 	const { isAdmin } = useIsAdmin();
 	const { data: resources, isLoading: loadingResources } = useResources();
 
-	const currentWeekStart = useMemo(() => startOfCurrentWeek(), []);
-	const currentWeekEnd = useMemo(() => {
-		const end = new Date(currentWeekStart);
-		end.setDate(end.getDate() + 7);
-		end.setHours(23, 59, 59, 999);
-		return end;
-	}, [currentWeekStart]);
+	// Monday 00:00 up to (not including) next Monday 00:00
+	const currentWeekStart = useMemo(() => startOfWeek(), []);
+	const nextWeekStart = useMemo(
+		() => addDays(currentWeekStart, 7),
+		[currentWeekStart],
+	);
 
 	const yearRange = useMemo(() => currentYearRange(), []);
 
@@ -72,7 +71,7 @@ function HomePage() {
 				const occTime = new Date(occ.start_time).getTime();
 				if (
 					occTime >= currentWeekStart.getTime() &&
-					occTime <= currentWeekEnd.getTime()
+					occTime < nextWeekStart.getTime()
 				) {
 					const current = counts.get(occ.resource_id) || 0;
 					counts.set(occ.resource_id, current + 1);
@@ -88,7 +87,7 @@ function HomePage() {
 			.sort((a, b) => b.weeklyCount - a.weeklyCount)
 			.map((item) => item.resource)
 			.slice(0, 5);
-	}, [resources, reservations, currentWeekStart, currentWeekEnd]);
+	}, [resources, reservations, currentWeekStart, nextWeekStart]);
 
 	return (
 		<div className="flex flex-col min-h-full -m-2 sm:-m-4">

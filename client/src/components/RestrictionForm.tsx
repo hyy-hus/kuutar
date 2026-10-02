@@ -5,7 +5,11 @@ import { useTranslation } from "react-i18next";
 import { Frequency } from "rrule";
 import { useGroups } from "#/hooks/useGroups";
 import { useResources } from "#/hooks/useResorces";
-import { formatDateTimeLocal, formatYYYYMMDD } from "#/utils/date";
+import {
+	formatDateTimeLocal,
+	formatYYYYMMDD,
+	parseLocalDate,
+} from "#/utils/date";
 import { generateOccurrences, parseRRule } from "#/utils/rruleUtils";
 import { Button } from "./Button";
 import { Input } from "./Input";
@@ -69,7 +73,7 @@ export function RestrictionForm({
 
 			// If start_time & end_time are set, generate recurring occurrences
 			if (value.start_time && value.end_time) {
-				const until = untilStr ? new Date(untilStr) : null;
+				const until = untilStr ? parseLocalDate(untilStr) : null;
 				const targetResources =
 					value.resource_ids && value.resource_ids.length > 0
 						? value.resource_ids

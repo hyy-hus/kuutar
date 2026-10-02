@@ -65,13 +65,6 @@ export const getSegmentGridMinutes = (
 	return { startMins, endMins };
 };
 
-export const startOfCurrentWeek = (): Date => {
-	const now = new Date();
-	const day = now.getDay();
-	const diff = now.getDate() - day + (day === 0 ? -6 : 1);
-	return new Date(now.setDate(diff));
-};
-
 /** Range from Jan 1 00:00 to Dec 31 23:59:59.999 of the current year, in local time */
 export const currentYearRange = (): { start: Date; end: Date } => {
 	const year = new Date().getFullYear();

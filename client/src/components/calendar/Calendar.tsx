@@ -10,7 +10,13 @@ import { useResources } from "#/hooks/useResorces";
 import { useRestrictions } from "#/hooks/useRestrictions";
 import type { CalendarSearch } from "#/routes/_app/calendar";
 import type { CalendarEvent } from "#/utils/calendarUtils";
-import { formatYYYYMMDD, parseLocalDate, startOfWeek } from "#/utils/date";
+import {
+	addDays,
+	formatYYYYMMDD,
+	localDayRangeISO,
+	parseLocalDate,
+	startOfWeek,
+} from "#/utils/date";
 import { ToggleChip } from "../Chip";
 import { WeekView } from "./WeekView";
 
@@ -72,19 +78,11 @@ export function Calendar({
 		}
 	}, [resources, selectedResourceIds, onSearchChange]);
 
-	const { startDateISO, endDateISO } = useMemo(() => {
-		const startDate = new Date(start);
-		startDate.setHours(0, 0, 0, 0);
-
-		const endDate = new Date(start);
-		endDate.setDate(endDate.getDate() + days);
-		endDate.setHours(23, 59, 59, 999);
-
-		return {
-			startDateISO: startDate.toISOString(),
-			endDateISO: endDate.toISOString(),
-		};
-	}, [start, days]);
+	// Exactly the visible days, in local time
+	const { startISO: startDateISO, endISO: endDateISO } = useMemo(
+		() => localDayRangeISO(start, addDays(start, days - 1)),
+		[start, days],
+	);
 
 	const { data: reservations, isLoading: loadingReservations } =
 		useReservations({
@@ -296,9 +294,9 @@ export function Calendar({
 						<input
 							type="date"
 							value={formatYYYYMMDD(start)}
+							// The input value is already YYYY-MM-DD; valueAsDate would be UTC midnight
 							onChange={(e) =>
-								e.target.valueAsDate &&
-								onSearchChange({ start: formatYYYYMMDD(e.target.valueAsDate) })
+								e.target.value && onSearchChange({ start: e.target.value })
 							}
 							className="px-2 py-1 text-xs bg-stone-50 dark:bg-stone-950 border border-stone-300 dark:border-stone-700 rounded-md font-mono"
 						/>

@@ -180,3 +180,19 @@ export function startOfWeek(date: Date = new Date()): Date {
 		date.getDate() - daysSinceMonday,
 	);
 }
+
+/** Local midnight `days` calendar days after `date` (DST-safe, unlike adding 24-hour steps) */
+export function addDays(date: Date, days: number): Date {
+	return new Date(date.getFullYear(), date.getMonth(), date.getDate() + days);
+}
+
+/** ISO bounds from the start of local day `first` to the end of local day `last`, both included */
+export function localDayRangeISO(
+	first: Date,
+	last: Date,
+): { startISO: string; endISO: string } {
+	return {
+		startISO: addDays(first, 0).toISOString(),
+		endISO: new Date(addDays(last, 1).getTime() - 1).toISOString(),
+	};
+}

@@ -33,6 +33,8 @@ import { useRestrictions } from "#/hooks/useRestrictions";
 import {
 	formatDateTimeLocal,
 	formatYYYYMMDD,
+	localDayRangeISO,
+	parseLocalDate,
 	useDateFormatter,
 } from "#/utils/date";
 import { generateOccurrences, parseRRule } from "#/utils/rruleUtils";
@@ -118,7 +120,7 @@ export function ReservationForm({
 			end_time: defaultValues?.end_time ?? "",
 		},
 		onSubmit: async ({ value }) => {
-			const until = untilStr ? new Date(untilStr) : null;
+			const until = untilStr ? parseLocalDate(untilStr) : null;
 			let allOccurrences: CreateOccurrencePayload[] = [];
 			let rruleString: string | null = null;
 
@@ -793,8 +795,10 @@ function AutomaticConflictChecker({
 
 	const { data: activeRestrictions } = useRestrictions({
 		start_date: startTime ? new Date(startTime).toISOString() : undefined,
+		// Through the end of the last day of the series
 		end_date: untilStr
-			? new Date(untilStr).toISOString()
+			? localDayRangeISO(parseLocalDate(untilStr), parseLocalDate(untilStr))
+					.endISO
 			: endTime
 				? new Date(endTime).toISOString()
 				: undefined,
@@ -807,7 +811,7 @@ function AutomaticConflictChecker({
 			return;
 		}
 
-		const until = untilStr ? new Date(untilStr) : null;
+		const until = untilStr ? parseLocalDate(untilStr) : null;
 		let allOccurrences: CreateOccurrencePayload[] = [];
 		for (const resourceId of resourceIds) {
 			const { occurrences } = generateOccurrences(

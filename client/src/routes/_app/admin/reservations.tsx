@@ -17,7 +17,13 @@ import {
 	useReservations,
 } from "#/hooks/useReservations";
 import { useResources } from "#/hooks/useResorces";
-import { useDateFormatter } from "#/utils/date";
+import {
+	addDays,
+	formatYYYYMMDD,
+	localDayRangeISO,
+	parseLocalDate,
+	useDateFormatter,
+} from "#/utils/date";
 
 export const Route = createFileRoute("/_app/admin/reservations")({
 	component: AdminReservationsSyncPage,
@@ -31,17 +37,13 @@ function AdminReservationsSyncPage() {
 
 	// Export Filter State (Defaults to 90-day span)
 	// Export Filter State (Defaults to ~74-day span to stay under the 91-day API limit)
-	const [exportStartDate, setExportStartDate] = useState(() => {
-		const d = new Date();
-		d.setDate(d.getDate() - 14);
-		return d.toISOString().slice(0, 10);
-	});
+	const [exportStartDate, setExportStartDate] = useState(() =>
+		formatYYYYMMDD(addDays(new Date(), -14)),
+	);
 
-	const [exportEndDate, setExportEndDate] = useState(() => {
-		const d = new Date();
-		d.setDate(d.getDate() + 60);
-		return d.toISOString().slice(0, 10);
-	});
+	const [exportEndDate, setExportEndDate] = useState(() =>
+		formatYYYYMMDD(addDays(new Date(), 60)),
+	);
 
 	const [exportResourceId, setExportResourceId] = useState<string>("");
 
@@ -60,10 +62,15 @@ function AdminReservationsSyncPage() {
 	}, [resources]);
 
 	// Fetch reservations for Export
+	// Both picked days are included in full, in local time
+	const exportRange = localDayRangeISO(
+		parseLocalDate(exportStartDate),
+		parseLocalDate(exportEndDate),
+	);
 	const { data: exportReservations, isLoading: isFetchingExport } =
 		useReservations({
-			startDate: new Date(exportStartDate).toISOString(),
-			endDate: new Date(exportEndDate).toISOString(),
+			startDate: exportRange.startISO,
+			endDate: exportRange.endISO,
 			resourceId: exportResourceId || undefined,
 		});
 
