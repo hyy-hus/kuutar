@@ -485,5 +485,9 @@
 	"yllapitajaOletuksena": "(Administratör som standard)",
 	"yllpidonHallintapaneeli": "Administrativ kontrollpanel",
 	"yllpitjnMuistiinpanot": "Administratörens anteckningar",
-	"yllpito": "Administration"
+	"yllpito": "Administration",
+	"varaussopimus": "Bokningsavtal",
+	"sahkoposti": "E-post",
+	"puhelin": "Telefon",
+	"tulostuksenKieli": "Utskriftsspråk"
 }

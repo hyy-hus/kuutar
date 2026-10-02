@@ -14,8 +14,9 @@ import {
 } from "#/hooks/useContracts";
 import type { ReservationWithOccurrences } from "#/hooks/useReservations";
 import { useResources } from "#/hooks/useResorces";
+import { SUPPORTED_LANGUAGES } from "#/i18n";
 import { requireAdminGuard } from "#/utils/authGuard";
-import { type DateFormatter, useDateFormatter } from "#/utils/date";
+import { type DateFormatter, getDateFormatter } from "#/utils/date";
 
 export interface BatchPrintSearch {
 	reservation_ids: string[];
@@ -50,7 +51,7 @@ async function drawCoverPage(
 	let y = 780;
 
 	// Title
-	page.drawText(t("sopimusasiakirja", "SOPIMUSASIAKIRJA").toUpperCase(), {
+	page.drawText(t("varaussopimus", "VARAUSSOPIMUS").toUpperCase(), {
 		x: 50,
 		y,
 		size: 20,
@@ -86,7 +87,7 @@ async function drawCoverPage(
 	});
 
 	y -= 20;
-	page.drawText(`${t("varaus", "Varaus")}:`, {
+	page.drawText(t("varaus", "Varaus:"), {
 		x: 50,
 		y,
 		size: 10,
@@ -116,6 +117,18 @@ async function drawCoverPage(
 		y -= 18;
 	}
 
+	// Contact info
+	for (const [label, value] of [
+		[t("yhteyshenkilo", "Yhteyshenkilö"), reservation.contact_person],
+		[t("sahkoposti", "Sähköposti"), reservation.contact_email],
+		[t("puhelin", "Puhelin"), reservation.contact_phone],
+	] as const) {
+		if (!value) continue;
+		page.drawText(`${label}:`, { x: 50, y, size: 10, font: fontBold });
+		page.drawText(value, { x: 180, y, size: 10, font: fontRegular });
+		y -= 18;
+	}
+
 	// Reserved resources
 	const resourceNames = Array.from(
 		new Set(
@@ -140,13 +153,16 @@ async function drawCoverPage(
 
 	// Occurrence schedule list
 	y -= 35;
-	page.drawText(t("varausajat", "VARAUSAJAT").toUpperCase(), {
-		x: 50,
-		y,
-		size: 12,
-		font: fontBold,
-		color: rgb(0.2, 0.2, 0.2),
-	});
+	page.drawText(
+		t("varausajat", "Varausajat:").replace(/:$/, "").toUpperCase(),
+		{
+			x: 50,
+			y,
+			size: 12,
+			font: fontBold,
+			color: rgb(0.2, 0.2, 0.2),
+		},
+	);
 
 	y -= 15;
 	page.drawLine({
@@ -256,9 +272,22 @@ async function drawSignaturePage(
 	});
 }
 
+const DEFAULT_PRINT_LANGUAGE = "fi";
+
 function BatchPrintPage() {
 	const { t, i18n } = useTranslation();
-	const { formatDate } = useDateFormatter();
+	// The printout language is chosen separately from the UI language
+	const [printLanguage, setPrintLanguage] = useState<string>(
+		DEFAULT_PRINT_LANGUAGE,
+	);
+	const printT = useMemo(
+		() => i18n.getFixedT(printLanguage),
+		[i18n, printLanguage],
+	);
+	const { formatDate } = useMemo(
+		() => getDateFormatter(printLanguage),
+		[printLanguage],
+	);
 	const { reservation_ids } = Route.useSearch();
 	const iframeRef = useRef<HTMLIFrameElement | null>(null);
 
@@ -304,12 +333,15 @@ function BatchPrintPage() {
 		enabled: reservation_ids.length > 0,
 	});
 
-	const hasRunRef = useRef(false);
+	const [includeContracts, setIncludeContracts] = useState(false);
+	// Tracks which includeContracts value the current PDF was built for
+	const builtForRef = useRef<string | null>(null);
+	const buildKey = `${includeContracts}:${printLanguage}`;
 
 	useEffect(() => {
 		async function prepareBatchPdf() {
 			if (
-				hasRunRef.current ||
+				builtForRef.current === buildKey ||
 				!activeContracts ||
 				!resources ||
 				!activeReservations ||
@@ -318,7 +350,7 @@ function BatchPrintPage() {
 				return;
 			}
 
-			hasRunRef.current = true;
+			builtForRef.current = buildKey;
 
 			try {
 				setIsMerging(true);
@@ -332,7 +364,7 @@ function BatchPrintPage() {
 						mergedPdf,
 						reservation,
 						resourceMap,
-						t,
+						printT,
 						formatDate,
 					);
 
@@ -344,16 +376,15 @@ function BatchPrintPage() {
 					);
 
 					// 3. Global contracts plus those linked to any involved resource
-					const applicableContracts = getApplicableContracts(
-						activeContracts,
-						resourceIds,
-					);
+					const applicableContracts = includeContracts
+						? getApplicableContracts(activeContracts, resourceIds)
+						: [];
 
 					// 4. Download and append all applicable contract PDFs
 					for (const contract of applicableContracts) {
 						const s3KeyMap = (contract.s3_key as Record<string, string>) || {};
 						const s3Key =
-							s3KeyMap[i18n.language] ||
+							s3KeyMap[printLanguage] ||
 							s3KeyMap.fi ||
 							s3KeyMap.en ||
 							Object.values(s3KeyMap)[0];
@@ -368,7 +399,7 @@ function BatchPrintPage() {
 								t(
 									"pdfLatausVirhe",
 									"Sopimustiedoston lataaminen epäonnistui: {{title}}",
-									{ title: getLocalizedText(contract.title, i18n.language) },
+									{ title: getLocalizedText(contract.title, printLanguage) },
 								),
 							);
 						}
@@ -386,7 +417,7 @@ function BatchPrintPage() {
 					}
 
 					// 5. Draw Signature Page for this reservation
-					await drawSignaturePage(mergedPdf, t);
+					await drawSignaturePage(mergedPdf, printT);
 				}
 
 				const mergedBytes = await mergedPdf.save();
@@ -407,10 +438,13 @@ function BatchPrintPage() {
 	}, [
 		activeContracts,
 		activeReservations,
+		buildKey,
+		includeContracts,
+		printLanguage,
+		printT,
 		resources,
 		resourceMap,
 		presignDownloadAsync,
-		i18n.language,
 		t,
 		formatDate,
 	]);
@@ -481,6 +515,28 @@ function BatchPrintPage() {
 						})}
 					</p>
 				</div>
+
+				<select
+					value={printLanguage}
+					onChange={(e) => setPrintLanguage(e.target.value)}
+					aria-label={t("tulostuksenKieli", "Tulostuksen kieli")}
+					className="text-sm rounded-md border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 px-2 py-1"
+				>
+					{SUPPORTED_LANGUAGES.map((lng) => (
+						<option key={lng} value={lng}>
+							{lng.toUpperCase()}
+						</option>
+					))}
+				</select>
+
+				<label className="flex items-center gap-2 text-sm text-stone-700 dark:text-stone-300 cursor-pointer">
+					<input
+						type="checkbox"
+						checked={includeContracts}
+						onChange={(e) => setIncludeContracts(e.target.checked)}
+					/>
+					<span>{t("sisallaSopimukset", "Sisällytä sopimusliitteet")}</span>
+				</label>
 
 				<Button
 					onClick={handleTriggerPrint}

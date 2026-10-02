@@ -485,5 +485,9 @@
 	"yllapitajaOletuksena": "(Defaults to administrator)",
 	"yllpidonHallintapaneeli": "Admin Dashboard",
 	"yllpitjnMuistiinpanot": "Administrator Notes",
-	"yllpito": "Administration"
+	"yllpito": "Administration",
+	"varaussopimus": "Booking contract",
+	"sahkoposti": "Email",
+	"puhelin": "Phone",
+	"tulostuksenKieli": "Print language"
 }
