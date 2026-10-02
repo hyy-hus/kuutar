@@ -102,16 +102,19 @@ pub async fn create_user(
     security(("bearer_auth" = [])),
     request_body = UpdateUser,
     responses(
-        (status = 200, description = "Current user updated", body = User),
+        (status = 200, description = "Current user updated (group_id is ignored)", body = User),
         (status = 409, description = "Email already in use")
     )
 )]
 pub async fn update_me(
     State(state): State<AuthState>,
     auth_user: AuthUser,
-    Json(payload): Json<UpdateUser>,
+    Json(mut payload): Json<UpdateUser>,
 ) -> Result<Json<User>, AppError> {
     payload.validate()?;
+
+    // Users cannot move themselves between groups; that is an admin action
+    payload.group_id = None;
 
     let new_password_hash = match &payload.password {
         Some(pwd) => Some(password::hash_password(pwd)?),

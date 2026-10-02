@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        SELECT id, group_id, name, email, role AS \"role: Role\", created_at, updated_at\n        FROM users\n        WHERE id = $1 AND deleted_at IS NULL\n        ",
+  "query": "\n        UPDATE users\n        SET \n            name = COALESCE($1, name),\n            email = COALESCE($2, email),\n            password_hash = COALESCE($3, password_hash),\n            group_id = COALESCE($4, group_id),\n            default_contact_person = CASE WHEN $5::text IS NULL THEN default_contact_person ELSE NULLIF($5, '') END,\n            default_contact_email = CASE WHEN $6::text IS NULL THEN default_contact_email ELSE NULLIF($6, '') END,\n            default_contact_phone = CASE WHEN $7::text IS NULL THEN default_contact_phone ELSE NULLIF($7, '') END,\n            updated_at = NOW()\n        WHERE id = $8 AND deleted_at IS NULL\n        RETURNING id, group_id, name, email, default_contact_person, default_contact_email, default_contact_phone, role AS \"role: Role\", created_at, updated_at\n        ",
   "describe": {
     "columns": [
       {
@@ -49,6 +49,39 @@
       },
       {
         "ordinal": 4,
+        "name": "default_contact_person",
+        "type_info": "Varchar",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "default_contact_person"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "default_contact_email",
+        "type_info": "Varchar",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "default_contact_email"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "default_contact_phone",
+        "type_info": "Varchar",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "default_contact_phone"
+          }
+        }
+      },
+      {
+        "ordinal": 7,
         "name": "role: Role",
         "type_info": {
           "Custom": {
@@ -69,7 +102,7 @@
         }
       },
       {
-        "ordinal": 5,
+        "ordinal": 8,
         "name": "created_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -80,7 +113,7 @@
         }
       },
       {
-        "ordinal": 6,
+        "ordinal": 9,
         "name": "updated_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -93,6 +126,13 @@
     ],
     "parameters": {
       "Left": [
+        "Varchar",
+        "Text",
+        "Text",
+        "Uuid",
+        "Text",
+        "Text",
+        "Text",
         "Uuid"
       ]
     },
@@ -101,10 +141,13 @@
       false,
       false,
       false,
+      true,
+      true,
+      true,
       false,
       false,
       false
     ]
   },
-  "hash": "136fccaba821b64655fc79d914ec31029417471cf9822be4ade7cec78aff1f2b"
+  "hash": "17a0a980248021572414ab8b9309011a371af8fbbfbf1857e87d30caffe3d7c7"
 }

@@ -6,6 +6,7 @@ import {
 	ReservationForm,
 	type ReservationFormValues,
 } from "#/components/ReservationForm";
+import { getDefaultContact, useAuth } from "#/hooks/useAuth";
 import { useCreateReservation } from "#/hooks/useReservations";
 import { requireAuthGuard } from "#/utils/authGuard";
 import { formatDateTimeLocal } from "#/utils/date";
@@ -53,6 +54,7 @@ function CreateReservationPage() {
 	const { t } = useTranslation();
 	const navigate = useNavigate();
 	const createReservation = useCreateReservation();
+	const { user } = useAuth();
 	const { start_time, end_time, resource_ids } = Route.useSearch();
 
 	// Calculate fallback times for current hour if query params aren't provided
@@ -84,6 +86,7 @@ function CreateReservationPage() {
 			</h1>
 			<ReservationForm
 				defaultValues={{
+					...getDefaultContact(user),
 					start_time: start_time || defaultStart,
 					end_time: end_time || defaultEnd,
 					resource_ids,

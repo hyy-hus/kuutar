@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as AppIndexRouteImport } from './routes/_app/index'
 import { Route as AppAdminRouteImport } from './routes/_app/admin'
+import { Route as AppMeRouteImport } from './routes/_app/me'
 import { Route as AppSandboxRouteImport } from './routes/_app/sandbox'
 import { Route as ContractsBatchPrintRouteImport } from './routes/contracts/batch-print'
 import { Route as AppAdminIndexRouteImport } from './routes/_app/admin/index'
@@ -58,6 +59,11 @@ const AppIndexRoute = AppIndexRouteImport.update({
 const AppAdminRoute = AppAdminRouteImport.update({
   id: '/admin',
   path: '/admin',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppMeRoute = AppMeRouteImport.update({
+  id: '/me',
+  path: '/me',
   getParentRoute: () => AppRoute,
 } as any)
 const AppSandboxRoute = AppSandboxRouteImport.update({
@@ -230,6 +236,7 @@ const AppAdminUsersEditIdRoute = AppAdminUsersEditIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof AppIndexRoute
   '/admin': typeof AppAdminRouteWithChildren
+  '/me': typeof AppMeRoute
   '/sandbox': typeof AppSandboxRoute
   '/contracts/batch-print': typeof ContractsBatchPrintRoute
   '/admin/reservations': typeof AppAdminReservationsRoute
@@ -265,6 +272,7 @@ export interface FileRoutesByFullPath {
   '/admin/users/edit/$id': typeof AppAdminUsersEditIdRoute
 }
 export interface FileRoutesByTo {
+  '/me': typeof AppMeRoute
   '/sandbox': typeof AppSandboxRoute
   '/contracts/batch-print': typeof ContractsBatchPrintRoute
   '/': typeof AppIndexRoute
@@ -304,6 +312,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_app': typeof AppRouteWithChildren
   '/_app/admin': typeof AppAdminRouteWithChildren
+  '/_app/me': typeof AppMeRoute
   '/_app/sandbox': typeof AppSandboxRoute
   '/contracts/batch-print': typeof ContractsBatchPrintRoute
   '/_app/': typeof AppIndexRoute
@@ -344,6 +353,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/admin'
+    | '/me'
     | '/sandbox'
     | '/contracts/batch-print'
     | '/admin/reservations'
@@ -379,6 +389,7 @@ export interface FileRouteTypes {
     | '/admin/users/edit/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
+    | '/me'
     | '/sandbox'
     | '/contracts/batch-print'
     | '/'
@@ -417,6 +428,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/_app'
     | '/_app/admin'
+    | '/_app/me'
     | '/_app/sandbox'
     | '/contracts/batch-print'
     | '/_app/'
@@ -479,6 +491,13 @@ declare module '@tanstack/react-router' {
       path: '/admin'
       fullPath: '/admin'
       preLoaderRoute: typeof AppAdminRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/me': {
+      id: '/_app/me'
+      path: '/me'
+      fullPath: '/me'
+      preLoaderRoute: typeof AppMeRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/sandbox': {
@@ -751,6 +770,7 @@ const AppAdminRouteWithChildren = AppAdminRoute._addFileChildren(
 
 interface AppRouteChildren {
   AppAdminRoute: typeof AppAdminRouteWithChildren
+  AppMeRoute: typeof AppMeRoute
   AppSandboxRoute: typeof AppSandboxRoute
   AppIndexRoute: typeof AppIndexRoute
   AppCollectionsIdRoute: typeof AppCollectionsIdRoute
@@ -776,6 +796,7 @@ interface AppRouteChildren {
 
 const AppRouteChildren: AppRouteChildren = {
   AppAdminRoute: AppAdminRouteWithChildren,
+  AppMeRoute: AppMeRoute,
   AppSandboxRoute: AppSandboxRoute,
   AppIndexRoute: AppIndexRoute,
   AppCollectionsIdRoute: AppCollectionsIdRoute,

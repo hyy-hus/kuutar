@@ -8,7 +8,7 @@ pub async fn list_users(pool: &PgPool) -> Result<Vec<User>, AppError> {
     let users = sqlx::query_as!(
         User,
         r#"
-        SELECT id, group_id, name, email, role AS "role: Role", created_at, updated_at
+        SELECT id, group_id, name, email, default_contact_person, default_contact_email, default_contact_phone, role AS "role: Role", created_at, updated_at
         FROM users
         WHERE deleted_at IS NULL
         ORDER BY name ASC, email ASC
@@ -24,7 +24,7 @@ pub async fn get_user(pool: &PgPool, id: Uuid) -> Result<User, AppError> {
     let user = sqlx::query_as!(
         User,
         r#"
-        SELECT id, group_id, name, email, role AS "role: Role", created_at, updated_at
+        SELECT id, group_id, name, email, default_contact_person, default_contact_email, default_contact_phone, role AS "role: Role", created_at, updated_at
         FROM users
         WHERE id = $1 AND deleted_at IS NULL
         "#,
@@ -47,7 +47,7 @@ pub async fn create_user(
         r#"
         INSERT INTO users (group_id, name, email, password_hash)
         VALUES ($1, $2, $3, $4)
-        RETURNING id, group_id, name, email, role AS "role: Role", created_at, updated_at
+        RETURNING id, group_id, name, email, default_contact_person, default_contact_email, default_contact_phone, role AS "role: Role", created_at, updated_at
         "#,
         payload.group_id,
         payload.name,
@@ -75,14 +75,20 @@ pub async fn update_user(
             email = COALESCE($2, email),
             password_hash = COALESCE($3, password_hash),
             group_id = COALESCE($4, group_id),
+            default_contact_person = CASE WHEN $5::text IS NULL THEN default_contact_person ELSE NULLIF($5, '') END,
+            default_contact_email = CASE WHEN $6::text IS NULL THEN default_contact_email ELSE NULLIF($6, '') END,
+            default_contact_phone = CASE WHEN $7::text IS NULL THEN default_contact_phone ELSE NULLIF($7, '') END,
             updated_at = NOW()
-        WHERE id = $5 AND deleted_at IS NULL
-        RETURNING id, group_id, name, email, role AS "role: Role", created_at, updated_at
+        WHERE id = $8 AND deleted_at IS NULL
+        RETURNING id, group_id, name, email, default_contact_person, default_contact_email, default_contact_phone, role AS "role: Role", created_at, updated_at
         "#,
         payload.name,
         payload.email.as_ref().map(|e| e.to_lowercase()),
         new_password_hash,
         payload.group_id,
+        payload.default_contact_person,
+        payload.default_contact_email.as_ref().map(|e| e.to_lowercase()),
+        payload.default_contact_phone,
         id
     )
     .fetch_optional(pool)
@@ -243,11 +249,50 @@ mod tests {
                 email: Some("new@example.com".to_string()),
                 password: None,
                 group_id: None,
+                default_contact_person: Some("Contact Person".to_string()),
+                default_contact_email: Some("Contact@Example.com".to_string()),
+                default_contact_phone: Some("+358401234567".to_string()),
             },
             None,
         )
         .await
         .expect("Failed to update user");
+
+        assert_eq!(
+            updated.default_contact_person.as_deref(),
+            Some("Contact Person")
+        );
+        assert_eq!(
+            updated.default_contact_email.as_deref(),
+            Some("contact@example.com")
+        );
+        assert_eq!(
+            updated.default_contact_phone.as_deref(),
+            Some("+358401234567")
+        );
+
+        // Omitted fields stay unchanged, empty string clears
+        let cleared = update_user(
+            &pool,
+            created.id,
+            &UpdateUser {
+                name: None,
+                email: None,
+                password: None,
+                group_id: None,
+                default_contact_person: Some(String::new()),
+                default_contact_email: None,
+                default_contact_phone: None,
+            },
+            None,
+        )
+        .await
+        .expect("Failed to update user");
+        assert_eq!(cleared.default_contact_person, None);
+        assert_eq!(
+            cleared.default_contact_email.as_deref(),
+            Some("contact@example.com")
+        );
 
         assert_eq!(updated.name, "New Name");
         assert_eq!(updated.email, "new@example.com");

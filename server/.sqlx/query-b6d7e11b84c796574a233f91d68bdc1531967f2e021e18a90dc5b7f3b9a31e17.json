@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        INSERT INTO users (group_id, name, email, password_hash)\n        VALUES ($1, $2, $3, $4)\n        RETURNING id, group_id, name, email, role AS \"role: Role\", created_at, updated_at\n        ",
+  "query": "\n        INSERT INTO users (group_id, name, email, password_hash)\n        VALUES ($1, $2, $3, $4)\n        RETURNING id, group_id, name, email, default_contact_person, default_contact_email, default_contact_phone, role AS \"role: Role\", created_at, updated_at\n        ",
   "describe": {
     "columns": [
       {
@@ -49,6 +49,39 @@
       },
       {
         "ordinal": 4,
+        "name": "default_contact_person",
+        "type_info": "Varchar",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "default_contact_person"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "default_contact_email",
+        "type_info": "Varchar",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "default_contact_email"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "default_contact_phone",
+        "type_info": "Varchar",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "default_contact_phone"
+          }
+        }
+      },
+      {
+        "ordinal": 7,
         "name": "role: Role",
         "type_info": {
           "Custom": {
@@ -69,7 +102,7 @@
         }
       },
       {
-        "ordinal": 5,
+        "ordinal": 8,
         "name": "created_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -80,7 +113,7 @@
         }
       },
       {
-        "ordinal": 6,
+        "ordinal": 9,
         "name": "updated_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -104,10 +137,13 @@
       false,
       false,
       false,
+      true,
+      true,
+      true,
       false,
       false,
       false
     ]
   },
-  "hash": "0271c163bdd00a951462867fc736d52341a466aedad29d120d5792472e6fdb76"
+  "hash": "b6d7e11b84c796574a233f91d68bdc1531967f2e021e18a90dc5b7f3b9a31e17"
 }

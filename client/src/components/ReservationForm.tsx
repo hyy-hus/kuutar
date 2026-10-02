@@ -230,18 +230,27 @@ export function ReservationForm({
 				)}
 			</form.Field>
 
-			{/* Admin-Only Contact Details & Notes Section */}
-			{isAdmin && (
+			{/* Contact Details */}
+			<div className="space-y-4">
 				<div className="p-3 bg-stone-100 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-md space-y-3">
 					<div className="flex items-center gap-1.5 text-xs font-bold text-purple-700 dark:text-purple-400">
 						<UserCheck size={14} />
-						<span>
-							{t("yhteystiedotYllapito", "Yhteystiedot (vain ylläpidolle)")}
-						</span>
+						<span>{t("yhteystiedot", "Yhteystiedot")}</span>
 					</div>
 
 					<div className="space-y-2">
-						<form.Field name="contact_person">
+						<form.Field
+							name="contact_person"
+							validators={{
+								onChange: ({ value }) =>
+									!isAdmin && !value.trim()
+										? t(
+												"yhteyshenkiloOnPakollinen",
+												"Yhteyshenkilö on pakollinen",
+											)
+										: undefined,
+							}}
+						>
 							{(field) => (
 								<div className="space-y-0.5">
 									<label
@@ -255,13 +264,31 @@ export function ReservationForm({
 										value={field.state.value}
 										onChange={(e) => field.handleChange(e.target.value)}
 										placeholder={t("yhteyshenkilonNimi", "Yhteyshenkilön nimi")}
+										isError={Boolean(field.state.meta.errors.length)}
+										onBlur={field.handleBlur}
 									/>
+									{Boolean(field.state.meta.errors.length) && (
+										<p className="text-[11px] text-red-500">
+											{field.state.meta.errors.join(", ")}
+										</p>
+									)}
 								</div>
 							)}
 						</form.Field>
 
 						<div className="grid grid-cols-2 gap-2">
-							<form.Field name="contact_email">
+							<form.Field
+								name="contact_email"
+								validators={{
+									onChange: ({ value }) =>
+										!isAdmin && !value.trim()
+											? t(
+													"yhteysSahkopostiOnPakollinen",
+													"Sähköposti on pakollinen",
+												)
+											: undefined,
+								}}
+							>
 								{(field) => (
 									<div className="space-y-0.5">
 										<label
@@ -279,12 +306,30 @@ export function ReservationForm({
 												"esimYhteysSahkoposti",
 												"yhteys@esimerkki.fi",
 											)}
+											isError={Boolean(field.state.meta.errors.length)}
+											onBlur={field.handleBlur}
 										/>
+										{Boolean(field.state.meta.errors.length) && (
+											<p className="text-[11px] text-red-500">
+												{field.state.meta.errors.join(", ")}
+											</p>
+										)}
 									</div>
 								)}
 							</form.Field>
 
-							<form.Field name="contact_phone">
+							<form.Field
+								name="contact_phone"
+								validators={{
+									onChange: ({ value }) =>
+										!isAdmin && !value.trim()
+											? t(
+													"puhelinnumeroOnPakollinen",
+													"Puhelinnumero on pakollinen",
+												)
+											: undefined,
+								}}
+							>
 								{(field) => (
 									<div className="space-y-0.5">
 										<label
@@ -299,63 +344,83 @@ export function ReservationForm({
 											value={field.state.value}
 											onChange={(e) => field.handleChange(e.target.value)}
 											placeholder="+358..."
+											isError={Boolean(field.state.meta.errors.length)}
+											onBlur={field.handleBlur}
 										/>
+										{Boolean(field.state.meta.errors.length) && (
+											<p className="text-[11px] text-red-500">
+												{field.state.meta.errors.join(", ")}
+											</p>
+										)}
 									</div>
 								)}
 							</form.Field>
 						</div>
-
-						<form.Field name="admin_notes">
-							{(field) => (
-								<div className="space-y-0.5">
-									<label
-										htmlFor={field.name}
-										className="text-[11px] text-stone-600 dark:text-stone-400"
-									>
-										{t("yllpitjnMuistiinpanot", "Ylläpitäjän muistiinpanot")}
-									</label>
-									<Input
-										id={field.name}
-										value={field.state.value}
-										onChange={(e) => field.handleChange(e.target.value)}
-										placeholder={t(
-											"vainYllpidolleNkyvtMerkinnt",
-											"Vain ylläpidolle näkyvät merkinnät",
-										)}
-									/>
-								</div>
-							)}
-						</form.Field>
-
-						<form.Field name="status">
-							{(field) => (
-								<div className="space-y-0.5">
-									<label
-										htmlFor={field.name}
-										className="text-[11px] text-stone-600 dark:text-stone-400"
-									>
-										{t("tila", "Tila")}
-									</label>
-									<select
-										id={field.name}
-										value={field.state.value}
-										onChange={(e) =>
-											field.handleChange(e.target.value as ReservationStatus)
-										}
-										className="w-full px-2.5 py-1.5 text-xs bg-white dark:bg-stone-950 border border-stone-200 dark:border-stone-800 rounded focus:outline-none focus:ring-2 focus:ring-purple-500"
-									>
-										<option value="confirmed">
-											{t("vahvistettu", "Vahvistettu")}
-										</option>
-										<option value="pending">{t("odottaa", "Odottaa")}</option>
-										<option value="cancelled">{t("peruttu", "Peruttu")}</option>
-									</select>
-								</div>
-							)}
-						</form.Field>
 					</div>
 				</div>
-			)}
+
+				{isAdmin && (
+					<div className="p-3 bg-stone-100 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-md space-y-3">
+						<div className="flex items-center gap-1.5 text-xs font-bold text-purple-700 dark:text-purple-400">
+							<ShieldAlert size={14} />
+							<span>{t("vainYllapidolle", "Vain ylläpidolle")}</span>
+						</div>
+
+						<div className="space-y-2">
+							<form.Field name="admin_notes">
+								{(field) => (
+									<div className="space-y-0.5">
+										<label
+											htmlFor={field.name}
+											className="text-[11px] text-stone-600 dark:text-stone-400"
+										>
+											{t("yllpitjnMuistiinpanot", "Ylläpitäjän muistiinpanot")}
+										</label>
+										<Input
+											id={field.name}
+											value={field.state.value}
+											onChange={(e) => field.handleChange(e.target.value)}
+											placeholder={t(
+												"vainYllpidolleNkyvtMerkinnt",
+												"Vain ylläpidolle näkyvät merkinnät",
+											)}
+										/>
+									</div>
+								)}
+							</form.Field>
+
+							<form.Field name="status">
+								{(field) => (
+									<div className="space-y-0.5">
+										<label
+											htmlFor={field.name}
+											className="text-[11px] text-stone-600 dark:text-stone-400"
+										>
+											{t("tila", "Tila")}
+										</label>
+										<select
+											id={field.name}
+											value={field.state.value}
+											onChange={(e) =>
+												field.handleChange(e.target.value as ReservationStatus)
+											}
+											className="w-full px-2.5 py-1.5 text-xs bg-white dark:bg-stone-950 border border-stone-200 dark:border-stone-800 rounded focus:outline-none focus:ring-2 focus:ring-purple-500"
+										>
+											<option value="confirmed">
+												{t("vahvistettu", "Vahvistettu")}
+											</option>
+											<option value="pending">{t("odottaa", "Odottaa")}</option>
+											<option value="cancelled">
+												{t("peruttu", "Peruttu")}
+											</option>
+										</select>
+									</div>
+								)}
+							</form.Field>
+						</div>
+					</div>
+				)}
+			</div>
 
 			{/* Occurrence & Multi-Resource Selection Section */}
 			<div className="pt-3 border-t-2 border-stone-800 dark:border-stone-700 space-y-3">
