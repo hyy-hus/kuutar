@@ -60,6 +60,8 @@ interface ReservationFormProps {
 	isSubmitting?: boolean;
 	submitLabel?: string;
 	isCreate?: boolean;
+	/** Set when editing, so the reservation is not reported as conflicting with itself */
+	reservationId?: string;
 }
 
 export function ReservationForm({
@@ -67,6 +69,7 @@ export function ReservationForm({
 	onSubmit,
 	isSubmitting = false,
 	submitLabel,
+	reservationId,
 }: ReservationFormProps) {
 	const { t } = useTranslation();
 	const { formatDate } = useDateFormatter();
@@ -684,6 +687,7 @@ export function ReservationForm({
 							restrictionConflicts={restrictionConflicts}
 							setRestrictionConflicts={setRestrictionConflicts}
 							isAdmin={isAdmin}
+							reservationId={reservationId}
 						/>
 					)}
 				</form.Subscribe>
@@ -709,6 +713,9 @@ export function ReservationForm({
 						restrictionConflicts !== null &&
 						restrictionConflicts.length > 0;
 
+					const hasReservationConflict =
+						!isAdmin && conflicts !== null && conflicts.length > 0;
+
 					return (
 						<Button
 							type="submit"
@@ -717,6 +724,7 @@ export function ReservationForm({
 								isSubmitting ||
 								formSubmitting ||
 								hasRestrictionViolation ||
+								hasReservationConflict ||
 								needsContractApproval
 							}
 							className="w-full flex items-center justify-center gap-2 mt-4"
@@ -841,6 +849,7 @@ interface AutomaticConflictCheckerProps {
 		items: { title: string; start_time: string; end_time: string }[] | null,
 	) => void;
 	isAdmin: boolean;
+	reservationId?: string;
 }
 
 function AutomaticConflictChecker({
@@ -855,6 +864,7 @@ function AutomaticConflictChecker({
 	restrictionConflicts,
 	setRestrictionConflicts,
 	isAdmin,
+	reservationId,
 }: AutomaticConflictCheckerProps) {
 	const { t } = useTranslation();
 	const { formatDate } = useDateFormatter();
@@ -945,7 +955,10 @@ function AutomaticConflictChecker({
 		}
 
 		let isCancelled = false;
-		mutateAsync(allOccurrences)
+		mutateAsync({
+			occurrences: allOccurrences,
+			excludeReservationId: reservationId,
+		})
 			.then((results) => {
 				if (!isCancelled) setConflicts(results);
 			})
@@ -964,6 +977,7 @@ function AutomaticConflictChecker({
 		untilStr,
 		activeRestrictions,
 		isAdmin,
+		reservationId,
 		mutateAsync,
 		setConflicts,
 		setRestrictionConflicts,

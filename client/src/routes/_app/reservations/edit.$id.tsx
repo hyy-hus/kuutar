@@ -76,6 +76,7 @@ function EditReservationPage() {
 				{t("muokkaaVarausta", "Muokkaa varausta")}
 			</h1>
 			<ReservationForm
+				reservationId={reservation.id}
 				defaultValues={{
 					title: reservation.title,
 					description: reservation.description ?? "",

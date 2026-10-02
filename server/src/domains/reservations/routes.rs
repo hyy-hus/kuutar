@@ -10,7 +10,8 @@ use validator::Validate;
 use super::{
     db,
     models::{
-        CreateOccurrencePayload, CreateReservationPayload, ListReservationsQuery, Occurrence,
+        CheckConflictsQuery, CreateOccurrencePayload, CreateReservationPayload,
+        ListReservationsQuery, Occurrence,
         ReservationWithOccurrences, UpdateReservationPayload,
     },
 };
@@ -291,19 +292,29 @@ pub async fn create_reservation(
     path = "/reservations/check-conflicts",
     tag = "Reservations",
     security(("bearer_auth" = [])),
+    params(CheckConflictsQuery),
     request_body = [CreateOccurrencePayload],
     responses(
         (status = 200, description = "List of conflicting occurrences", body = [Occurrence]),
         (status = 401, description = "Unauthorized")
     )
 )]
-#[tracing::instrument(skip(auth_state, _auth_user))]
+#[tracing::instrument(skip(auth_state, auth_user))]
 pub async fn check_reservation_conflicts(
     State(auth_state): State<AuthState>,
-    _auth_user: AuthUser,
+    auth_user: AuthUser,
+    Query(query): Query<CheckConflictsQuery>,
     Json(payload): Json<Vec<CreateOccurrencePayload>>,
 ) -> Result<Json<Vec<Occurrence>>, AppError> {
-    let conflicts = db::check_conflicts(&auth_state.pool, &payload).await?;
+    // Admins also see overlaps with pending reservations; others only with confirmed ones
+    let include_pending = auth_user.role == Role::Admin;
+    let conflicts = db::check_conflicts(
+        &auth_state.pool,
+        &payload,
+        query.exclude_reservation_id,
+        include_pending,
+    )
+    .await?;
     Ok(Json(conflicts))
 }
 

@@ -358,6 +358,8 @@ async fn fetch_occurrences_for_reservation_filtered(
 pub async fn check_conflicts(
     pool: &PgPool,
     proposed_occurrences: &[CreateOccurrencePayload],
+    exclude_reservation_id: Option<Uuid>,
+    include_pending: bool,
 ) -> Result<Vec<Occurrence>, AppError> {
     let mut conflicting_occurrences = Vec::new();
 
@@ -370,13 +372,16 @@ pub async fn check_conflicts(
             JOIN reservations r ON r.id = o.reservation_id
             WHERE o.resource_id = $1
               AND r.deleted_at IS NULL
-              AND r.status = 'confirmed'
+              AND (r.status = 'confirmed' OR ($5 AND r.status = 'pending'))
+              AND ($4::uuid IS NULL OR r.id <> $4)
               AND o.start_time < $3 
               AND o.end_time > $2
             "#,
             proposed.resource_id,
             proposed.start_time,
-            proposed.end_time
+            proposed.end_time,
+            exclude_reservation_id,
+            include_pending
         )
         .fetch_all(pool)
         .await?;
