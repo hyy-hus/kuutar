@@ -5,7 +5,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "#/components/Button";
 import { Input } from "#/components/Input";
-import { useAuth, useIsAdmin } from "#/hooks/useAuth";
+import { useAuth } from "#/hooks/useAuth";
 import { useUpdateMe } from "#/hooks/useUsers";
 import { requireAuthGuard } from "#/utils/authGuard";
 
@@ -24,7 +24,6 @@ function FieldError({ errors }: { errors: unknown[] }) {
 function MePage() {
 	const { t } = useTranslation();
 	const { user } = useAuth();
-	const { isAdmin } = useIsAdmin();
 	const updateMe = useUpdateMe();
 	const [saved, setSaved] = useState(false);
 
@@ -32,7 +31,6 @@ function MePage() {
 		defaultValues: {
 			name: user?.name ?? "",
 			email: user?.email ?? "",
-			current_password: "",
 			password: "",
 			default_contact_person: user?.default_contact_person ?? "",
 			default_contact_email: user?.default_contact_email ?? "",
@@ -40,16 +38,13 @@ function MePage() {
 		},
 		onSubmit: async ({ value }) => {
 			setSaved(false);
-			const { password, current_password, ...rest } = value;
+			const { password, ...rest } = value;
 			// Empty contact strings clear the saved default on the server
 			await updateMe.mutateAsync({
 				...rest,
-				...(password
-					? { password, ...(isAdmin ? {} : { current_password }) }
-					: {}),
+				...(password ? { password } : {}),
 			});
 			form.setFieldValue("password", "");
-			form.setFieldValue("current_password", "");
 			setSaved(true);
 		},
 	});
@@ -130,41 +125,6 @@ function MePage() {
 					)}
 				</form.Field>
 
-				{!isAdmin && (
-					<form.Field
-						name="current_password"
-						validators={{
-							onChangeListenTo: ["password"],
-							onChange: ({ value, fieldApi }) =>
-								fieldApi.form.getFieldValue("password") && !value
-									? t(
-											"nykyinenSalasanaOnPakollinen",
-											"Nykyinen salasana vaaditaan salasanan vaihtamiseen",
-										)
-									: undefined,
-						}}
-					>
-						{(field) => (
-							<div className="space-y-1">
-								<label htmlFor={field.name} className={labelClass}>
-									{t("nykyinenSalasana", "Nykyinen salasana")}
-								</label>
-								<Input
-									id={field.name}
-									type="password"
-									autoComplete="current-password"
-									value={field.state.value}
-									onChange={(e) => field.handleChange(e.target.value)}
-									onBlur={field.handleBlur}
-									isError={field.state.meta.errors.length > 0}
-									placeholder="••••••••"
-								/>
-								<FieldError errors={field.state.meta.errors} />
-							</div>
-						)}
-					</form.Field>
-				)}
-
 				<form.Field
 					name="password"
 					validators={{
@@ -188,7 +148,6 @@ function MePage() {
 							<Input
 								id={field.name}
 								type="password"
-								autoComplete="new-password"
 								value={field.state.value}
 								onChange={(e) => field.handleChange(e.target.value)}
 								onBlur={field.handleBlur}

@@ -135,13 +135,7 @@ export function useUpdateMe() {
 
 	return useMutation({
 		mutationFn: async (payload: UpdateUserPayload) => {
-			const { data, error, response } = await api.PATCH("/users/me", {
-				body: payload,
-			});
-			if (response.status === 403)
-				throw new Error(
-					i18next.t("nykyinenSalasanaVrin", "Nykyinen salasana on väärin."),
-				);
+			const { data, error } = await api.PATCH("/users/me", { body: payload });
 			if (error || !data)
 				throw new Error(
 					i18next.t(

@@ -37,16 +37,6 @@ pub async fn get_user(pool: &PgPool, id: Uuid) -> Result<User, AppError> {
     Ok(user)
 }
 
-pub async fn get_password_hash(pool: &PgPool, id: Uuid) -> Result<String, AppError> {
-    sqlx::query_scalar!(
-        "SELECT password_hash FROM users WHERE id = $1 AND deleted_at IS NULL",
-        id
-    )
-    .fetch_optional(pool)
-    .await?
-    .ok_or(AppError::NotFound)
-}
-
 pub async fn create_user(
     pool: &PgPool,
     payload: &CreateUser,
@@ -258,7 +248,6 @@ mod tests {
                 name: Some("New Name".to_string()),
                 email: Some("new@example.com".to_string()),
                 password: None,
-                current_password: None,
                 group_id: None,
                 default_contact_person: Some("Contact Person".to_string()),
                 default_contact_email: Some("Contact@Example.com".to_string()),
@@ -290,7 +279,6 @@ mod tests {
                 name: None,
                 email: None,
                 password: None,
-                current_password: None,
                 group_id: None,
                 default_contact_person: Some(String::new()),
                 default_contact_email: None,
