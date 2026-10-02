@@ -30,7 +30,11 @@ import {
 } from "#/hooks/useReservations";
 import { useResources } from "#/hooks/useResorces";
 import { useRestrictions } from "#/hooks/useRestrictions";
-import { formatDateTimeLocal, useDateFormatter } from "#/utils/date";
+import {
+	formatDateTimeLocal,
+	formatYYYYMMDD,
+	useDateFormatter,
+} from "#/utils/date";
 import { generateOccurrences, parseRRule } from "#/utils/rruleUtils";
 
 export interface ReservationFormValues {
@@ -74,17 +78,9 @@ export function ReservationForm({
 
 	const initialRule = parseRRule(defaultValues?.rrule);
 
-	const formatDateInput = (date?: Date | null) => {
-		if (!date) return "";
-		const year = date.getFullYear();
-		const month = String(date.getMonth() + 1).padStart(2, "0");
-		const day = String(date.getDate()).padStart(2, "0");
-		return `${year}-${month}-${day}`;
-	};
-
 	const [freq, setFreq] = useState<Frequency | null>(initialRule.freq);
 	const [untilStr, setUntilStr] = useState<string>(
-		formatDateInput(initialRule.until),
+		initialRule.until ? formatYYYYMMDD(initialRule.until) : "",
 	);
 	const [conflicts, setConflicts] = useState<Occurrence[] | null>(null);
 	const [restrictionConflicts, setRestrictionConflicts] = useState<

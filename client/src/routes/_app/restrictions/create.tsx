@@ -6,17 +6,13 @@ import {
 } from "#/components/RestrictionForm";
 import { useCreateRestriction } from "#/hooks/useRestrictions";
 import { requireAuthGuard } from "#/utils/authGuard";
+import { formatDateTimeLocal } from "#/utils/date";
 
 export interface CreateRestrictionSearch {
 	start_time?: string;
 	end_time?: string;
 	resource_id?: string;
 }
-
-const formatDateTimeLocal = (date: Date) => {
-	const pad = (n: number) => String(n).padStart(2, "0");
-	return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
-};
 
 const getDefaultSlot = () => {
 	const start = new Date();

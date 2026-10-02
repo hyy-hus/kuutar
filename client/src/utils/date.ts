@@ -158,3 +158,25 @@ export function formatDateTimeLocal(date: Date): string {
 	const pad = (n: number) => String(n).padStart(2, "0");
 	return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
+
+/** Formats a Date as YYYY-MM-DD in local time, e.g. for input[type="date"] or URL params */
+export function formatYYYYMMDD(date: Date): string {
+	const pad = (n: number) => String(n).padStart(2, "0");
+	return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}
+
+/** Parses YYYY-MM-DD as local midnight; `new Date("YYYY-MM-DD")` would give UTC midnight */
+export function parseLocalDate(dateStr: string): Date {
+	const [year, month, day] = dateStr.split("-").map(Number);
+	return new Date(year, month - 1, day);
+}
+
+/** Monday 00:00 local time of the week containing `date` */
+export function startOfWeek(date: Date = new Date()): Date {
+	const daysSinceMonday = (date.getDay() + 6) % 7;
+	return new Date(
+		date.getFullYear(),
+		date.getMonth(),
+		date.getDate() - daysSinceMonday,
+	);
+}

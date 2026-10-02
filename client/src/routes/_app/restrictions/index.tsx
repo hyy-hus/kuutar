@@ -24,8 +24,12 @@ import {
 	useRestrictions,
 } from "#/hooks/useRestrictions";
 import { requireAuthGuard } from "#/utils/authGuard";
-import { startOfCurrentWeek } from "#/utils/calendarUtils";
-import { useDateFormatter } from "#/utils/date";
+import {
+	formatYYYYMMDD,
+	parseLocalDate,
+	startOfWeek,
+	useDateFormatter,
+} from "#/utils/date";
 import { readable_uuid } from "#/utils/uuid";
 
 export interface RestrictionsDashboardSearch {
@@ -33,18 +37,6 @@ export interface RestrictionsDashboardSearch {
 	days?: number;
 	resource_id?: string;
 }
-
-const formatYYYYMMDD = (d: Date) => {
-	const year = d.getFullYear();
-	const month = String(d.getMonth() + 1).padStart(2, "0");
-	const day = String(d.getDate()).padStart(2, "0");
-	return `${year}-${month}-${day}`;
-};
-
-const parseLocalDate = (dateStr: string): Date => {
-	const [year, month, day] = dateStr.split("-").map(Number);
-	return new Date(year, month - 1, day, 0, 0, 0, 0);
-};
 
 export const Route = createFileRoute("/_app/restrictions/")({
 	validateSearch: (
@@ -179,7 +171,7 @@ function RestrictionsDashboardPage() {
 	const { data: resources, isLoading: loadingResources } = useResources();
 	const deleteRestriction = useDeleteRestriction();
 
-	const defaultStartStr = formatYYYYMMDD(startOfCurrentWeek());
+	const defaultStartStr = formatYYYYMMDD(startOfWeek());
 	const startStr = search.start_date || defaultStartStr;
 	const days = search.days || 30;
 	const resourceId = search.resource_id;

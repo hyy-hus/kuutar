@@ -10,6 +10,7 @@ import { useResources } from "#/hooks/useResorces";
 import { useRestrictions } from "#/hooks/useRestrictions";
 import type { CalendarSearch } from "#/routes/_app/calendar";
 import type { CalendarEvent } from "#/utils/calendarUtils";
+import { formatYYYYMMDD, parseLocalDate, startOfWeek } from "#/utils/date";
 import { ToggleChip } from "../Chip";
 import { WeekView } from "./WeekView";
 
@@ -19,18 +20,6 @@ interface CalendarProps {
 	selectedResourceIds?: string[];
 	onSearchChange: (nextSearch: CalendarSearch) => void;
 }
-
-const parseLocalDate = (dateStr: string): Date => {
-	const [year, month, day] = dateStr.split("-").map(Number);
-	return new Date(year, month - 1, day, 0, 0, 0, 0);
-};
-
-const formatYYYYMMDD = (d: Date): string => {
-	const year = d.getFullYear();
-	const month = String(d.getMonth() + 1).padStart(2, "0");
-	const day = String(d.getDate()).padStart(2, "0");
-	return `${year}-${month}-${day}`;
-};
 
 /** Height of one hour row in rem, from most compact to roomiest */
 const HOUR_HEIGHTS = [3, 5, 7] as const;
@@ -47,13 +36,6 @@ function readStoredHourHeight(): HourHeight {
 		return DEFAULT_HOUR_HEIGHT;
 	}
 }
-
-const getMonday = (d: Date): Date => {
-	const target = new Date(d);
-	const day = target.getDay();
-	const diff = target.getDate() - day + (day === 0 ? -6 : 1);
-	return new Date(target.setDate(diff));
-};
 
 export function Calendar({
 	startStr,
@@ -124,7 +106,7 @@ export function Calendar({
 
 	const handleDaysChange = (newDays: number) => {
 		if (newDays === 7) {
-			onSearchChange({ days: 7, start: formatYYYYMMDD(getMonday(start)) });
+			onSearchChange({ days: 7, start: formatYYYYMMDD(startOfWeek(start)) });
 		} else {
 			onSearchChange({ days: newDays, start: formatYYYYMMDD(start) });
 		}

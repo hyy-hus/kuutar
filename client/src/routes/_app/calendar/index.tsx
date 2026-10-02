@@ -1,6 +1,7 @@
 // src/routes/_app/calendar/index.tsx
 import { createFileRoute } from "@tanstack/react-router";
 import { Calendar } from "#/components/calendar/Calendar";
+import { formatYYYYMMDD, startOfWeek } from "#/utils/date";
 
 export interface CalendarSearch {
 	start?: string;
@@ -11,20 +12,6 @@ export interface CalendarSearch {
 /** Day ranges the calendar offers */
 const DAY_RANGES = [1, 3, 5, 7] as const;
 const DAYS_STORAGE_KEY = "kuutar.calendar.days";
-
-const formatYYYYMMDD = (d: Date): string => {
-	const year = d.getFullYear();
-	const month = String(d.getMonth() + 1).padStart(2, "0");
-	const day = String(d.getDate()).padStart(2, "0");
-	return `${year}-${month}-${day}`;
-};
-
-const getMondayYYYYMMDD = (): string => {
-	const d = new Date();
-	const day = d.getDay();
-	d.setDate(d.getDate() - day + (day === 0 ? -6 : 1));
-	return formatYYYYMMDD(d);
-};
 
 /** Reads the remembered day range; storage can be unavailable (e.g. private mode) */
 function readStoredDays(): number | undefined {
@@ -74,7 +61,9 @@ function CalendarRoutePage() {
 	// A week view starts on Monday, other ranges on today
 	const effectiveStart =
 		start ??
-		(effectiveDays === 7 ? getMondayYYYYMMDD() : formatYYYYMMDD(new Date()));
+		(effectiveDays === 7
+			? formatYYYYMMDD(startOfWeek())
+			: formatYYYYMMDD(new Date()));
 
 	const handleSearchChange = (nextSearch: CalendarSearch) => {
 		if (nextSearch.days !== undefined) storeDays(nextSearch.days);

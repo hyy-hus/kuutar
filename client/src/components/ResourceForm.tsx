@@ -5,6 +5,7 @@ import { LocalizedRichTextEditor } from "#/components/LocalizedRichTextEditor";
 import { useCollections } from "#/hooks/useCollections";
 import { getLocalizedText, useContracts } from "#/hooks/useContracts";
 import type { CreateResource } from "#/hooks/useResorces";
+import { formatYYYYMMDD } from "#/utils/date";
 import {
 	compactLocalizedRichText,
 	toLocalizedRichText,
@@ -26,14 +27,11 @@ interface ResourceFormProps {
 	submitLabel?: string;
 }
 
-const formatYYYYMMDD = (isoStr?: string | null) => {
+/** Turns an ISO timestamp into the YYYY-MM-DD value of a date input */
+const toDateInputValue = (isoStr?: string | null) => {
 	if (!isoStr) return "";
 	const date = new Date(isoStr);
-	if (Number.isNaN(date.getTime())) return "";
-	const year = date.getFullYear();
-	const month = String(date.getMonth() + 1).padStart(2, "0");
-	const day = String(date.getDate()).padStart(2, "0");
-	return `${year}-${month}-${day}`;
+	return Number.isNaN(date.getTime()) ? "" : formatYYYYMMDD(date);
 };
 
 export function ResourceForm({
@@ -57,7 +55,7 @@ export function ResourceForm({
 			collection_id: defaultValues?.collection_id ?? "",
 			allow_recurring: defaultValues?.allow_recurring ?? true,
 			is_public: defaultValues?.is_public ?? true,
-			reservable_until: formatYYYYMMDD(defaultValues?.reservable_until),
+			reservable_until: toDateInputValue(defaultValues?.reservable_until),
 			contract_ids: defaultValues?.contract_ids ?? [],
 		},
 		onSubmit: async ({ value }) => {

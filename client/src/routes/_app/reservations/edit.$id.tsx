@@ -6,6 +6,7 @@ import {
 } from "#/components/ReservationForm";
 import { useReservation, useUpdateReservation } from "#/hooks/useReservations";
 import { requireAuthGuard } from "#/utils/authGuard";
+import { formatDateTimeLocal } from "#/utils/date";
 
 export const Route = createFileRoute("/_app/reservations/edit/$id")({
 	beforeLoad: async ({ context }) => {
@@ -38,14 +39,6 @@ function EditReservationPage() {
 	const resourceIds = Array.from(
 		new Set(reservation.occurrences?.map((occ) => occ.resource_id) || []),
 	);
-
-	const formatLocalISO = (isoStr?: string) => {
-		if (!isoStr) return "";
-		const date = new Date(isoStr);
-		const offset = date.getTimezoneOffset();
-		const localDate = new Date(date.getTime() - offset * 60 * 1000);
-		return localDate.toISOString().slice(0, 16);
-	};
 
 	const handleSubmit = async (values: ReservationFormValues) => {
 		await updateReservation.mutateAsync({
@@ -81,8 +74,12 @@ function EditReservationPage() {
 					contact_phone: reservation.contact_phone ?? "",
 					rrule: reservation.rrule,
 					resource_ids: resourceIds,
-					start_time: formatLocalISO(firstOccurrence?.start_time),
-					end_time: formatLocalISO(firstOccurrence?.end_time),
+					start_time: firstOccurrence
+						? formatDateTimeLocal(new Date(firstOccurrence.start_time))
+						: "",
+					end_time: firstOccurrence
+						? formatDateTimeLocal(new Date(firstOccurrence.end_time))
+						: "",
 					occurrences: reservation.occurrences,
 				}}
 				onSubmit={handleSubmit}

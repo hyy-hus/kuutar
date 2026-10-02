@@ -7,18 +7,13 @@ import {
 } from "#/components/ReservationForm";
 import { useCreateReservation } from "#/hooks/useReservations";
 import { requireAuthGuard } from "#/utils/authGuard";
+import { formatDateTimeLocal } from "#/utils/date";
 
 export interface CreateReservationSearch {
 	start_time?: string;
 	end_time?: string;
 	resource_ids?: string[];
 }
-
-// Helper to format Date for input[type="datetime-local"] (YYYY-MM-DDTHH:mm)
-const formatDateTimeLocal = (date: Date) => {
-	const pad = (n: number) => String(n).padStart(2, "0");
-	return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
-};
 
 // Generates fallback start/end times spanning the current hour
 const getDefaultSlot = () => {
