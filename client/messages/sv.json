@@ -489,5 +489,7 @@
 	"varaussopimus": "Bokningsavtal",
 	"sahkoposti": "E-post",
 	"puhelin": "Telefon",
-	"tulostuksenKieli": "Utskriftsspråk"
+	"tulostuksenKieli": "Utskriftsspråk",
+	"kieli": "Språk",
+	"kieliKuvausSahkoposti": "Användarens e-postmeddelanden skickas på detta språk."
 }

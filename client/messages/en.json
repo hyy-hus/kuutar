@@ -489,5 +489,7 @@
 	"varaussopimus": "Booking contract",
 	"sahkoposti": "Email",
 	"puhelin": "Phone",
-	"tulostuksenKieli": "Print language"
+	"tulostuksenKieli": "Print language",
+	"kieli": "Language",
+	"kieliKuvausSahkoposti": "The user's emails are sent in this language."
 }

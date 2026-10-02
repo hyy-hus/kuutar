@@ -489,5 +489,7 @@
 	"varaussopimus": "Varaussopimus",
 	"sahkoposti": "Sähköposti",
 	"puhelin": "Puhelin",
-	"tulostuksenKieli": "Tulostuksen kieli"
+	"tulostuksenKieli": "Tulostuksen kieli",
+	"kieli": "Kieli",
+	"kieliKuvausSahkoposti": "Käyttäjän sähköpostiviestit lähetetään tällä kielellä."
 }

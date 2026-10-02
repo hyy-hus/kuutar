@@ -35,6 +35,7 @@ function EditUserPage() {
 				name: values.name,
 				email: values.email,
 				group_id: values.group_id,
+				language: values.language,
 				...(values.password ? { password: values.password } : {}),
 			},
 		});
@@ -54,6 +55,7 @@ function EditUserPage() {
 					name: user.name,
 					email: user.email,
 					group_id: user.group_id,
+					language: user.language,
 				}}
 				onSubmit={handleSubmit}
 				isSubmitting={updateUser.isPending}

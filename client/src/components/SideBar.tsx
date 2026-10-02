@@ -19,6 +19,7 @@ import {
 	Users,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { LANGUAGE_LABELS } from "#/components/LanguageSelect";
 import { useAuth, useIsAdmin } from "#/hooks/useAuth";
 import { SUPPORTED_LANGUAGES, selectLanguage } from "#/i18n";
 
@@ -27,12 +28,6 @@ interface SideBarProps {
 	theme: "light" | "dark";
 	toggleTheme: () => void;
 }
-
-const LANGUAGE_LABELS: Record<string, string> = {
-	fi: "Suomi",
-	en: "English",
-	sv: "Svenska",
-};
 
 export function SideBar({ theme, toggleTheme }: SideBarProps) {
 	const { t, i18n } = useTranslation();

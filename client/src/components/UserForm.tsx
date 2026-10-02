@@ -3,12 +3,14 @@ import { Loader2, Save } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "#/components/Button";
 import { Input } from "#/components/Input";
+import { LanguageSelect } from "#/components/LanguageSelect";
 import { useGroups } from "#/hooks/useGroups";
 
 export interface UserFormValues {
 	name: string;
 	email: string;
 	group_id: string;
+	language: string;
 	password?: string;
 }
 
@@ -35,6 +37,7 @@ export function UserForm({
 			name: defaultValues?.name ?? "",
 			email: defaultValues?.email ?? "",
 			group_id: defaultValues?.group_id ?? "",
+			language: defaultValues?.language ?? "fi",
 			password: defaultValues?.password ?? "",
 		},
 		onSubmit: async ({ value }) => {
@@ -182,6 +185,32 @@ export function UserForm({
 						</div>
 					);
 				}}
+			</form.Field>
+
+			{/* Language Field */}
+			<form.Field name="language">
+				{(field) => (
+					<div className="space-y-1">
+						<label
+							htmlFor={field.name}
+							className="text-xs font-medium text-stone-700 dark:text-stone-300"
+						>
+							{t("kieli", "Kieli")}
+						</label>
+						<LanguageSelect
+							id={field.name}
+							value={field.state.value}
+							onChange={field.handleChange}
+							onBlur={field.handleBlur}
+						/>
+						<p className="text-[11px] text-stone-500">
+							{t(
+								"kieliKuvausSahkoposti",
+								"Käyttäjän sähköpostiviestit lähetetään tällä kielellä.",
+							)}
+						</p>
+					</div>
+				)}
 			</form.Field>
 
 			{/* Password Field */}
