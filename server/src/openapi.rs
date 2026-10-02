@@ -4,6 +4,7 @@ use utoipa::{Modify, OpenApi};
 use crate::domains::auth;
 use crate::domains::collections;
 use crate::domains::contracts;
+use crate::domains::email_templates;
 use crate::domains::groups;
 use crate::domains::reservations;
 use crate::domains::resources;
@@ -100,6 +101,14 @@ impl Modify for SecurityAddon {
         contracts::routes::generate_upload_url,
         contracts::routes::generate_download_url,
 
+        // Email templates
+        email_templates::routes::list_templates,
+        email_templates::routes::get_template,
+        email_templates::routes::update_template,
+        email_templates::routes::reset_template,
+        email_templates::routes::preview_template,
+        email_templates::routes::send_test,
+
         // Stats
         stats::routes::get_stats,
     ),
@@ -143,6 +152,11 @@ impl Modify for SecurityAddon {
             contracts::models::PresignedUploadRequest,
             contracts::models::PresignedUploadResponse,
             contracts::models::PresignedDownloadResponse,
+            email_templates::models::EmailTemplateKey,
+            email_templates::models::EmailTemplate,
+            email_templates::models::UpdateEmailTemplate,
+            email_templates::models::PreviewEmailTemplate,
+            email_templates::models::EmailPreview,
             stats::models::SystemStats,
             stats::models::TopResourceStat,
         )
@@ -156,6 +170,7 @@ impl Modify for SecurityAddon {
         (name = "Reservations", description = "Reservation and occurrence management endpoints"),
         (name = "Restrictions", description = "Time restriction and group exemption management endpoints"),
         (name = "Contracts", description = "Contract document management endpoints"),
+        (name = "Email templates", description = "Editable notification email templates"),
         (name = "Stats", description = "System statistics and usage analytics endpoints")
     ),
     modifiers(&SecurityAddon)

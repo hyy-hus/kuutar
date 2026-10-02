@@ -21,6 +21,7 @@ use crate::{
             AuthState,
             extractor::{AuthUser, OptionalAuthUser, RequireAdmin},
         },
+        email_templates::{models::EmailTemplateKey, notify},
         reservations::models::{BatchImportReport, PortableReservationImport},
         users::{db as users_db, models::Role},
     },
@@ -296,6 +297,22 @@ pub async fn create_reservation(
 
     let reservation = db::create(&auth_state.pool, owner_id, payload).await?;
 
+    // Pending reservations get an acknowledgement; ones an admin creates as
+    // confirmed get the confirmation straight away.
+    let template = match reservation.reservation.status {
+        ReservationStatus::Pending => Some(EmailTemplateKey::ReservationCreated),
+        ReservationStatus::Confirmed => Some(EmailTemplateKey::ReservationConfirmed),
+        ReservationStatus::Cancelled => None,
+    };
+    if let Some(key) = template {
+        notify::spawn_reservation_email(
+            &auth_state.pool,
+            &auth_state.config,
+            key,
+            reservation.reservation.id,
+        );
+    }
+
     let sanitized = sanitize_reservation_for_role(reservation, is_admin, Some(auth_user.id));
 
     Ok((StatusCode::CREATED, Json(sanitized)))
@@ -400,6 +417,19 @@ pub async fn update_reservation(
     }
 
     let reservation = db::update(&auth_state.pool, id, payload).await?;
+
+    // Notify on confirmation and cancellation. Falling back to pending (e.g. after
+    // an edit that needs re-approval) is deliberately silent.
+    if reservation.reservation.status != existing.reservation.status {
+        let template = match reservation.reservation.status {
+            ReservationStatus::Confirmed => Some(EmailTemplateKey::ReservationConfirmed),
+            ReservationStatus::Cancelled => Some(EmailTemplateKey::ReservationCancelled),
+            ReservationStatus::Pending => None,
+        };
+        if let Some(key) = template {
+            notify::spawn_reservation_email(&auth_state.pool, &auth_state.config, key, id);
+        }
+    }
 
     let sanitized = sanitize_reservation_for_role(reservation, is_admin, Some(auth_user.id));
 

@@ -60,6 +60,10 @@ pub struct Config {
     )]
     pub smtp_from_email: String,
 
+    /// Public URL of the web app, used for links in emails.
+    #[arg(long, env = "APP_BASE_URL", default_value = "http://localhost:5173")]
+    pub app_base_url: String,
+
     // --- S3 / Scaleway Object Storage Configuration ---
     #[arg(long, env = "S3_BUCKET_NAME")]
     pub s3_bucket_name: String,

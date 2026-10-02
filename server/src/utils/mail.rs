@@ -2,7 +2,7 @@ use crate::config::{Config, SmtpTls};
 use crate::errors::AppError;
 use lettre::{
     AsyncSmtpTransport, AsyncTransport, Message, Tokio1Executor,
-    message::{Mailbox, header::ContentType},
+    message::{Mailbox, MultiPart},
     transport::smtp::authentication::Credentials,
 };
 
@@ -50,14 +50,18 @@ fn build_transport(config: &Config) -> Result<AsyncSmtpTransport<Tokio1Executor>
     Ok(builder.build())
 }
 
-pub async fn send_otp_email(
+/// Sends one message with HTML and plain-text alternatives.
+pub async fn send_email(
     config: &Config,
     to_email: &str,
-    otp_code: &str,
+    cc_email: Option<&str>,
+    subject: &str,
+    html: String,
+    text: String,
 ) -> Result<(), AppError> {
     let invalid = |what: &str, e: &dyn std::fmt::Display| {
-        tracing::error!("Invalid {what} for OTP email: {e}");
-        AppError::InternalServerError("Sähköpostikoodin lähetys epäonnistui.".to_string())
+        tracing::error!("Invalid {what} for email: {e}");
+        AppError::InternalServerError("Sähköpostin lähetys epäonnistui.".to_string())
     };
 
     let from: Mailbox = config
@@ -66,18 +70,39 @@ pub async fn send_otp_email(
         .map_err(|e| invalid("SMTP_FROM_EMAIL", &e))?;
     let to: Mailbox = to_email.parse().map_err(|e| invalid("recipient", &e))?;
 
-    let message = Message::builder()
-        .from(from)
-        .to(to)
-        .subject("Kirjautumiskoodisi - Varauskalenteri")
-        .header(ContentType::TEXT_HTML)
-        .body(otp_html(otp_code))
+    let mut builder = Message::builder().from(from).to(to).subject(subject);
+    if let Some(cc) = cc_email {
+        let cc: Mailbox = cc.parse().map_err(|e| invalid("cc recipient", &e))?;
+        builder = builder.cc(cc);
+    }
+
+    let message = builder
+        .multipart(MultiPart::alternative_plain_html(text, html))
         .map_err(|e| invalid("message", &e))?;
 
     build_transport(config)?.send(message).await.map_err(|e| {
         tracing::error!("SMTP send error: {e}");
-        AppError::InternalServerError("Sähköpostikoodin lähetys epäonnistui.".to_string())
+        AppError::InternalServerError("Sähköpostin lähetys epäonnistui.".to_string())
     })?;
 
     Ok(())
+}
+
+pub async fn send_otp_email(
+    config: &Config,
+    to_email: &str,
+    otp_code: &str,
+) -> Result<(), AppError> {
+    let text = format!(
+        "Kirjautumiskoodisi: {otp_code}\n\nKoodi on voimassa 10 minuuttia. Jos et pyytänyt tätä koodia, voit jättää tämän viestin huomiotta."
+    );
+    send_email(
+        config,
+        to_email,
+        None,
+        "Kirjautumiskoodisi - Varauskalenteri",
+        otp_html(otp_code),
+        text,
+    )
+    .await
 }

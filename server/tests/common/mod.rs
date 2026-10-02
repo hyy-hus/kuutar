@@ -20,6 +20,7 @@ pub fn test_config() -> Config {
         smtp_tls: SmtpTls::Starttls,
         smtp_username: None,
         smtp_password: None,
+        app_base_url: "http://localhost:5173".to_string(),
         smtp_from_email: "Kuutar <noreply@kuutar.fi>".to_string(),
         s3_bucket_name: "test-bucket".to_string(),
         s3_endpoint: "https://s3.fr-par.scw.cloud".to_string(),
