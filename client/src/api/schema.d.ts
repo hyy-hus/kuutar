@@ -214,6 +214,70 @@ export interface paths {
         patch: operations["update_contract"];
         trace?: never;
     };
+    "/email-templates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_templates"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/email-templates/{key}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_template"];
+        put: operations["update_template"];
+        post?: never;
+        delete: operations["reset_template"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/email-templates/{key}/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["preview_template"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/email-templates/{key}/send-test": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["send_test"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/groups": {
         parameters: {
             query?: never;
@@ -574,6 +638,11 @@ export interface components {
             rrule?: string | null;
             status?: null | components["schemas"]["ReservationStatus"];
             title: string;
+            /**
+             * Format: uuid
+             * @description Admins only: create the reservation on behalf of this user.
+             */
+            user_id?: string | null;
         };
         CreateResource: {
             allow_recurring?: boolean;
@@ -608,9 +677,38 @@ export interface components {
             email: string;
             /** Format: uuid */
             group_id: string;
+            /** @description Preferred language code (`fi`, `sv` or `en`); defaults to `fi`. */
+            language?: string | null;
             name: string;
             password: string;
         };
+        EmailPreview: {
+            html: string;
+            subject: string;
+            text: string;
+        };
+        EmailTemplate: {
+            /** @description Tiptap documents per language code; `{{variables}}` are allowed in text and links. */
+            body: {
+                [key: string]: Record<string, never>;
+            };
+            /** @description False while the built-in default is in use. */
+            customized: boolean;
+            key: components["schemas"]["EmailTemplateKey"];
+            /** @description Subject lines per language code; `{{variables}}` are allowed. */
+            subject: {
+                [key: string]: string;
+            };
+            /** Format: date-time */
+            updated_at?: string | null;
+            /** @description Placeholders that can be used in the subject and body. */
+            variables: string[];
+        };
+        /**
+         * @description The events that trigger a notification email.
+         * @enum {string}
+         */
+        EmailTemplateKey: "reservation_created" | "reservation_confirmed" | "reservation_cancelled" | "user_welcome";
         Group: {
             /** Format: date-time */
             created_at: string;
@@ -678,6 +776,16 @@ export interface components {
         PresignedUploadResponse: {
             s3_key: string;
             upload_url: string;
+        };
+        PreviewEmailTemplate: {
+            body?: {
+                [key: string]: Record<string, never>;
+            } | null;
+            /** @description Language to preview; defaults to Finnish. */
+            language?: string | null;
+            subject?: {
+                [key: string]: string;
+            } | null;
         };
         RefreshPayload: {
             refresh_token: string;
@@ -808,6 +916,14 @@ export interface components {
             s3_key?: null | components["schemas"]["HashMap"];
             title?: null | components["schemas"]["HashMap"];
         };
+        UpdateEmailTemplate: {
+            body: {
+                [key: string]: Record<string, never>;
+            };
+            subject: {
+                [key: string]: string;
+            };
+        };
         UpdateGroup: {
             /** @description Localized Tiptap documents, e.g. {"fi": {"type": "doc", ...}} */
             description?: {
@@ -858,6 +974,8 @@ export interface components {
             email?: string | null;
             /** Format: uuid */
             group_id?: string | null;
+            /** @description Preferred language code: `fi`, `sv` or `en`. */
+            language?: string | null;
             name?: string | null;
             password?: string | null;
         };
@@ -872,6 +990,8 @@ export interface components {
             group_id: string;
             /** Format: uuid */
             id: string;
+            /** @description Preferred language code (`fi`, `sv` or `en`), used for emails. */
+            language: string;
             name: string;
             role: components["schemas"]["Role"];
             /** Format: date-time */
@@ -1550,6 +1670,172 @@ export interface operations {
             };
             /** @description Validation error */
             422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    list_templates: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description All notification email templates */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EmailTemplate"][];
+                };
+            };
+            /** @description Admin required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_template: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Template key */
+                key: components["schemas"]["EmailTemplateKey"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Email template */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EmailTemplate"];
+                };
+            };
+        };
+    };
+    update_template: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Template key */
+                key: components["schemas"]["EmailTemplateKey"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateEmailTemplate"];
+            };
+        };
+        responses: {
+            /** @description Template saved */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EmailTemplate"];
+                };
+            };
+            /** @description Validation error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    reset_template: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Template key */
+                key: components["schemas"]["EmailTemplateKey"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Built-in default restored */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EmailTemplate"];
+                };
+            };
+        };
+    };
+    preview_template: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Template key */
+                key: components["schemas"]["EmailTemplateKey"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PreviewEmailTemplate"];
+            };
+        };
+        responses: {
+            /** @description Rendered with sample data */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EmailPreview"];
+                };
+            };
+        };
+    };
+    send_test: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Template key */
+                key: components["schemas"]["EmailTemplateKey"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PreviewEmailTemplate"];
+            };
+        };
+        responses: {
+            /** @description Test email sent to the calling admin */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Email sending is not configured */
+            400: {
                 headers: {
                     [name: string]: unknown;
                 };

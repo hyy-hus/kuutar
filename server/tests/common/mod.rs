@@ -1,4 +1,8 @@
-use kuutar::{config::Config, domains::auth::jwt, domains::users::models::Role};
+use kuutar::{
+    config::{Config, SmtpTls},
+    domains::auth::jwt,
+    domains::users::models::Role,
+};
 use sqlx::PgPool;
 use uuid::Uuid;
 
@@ -11,8 +15,13 @@ pub fn test_config() -> Config {
         jwt_expiration_seconds: 900,
         seed_admin_email: "admin@localhost".to_string(),
         seed_admin_password: "Admin".to_string(),
-        resend_api_key: None,
-        resend_from_email: "Kuutar <noreply@kuutar.fi>".to_string(),
+        smtp_host: None,
+        smtp_port: 587,
+        smtp_tls: SmtpTls::Starttls,
+        smtp_username: None,
+        smtp_password: None,
+        app_base_url: "http://localhost:5173".to_string(),
+        smtp_from_email: "Kuutar <noreply@kuutar.fi>".to_string(),
         s3_bucket_name: "test-bucket".to_string(),
         s3_endpoint: "https://s3.fr-par.scw.cloud".to_string(),
         s3_region: "fr-par".to_string(),

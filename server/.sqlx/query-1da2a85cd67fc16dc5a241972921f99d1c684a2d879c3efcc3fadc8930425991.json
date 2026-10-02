@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        UPDATE users\n        SET \n            name = COALESCE($1, name),\n            email = COALESCE($2, email),\n            password_hash = COALESCE($3, password_hash),\n            group_id = COALESCE($4, group_id),\n            default_contact_person = CASE WHEN $5::text IS NULL THEN default_contact_person ELSE NULLIF($5, '') END,\n            default_contact_email = CASE WHEN $6::text IS NULL THEN default_contact_email ELSE NULLIF($6, '') END,\n            default_contact_phone = CASE WHEN $7::text IS NULL THEN default_contact_phone ELSE NULLIF($7, '') END,\n            updated_at = NOW()\n        WHERE id = $8 AND deleted_at IS NULL\n        RETURNING id, group_id, name, email, default_contact_person, default_contact_email, default_contact_phone, role AS \"role: Role\", created_at, updated_at\n        ",
+  "query": "\n        SELECT id, group_id, name, email, default_contact_person, default_contact_email, default_contact_phone, language, role AS \"role: Role\", created_at, updated_at\n        FROM users\n        WHERE id = $1 AND deleted_at IS NULL\n        ",
   "describe": {
     "columns": [
       {
@@ -82,6 +82,17 @@
       },
       {
         "ordinal": 7,
+        "name": "language",
+        "type_info": "Varchar",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "language"
+          }
+        }
+      },
+      {
+        "ordinal": 8,
         "name": "role: Role",
         "type_info": {
           "Custom": {
@@ -102,7 +113,7 @@
         }
       },
       {
-        "ordinal": 8,
+        "ordinal": 9,
         "name": "created_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -113,7 +124,7 @@
         }
       },
       {
-        "ordinal": 9,
+        "ordinal": 10,
         "name": "updated_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -126,13 +137,6 @@
     ],
     "parameters": {
       "Left": [
-        "Varchar",
-        "Text",
-        "Text",
-        "Uuid",
-        "Text",
-        "Text",
-        "Text",
         "Uuid"
       ]
     },
@@ -146,8 +150,9 @@
       true,
       false,
       false,
+      false,
       false
     ]
   },
-  "hash": "17a0a980248021572414ab8b9309011a371af8fbbfbf1857e87d30caffe3d7c7"
+  "hash": "1da2a85cd67fc16dc5a241972921f99d1c684a2d879c3efcc3fadc8930425991"
 }

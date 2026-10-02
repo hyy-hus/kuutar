@@ -8,7 +8,7 @@ pub async fn list_users(pool: &PgPool) -> Result<Vec<User>, AppError> {
     let users = sqlx::query_as!(
         User,
         r#"
-        SELECT id, group_id, name, email, default_contact_person, default_contact_email, default_contact_phone, role AS "role: Role", created_at, updated_at
+        SELECT id, group_id, name, email, default_contact_person, default_contact_email, default_contact_phone, language, role AS "role: Role", created_at, updated_at
         FROM users
         WHERE deleted_at IS NULL
         ORDER BY name ASC, email ASC
@@ -24,7 +24,7 @@ pub async fn get_user(pool: &PgPool, id: Uuid) -> Result<User, AppError> {
     let user = sqlx::query_as!(
         User,
         r#"
-        SELECT id, group_id, name, email, default_contact_person, default_contact_email, default_contact_phone, role AS "role: Role", created_at, updated_at
+        SELECT id, group_id, name, email, default_contact_person, default_contact_email, default_contact_phone, language, role AS "role: Role", created_at, updated_at
         FROM users
         WHERE id = $1 AND deleted_at IS NULL
         "#,
@@ -45,14 +45,15 @@ pub async fn create_user(
     let user = sqlx::query_as!(
         User,
         r#"
-        INSERT INTO users (group_id, name, email, password_hash)
-        VALUES ($1, $2, $3, $4)
-        RETURNING id, group_id, name, email, default_contact_person, default_contact_email, default_contact_phone, role AS "role: Role", created_at, updated_at
+        INSERT INTO users (group_id, name, email, password_hash, language)
+        VALUES ($1, $2, $3, $4, COALESCE($5, 'fi'))
+        RETURNING id, group_id, name, email, default_contact_person, default_contact_email, default_contact_phone, language, role AS "role: Role", created_at, updated_at
         "#,
         payload.group_id,
         payload.name,
         payload.email.to_lowercase(),
-        password_hash
+        password_hash,
+        payload.language
     )
     .fetch_one(pool)
     .await?;
@@ -78,9 +79,10 @@ pub async fn update_user(
             default_contact_person = CASE WHEN $5::text IS NULL THEN default_contact_person ELSE NULLIF($5, '') END,
             default_contact_email = CASE WHEN $6::text IS NULL THEN default_contact_email ELSE NULLIF($6, '') END,
             default_contact_phone = CASE WHEN $7::text IS NULL THEN default_contact_phone ELSE NULLIF($7, '') END,
+            language = COALESCE($8, language),
             updated_at = NOW()
-        WHERE id = $8 AND deleted_at IS NULL
-        RETURNING id, group_id, name, email, default_contact_person, default_contact_email, default_contact_phone, role AS "role: Role", created_at, updated_at
+        WHERE id = $9 AND deleted_at IS NULL
+        RETURNING id, group_id, name, email, default_contact_person, default_contact_email, default_contact_phone, language, role AS "role: Role", created_at, updated_at
         "#,
         payload.name,
         payload.email.as_ref().map(|e| e.to_lowercase()),
@@ -89,6 +91,7 @@ pub async fn update_user(
         payload.default_contact_person,
         payload.default_contact_email.as_ref().map(|e| e.to_lowercase()),
         payload.default_contact_phone,
+        payload.language,
         id
     )
     .fetch_optional(pool)
@@ -161,6 +164,7 @@ mod tests {
             name: "Test User".to_string(),
             email: "testuser@example.com".to_string(),
             password: "password123".to_string(),
+            language: None,
         };
 
         let created = create_user(&pool, &payload, "fake_hash")
@@ -193,6 +197,7 @@ mod tests {
                 name: "Zeta User".to_string(),
                 email: "zeta@example.com".to_string(),
                 password: "password123".to_string(),
+                language: None,
             },
             "hash1",
         )
@@ -206,6 +211,7 @@ mod tests {
                 name: "Alpha User".to_string(),
                 email: "alpha@example.com".to_string(),
                 password: "password123".to_string(),
+                language: None,
             },
             "hash2",
         )
@@ -235,6 +241,7 @@ mod tests {
                 name: "Old Name".to_string(),
                 email: "old@example.com".to_string(),
                 password: "password123".to_string(),
+                language: None,
             },
             "old_hash",
         )
@@ -252,6 +259,7 @@ mod tests {
                 default_contact_person: Some("Contact Person".to_string()),
                 default_contact_email: Some("Contact@Example.com".to_string()),
                 default_contact_phone: Some("+358401234567".to_string()),
+                language: None,
             },
             None,
         )
@@ -283,6 +291,7 @@ mod tests {
                 default_contact_person: Some(String::new()),
                 default_contact_email: None,
                 default_contact_phone: None,
+                language: None,
             },
             None,
         )

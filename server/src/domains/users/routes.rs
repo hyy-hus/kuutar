@@ -11,10 +11,13 @@ use super::{
     models::{CreateUser, UpdateUser, User},
 };
 use crate::{
-    domains::auth::{
-        AuthState,
-        extractor::{AuthUser, RequireAdmin},
-        password,
+    domains::{
+        auth::{
+            AuthState,
+            extractor::{AuthUser, RequireAdmin},
+            password,
+        },
+        email_templates::notify,
     },
     errors::AppError,
 };
@@ -92,6 +95,7 @@ pub async fn create_user(
     payload.validate()?;
     let password_hash = password::hash_password(&payload.password)?;
     let user = db::create_user(&state.pool, &payload, &password_hash).await?;
+    notify::spawn_welcome_email(&state.pool, &state.config, user.id);
     Ok((StatusCode::CREATED, Json(user)))
 }
 

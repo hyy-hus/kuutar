@@ -10,7 +10,7 @@ use axum::{Json, Router, response::IntoResponse, routing::get};
 use config::Config;
 use domains::{
     auth::{self, AuthState},
-    collections, contracts, groups, reservations, resources, restrictions, stats,
+    collections, contracts, email_templates, groups, reservations, resources, restrictions, stats,
 };
 use openapi::ApiDoc;
 use serde::Serialize;
@@ -52,6 +52,10 @@ pub fn app(pool: PgPool, config: Config) -> Router {
         .nest("/collections", collections::router(auth_state.clone()))
         .nest("/reservations", reservations::router(auth_state.clone()))
         .nest("/contracts", contracts::router(auth_state.clone()))
+        .nest(
+            "/email-templates",
+            email_templates::router(auth_state.clone()),
+        )
         .nest("/resources", resources::router(auth_state.clone()))
         .nest("/restrictions", restrictions::router(auth_state.clone()))
         .nest("/stats", stats::router(auth_state))

@@ -16,6 +16,8 @@ pub struct User {
     pub default_contact_person: Option<String>,
     pub default_contact_email: Option<String>,
     pub default_contact_phone: Option<String>,
+    /// Preferred language code (`fi`, `sv` or `en`), used for emails.
+    pub language: String,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -34,6 +36,10 @@ pub struct CreateUser {
 
     #[validate(length(min = 8, message = "Password must be at least 8 characters"))]
     pub password: String,
+
+    /// Preferred language code (`fi`, `sv` or `en`); defaults to `fi`.
+    #[validate(custom(function = "crate::utils::lang::validate_language"))]
+    pub language: Option<String>,
 }
 
 #[derive(Debug, Deserialize, Validate, ToSchema)]
@@ -65,6 +71,10 @@ pub struct UpdateUser {
     #[serde(default, deserialize_with = "deserialize_trimmed_option_string")]
     #[validate(length(max = 64))]
     pub default_contact_phone: Option<String>,
+
+    /// Preferred language code: `fi`, `sv` or `en`.
+    #[validate(custom(function = "crate::utils::lang::validate_language"))]
+    pub language: Option<String>,
 }
 
 fn validate_optional_email(value: &str) -> Result<(), validator::ValidationError> {

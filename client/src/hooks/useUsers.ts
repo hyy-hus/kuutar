@@ -17,8 +17,10 @@ export const userKeys = {
 	sessions: (id: string) => [...userKeys.detail(id), "sessions"] as const,
 };
 
-export function useUsers() {
+/** Lists all users (admin only); pass `enabled: false` for callers that may not be admins */
+export function useUsers({ enabled = true }: { enabled?: boolean } = {}) {
 	return useQuery({
+		enabled,
 		queryKey: userKeys.lists(),
 		queryFn: async () => {
 			const { data, error } = await api.GET("/users");
