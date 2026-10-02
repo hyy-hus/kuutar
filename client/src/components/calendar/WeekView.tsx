@@ -78,7 +78,13 @@ export function WeekView({
 
 	useEffect(() => {
 		if (scrollRef.current) {
-			scrollRef.current.scrollTop = 480; // Scroll to ~08:00
+			// Start with the previous hour at the top, so the current hour is in view with some context.
+			// Hour rows are 5rem; the sticky 3rem header covers the area above them.
+			const remPx = Number.parseFloat(
+				getComputedStyle(document.documentElement).fontSize,
+			);
+			const firstHour = Math.max(0, new Date().getHours() - 1);
+			scrollRef.current.scrollTop = firstHour * 5 * remPx;
 		}
 	}, []);
 
