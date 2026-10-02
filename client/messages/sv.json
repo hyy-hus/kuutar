@@ -524,5 +524,9 @@
 	"varausVastaanotettu": "Bokning mottagen",
 	"varausVastaanotettuKuvaus": "Skickas när en bokning har gjorts och väntar på godkännande.",
 	"vastaanottajanNimi": "Mottagarens namn",
-	"viesti": "Meddelande"
+	"viesti": "Meddelande",
+	"minaItse": "Jag själv",
+	"muokkausPalauttaaOdottaa": "Om du sparar ändringarna återgår bokningen till Väntar. Du får ett e-postmeddelande när ändringarna har godkänts.",
+	"varauksenKayttaja": "Bokning för användare",
+	"varauksenKayttajaKuvaus": "Bokningen visas som den valda användarens bokning och e-postmeddelanden skickas till hen."
 }

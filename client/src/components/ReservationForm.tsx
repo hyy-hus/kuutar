@@ -14,7 +14,7 @@ import { useTranslation } from "react-i18next";
 import { Frequency } from "rrule";
 import { Button } from "#/components/Button";
 import { Input } from "#/components/Input";
-import { useIsAdmin } from "#/hooks/useAuth";
+import { useAuth, useIsAdmin } from "#/hooks/useAuth";
 import {
 	type Contract,
 	getApplicableContracts,
@@ -30,6 +30,7 @@ import {
 } from "#/hooks/useReservations";
 import { useResources } from "#/hooks/useResorces";
 import { useRestrictions } from "#/hooks/useRestrictions";
+import { useUsers } from "#/hooks/useUsers";
 import {
 	formatDateTimeLocal,
 	formatYYYYMMDD,
@@ -40,6 +41,8 @@ import {
 import { generateOccurrences, parseRRule } from "#/utils/rruleUtils";
 
 export interface ReservationFormValues {
+	/** Admins only: the user the reservation is made for; empty means the admin themselves */
+	user_id?: string;
 	title: string;
 	description?: string;
 	status?: ReservationStatus;
@@ -69,6 +72,7 @@ export function ReservationForm({
 	onSubmit,
 	isSubmitting = false,
 	submitLabel,
+	isCreate = false,
 	reservationId,
 }: ReservationFormProps) {
 	const { t } = useTranslation();
@@ -80,6 +84,8 @@ export function ReservationForm({
 
 	const checkConflicts = useCheckConflicts();
 	const { isAdmin } = useIsAdmin();
+	const { user: currentUser } = useAuth();
+	const { data: users } = useUsers({ enabled: isAdmin && isCreate });
 
 	const initialRule = parseRRule(defaultValues?.rrule);
 
@@ -111,6 +117,7 @@ export function ReservationForm({
 
 	const form = useForm({
 		defaultValues: {
+			user_id: defaultValues?.user_id ?? "",
 			title: defaultValues?.title ?? "",
 			description: defaultValues?.description ?? "",
 			status: defaultValues?.status ?? ("confirmed" as ReservationStatus),
@@ -138,6 +145,7 @@ export function ReservationForm({
 			}
 
 			await onSubmit({
+				user_id: value.user_id || undefined,
 				title: value.title,
 				description: value.description,
 				status: value.status,
@@ -174,6 +182,44 @@ export function ReservationForm({
 			}}
 			className="space-y-4 max-w-md"
 		>
+			{/* Owner (admins can reserve on behalf of another user) */}
+			{isAdmin && isCreate && (
+				<form.Field name="user_id">
+					{(field) => (
+						<div className="space-y-1">
+							<label
+								htmlFor={field.name}
+								className="text-xs font-medium text-stone-700 dark:text-stone-300"
+							>
+								{t("varauksenKayttaja", "Varaus käyttäjälle")}
+							</label>
+							<select
+								id={field.name}
+								value={field.state.value}
+								onChange={(e) => field.handleChange(e.target.value)}
+								onBlur={field.handleBlur}
+								className="w-full px-3 py-2 text-sm bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+							>
+								<option value="">{t("minaItse", "Minä itse")}</option>
+								{users
+									?.filter((u) => u.id !== currentUser?.id)
+									.map((u) => (
+										<option key={u.id} value={u.id}>
+											{u.name ? `${u.name} (${u.email})` : u.email}
+										</option>
+									))}
+							</select>
+							<p className="text-[11px] text-stone-500">
+								{t(
+									"varauksenKayttajaKuvaus",
+									"Varaus näkyy valitun käyttäjän varauksena, ja sähköpostiviestit lähetetään hänelle.",
+								)}
+							</p>
+						</div>
+					)}
+				</form.Field>
+			)}
+
 			{/* Title */}
 			<form.Field
 				name="title"
@@ -701,6 +747,22 @@ export function ReservationForm({
 					approved={contractsApproved}
 					onApproveChange={setContractsApproved}
 				/>
+			)}
+
+			{/* Editing a reservation as a regular user needs a new approval */}
+			{!isAdmin && !isCreate && (
+				<p
+					role="note"
+					className="flex items-start gap-2 p-2.5 text-xs text-amber-900 dark:text-amber-200 bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 rounded-md"
+				>
+					<AlertTriangle size={14} className="shrink-0 mt-0.5" />
+					<span>
+						{t(
+							"muokkausPalauttaaOdottaa",
+							"Muutosten tallentaminen palauttaa varauksen tilaan Odottaa. Saat vahvistuksen sähköpostiin, kun muutokset on hyväksytty.",
+						)}
+					</span>
+				</p>
 			)}
 
 			{/* Submit Button */}

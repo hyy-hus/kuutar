@@ -524,5 +524,9 @@
 	"varausVastaanotettu": "Reservation received",
 	"varausVastaanotettuKuvaus": "Sent when a reservation has been made and is awaiting approval.",
 	"vastaanottajanNimi": "Recipient's name",
-	"viesti": "Message"
+	"viesti": "Message",
+	"minaItse": "Myself",
+	"muokkausPalauttaaOdottaa": "Saving changes sets the reservation back to Pending. You will receive an email once the changes have been approved.",
+	"varauksenKayttaja": "Reservation for user",
+	"varauksenKayttajaKuvaus": "The reservation appears as the selected user's reservation, and emails are sent to them."
 }

@@ -524,5 +524,9 @@
 	"varausVastaanotettu": "Varaus vastaanotettu",
 	"varausVastaanotettuKuvaus": "Lähetetään, kun varaus on tehty ja odottaa hyväksyntää.",
 	"vastaanottajanNimi": "Vastaanottajan nimi",
-	"viesti": "Viesti"
+	"viesti": "Viesti",
+	"minaItse": "Minä itse",
+	"muokkausPalauttaaOdottaa": "Muutosten tallentaminen palauttaa varauksen tilaan Odottaa. Saat vahvistuksen sähköpostiin, kun muutokset on hyväksytty.",
+	"varauksenKayttaja": "Varaus käyttäjälle",
+	"varauksenKayttajaKuvaus": "Varaus näkyy valitun käyttäjän varauksena, ja sähköpostiviestit lähetetään hänelle."
 }
