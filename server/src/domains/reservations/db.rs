@@ -84,9 +84,12 @@ pub async fn list_filtered(
         if !is_admin {
             reservation.user_email = None;
             reservation.admin_notes = None;
-            reservation.contact_person = None;
-            reservation.contact_email = None;
-            reservation.contact_phone = None;
+            // Owners (the "my reservations" listing) may see their own contact details
+            if target_user_id != Some(reservation.user_id) {
+                reservation.contact_person = None;
+                reservation.contact_email = None;
+                reservation.contact_phone = None;
+            }
         }
 
         let occurrences = fetch_occurrences_for_reservation_filtered(

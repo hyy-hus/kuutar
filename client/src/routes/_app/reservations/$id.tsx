@@ -141,8 +141,8 @@ function ViewReservationPage() {
 					<Chip>{readable_uuid(reservation.id)}</Chip>
 				</div>
 
-				{/* Admin-Only Contact Details Card */}
-				{isAdmin &&
+				{/* Contact Details Card (admin or owner) */}
+				{canEdit &&
 					(reservation.contact_person ||
 						reservation.contact_email ||
 						reservation.contact_phone ||

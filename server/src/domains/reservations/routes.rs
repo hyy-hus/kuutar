@@ -75,16 +75,20 @@ async fn validate_recurring_permission(
 }
 
 /// Helper function to strip admin-only fields for non-admin callers.
+/// Contact details stay visible to the reservation's owner.
 fn sanitize_reservation_for_role(
     mut res: ReservationWithOccurrences,
     is_admin: bool,
+    viewer_id: Option<Uuid>,
 ) -> ReservationWithOccurrences {
     if !is_admin {
         res.reservation.user_email = None;
         res.reservation.admin_notes = None;
-        res.reservation.contact_person = None;
-        res.reservation.contact_email = None;
-        res.reservation.contact_phone = None;
+        if viewer_id != Some(res.reservation.user_id) {
+            res.reservation.contact_person = None;
+            res.reservation.contact_email = None;
+            res.reservation.contact_phone = None;
+        }
     }
     res
 }
@@ -209,10 +213,11 @@ pub async fn get_reservation(
     Path(id): Path<Uuid>,
     opt_user: OptionalAuthUser,
 ) -> Result<Json<ReservationWithOccurrences>, AppError> {
-    let is_admin = opt_user.0.map(|u| u.role == Role::Admin).unwrap_or(false);
+    let is_admin = opt_user.0.as_ref().map(|u| u.role == Role::Admin).unwrap_or(false);
+    let viewer_id = opt_user.0.as_ref().map(|u| u.id);
 
-    let reservation = db::find_by_id(&auth_state.pool, id, is_admin).await?;
-    Ok(Json(reservation))
+    let reservation = db::find_by_id(&auth_state.pool, id, true).await?;
+    Ok(Json(sanitize_reservation_for_role(reservation, is_admin, viewer_id)))
 }
 
 #[utoipa::path(
@@ -259,9 +264,6 @@ pub async fn create_reservation(
     if !is_admin {
         payload.status = Some(super::models::ReservationStatus::Pending);
         payload.admin_notes = None;
-        payload.contact_person = None;
-        payload.contact_email = None;
-        payload.contact_phone = None;
     }
 
     if !payload.validate_occurrence_times() {
@@ -271,7 +273,7 @@ pub async fn create_reservation(
     }
 
     let reservation = db::create(&auth_state.pool, auth_user.id, payload).await?;
-    let sanitized = sanitize_reservation_for_role(reservation, is_admin);
+    let sanitized = sanitize_reservation_for_role(reservation, is_admin, Some(auth_user.id));
 
     Ok((StatusCode::CREATED, Json(sanitized)))
 }
@@ -347,11 +349,8 @@ pub async fn update_reservation(
             payload.mark_printed = Some(false);
         }
 
-        // Non-admins cannot update admin notes or contact fields
+        // Non-admins cannot update admin notes (contact fields are theirs to edit)
         payload.admin_notes = None;
-        payload.contact_person = None;
-        payload.contact_email = None;
-        payload.contact_phone = None;
     }
 
     // Validate new occurrences against reservable_until boundary and time restrictions
@@ -368,7 +367,7 @@ pub async fn update_reservation(
     }
 
     let reservation = db::update(&auth_state.pool, id, payload).await?;
-    let sanitized = sanitize_reservation_for_role(reservation, is_admin);
+    let sanitized = sanitize_reservation_for_role(reservation, is_admin, Some(auth_user.id));
 
     Ok(Json(sanitized))
 }
