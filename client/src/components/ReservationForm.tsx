@@ -1,4 +1,4 @@
-import { useForm, useStore } from "@tanstack/react-form";
+import { useForm, useSelector } from "@tanstack/react-form";
 import {
 	AlertTriangle,
 	CheckCircle2,
@@ -151,7 +151,7 @@ export function ReservationForm({
 		},
 	});
 
-	const selectedResourceIds = useStore(
+	const selectedResourceIds = useSelector(
 		form.store,
 		(state) => state.values.resource_ids,
 	);
@@ -160,7 +160,7 @@ export function ReservationForm({
 		[activeContracts, selectedResourceIds],
 	);
 	const needsContractApproval =
-		applicableContracts.length > 0 && !contractsApproved;
+		!isAdmin && applicableContracts.length > 0 && !contractsApproved;
 
 	return (
 		<form
@@ -690,12 +690,14 @@ export function ReservationForm({
 			</div>
 
 			{/* Contract Approval Section */}
-			<ContractApprovalSection
-				contracts={applicableContracts}
-				isLoading={loadingContracts}
-				approved={contractsApproved}
-				onApproveChange={setContractsApproved}
-			/>
+			{!isAdmin && (
+				<ContractApprovalSection
+					contracts={applicableContracts}
+					isLoading={loadingContracts}
+					approved={contractsApproved}
+					onApproveChange={setContractsApproved}
+				/>
+			)}
 
 			{/* Submit Button */}
 			<form.Subscribe
