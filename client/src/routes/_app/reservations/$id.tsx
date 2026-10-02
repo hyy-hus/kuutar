@@ -56,6 +56,8 @@ function ViewReservationPage() {
 		);
 	}
 
+	// Contact details are only returned by the server to admins and the owner
+	const canSeeContact = isAdmin || (!!user && user.id === reservation.user_id);
 	const canEdit = isAdmin || (!!user && user.id === reservation.user_id);
 	const occurrences = reservation.occurrences || [];
 	const resourceMap = new Map(resources?.map((r) => [r.id, r.name]));
@@ -142,17 +144,15 @@ function ViewReservationPage() {
 				</div>
 
 				{/* Contact Details Card (admin or owner) */}
-				{canEdit &&
+				{canSeeContact &&
 					(reservation.contact_person ||
 						reservation.contact_email ||
 						reservation.contact_phone ||
-						reservation.admin_notes) && (
+						(isAdmin && reservation.admin_notes)) && (
 						<div className="p-3 bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-900 rounded space-y-2 text-xs">
 							<div className="flex items-center gap-1 font-semibold text-purple-900 dark:text-purple-300">
 								<Shield size={14} />
-								<span>
-									{t("yhteystiedotYllapidolle", "Ylläpidon yhteystiedot")}
-								</span>
+								<span>{t("yhteystiedot", "Yhteystiedot")}</span>
 							</div>
 
 							{reservation.contact_person && (
@@ -190,7 +190,7 @@ function ViewReservationPage() {
 								)}
 							</div>
 
-							{reservation.admin_notes && (
+							{isAdmin && reservation.admin_notes && (
 								<p className="italic text-stone-600 dark:text-stone-400 pt-1 border-t border-purple-200 dark:border-purple-900">
 									<strong>
 										{t("muistiinpanot", "Muistiinpanot")}
