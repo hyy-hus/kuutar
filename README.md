@@ -82,7 +82,7 @@ cp .env.example .env   # muokkaa halutessasi DB_USER, DB_PASSWORD ja DB_NAME
 docker compose up -d
 ```
 
-Tietokanta on nyt osoitteessa `localhost:5432`.
+Tietokanta on nyt osoitteessa `localhost:5432`. Mailpit (paikallinen sähköpostipalvelin) vastaanottaa lähetetyt viestit portissa 1025, ja ne näkyvät osoitteessa http://localhost:8025.
 
 ### 2. Palvelin
 
@@ -98,7 +98,7 @@ Palvelin kuuntelee oletuksena osoitetta `http://127.0.0.1:3000`. Rajapinnan doku
 
 **Valinnaiset palvelut:**
 - **S3-objektitallennus**: palvelin vaatii `S3_*`- ja `AWS_*`-muuttujat käynnistyäkseen. Paikallisesti mitkä tahansa arvot riittävät, mutta sopimus-PDF:ien lataaminen ja tulostus vaativat toimivan S3-yhteensopivan tallennuksen.
-- **SMTP**: aseta `SMTP_HOST`, `SMTP_USERNAME` ja `SMTP_PASSWORD` (sekä tarvittaessa `SMTP_PORT`, `SMTP_TLS` ja `SMTP_FROM_EMAIL`), jos haluat käyttää sähköpostiin lähetettäviä kirjautumiskoodeja. Ilman palvelinta salasanakirjautuminen toimii normaalisti.
+- **SMTP**: `server/.env.example` osoittaa paikalliseen Mailpitiin. Tuotannossa aseta `SMTP_HOST`, `SMTP_USERNAME` ja `SMTP_PASSWORD` (sekä tarvittaessa `SMTP_PORT`, `SMTP_TLS` ja `SMTP_FROM_EMAIL`), jos haluat käyttää sähköpostiin lähetettäviä kirjautumiskoodeja. Ilman palvelinta salasanakirjautuminen toimii normaalisti.
 
 ### 3. Käyttöliittymä
 
@@ -131,7 +131,7 @@ Kirjaudu sisään palvelimen luomilla ylläpitäjän tunnuksilla.
 
 ```
 kuutar/
-├── compose.yml              # Paikallinen PostgreSQL
+├── compose.yml              # Paikallinen PostgreSQL ja Mailpit
 ├── server/                  # Rust-palvelin
 │   ├── migrations/          # SQL-migraatiot (ajetaan käynnistyksessä)
 │   ├── src/domains/         # Toiminnot aiheittain: auth, reservations, resources, contracts, …
