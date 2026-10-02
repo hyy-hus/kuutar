@@ -54,7 +54,9 @@ export async function refreshAuthToken(): Promise<boolean> {
 			}
 		}
 	} catch (e) {
+		// Network error: keep the tokens so a later attempt can still succeed
 		console.error("Token refresh failed", e);
+		return false;
 	}
 
 	localStorage.removeItem("access_token");
@@ -66,6 +68,25 @@ export async function refreshAuthToken(): Promise<boolean> {
 const authMiddleware: Middleware = {
 	async onRequest({ request }) {
 		if (typeof window !== "undefined") {
+			// Refresh an expired access token up front, so optional-auth endpoints
+			// never see a stale token
+			const expiresAt = Number.parseInt(
+				localStorage.getItem("token_expires_at") ?? "",
+				10,
+			);
+			if (
+				!request.url.includes("/auth/") &&
+				localStorage.getItem("refresh_token") &&
+				!Number.isNaN(expiresAt) &&
+				expiresAt <= Date.now()
+			) {
+				if (!refreshPromise) {
+					refreshPromise = refreshAuthToken().finally(() => {
+						refreshPromise = null;
+					});
+				}
+				await refreshPromise;
+			}
 			const token = localStorage.getItem("access_token");
 			if (token) {
 				request.headers.set("Authorization", `Bearer ${token}`);

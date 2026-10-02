@@ -65,7 +65,9 @@ where
 }
 
 /// Optional extractor: returns `Some(AuthUser)` if a valid Bearer token is present,
-/// or `None` if no Authorization header is sent.
+/// or `None` if no Authorization header is sent. A header that is present but
+/// invalid or expired is rejected (401) so clients can refresh their token
+/// instead of silently being served the guest view.
 #[derive(Debug, Clone)]
 pub struct OptionalAuthUser(pub Option<AuthUser>);
 
@@ -74,12 +76,14 @@ where
     S: Send + Sync,
     AuthState: axum::extract::FromRef<S>,
 {
-    type Rejection = std::convert::Infallible;
+    type Rejection = AppError;
 
     async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
-        match AuthUser::from_request_parts(parts, state).await {
-            Ok(user) => Ok(OptionalAuthUser(Some(user))),
-            Err(_) => Ok(OptionalAuthUser(None)),
+        if !parts.headers.contains_key(AUTHORIZATION) {
+            return Ok(OptionalAuthUser(None));
         }
+        AuthUser::from_request_parts(parts, state)
+            .await
+            .map(|user| OptionalAuthUser(Some(user)))
     }
 }

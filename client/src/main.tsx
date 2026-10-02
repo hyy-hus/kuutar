@@ -17,6 +17,13 @@ const queryClient = new QueryClient({
 	},
 });
 
+// A refreshed token can change what the API returns (e.g. admin-only resources)
+if (typeof window !== "undefined") {
+	window.addEventListener("kuutar:token-refreshed", () => {
+		queryClient.invalidateQueries();
+	});
+}
+
 const router = createRouter({
 	routeTree,
 	context: {
