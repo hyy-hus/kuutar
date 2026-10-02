@@ -1,16 +1,29 @@
 import { Link } from "@tanstack/react-router";
 import { AlertOctagon, Clock, User as UserIcon } from "lucide-react";
+import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { getSegmentGridMinutes, type PlacedEvent } from "#/utils/calendarUtils";
 import { cn } from "#/utils/cn";
 import { useDateFormatter } from "#/utils/date";
 
+/** Approximate rem heights of the block's parts, for deciding which lines fit */
+const TITLE_LINE_REM = 1;
+const DETAIL_LINE_REM = 0.85;
+/** Vertical padding (p-1) and borders around the content */
+const BLOCK_CHROME_REM = 0.625;
+
 interface ReservationBlockProps {
 	event: PlacedEvent;
 	maxCols: number;
+	/** Height of one hour row in rem */
+	hourHeightRem: number;
 }
 
-export function ReservationBlock({ event, maxCols }: ReservationBlockProps) {
+export function ReservationBlock({
+	event,
+	maxCols,
+	hourHeightRem,
+}: ReservationBlockProps) {
 	const { t } = useTranslation();
 	const { formatTime, formatDateRange } = useDateFormatter();
 	const { startMins, endMins } = getSegmentGridMinutes(event);
@@ -24,6 +37,16 @@ export function ReservationBlock({ event, maxCols }: ReservationBlockProps) {
 	const topPct = (startMins / 1440) * 100;
 	const heightPct = ((endMins - startMins) / 1440) * 100;
 
+	// Show only as many detail lines as the block has room for; short blocks get just the title
+	const heightRem = ((endMins - startMins) / 60) * hourHeightRem;
+	const detailLineCount = Math.max(
+		0,
+		Math.floor(
+			(heightRem - BLOCK_CHROME_REM - TITLE_LINE_REM) / DETAIL_LINE_REM,
+		),
+	);
+	const isTitleOnly = detailLineCount === 0;
+
 	// Column width calculation for overlapping events
 	const colWidthPct = 100 / maxCols;
 	const leftPct = (event.col - 1) * colWidthPct;
@@ -36,10 +59,101 @@ export function ReservationBlock({ event, maxCols }: ReservationBlockProps) {
 		? `${event.resourceName ?? ""}: ${event.title} (${timeString})`
 		: `${event.resourceName ?? ""}: ${event.title}${isPending ? ` [${t("odottaa", "Odottaa")}]` : ""}${event.userName ? ` [${event.userName}]` : ""} (${timeString})`;
 
+	// Detail lines in order of importance, cut down to what fits
+	const details: { key: string; node: ReactNode }[] = [];
+	if (isRestriction) {
+		if (event.resourceName) {
+			details.push({
+				key: "resource",
+				node: (
+					<span className="text-[10px] text-amber-800 dark:text-amber-300 truncate font-medium">
+						{event.resourceName}
+					</span>
+				),
+			});
+		}
+		details.push({
+			key: "time",
+			node: (
+				<span className="text-[10px] italic text-amber-700 dark:text-amber-400 truncate">
+					{timeString}
+				</span>
+			),
+		});
+	} else {
+		if (isPending) {
+			details.push({
+				key: "pending",
+				node: (
+					<span className="text-[9px] font-semibold text-purple-700 dark:text-purple-300 uppercase tracking-wider truncate">
+						{t("odottaaVahvistusta", "Odottaa vahvistusta")}
+					</span>
+				),
+			});
+		}
+		if (event.userName) {
+			details.push({
+				key: "user",
+				node: (
+					<span className="text-[10px] text-stone-700 dark:text-stone-300 truncate flex items-center gap-0.5">
+						<UserIcon
+							size={10}
+							className="shrink-0 text-purple-600 dark:text-purple-400"
+						/>
+						<span className="truncate">{event.userName}</span>
+					</span>
+				),
+			});
+		}
+		if (event.resourceName) {
+			details.push({
+				key: "resource",
+				node: (
+					<span className="text-[10px] text-stone-600 dark:text-stone-400 truncate font-medium">
+						{event.resourceName}
+					</span>
+				),
+			});
+		}
+		details.push({
+			key: "time",
+			node: (
+				<span className="text-[10px] italic text-stone-500 dark:text-stone-400 truncate">
+					{timeString}
+				</span>
+			),
+		});
+	}
+
+	const content = (
+		<>
+			<div className="flex items-center gap-1 font-bold truncate shrink-0">
+				{isRestriction ? (
+					<AlertOctagon size={12} className="text-amber-600 shrink-0" />
+				) : (
+					isPending && (
+						<Clock
+							size={11}
+							className="text-purple-600 dark:text-purple-400 shrink-0"
+						/>
+					)
+				)}
+				<span className="truncate">{event.title}</span>
+			</div>
+			{details.slice(0, detailLineCount).map(({ key, node }) => (
+				<div key={key} className="flex min-w-0 shrink-0">
+					{node}
+				</div>
+			))}
+		</>
+	);
+
 	return (
 		<div
 			className={cn(
-				"absolute pointer-events-auto border text-xs p-1 rounded-xs overflow-hidden shadow-xs hover:z-20 transition-all z-15 box-border",
+				"absolute pointer-events-auto border text-xs px-1 rounded-xs overflow-hidden shadow-xs hover:z-20 transition-all z-15 box-border",
+				// Title-only blocks may be barely taller than one line, so trim the padding
+				isTitleOnly ? "py-0" : "py-1",
 				// Open edges show that the event carries on from / into the neighbouring day
 				event.continuesBefore && "rounded-t-none border-t-0",
 				event.continuesAfter && "rounded-b-none border-b-0",
@@ -63,18 +177,7 @@ export function ReservationBlock({ event, maxCols }: ReservationBlockProps) {
 					params={{ id: event.restrictionId || "" }}
 					className="flex flex-col h-full w-full overflow-hidden text-amber-900 dark:text-amber-200 hover:underline"
 				>
-					<div className="flex items-center gap-1 font-bold truncate">
-						<AlertOctagon size={12} className="text-amber-600 shrink-0" />
-						<span className="truncate">{event.title}</span>
-					</div>
-					{event.resourceName && (
-						<span className="text-[10px] text-amber-800 dark:text-amber-300 truncate font-medium">
-							{event.resourceName}
-						</span>
-					)}
-					<span className="text-[10px] italic text-amber-700 dark:text-amber-400 truncate">
-						{timeString}
-					</span>
+					{content}
 				</Link>
 			) : (
 				<Link
@@ -82,39 +185,7 @@ export function ReservationBlock({ event, maxCols }: ReservationBlockProps) {
 					params={{ id: event.reservationId || "" }}
 					className="flex flex-col h-full w-full overflow-hidden text-stone-900 dark:text-stone-100 hover:underline"
 				>
-					<div className="flex items-center gap-1 font-bold truncate">
-						{isPending && (
-							<Clock
-								size={11}
-								className="text-purple-600 dark:text-purple-400 shrink-0"
-							/>
-						)}
-						<span className="truncate">{event.title}</span>
-					</div>
-
-					{isPending && (
-						<span className="text-[9px] font-semibold text-purple-700 dark:text-purple-300 uppercase tracking-wider truncate">
-							{t("odottaaVahvistusta", "Odottaa vahvistusta")}
-						</span>
-					)}
-
-					{event.userName && (
-						<span className="text-[10px] text-stone-700 dark:text-stone-300 truncate flex items-center gap-0.5">
-							<UserIcon
-								size={10}
-								className="shrink-0 text-purple-600 dark:text-purple-400"
-							/>
-							<span className="truncate">{event.userName}</span>
-						</span>
-					)}
-					{event.resourceName && (
-						<span className="text-[10px] text-stone-600 dark:text-stone-400 truncate font-medium">
-							{event.resourceName}
-						</span>
-					)}
-					<span className="text-[10px] italic text-stone-500 dark:text-stone-400 truncate">
-						{timeString}
-					</span>
+					{content}
 				</Link>
 			)}
 		</div>

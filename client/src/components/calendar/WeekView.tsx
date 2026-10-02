@@ -252,7 +252,11 @@ export function WeekView({
 						className="pointer-events-none"
 						style={{ gridColumn: i + 2, gridRow: "2 / span 24" }}
 					>
-						<DayColumn events={eventsByDay[i]} columnIndex={i + 2} />
+						<DayColumn
+							events={eventsByDay[i]}
+							columnIndex={i + 2}
+							hourHeightRem={hourHeightRem}
+						/>
 					</div>
 				))}
 			</div>

@@ -32,6 +32,16 @@ export interface PlacedEvent extends DaySegment {
 	span: number;
 }
 
+/** Shortest duration a block is drawn as, so very short events stay readable and clickable */
+export const MIN_BLOCK_MINUTES = 30;
+
+/** End time used for laying out a segment, stretched to the minimum block length */
+const getLayoutEnd = (segment: DaySegment): number =>
+	Math.max(
+		segment.end.getTime(),
+		segment.start.getTime() + MIN_BLOCK_MINUTES * 60_000,
+	);
+
 export const getMinutesSinceMidnight = (d: Date): number => {
 	return d.getHours() * 60 + d.getMinutes();
 };
@@ -44,12 +54,15 @@ export const getMinutesSinceMidnight = (d: Date): number => {
 export const getSegmentGridMinutes = (
 	segment: Pick<DaySegment, "start" | "end">,
 ): { startMins: number; endMins: number } => {
-	const startMins = getMinutesSinceMidnight(segment.start);
+	const realStartMins = getMinutesSinceMidnight(segment.start);
 	// A segment ending at the next midnight reaches the bottom of the grid
 	const endsNextDay = segment.end.getDate() !== segment.start.getDate();
-	const endMins = endsNextDay ? 1440 : getMinutesSinceMidnight(segment.end);
-	// Keep zero-length (or clock-skipped) events visible as a thin line
-	return { startMins, endMins: Math.max(endMins, startMins + 1) };
+	const realEndMins = endsNextDay ? 1440 : getMinutesSinceMidnight(segment.end);
+	// Draw short (or clock-skipped) events at least MIN_BLOCK_MINUTES tall,
+	// moving them up if they would run past the bottom of the grid
+	const startMins = Math.min(realStartMins, 1440 - MIN_BLOCK_MINUTES);
+	const endMins = Math.max(realEndMins, startMins + MIN_BLOCK_MINUTES);
+	return { startMins, endMins };
 };
 
 export const startOfCurrentWeek = (): Date => {
@@ -119,14 +132,14 @@ export function layoutDay(events: DaySegment[]) {
 	for (const evt of sorted) {
 		if (currentGroup.length === 0) {
 			currentGroup.push(evt);
-			groupEnd = evt.end.getTime();
+			groupEnd = getLayoutEnd(evt);
 		} else if (evt.start.getTime() < groupEnd) {
 			currentGroup.push(evt);
-			if (evt.end.getTime() > groupEnd) groupEnd = evt.end.getTime();
+			if (getLayoutEnd(evt) > groupEnd) groupEnd = getLayoutEnd(evt);
 		} else {
 			groups.push(currentGroup);
 			currentGroup = [evt];
-			groupEnd = evt.end.getTime();
+			groupEnd = getLayoutEnd(evt);
 		}
 	}
 	if (currentGroup.length) groups.push(currentGroup);
@@ -140,7 +153,7 @@ export function layoutDay(events: DaySegment[]) {
 			for (let i = 0; i < columns.length; i++) {
 				const col = columns[i];
 				const last = col[col.length - 1];
-				if (last.end.getTime() <= evt.start.getTime()) {
+				if (getLayoutEnd(last) <= evt.start.getTime()) {
 					col.push(evt);
 					placed.push({ ...evt, col: i + 1, span: 1 });
 					placedInCol = true;
@@ -163,8 +176,8 @@ export function layoutDay(events: DaySegment[]) {
 						colEvts.some(
 							(other) =>
 								!(
-									other.end.getTime() <= evt.start.getTime() ||
-									other.start.getTime() >= evt.end.getTime()
+									getLayoutEnd(other) <= evt.start.getTime() ||
+									other.start.getTime() >= getLayoutEnd(evt)
 								),
 						)
 					) {
