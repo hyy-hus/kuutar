@@ -10,6 +10,7 @@ import {
 	Folder,
 	Globe,
 	Home,
+	Mail,
 	Moon,
 	Shield,
 	ShieldAlert,
@@ -101,6 +102,12 @@ export function SideBar({ theme, toggleTheme }: SideBarProps) {
 			to: "/contracts",
 			label: t("sopimukset", "Sopimukset"),
 			icon: FileText,
+			adminOnly: true,
+		},
+		{
+			to: "/admin/email-templates",
+			label: t("sahkopostipohjat", "Sähköpostipohjat"),
+			icon: Mail,
 			adminOnly: true,
 		},
 		{
