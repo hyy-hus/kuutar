@@ -521,3 +521,90 @@ async fn test_delete_reservation_requires_owner_or_admin(pool: PgPool) {
     let res = app.oneshot(delete_as(admin_auth)).await.unwrap();
     assert_eq!(res.status(), StatusCode::NO_CONTENT);
 }
+
+fn create_payload(resource_id: Uuid, extra: Value) -> Value {
+    let start = Utc::now() + Duration::hours(1);
+    let mut payload = json!({
+        "title": "On behalf",
+        "occurrences": [{
+            "resource_id": resource_id,
+            "start_time": start,
+            "end_time": start + Duration::hours(1)
+        }]
+    });
+    payload
+        .as_object_mut()
+        .unwrap()
+        .extend(extra.as_object().unwrap().clone());
+    payload
+}
+
+async fn post_reservation(app: axum::Router, token: &str, payload: Value) -> (StatusCode, Value) {
+    let response = app
+        .oneshot(
+            Request::builder()
+                .method("POST")
+                .uri("/reservations")
+                .header(header::AUTHORIZATION, format!("Bearer {token}"))
+                .header(header::CONTENT_TYPE, "application/json")
+                .body(Body::from(payload.to_string()))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    let status = response.status();
+    let body = to_bytes(response.into_body(), usize::MAX).await.unwrap();
+    (status, serde_json::from_slice(&body).unwrap_or(Value::Null))
+}
+
+#[sqlx::test]
+async fn test_admin_can_create_reservation_for_another_user(pool: PgPool) {
+    let (_group, admin_id, resource_id, _collection, token) =
+        setup_test_environment(&pool, Role::Admin).await;
+    let (_, other_id, _) = setup_user_token(&pool, Role::User).await;
+    let app = app(pool, test_config());
+
+    let (status, body) = post_reservation(
+        app,
+        &token,
+        create_payload(resource_id, json!({ "user_id": other_id })),
+    )
+    .await;
+
+    assert_eq!(status, StatusCode::CREATED);
+    assert_eq!(body["user_id"], json!(other_id));
+    assert_ne!(body["user_id"], json!(admin_id));
+}
+
+#[sqlx::test]
+async fn test_non_admin_cannot_create_reservation_for_another_user(pool: PgPool) {
+    let (_group, _user_id, resource_id, _collection, token) =
+        setup_test_environment(&pool, Role::User).await;
+    let (_, other_id, _) = setup_user_token(&pool, Role::User).await;
+    let app = app(pool, test_config());
+
+    let (status, _) = post_reservation(
+        app,
+        &token,
+        create_payload(resource_id, json!({ "user_id": other_id })),
+    )
+    .await;
+
+    assert_eq!(status, StatusCode::FORBIDDEN);
+}
+
+#[sqlx::test]
+async fn test_admin_cannot_create_reservation_for_unknown_user(pool: PgPool) {
+    let (_group, _user_id, resource_id, _collection, token) =
+        setup_test_environment(&pool, Role::Admin).await;
+    let app = app(pool, test_config());
+
+    let (status, _) = post_reservation(
+        app,
+        &token,
+        create_payload(resource_id, json!({ "user_id": Uuid::new_v4() })),
+    )
+    .await;
+
+    assert_eq!(status, StatusCode::NOT_FOUND);
+}

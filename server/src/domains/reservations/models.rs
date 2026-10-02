@@ -77,6 +77,9 @@ pub struct CreateOccurrencePayload {
 
 #[derive(Debug, Deserialize, Validate, ToSchema)]
 pub struct CreateReservationPayload {
+    /// Admins only: create the reservation on behalf of this user.
+    pub user_id: Option<Uuid>,
+
     #[validate(length(min = 1, max = 255))]
     pub title: String,
     pub description: Option<String>,
