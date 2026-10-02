@@ -6,7 +6,7 @@ import { Chip } from "#/components/Chip";
 import { RichTextContent } from "#/components/RichTextContent";
 import { useDeleteGroup, useGroup } from "#/hooks/useGroups";
 import { requireAuthGuard } from "#/utils/authGuard";
-import { formatDate } from "#/utils/date";
+import { useDateFormatter } from "#/utils/date";
 import { readable_uuid } from "#/utils/uuid";
 
 export const Route = createFileRoute("/_app/groups/$id")({
@@ -18,6 +18,7 @@ export const Route = createFileRoute("/_app/groups/$id")({
 
 function ViewGroupPage() {
 	const { t } = useTranslation();
+	const { formatDate } = useDateFormatter();
 	const { id } = Route.useParams();
 	const navigate = useNavigate();
 	const { data: group, isLoading, isError } = useGroup(id);

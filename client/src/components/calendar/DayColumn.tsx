@@ -1,13 +1,19 @@
 import { useMemo } from "react";
-import { type CalendarEvent, layoutDay } from "#/utils/calendarUtils";
+import { type DaySegment, layoutDay } from "#/utils/calendarUtils";
 import { ReservationBlock } from "./ReservationBlock";
 
 interface DayColumnProps {
-	events: CalendarEvent[];
+	events: DaySegment[];
 	columnIndex: number;
+	/** Height of one hour row in rem */
+	hourHeightRem: number;
 }
 
-export function DayColumn({ events, columnIndex }: DayColumnProps) {
+export function DayColumn({
+	events,
+	columnIndex,
+	hourHeightRem,
+}: DayColumnProps) {
 	const { maxCols, placed } = useMemo(() => layoutDay(events), [events]);
 
 	return (
@@ -19,7 +25,12 @@ export function DayColumn({ events, columnIndex }: DayColumnProps) {
 			}}
 		>
 			{placed.map((evt) => (
-				<ReservationBlock key={evt.id} event={evt} maxCols={maxCols} />
+				<ReservationBlock
+					key={evt.id}
+					event={evt}
+					maxCols={maxCols}
+					hourHeightRem={hourHeightRem}
+				/>
 			))}
 		</div>
 	);

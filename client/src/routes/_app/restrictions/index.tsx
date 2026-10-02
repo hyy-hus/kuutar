@@ -24,8 +24,14 @@ import {
 	useRestrictions,
 } from "#/hooks/useRestrictions";
 import { requireAuthGuard } from "#/utils/authGuard";
-import { startOfCurrentWeek } from "#/utils/calendarUtils";
-import { formatDate } from "#/utils/date";
+import {
+	addDays,
+	formatYYYYMMDD,
+	localDayRangeISO,
+	parseLocalDate,
+	startOfWeek,
+	useDateFormatter,
+} from "#/utils/date";
 import { readable_uuid } from "#/utils/uuid";
 
 export interface RestrictionsDashboardSearch {
@@ -33,18 +39,6 @@ export interface RestrictionsDashboardSearch {
 	days?: number;
 	resource_id?: string;
 }
-
-const formatYYYYMMDD = (d: Date) => {
-	const year = d.getFullYear();
-	const month = String(d.getMonth() + 1).padStart(2, "0");
-	const day = String(d.getDate()).padStart(2, "0");
-	return `${year}-${month}-${day}`;
-};
-
-const parseLocalDate = (dateStr: string): Date => {
-	const [year, month, day] = dateStr.split("-").map(Number);
-	return new Date(year, month - 1, day, 0, 0, 0, 0);
-};
 
 export const Route = createFileRoute("/_app/restrictions/")({
 	validateSearch: (
@@ -74,6 +68,7 @@ function RestrictionCard({
 	isDeleting: boolean;
 }) {
 	const { t } = useTranslation();
+	const { formatDate } = useDateFormatter();
 	const { data: groups } = useGroups();
 
 	const groupMap = useMemo(
@@ -178,26 +173,17 @@ function RestrictionsDashboardPage() {
 	const { data: resources, isLoading: loadingResources } = useResources();
 	const deleteRestriction = useDeleteRestriction();
 
-	const defaultStartStr = formatYYYYMMDD(startOfCurrentWeek());
+	const defaultStartStr = formatYYYYMMDD(startOfWeek());
 	const startStr = search.start_date || defaultStartStr;
 	const days = search.days || 30;
 	const resourceId = search.resource_id;
 
 	const start = useMemo(() => parseLocalDate(startStr), [startStr]);
 
-	const { startDateISO, endDateISO } = useMemo(() => {
-		const startDate = new Date(start);
-		startDate.setHours(0, 0, 0, 0);
-
-		const endDate = new Date(start);
-		endDate.setDate(endDate.getDate() + days);
-		endDate.setHours(23, 59, 59, 999);
-
-		return {
-			startDateISO: startDate.toISOString(),
-			endDateISO: endDate.toISOString(),
-		};
-	}, [start, days]);
+	const { startISO: startDateISO, endISO: endDateISO } = useMemo(
+		() => localDayRangeISO(start, addDays(start, days - 1)),
+		[start, days],
+	);
 
 	const {
 		data: restrictions,
@@ -266,9 +252,9 @@ function RestrictionsDashboardPage() {
 				<input
 					type="date"
 					value={formatYYYYMMDD(start)}
+					// The input value is already YYYY-MM-DD; valueAsDate would be UTC midnight
 					onChange={(e) =>
-						e.target.valueAsDate &&
-						updateSearch({ start_date: formatYYYYMMDD(e.target.valueAsDate) })
+						e.target.value && updateSearch({ start_date: e.target.value })
 					}
 					className="px-3 py-1.5 text-xs bg-stone-50 dark:bg-stone-950 border border-stone-200 dark:border-stone-800 rounded-md font-mono"
 				/>

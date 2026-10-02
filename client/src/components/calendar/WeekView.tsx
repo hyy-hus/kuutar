@@ -2,22 +2,34 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import type { CalendarEvent } from "#/utils/calendarUtils";
+import { type CalendarEvent, splitEventsByDay } from "#/utils/calendarUtils";
+import { formatDateTimeLocal, useDateFormatter } from "#/utils/date";
 import { DayColumn } from "./DayColumn";
 
-const hours = Array.from(
+/** One sample timestamp per hour of the day, for the locale-formatted hour labels */
+const hourDates = Array.from(
 	{ length: 24 },
-	(_, i) => `${i.toString().padStart(2, "0")}:00`,
+	(_, i) => new Date(2000, 0, 1, i, 0, 0, 0),
 );
 
 interface WeekViewProps {
 	start: Date;
 	days: number;
+	/** Height of one hour row in rem */
+	hourHeightRem: number;
 	events: CalendarEvent[];
 	onSlotDoubleClick?: (startTimeISO: string, endTimeISO: string) => void;
 }
 
-function CurrentTimeIndicator({ start, days }: { start: Date; days: number }) {
+function CurrentTimeIndicator({
+	start,
+	days,
+	hourHeightRem,
+}: {
+	start: Date;
+	days: number;
+	hourHeightRem: number;
+}) {
 	const [now, setNow] = useState(() => new Date());
 
 	useEffect(() => {
@@ -44,7 +56,7 @@ function CurrentTimeIndicator({ start, days }: { start: Date; days: number }) {
 	if (!isTodayVisible) return null;
 
 	const minutesSinceMidnight = now.getHours() * 60 + now.getMinutes();
-	const topOffset = `calc(3rem + ${(minutesSinceMidnight / 60) * 5}rem)`;
+	const topOffset = `calc(3rem + ${(minutesSinceMidnight / 60) * hourHeightRem}rem)`;
 
 	return (
 		<div
@@ -59,55 +71,48 @@ function CurrentTimeIndicator({ start, days }: { start: Date; days: number }) {
 	);
 }
 
-const formatDateTimeLocal = (date: Date) => {
-	const pad = (n: number) => String(n).padStart(2, "0");
-	return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
-};
-
 export function WeekView({
 	start,
 	days,
+	hourHeightRem,
 	events,
 	onSlotDoubleClick,
 }: WeekViewProps) {
-	const { t, i18n } = useTranslation();
+	const { t } = useTranslation();
+	const { formatTime, formatWeekday, formatDayMonth } = useDateFormatter();
+	const hours = hourDates.map((d) => formatTime(d));
 	const scrollRef = useRef<HTMLDivElement>(null);
 	const [hoveredCell, setHoveredCell] = useState<{
 		row: number;
 		col: number;
 	} | null>(null);
 
+	const prevHourHeightRef = useRef<number | null>(null);
+
 	useEffect(() => {
-		if (scrollRef.current) {
-			scrollRef.current.scrollTop = 480; // Scroll to ~08:00
-		}
-	}, []);
+		const scroller = scrollRef.current;
+		if (!scroller) return;
+		const prevHourHeight = prevHourHeightRef.current;
+		prevHourHeightRef.current = hourHeightRem;
 
-	const eventsByDay = useMemo(() => {
-		const slots: CalendarEvent[][] = Array.from({ length: days }, () => []);
-		const startDateOnly = new Date(
-			start.getFullYear(),
-			start.getMonth(),
-			start.getDate(),
-		).getTime();
-
-		events.forEach((evt) => {
-			const evtDateOnly = new Date(
-				evt.start.getFullYear(),
-				evt.start.getMonth(),
-				evt.start.getDate(),
-			).getTime();
-			const dayOffset = Math.round(
-				(evtDateOnly - startDateOnly) / (1000 * 60 * 60 * 24),
+		if (prevHourHeight === null) {
+			// Start with the previous hour at the top, so the current hour is in view with some context.
+			// The sticky 3rem header covers the area above the hour rows.
+			const remPx = Number.parseFloat(
+				getComputedStyle(document.documentElement).fontSize,
 			);
+			const firstHour = Math.max(0, new Date().getHours() - 1);
+			scroller.scrollTop = firstHour * hourHeightRem * remPx;
+		} else if (prevHourHeight !== hourHeightRem) {
+			// Keep the same hour at the top when the row height changes
+			scroller.scrollTop *= hourHeightRem / prevHourHeight;
+		}
+	}, [hourHeightRem]);
 
-			if (dayOffset >= 0 && dayOffset < days) {
-				slots[dayOffset].push(evt);
-			}
-		});
-
-		return slots;
-	}, [events, start, days]);
+	const eventsByDay = useMemo(
+		() => splitEventsByDay(events, start, days),
+		[events, start, days],
+	);
 
 	const handleCellDoubleClick = (row: number, col: number) => {
 		if (row === 0 || col === 0 || !onSlotDoubleClick) return;
@@ -132,11 +137,9 @@ export function WeekView({
 		const targetDate = new Date(start);
 		targetDate.setDate(targetDate.getDate() + colIndex);
 
-		const weekday = new Intl.DateTimeFormat(i18n.language, {
-			weekday: "long",
-		}).format(targetDate);
+		const weekday = formatWeekday(targetDate);
 		const dayName = weekday.charAt(0).toUpperCase() + weekday.slice(1);
-		const dateFormatted = `${targetDate.getDate()}.${targetDate.getMonth() + 1}.`;
+		const dateFormatted = formatDayMonth(targetDate);
 
 		return { dayName, dateFormatted };
 	};
@@ -147,13 +150,18 @@ export function WeekView({
 			className="flex-1 min-h-0 overflow-auto border border-stone-200 dark:border-stone-800 rounded-md bg-stone-50 dark:bg-stone-950"
 		>
 			<div
-				className="relative grid grid-rows-[3rem_repeat(24,5rem)] divide-x divide-y divide-stone-200 dark:divide-stone-800 min-w-full"
+				className="relative grid divide-x divide-y divide-stone-200 dark:divide-stone-800 min-w-full"
 				style={{
+					gridTemplateRows: `3rem repeat(24, ${hourHeightRem}rem)`,
 					gridTemplateColumns: `3.5rem repeat(${days}, minmax(${days === 1 ? "100%" : "11rem"}, 1fr))`,
 				}}
 			>
 				{/* Current Time Indicator anchored to gridColumn */}
-				<CurrentTimeIndicator start={start} days={days} />
+				<CurrentTimeIndicator
+					start={start}
+					days={days}
+					hourHeightRem={hourHeightRem}
+				/>
 
 				{/* Grid Cells */}
 				{Array.from({ length: 25 }).map((_, row) =>
@@ -207,13 +215,13 @@ export function WeekView({
 								key={cellKey}
 								className={`transition-colors flex flex-col justify-between items-center p-1 text-xs select-none ${
 									row === 0
-										? "sticky top-0 z-20 bg-stone-100 dark:bg-stone-900 border-b border-stone-300 dark:border-stone-700 font-semibold cursor-default justify-center"
+										? "sticky top-0 z-30 bg-stone-100 dark:bg-stone-900 border-b border-stone-300 dark:border-stone-700 font-semibold cursor-default justify-center"
 										: ""
 								} ${
 									col === 0
-										? "sticky left-0 z-20 bg-stone-100 dark:bg-stone-900 border-r border-stone-300 dark:border-stone-700 font-mono text-stone-500 cursor-default justify-center text-[11px]"
+										? "sticky left-0 z-25 bg-stone-100 dark:bg-stone-900 border-r border-stone-300 dark:border-stone-700 font-mono text-stone-500 cursor-default justify-center text-[11px]"
 										: ""
-								} ${row === 0 && col === 0 ? "z-30" : ""}`}
+								} ${row === 0 && col === 0 ? "z-40" : ""}`}
 								style={{
 									gridRow: row + 1,
 									gridColumn: col + 1,
@@ -244,7 +252,11 @@ export function WeekView({
 						className="pointer-events-none"
 						style={{ gridColumn: i + 2, gridRow: "2 / span 24" }}
 					>
-						<DayColumn events={eventsByDay[i]} columnIndex={i + 2} />
+						<DayColumn
+							events={eventsByDay[i]}
+							columnIndex={i + 2}
+							hourHeightRem={hourHeightRem}
+						/>
 					</div>
 				))}
 			</div>

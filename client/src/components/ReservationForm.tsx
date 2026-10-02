@@ -30,7 +30,13 @@ import {
 } from "#/hooks/useReservations";
 import { useResources } from "#/hooks/useResorces";
 import { useRestrictions } from "#/hooks/useRestrictions";
-import { formatDate, formatDateTimeLocal } from "#/utils/date";
+import {
+	formatDateTimeLocal,
+	formatYYYYMMDD,
+	localDayRangeISO,
+	parseLocalDate,
+	useDateFormatter,
+} from "#/utils/date";
 import { generateOccurrences, parseRRule } from "#/utils/rruleUtils";
 
 export interface ReservationFormValues {
@@ -63,6 +69,7 @@ export function ReservationForm({
 	submitLabel,
 }: ReservationFormProps) {
 	const { t } = useTranslation();
+	const { formatDate } = useDateFormatter();
 	const { data: resources, isLoading: loadingResources } = useResources();
 	const { data: activeContracts, isLoading: loadingContracts } = useContracts({
 		active_only: true,
@@ -73,17 +80,9 @@ export function ReservationForm({
 
 	const initialRule = parseRRule(defaultValues?.rrule);
 
-	const formatDateInput = (date?: Date | null) => {
-		if (!date) return "";
-		const year = date.getFullYear();
-		const month = String(date.getMonth() + 1).padStart(2, "0");
-		const day = String(date.getDate()).padStart(2, "0");
-		return `${year}-${month}-${day}`;
-	};
-
 	const [freq, setFreq] = useState<Frequency | null>(initialRule.freq);
 	const [untilStr, setUntilStr] = useState<string>(
-		formatDateInput(initialRule.until),
+		initialRule.until ? formatYYYYMMDD(initialRule.until) : "",
 	);
 	const [conflicts, setConflicts] = useState<Occurrence[] | null>(null);
 	const [restrictionConflicts, setRestrictionConflicts] = useState<
@@ -121,7 +120,7 @@ export function ReservationForm({
 			end_time: defaultValues?.end_time ?? "",
 		},
 		onSubmit: async ({ value }) => {
-			const until = untilStr ? new Date(untilStr) : null;
+			const until = untilStr ? parseLocalDate(untilStr) : null;
 			let allOccurrences: CreateOccurrencePayload[] = [];
 			let rruleString: string | null = null;
 
@@ -791,12 +790,15 @@ function AutomaticConflictChecker({
 	isAdmin,
 }: AutomaticConflictCheckerProps) {
 	const { t } = useTranslation();
+	const { formatDate } = useDateFormatter();
 	const mutateAsync = checkConflicts.mutateAsync;
 
 	const { data: activeRestrictions } = useRestrictions({
 		start_date: startTime ? new Date(startTime).toISOString() : undefined,
+		// Through the end of the last day of the series
 		end_date: untilStr
-			? new Date(untilStr).toISOString()
+			? localDayRangeISO(parseLocalDate(untilStr), parseLocalDate(untilStr))
+					.endISO
 			: endTime
 				? new Date(endTime).toISOString()
 				: undefined,
@@ -809,7 +811,7 @@ function AutomaticConflictChecker({
 			return;
 		}
 
-		const until = untilStr ? new Date(untilStr) : null;
+		const until = untilStr ? parseLocalDate(untilStr) : null;
 		let allOccurrences: CreateOccurrencePayload[] = [];
 		for (const resourceId of resourceIds) {
 			const { occurrences } = generateOccurrences(

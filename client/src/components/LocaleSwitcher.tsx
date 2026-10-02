@@ -1,6 +1,5 @@
 import { useTranslation } from "react-i18next";
-
-const LOCALES = ["fi", "en", "sv"] as const;
+import { SUPPORTED_LANGUAGES, selectLanguage } from "#/i18n";
 
 export default function LocaleSwitcher() {
 	const { i18n } = useTranslation();
@@ -9,13 +8,13 @@ export default function LocaleSwitcher() {
 	return (
 		<div className="flex items-center gap-2 text-inherit">
 			<div className="flex gap-1">
-				{LOCALES.map((locale) => {
+				{SUPPORTED_LANGUAGES.map((locale) => {
 					const isActive = locale === currentLocale;
 					return (
 						<button
 							key={locale}
 							type="button"
-							onClick={() => i18n.changeLanguage(locale)}
+							onClick={() => selectLanguage(locale)}
 							aria-pressed={isActive}
 							className={`cursor-pointer px-3 py-1.5 rounded-full border text-xs font-medium tracking-tight transition-colors ${
 								isActive

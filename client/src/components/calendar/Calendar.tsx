@@ -2,7 +2,7 @@
 
 import { Link, useNavigate } from "@tanstack/react-router";
 import { ChevronLeft, ChevronRight, Loader2, Plus } from "lucide-react";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "#/components/Button";
 import { useReservations } from "#/hooks/useReservations";
@@ -10,6 +10,13 @@ import { useResources } from "#/hooks/useResorces";
 import { useRestrictions } from "#/hooks/useRestrictions";
 import type { CalendarSearch } from "#/routes/_app/calendar";
 import type { CalendarEvent } from "#/utils/calendarUtils";
+import {
+	addDays,
+	formatYYYYMMDD,
+	localDayRangeISO,
+	parseLocalDate,
+	startOfWeek,
+} from "#/utils/date";
 import { ToggleChip } from "../Chip";
 import { WeekView } from "./WeekView";
 
@@ -20,24 +27,21 @@ interface CalendarProps {
 	onSearchChange: (nextSearch: CalendarSearch) => void;
 }
 
-const parseLocalDate = (dateStr: string): Date => {
-	const [year, month, day] = dateStr.split("-").map(Number);
-	return new Date(year, month - 1, day, 0, 0, 0, 0);
-};
+/** Height of one hour row in rem, from most compact to roomiest */
+const HOUR_HEIGHTS = [3, 5, 7] as const;
+type HourHeight = (typeof HOUR_HEIGHTS)[number];
+const DEFAULT_HOUR_HEIGHT: HourHeight = 5;
+const HOUR_HEIGHT_STORAGE_KEY = "kuutar.calendar.hourHeight";
 
-const formatYYYYMMDD = (d: Date): string => {
-	const year = d.getFullYear();
-	const month = String(d.getMonth() + 1).padStart(2, "0");
-	const day = String(d.getDate()).padStart(2, "0");
-	return `${year}-${month}-${day}`;
-};
-
-const getMonday = (d: Date): Date => {
-	const target = new Date(d);
-	const day = target.getDay();
-	const diff = target.getDate() - day + (day === 0 ? -6 : 1);
-	return new Date(target.setDate(diff));
-};
+/** Reads the remembered row height; storage can be unavailable (e.g. private mode) */
+function readStoredHourHeight(): HourHeight {
+	try {
+		const stored = Number(localStorage.getItem(HOUR_HEIGHT_STORAGE_KEY));
+		return HOUR_HEIGHTS.find((h) => h === stored) ?? DEFAULT_HOUR_HEIGHT;
+	} catch {
+		return DEFAULT_HOUR_HEIGHT;
+	}
+}
 
 export function Calendar({
 	startStr,
@@ -48,14 +52,18 @@ export function Calendar({
 	const { t } = useTranslation();
 	const navigate = useNavigate();
 	const start = useMemo(() => parseLocalDate(startStr), [startStr]);
+	const [hourHeight, setHourHeight] = useState(readStoredHourHeight);
+
+	const handleHourHeightChange = (next: HourHeight) => {
+		setHourHeight(next);
+		try {
+			localStorage.setItem(HOUR_HEIGHT_STORAGE_KEY, String(next));
+		} catch {
+			// Not persisting is fine; it just resets on reload
+		}
+	};
 
 	const { data: resources, isLoading: loadingResources } = useResources();
-
-	useEffect(() => {
-		if (window.innerWidth < 640 && days > 1 && !selectedResourceIds) {
-			onSearchChange({ days: 1, start: formatYYYYMMDD(start) });
-		}
-	}, [days, onSearchChange, selectedResourceIds, start]);
 
 	const activeResourceIds = useMemo(() => {
 		if (selectedResourceIds && selectedResourceIds.length > 0) {
@@ -70,19 +78,11 @@ export function Calendar({
 		}
 	}, [resources, selectedResourceIds, onSearchChange]);
 
-	const { startDateISO, endDateISO } = useMemo(() => {
-		const startDate = new Date(start);
-		startDate.setHours(0, 0, 0, 0);
-
-		const endDate = new Date(start);
-		endDate.setDate(endDate.getDate() + days);
-		endDate.setHours(23, 59, 59, 999);
-
-		return {
-			startDateISO: startDate.toISOString(),
-			endDateISO: endDate.toISOString(),
-		};
-	}, [start, days]);
+	// Exactly the visible days, in local time
+	const { startISO: startDateISO, endISO: endDateISO } = useMemo(
+		() => localDayRangeISO(start, addDays(start, days - 1)),
+		[start, days],
+	);
 
 	const { data: reservations, isLoading: loadingReservations } =
 		useReservations({
@@ -104,7 +104,7 @@ export function Calendar({
 
 	const handleDaysChange = (newDays: number) => {
 		if (newDays === 7) {
-			onSearchChange({ days: 7, start: formatYYYYMMDD(getMonday(start)) });
+			onSearchChange({ days: 7, start: formatYYYYMMDD(startOfWeek(start)) });
 		} else {
 			onSearchChange({ days: newDays, start: formatYYYYMMDD(start) });
 		}
@@ -264,7 +264,7 @@ export function Calendar({
 	}
 
 	return (
-		<div className="flex flex-col gap-3 p-1 md:p-2 flex-1 min-h-0 min-w-0">
+		<div className="flex flex-col gap-3 p-1 md:p-2 h-full min-h-0 min-w-0">
 			{/* Header & New Reservation Button */}
 			<div className="flex items-center justify-between gap-2 shrink-0">
 				<h1 className="text-lg md:text-xl font-bold tracking-tight">
@@ -294,9 +294,9 @@ export function Calendar({
 						<input
 							type="date"
 							value={formatYYYYMMDD(start)}
+							// The input value is already YYYY-MM-DD; valueAsDate would be UTC midnight
 							onChange={(e) =>
-								e.target.valueAsDate &&
-								onSearchChange({ start: formatYYYYMMDD(e.target.valueAsDate) })
+								e.target.value && onSearchChange({ start: e.target.value })
 							}
 							className="px-2 py-1 text-xs bg-stone-50 dark:bg-stone-950 border border-stone-300 dark:border-stone-700 rounded-md font-mono"
 						/>
@@ -319,6 +319,19 @@ export function Calendar({
 						<option value={3}>{t("3Piv", "3 päivää")}</option>
 						<option value={5}>{t("5Piv", "5 päivää")}</option>
 						<option value={7}>{t("1Viikko", "1 viikko")}</option>
+					</select>
+
+					<select
+						value={hourHeight}
+						onChange={(e) =>
+							handleHourHeightChange(Number(e.target.value) as HourHeight)
+						}
+						aria-label={t("tuntirivinKorkeus", "Tuntirivin korkeus")}
+						className="px-2 py-1 text-xs bg-stone-50 dark:bg-stone-950 border border-stone-300 dark:border-stone-700 rounded-md font-medium"
+					>
+						<option value={3}>{t("tiivis", "Tiivis")}</option>
+						<option value={5}>{t("normaali", "Normaali")}</option>
+						<option value={7}>{t("vlj", "Väljä")}</option>
 					</select>
 				</div>
 			</div>
@@ -344,6 +357,7 @@ export function Calendar({
 			<WeekView
 				start={start}
 				days={days}
+				hourHeightRem={hourHeight}
 				events={calendarEvents}
 				onSlotDoubleClick={handleSlotDoubleClick}
 			/>

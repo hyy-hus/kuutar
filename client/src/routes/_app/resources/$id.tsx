@@ -7,7 +7,7 @@ import { Chip } from "#/components/Chip";
 import { RichTextContent } from "#/components/RichTextContent";
 import { useCollection } from "#/hooks/useCollections";
 import { useDeleteResource, useResource } from "#/hooks/useResorces";
-import { formatDate } from "#/utils/date";
+import { useDateFormatter } from "#/utils/date";
 import { readable_uuid } from "#/utils/uuid";
 
 export const Route = createFileRoute("/_app/resources/$id")({
@@ -16,6 +16,7 @@ export const Route = createFileRoute("/_app/resources/$id")({
 
 function ViewResourcePage() {
 	const { t } = useTranslation();
+	const { formatDate } = useDateFormatter();
 	const { id } = Route.useParams();
 	const navigate = useNavigate();
 	const { data: resource, isLoading, isError } = useResource(id);

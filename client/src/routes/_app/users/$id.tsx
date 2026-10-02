@@ -6,7 +6,7 @@ import { Chip } from "#/components/Chip";
 import { useGroup } from "#/hooks/useGroups";
 import { useDeleteUser, useUser } from "#/hooks/useUsers";
 import { requireAuthGuard } from "#/utils/authGuard";
-import { formatDate } from "#/utils/date";
+import { useDateFormatter } from "#/utils/date";
 import { readable_uuid } from "#/utils/uuid";
 
 export const Route = createFileRoute("/_app/users/$id")({
@@ -18,6 +18,7 @@ export const Route = createFileRoute("/_app/users/$id")({
 
 function ViewUserPage() {
 	const { t } = useTranslation();
+	const { formatDate } = useDateFormatter();
 	const { id } = Route.useParams();
 	const navigate = useNavigate();
 	const { data: user, isLoading, isError } = useUser(id);

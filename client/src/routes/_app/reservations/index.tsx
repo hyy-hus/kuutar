@@ -24,7 +24,7 @@ import {
 import { useResources } from "#/hooks/useResorces";
 import { requireAuthGuard } from "#/utils/authGuard";
 import { cn } from "#/utils/cn";
-import { formatDate } from "#/utils/date";
+import { useDateFormatter } from "#/utils/date";
 import {
 	getPeriodRange,
 	type PeriodMonths,
@@ -64,6 +64,7 @@ function UserReservationCard({
 	isUpdating: boolean;
 }) {
 	const { t } = useTranslation();
+	const { formatDate } = useDateFormatter();
 	const firstOccurrence = reservationWithOcc.occurrences?.[0];
 	const isPending = reservationWithOcc.status === "pending";
 	const isCancelled = reservationWithOcc.status === "cancelled";

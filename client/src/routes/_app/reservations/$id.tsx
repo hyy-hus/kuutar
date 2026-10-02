@@ -15,7 +15,7 @@ import { Chip } from "#/components/Chip";
 import { useIsAdmin } from "#/hooks/useAuth";
 import { useDeleteReservation, useReservation } from "#/hooks/useReservations";
 import { useResources } from "#/hooks/useResorces";
-import { formatDate } from "#/utils/date";
+import { useDateFormatter } from "#/utils/date";
 import { readable_uuid } from "#/utils/uuid";
 
 export const Route = createFileRoute("/_app/reservations/$id")({
@@ -24,6 +24,7 @@ export const Route = createFileRoute("/_app/reservations/$id")({
 
 function ViewReservationPage() {
 	const { t } = useTranslation();
+	const { formatDate } = useDateFormatter();
 	const { id } = Route.useParams();
 	const navigate = useNavigate();
 	const { isAdmin } = useIsAdmin();

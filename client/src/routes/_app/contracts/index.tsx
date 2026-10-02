@@ -23,7 +23,7 @@ import {
 	useUpdateContract,
 } from "#/hooks/useContracts";
 import { requireAuthGuard } from "#/utils/authGuard";
-import { formatDate } from "#/utils/date";
+import { useDateFormatter } from "#/utils/date";
 
 export const Route = createFileRoute("/_app/contracts/")({
 	beforeLoad: async ({ context }) => {
@@ -40,6 +40,7 @@ function ContractCard({
 	onEdit: (contract: Contract) => void;
 }) {
 	const { t, i18n } = useTranslation();
+	const { formatDate } = useDateFormatter();
 	const title = getLocalizedText(contract.title, i18n.language);
 	const fileName = getLocalizedText(contract.file_name, i18n.language);
 

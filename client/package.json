@@ -15,6 +15,7 @@
         "lint": "biome lint",
         "check": "biome check",
         "typecheck": "tsc --noEmit",
+        "test": "vitest run --project unit",
         "storybook": "storybook dev -p 6006",
         "build-storybook": "storybook build",
         "generate:api": "openapi-typescript http://127.0.0.1:3000/api-docs/openapi.json -o src/api/schema.d.ts"
