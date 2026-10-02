@@ -36,9 +36,20 @@ export const getMinutesSinceMidnight = (d: Date): number => {
 	return d.getHours() * 60 + d.getMinutes();
 };
 
-export const getMinutesBetween = (start: Date, end: Date): number => {
-	const diff = end.getTime() - start.getTime();
-	return Math.max(1, Math.round(diff / (1000 * 60)));
+/**
+ * Where a day segment sits on the 24-hour grid, in wall-clock minutes from midnight.
+ * The grid labels clock times, so on daylight-saving days (23 or 25 hours long)
+ * blocks must follow the clock rather than the elapsed time to line up with the rows.
+ */
+export const getSegmentGridMinutes = (
+	segment: Pick<DaySegment, "start" | "end">,
+): { startMins: number; endMins: number } => {
+	const startMins = getMinutesSinceMidnight(segment.start);
+	// A segment ending at the next midnight reaches the bottom of the grid
+	const endsNextDay = segment.end.getDate() !== segment.start.getDate();
+	const endMins = endsNextDay ? 1440 : getMinutesSinceMidnight(segment.end);
+	// Keep zero-length (or clock-skipped) events visible as a thin line
+	return { startMins, endMins: Math.max(endMins, startMins + 1) };
 };
 
 export const startOfCurrentWeek = (): Date => {

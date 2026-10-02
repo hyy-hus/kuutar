@@ -30,6 +30,10 @@ export interface DateFormatter {
 	 * "20.10.2026 klo 18.00 – 22.00" or "21.10.2026 klo 18.00 – 22.10.2026 klo 02.00"
 	 */
 	formatDateRange: (start?: DateInput, end?: DateInput) => string;
+	/** Formats the weekday name, e.g. "maanantai" */
+	formatWeekday: (dateInput?: DateInput) => string;
+	/** Formats a short day & month without the year, e.g. "19.10." */
+	formatDayMonth: (dateInput?: DateInput) => string;
 }
 
 function toDate(dateInput: DateInput): Date | null {
@@ -100,7 +104,30 @@ function createDateFormatter(locale: string): DateFormatter {
 		return `${formatDate(startDate)} – ${endFormatted}`;
 	};
 
-	return { formatDate, formatDateOnly, formatTime, formatDateRange };
+	const weekdayFormatter = new Intl.DateTimeFormat(locale, { weekday: "long" });
+	const dayMonthFormatter = new Intl.DateTimeFormat(locale, {
+		day: "numeric",
+		month: "numeric",
+	});
+
+	const formatWeekday = (dateInput?: DateInput) => {
+		const date = toDate(dateInput);
+		return date ? weekdayFormatter.format(date) : "—";
+	};
+
+	const formatDayMonth = (dateInput?: DateInput) => {
+		const date = toDate(dateInput);
+		return date ? dayMonthFormatter.format(date) : "—";
+	};
+
+	return {
+		formatDate,
+		formatDateOnly,
+		formatTime,
+		formatDateRange,
+		formatWeekday,
+		formatDayMonth,
+	};
 }
 
 const formatterCache = new Map<string, DateFormatter>();

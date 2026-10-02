@@ -67,8 +67,8 @@ export function WeekView({
 	events,
 	onSlotDoubleClick,
 }: WeekViewProps) {
-	const { t, i18n } = useTranslation();
-	const { formatTime } = useDateFormatter();
+	const { t } = useTranslation();
+	const { formatTime, formatWeekday, formatDayMonth } = useDateFormatter();
 	const hours = hourDates.map((d) => formatTime(d));
 	const scrollRef = useRef<HTMLDivElement>(null);
 	const [hoveredCell, setHoveredCell] = useState<{
@@ -110,11 +110,9 @@ export function WeekView({
 		const targetDate = new Date(start);
 		targetDate.setDate(targetDate.getDate() + colIndex);
 
-		const weekday = new Intl.DateTimeFormat(i18n.language, {
-			weekday: "long",
-		}).format(targetDate);
+		const weekday = formatWeekday(targetDate);
 		const dayName = weekday.charAt(0).toUpperCase() + weekday.slice(1);
-		const dateFormatted = `${targetDate.getDate()}.${targetDate.getMonth() + 1}.`;
+		const dateFormatted = formatDayMonth(targetDate);
 
 		return { dayName, dateFormatted };
 	};

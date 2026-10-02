@@ -1,11 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { AlertOctagon, Clock, User as UserIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import {
-	getMinutesBetween,
-	getMinutesSinceMidnight,
-	type PlacedEvent,
-} from "#/utils/calendarUtils";
+import { getSegmentGridMinutes, type PlacedEvent } from "#/utils/calendarUtils";
 import { cn } from "#/utils/cn";
 import { useDateFormatter } from "#/utils/date";
 
@@ -17,17 +13,16 @@ interface ReservationBlockProps {
 export function ReservationBlock({ event, maxCols }: ReservationBlockProps) {
 	const { t } = useTranslation();
 	const { formatTime, formatDateRange } = useDateFormatter();
-	const startMins = getMinutesSinceMidnight(event.start);
-	const durationMins = getMinutesBetween(event.start, event.end);
+	const { startMins, endMins } = getSegmentGridMinutes(event);
 	const isMultiDay = event.continuesBefore || event.continuesAfter;
 	// Label the whole event, not just this day's segment, adding dates when it spans days
 	const timeString = isMultiDay
 		? formatDateRange(event.eventStart, event.eventEnd)
 		: `${formatTime(event.eventStart)} – ${formatTime(event.eventEnd)}`;
 
-	// Exact percentage math over 1440 minutes in a 24h day, kept inside the column
+	// Percentage math over the grid's 1440 clock minutes
 	const topPct = (startMins / 1440) * 100;
-	const heightPct = Math.min((durationMins / 1440) * 100, 100 - topPct);
+	const heightPct = ((endMins - startMins) / 1440) * 100;
 
 	// Column width calculation for overlapping events
 	const colWidthPct = 100 / maxCols;
