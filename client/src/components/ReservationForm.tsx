@@ -30,7 +30,7 @@ import {
 } from "#/hooks/useReservations";
 import { useResources } from "#/hooks/useResorces";
 import { useRestrictions } from "#/hooks/useRestrictions";
-import { formatDate, formatDateTimeLocal } from "#/utils/date";
+import { formatDateTimeLocal, useDateFormatter } from "#/utils/date";
 import { generateOccurrences, parseRRule } from "#/utils/rruleUtils";
 
 export interface ReservationFormValues {
@@ -63,6 +63,7 @@ export function ReservationForm({
 	submitLabel,
 }: ReservationFormProps) {
 	const { t } = useTranslation();
+	const { formatDate } = useDateFormatter();
 	const { data: resources, isLoading: loadingResources } = useResources();
 	const { data: activeContracts, isLoading: loadingContracts } = useContracts({
 		active_only: true,
@@ -791,6 +792,7 @@ function AutomaticConflictChecker({
 	isAdmin,
 }: AutomaticConflictCheckerProps) {
 	const { t } = useTranslation();
+	const { formatDate } = useDateFormatter();
 	const mutateAsync = checkConflicts.mutateAsync;
 
 	const { data: activeRestrictions } = useRestrictions({

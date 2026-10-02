@@ -17,7 +17,7 @@ import {
 	useReservations,
 } from "#/hooks/useReservations";
 import { useResources } from "#/hooks/useResorces";
-import { formatDate } from "#/utils/date";
+import { useDateFormatter } from "#/utils/date";
 
 export const Route = createFileRoute("/_app/admin/reservations")({
 	component: AdminReservationsSyncPage,
@@ -25,6 +25,7 @@ export const Route = createFileRoute("/_app/admin/reservations")({
 
 function AdminReservationsSyncPage() {
 	const { t } = useTranslation();
+	const { formatDate } = useDateFormatter();
 	const { data: resources } = useResources();
 	const batchImport = useBatchImportReservations();
 

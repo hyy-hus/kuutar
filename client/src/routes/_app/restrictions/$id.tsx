@@ -13,7 +13,7 @@ import { Chip } from "#/components/Chip";
 import { useGroups } from "#/hooks/useGroups";
 import { useResources } from "#/hooks/useResorces";
 import { useDeleteRestriction, useRestriction } from "#/hooks/useRestrictions";
-import { formatDate } from "#/utils/date";
+import { useDateFormatter } from "#/utils/date";
 import { readable_uuid } from "#/utils/uuid";
 
 export const Route = createFileRoute("/_app/restrictions/$id")({
@@ -22,6 +22,7 @@ export const Route = createFileRoute("/_app/restrictions/$id")({
 
 function ViewRestrictionPage() {
 	const { t } = useTranslation();
+	const { formatDate } = useDateFormatter();
 	const { id } = Route.useParams();
 	const navigate = useNavigate();
 

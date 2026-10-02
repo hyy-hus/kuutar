@@ -20,7 +20,7 @@ import { useAuth, useIsAdmin } from "#/hooks/useAuth";
 import { useReservations } from "#/hooks/useReservations";
 import { useResources } from "#/hooks/useResorces";
 import { currentYearRange, startOfCurrentWeek } from "#/utils/calendarUtils";
-import { formatDate } from "#/utils/date";
+import { useDateFormatter } from "#/utils/date";
 import { getLocalizedPlainText } from "#/utils/richText";
 import { readable_uuid } from "#/utils/uuid";
 
@@ -30,6 +30,7 @@ export const Route = createFileRoute("/_app/")({
 
 function HomePage() {
 	const { t, i18n } = useTranslation();
+	const { formatDate } = useDateFormatter();
 	const { user } = useAuth();
 	const { isAdmin } = useIsAdmin();
 	const { data: resources, isLoading: loadingResources } = useResources();

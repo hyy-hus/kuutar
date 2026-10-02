@@ -8,11 +8,7 @@ import {
 	type PlacedEvent,
 } from "#/utils/calendarUtils";
 import { cn } from "#/utils/cn";
-
-const timeFormatter = new Intl.DateTimeFormat("fi-FI", {
-	hour: "2-digit",
-	minute: "2-digit",
-});
+import { useDateFormatter } from "#/utils/date";
 
 interface ReservationBlockProps {
 	event: PlacedEvent;
@@ -21,9 +17,10 @@ interface ReservationBlockProps {
 
 export function ReservationBlock({ event, maxCols }: ReservationBlockProps) {
 	const { t } = useTranslation();
+	const { formatTime } = useDateFormatter();
 	const startMins = getMinutesSinceMidnight(event.start);
 	const durationMins = getMinutesBetween(event.start, event.end);
-	const timeString = `${timeFormatter.format(event.start)} – ${timeFormatter.format(event.end)}`;
+	const timeString = `${formatTime(event.start)} – ${formatTime(event.end)}`;
 
 	// Exact percentage math over 1440 minutes in a 24h day
 	const topPct = (startMins / 1440) * 100;

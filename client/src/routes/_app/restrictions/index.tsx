@@ -25,7 +25,7 @@ import {
 } from "#/hooks/useRestrictions";
 import { requireAuthGuard } from "#/utils/authGuard";
 import { startOfCurrentWeek } from "#/utils/calendarUtils";
-import { formatDate } from "#/utils/date";
+import { useDateFormatter } from "#/utils/date";
 import { readable_uuid } from "#/utils/uuid";
 
 export interface RestrictionsDashboardSearch {
@@ -74,6 +74,7 @@ function RestrictionCard({
 	isDeleting: boolean;
 }) {
 	const { t } = useTranslation();
+	const { formatDate } = useDateFormatter();
 	const { data: groups } = useGroups();
 
 	const groupMap = useMemo(

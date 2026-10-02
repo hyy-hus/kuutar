@@ -5,7 +5,7 @@ import { Button } from "#/components/Button";
 import { Chip } from "#/components/Chip";
 import { RichTextContent } from "#/components/RichTextContent";
 import { useCollection, useDeleteCollection } from "#/hooks/useCollections";
-import { formatDate } from "#/utils/date";
+import { useDateFormatter } from "#/utils/date";
 import { readable_uuid } from "#/utils/uuid";
 
 export const Route = createFileRoute("/_app/collections/$id")({
@@ -14,6 +14,7 @@ export const Route = createFileRoute("/_app/collections/$id")({
 
 function ViewCollectionPage() {
 	const { t } = useTranslation();
+	const { formatDate } = useDateFormatter();
 	const { id } = Route.useParams();
 	const navigate = useNavigate();
 	const { data: collection, isLoading, isError } = useCollection(id);

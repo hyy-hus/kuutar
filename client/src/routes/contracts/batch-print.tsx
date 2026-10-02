@@ -15,7 +15,7 @@ import {
 import type { ReservationWithOccurrences } from "#/hooks/useReservations";
 import { useResources } from "#/hooks/useResorces";
 import { requireAuthGuard } from "#/utils/authGuard";
-import { formatDate } from "#/utils/date";
+import { type DateFormatter, useDateFormatter } from "#/utils/date";
 
 export interface BatchPrintSearch {
 	reservation_ids: string[];
@@ -41,6 +41,7 @@ async function drawCoverPage(
 	reservation: ReservationWithOccurrences,
 	resourceMap: Map<string, string>,
 	t: (key: string, fallback: string) => string,
+	formatDate: DateFormatter["formatDate"],
 ) {
 	const page = pdfDoc.addPage([595.28, 841.89]); // A4 size in points
 	const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
@@ -257,6 +258,7 @@ async function drawSignaturePage(
 
 function BatchPrintPage() {
 	const { t, i18n } = useTranslation();
+	const { formatDate } = useDateFormatter();
 	const { reservation_ids } = Route.useSearch();
 	const iframeRef = useRef<HTMLIFrameElement | null>(null);
 
@@ -326,7 +328,13 @@ function BatchPrintPage() {
 
 				for (const reservation of activeReservations) {
 					// 1. Draw Cover / Details Page for this reservation
-					await drawCoverPage(mergedPdf, reservation, resourceMap, t);
+					await drawCoverPage(
+						mergedPdf,
+						reservation,
+						resourceMap,
+						t,
+						formatDate,
+					);
 
 					// 2. Collect unique resource IDs involved in this reservation
 					const resourceIds = Array.from(
@@ -404,6 +412,7 @@ function BatchPrintPage() {
 		presignDownloadAsync,
 		i18n.language,
 		t,
+		formatDate,
 	]);
 
 	// Release the generated PDF blob when it is replaced or the page unmounts

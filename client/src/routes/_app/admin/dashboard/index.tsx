@@ -24,7 +24,7 @@ import {
 } from "#/hooks/useReservations";
 import { useResources } from "#/hooks/useResorces";
 import { cn } from "#/utils/cn";
-import { formatDate } from "#/utils/date";
+import { useDateFormatter } from "#/utils/date";
 import {
 	getPeriodRange,
 	type PeriodMonths,
@@ -89,6 +89,7 @@ function AdminReservationRow({
 	onHoverReservation: (res: ReservationWithOccurrences | null) => void;
 }) {
 	const { t } = useTranslation();
+	const { formatDate } = useDateFormatter();
 	const firstOccurrence = reservationWithOcc.occurrences?.[0];
 	const isPending = reservationWithOcc.status === "pending";
 	const isCancelled = reservationWithOcc.status === "cancelled";
@@ -138,7 +139,7 @@ function AdminReservationRow({
 		const startFormatted = formatDate(firstOccurrence.start_time);
 		const endTimeFormatted = formatTimeOnly(firstOccurrence.end_time);
 		return `${startFormatted} – ${endTimeFormatted}`;
-	}, [firstOccurrence]);
+	}, [firstOccurrence, formatDate]);
 
 	return (
 		<tr
