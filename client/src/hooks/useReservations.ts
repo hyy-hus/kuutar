@@ -221,8 +221,16 @@ export function useDeleteReservation() {
 
 export function useCheckConflicts() {
 	return useMutation({
-		mutationFn: async (occurrences: CreateOccurrencePayload[]) => {
+		mutationFn: async ({
+			occurrences,
+			excludeReservationId,
+		}: {
+			occurrences: CreateOccurrencePayload[];
+			/** Reservation being edited, so it doesn't conflict with itself */
+			excludeReservationId?: string;
+		}) => {
 			const { data, error } = await api.POST("/reservations/check-conflicts", {
+				params: { query: { exclude_reservation_id: excludeReservationId } },
 				body: occurrences,
 			});
 			if (error || !data)

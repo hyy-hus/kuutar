@@ -126,6 +126,12 @@ pub struct UpdateReservationPayload {
     pub occurrences: Option<Vec<CreateOccurrencePayload>>,
 }
 
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
+pub struct CheckConflictsQuery {
+    /// Reservation being edited; its own occurrences are ignored
+    pub exclude_reservation_id: Option<uuid::Uuid>,
+}
+
 #[derive(Debug, Deserialize, Validate, utoipa::IntoParams)]
 pub struct ListReservationsQuery {
     pub start_date: Option<DateTime<Utc>>,

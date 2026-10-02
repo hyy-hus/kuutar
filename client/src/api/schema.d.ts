@@ -1921,7 +1921,10 @@ export interface operations {
     };
     check_reservation_conflicts: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description Reservation being edited; its own occurrences are ignored */
+                exclude_reservation_id?: string | null;
+            };
             header?: never;
             path?: never;
             cookie?: never;
