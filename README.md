@@ -30,7 +30,7 @@ Nimi tulee muinaissuomalaisesta kuun jumalattaresta Kuuttaresta.
 - **Sopimusten erätulostus**: ylläpito voi koota valituista varauksista yhden tulostettavan PDF:n. Siinä on jokaiselle varaukselle kansilehti, liittyvät sopimukset ja allekirjoitussivu.
 
 ### Käyttäjät ja ylläpito
-- **Kirjautuminen**: salasanalla tai sähköpostiin lähetettävällä kertakäyttökoodilla (OTP, [Resend](https://resend.com)). Toistuvat virheelliset koodiyritykset lukitsevat kirjautumisen väliaikaisesti.
+- **Kirjautuminen**: salasanalla tai sähköpostiin lähetettävällä kertakäyttökoodilla (OTP, SMTP). Toistuvat virheelliset koodiyritykset lukitsevat kirjautumisen väliaikaisesti.
 - **Käyttäjät, ryhmät ja roolit**: ylläpitäjät ja tavalliset käyttäjät. Ryhmiä käytetään esimerkiksi rajoituksista vapauttamiseen.
 - **Käyttäjien massarekisteröinti**: CSV- tai TSV-tiedostosta tai leikepöydältä, esikatselun ja rivikohtaisten virheilmoitusten kera.
 - **Ylläpidon hallintapaneeli**: odottavien pyyntöjen saapuneet-näkymä, varausten hyväksyntä ja peruminen sekä tilastot.
@@ -53,7 +53,7 @@ Kirjaudu ylläpitäjän tunnuksella:
 |---|---|
 | `admin@admin.fi` | `Admin` |
 
-Testiympäristössä on käytössä vain salasanakirjautuminen. Sähköpostiin lähetettävä kertakäyttökoodi (OTP) ei toimi, koska testiympäristöllä ei ole voimassa olevaa Resend-avainta.
+Testiympäristössä on käytössä vain salasanakirjautuminen. Sähköpostiin lähetettävä kertakäyttökoodi (OTP) ei toimi, koska testiympäristöllä ei ole SMTP-palvelinta määritettynä.
 
 Testiympäristön tiedot voivat muuttua tai nollautua milloin tahansa, joten älä tallenna sinne mitään tärkeää.
 
@@ -98,7 +98,7 @@ Palvelin kuuntelee oletuksena osoitetta `http://127.0.0.1:3000`. Rajapinnan doku
 
 **Valinnaiset palvelut:**
 - **S3-objektitallennus**: palvelin vaatii `S3_*`- ja `AWS_*`-muuttujat käynnistyäkseen. Paikallisesti mitkä tahansa arvot riittävät, mutta sopimus-PDF:ien lataaminen ja tulostus vaativat toimivan S3-yhteensopivan tallennuksen.
-- **Resend**: aseta `RESEND_API_KEY`, jos haluat käyttää sähköpostiin lähetettäviä kirjautumiskoodeja. Ilman avainta salasanakirjautuminen toimii normaalisti.
+- **SMTP**: aseta `SMTP_HOST`, `SMTP_USERNAME` ja `SMTP_PASSWORD` (sekä tarvittaessa `SMTP_PORT`, `SMTP_TLS` ja `SMTP_FROM_EMAIL`), jos haluat käyttää sähköpostiin lähetettäviä kirjautumiskoodeja. Ilman palvelinta salasanakirjautuminen toimii normaalisti.
 
 ### 3. Käyttöliittymä
 

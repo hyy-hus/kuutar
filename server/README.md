@@ -5,7 +5,7 @@ Kuutarin REST-rajapinta: Rust, [Axum](https://github.com/tokio-rs/axum), [SQLx](
 ## Käynnistys
 
 ```sh
-cp .env.example .env   # tietokanta, JWT-salaisuus, S3 ja valinnainen Resend-avain
+cp .env.example .env   # tietokanta, JWT-salaisuus, S3 ja valinnainen SMTP-palvelin
 cargo run
 ```
 
@@ -26,7 +26,8 @@ Kaikki muuttujat ja niiden esimerkkiarvot ovat tiedostossa [`.env.example`](.env
 | `JWT_SECRET` | kyllä | Tunnisteiden allekirjoitusavain |
 | `S3_BUCKET_NAME`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` | kyllä | Sopimus-PDF:ien tallennus. Paikallisesti mitkä tahansa arvot riittävät käynnistykseen. |
 | `S3_ENDPOINT`, `S3_REGION` | ei | Oletuksena Scaleway `fr-par` |
-| `RESEND_API_KEY`, `RESEND_FROM_EMAIL` | ei | Sähköpostiin lähetettävät kirjautumiskoodit |
+| `SMTP_HOST`, `SMTP_USERNAME`, `SMTP_PASSWORD` | ei | SMTP-palvelin sähköpostiin lähetettäville kirjautumiskoodeille (mikä tahansa SMTP-palvelin) |
+| `SMTP_PORT`, `SMTP_TLS`, `SMTP_FROM_EMAIL` | ei | Portti (oletus 587), salaus (`starttls`, `tls` tai `none`) ja lähettäjä |
 | `BIND_ADDR`, `MAX_DB_CONNECTIONS`, `JWT_EXPIRATION_SECONDS` | ei | Palvelimen asetukset |
 | `SEED_ADMIN_EMAIL`, `SEED_ADMIN_PASSWORD` | ei | Ensimmäinen ylläpitäjä |
 
