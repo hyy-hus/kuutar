@@ -13,6 +13,7 @@ use crate::{
     config::Config,
     domains::{
         auth::models::{RequestOtpPayload, VerifyOtpPayload},
+        email_templates::notify,
         users::models::Role,
     },
     errors::AppError,
@@ -45,6 +46,7 @@ pub async fn register(
 
     let password_hash = password::hash_password(&payload.password)?;
     let user = db::create_user(&state.pool, &payload, &password_hash).await?;
+    notify::spawn_welcome_email(&state.pool, &state.config, user.id);
 
     let tokens = issue_token_pair(&state, user.id, user.group_id, user.role).await?;
     Ok((StatusCode::CREATED, Json(tokens)))

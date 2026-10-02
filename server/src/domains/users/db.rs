@@ -45,14 +45,15 @@ pub async fn create_user(
     let user = sqlx::query_as!(
         User,
         r#"
-        INSERT INTO users (group_id, name, email, password_hash)
-        VALUES ($1, $2, $3, $4)
+        INSERT INTO users (group_id, name, email, password_hash, language)
+        VALUES ($1, $2, $3, $4, COALESCE($5, 'fi'))
         RETURNING id, group_id, name, email, default_contact_person, default_contact_email, default_contact_phone, language, role AS "role: Role", created_at, updated_at
         "#,
         payload.group_id,
         payload.name,
         payload.email.to_lowercase(),
-        password_hash
+        password_hash,
+        payload.language
     )
     .fetch_one(pool)
     .await?;
@@ -163,6 +164,7 @@ mod tests {
             name: "Test User".to_string(),
             email: "testuser@example.com".to_string(),
             password: "password123".to_string(),
+            language: None,
         };
 
         let created = create_user(&pool, &payload, "fake_hash")
@@ -195,6 +197,7 @@ mod tests {
                 name: "Zeta User".to_string(),
                 email: "zeta@example.com".to_string(),
                 password: "password123".to_string(),
+                language: None,
             },
             "hash1",
         )
@@ -208,6 +211,7 @@ mod tests {
                 name: "Alpha User".to_string(),
                 email: "alpha@example.com".to_string(),
                 password: "password123".to_string(),
+                language: None,
             },
             "hash2",
         )
@@ -237,6 +241,7 @@ mod tests {
                 name: "Old Name".to_string(),
                 email: "old@example.com".to_string(),
                 password: "password123".to_string(),
+                language: None,
             },
             "old_hash",
         )

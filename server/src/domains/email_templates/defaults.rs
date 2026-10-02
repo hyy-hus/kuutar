@@ -7,8 +7,7 @@ use serde_json::{Value, json};
 use super::models::EmailTemplateKey;
 use crate::utils::rich_text::LocalizedRichText;
 
-/// Placeholders available in every reservation email.
-pub const VARIABLES: [&str; 6] = [
+const RESERVATION_VARIABLES: [&str; 6] = [
     "user_name",
     "title",
     "status",
@@ -16,6 +15,16 @@ pub const VARIABLES: [&str; 6] = [
     "occurrences",
     "reservation_url",
 ];
+
+const USER_VARIABLES: [&str; 3] = ["user_name", "email", "app_url"];
+
+/// Placeholders that can be used in a template's subject and body.
+pub fn variables(key: EmailTemplateKey) -> &'static [&'static str] {
+    match key {
+        EmailTemplateKey::UserWelcome => &USER_VARIABLES,
+        _ => &RESERVATION_VARIABLES,
+    }
+}
 
 fn text(value: &str) -> Value {
     json!({"type": "text", "text": value})
@@ -59,6 +68,11 @@ pub fn default_subject(key: EmailTemplateKey) -> HashMap<String, String> {
             ("sv", "Bokning avbokad: {{title}}"),
             ("en", "Reservation cancelled: {{title}}"),
         ],
+        EmailTemplateKey::UserWelcome => [
+            ("fi", "Tervetuloa Kuutariin"),
+            ("sv", "Välkommen till Kuutar"),
+            ("en", "Welcome to Kuutar"),
+        ],
     };
     pairs
         .into_iter()
@@ -66,7 +80,59 @@ pub fn default_subject(key: EmailTemplateKey) -> HashMap<String, String> {
         .collect()
 }
 
+fn welcome_doc(greeting: &str, intro: &str, hint: &str, link_label: &str) -> Value {
+    json!({"type": "doc", "content": [
+        paragraph(greeting),
+        paragraph(intro),
+        paragraph(hint),
+        {"type": "paragraph", "content": [{
+            "type": "text",
+            "text": link_label,
+            "marks": [{"type": "link", "attrs": {"href": "{{app_url}}"}}]
+        }]},
+    ]})
+}
+
+fn welcome_body() -> LocalizedRichText {
+    [
+        (
+            "fi",
+            welcome_doc(
+                "Tervetuloa!",
+                "Käyttäjätilisi on luotu sähköpostiosoitteelle {{email}}.",
+                "Voit kirjautua salasanalla tai sähköpostiisi lähetettävällä kertakäyttökoodilla.",
+                "Avaa Kuutar",
+            ),
+        ),
+        (
+            "sv",
+            welcome_doc(
+                "Välkommen!",
+                "Ditt konto har skapats för e-postadressen {{email}}.",
+                "Du kan logga in med lösenord eller med en engångskod som skickas till din e-post.",
+                "Öppna Kuutar",
+            ),
+        ),
+        (
+            "en",
+            welcome_doc(
+                "Welcome!",
+                "Your account has been created for {{email}}.",
+                "You can sign in with a password or with a one-time code sent to your email.",
+                "Open Kuutar",
+            ),
+        ),
+    ]
+    .into_iter()
+    .map(|(lang, document)| (lang.to_string(), document))
+    .collect()
+}
+
 pub fn default_body(key: EmailTemplateKey) -> LocalizedRichText {
+    if key == EmailTemplateKey::UserWelcome {
+        return welcome_body();
+    }
+
     let entries = match key {
         EmailTemplateKey::ReservationCreated => [
             (
@@ -128,6 +194,7 @@ pub fn default_body(key: EmailTemplateKey) -> LocalizedRichText {
                 "View reservation",
             ),
         ],
+        EmailTemplateKey::UserWelcome => unreachable!("handled above"),
     };
     entries
         .into_iter()

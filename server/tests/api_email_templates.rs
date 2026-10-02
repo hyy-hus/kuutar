@@ -61,7 +61,7 @@ async fn test_lists_defaults_until_customized(pool: PgPool) {
     assert_eq!(status, StatusCode::OK);
 
     let templates = body.as_array().unwrap();
-    assert_eq!(templates.len(), 3);
+    assert_eq!(templates.len(), 4);
     for template in templates {
         assert_eq!(template["customized"], json!(false));
         for lang in ["fi", "sv", "en"] {
@@ -165,4 +165,47 @@ async fn test_send_test_requires_smtp_configuration(pool: PgPool) {
     )
     .await;
     assert_eq!(status, StatusCode::BAD_REQUEST);
+}
+
+#[sqlx::test]
+async fn test_welcome_template_previews_with_user_variables(pool: PgPool) {
+    let token = setup_admin_token(&pool).await;
+    let app = app(pool, test_config());
+
+    let (status, template) = call(
+        app.clone(),
+        "GET",
+        "/email-templates/user_welcome",
+        &token,
+        None,
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(
+        template["variables"],
+        json!(["user_name", "email", "app_url"])
+    );
+
+    let (status, preview) = call(
+        app,
+        "POST",
+        "/email-templates/user_welcome/preview",
+        &token,
+        Some(json!({"language": "en"})),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(preview["subject"], json!("Welcome to Kuutar"));
+    assert!(
+        preview["html"]
+            .as_str()
+            .unwrap()
+            .contains("matti@example.com")
+    );
+    assert!(
+        preview["html"]
+            .as_str()
+            .unwrap()
+            .contains(r#"href="http://localhost:5173""#)
+    );
 }

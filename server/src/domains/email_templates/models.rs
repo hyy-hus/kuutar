@@ -14,13 +14,15 @@ pub enum EmailTemplateKey {
     ReservationCreated,
     ReservationConfirmed,
     ReservationCancelled,
+    UserWelcome,
 }
 
 impl EmailTemplateKey {
-    pub const ALL: [EmailTemplateKey; 3] = [
+    pub const ALL: [EmailTemplateKey; 4] = [
         EmailTemplateKey::ReservationCreated,
         EmailTemplateKey::ReservationConfirmed,
         EmailTemplateKey::ReservationCancelled,
+        EmailTemplateKey::UserWelcome,
     ];
 
     pub fn as_str(self) -> &'static str {
@@ -28,6 +30,7 @@ impl EmailTemplateKey {
             EmailTemplateKey::ReservationCreated => "reservation_created",
             EmailTemplateKey::ReservationConfirmed => "reservation_confirmed",
             EmailTemplateKey::ReservationCancelled => "reservation_cancelled",
+            EmailTemplateKey::UserWelcome => "user_welcome",
         }
     }
 }

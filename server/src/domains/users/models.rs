@@ -36,6 +36,10 @@ pub struct CreateUser {
 
     #[validate(length(min = 8, message = "Password must be at least 8 characters"))]
     pub password: String,
+
+    /// Preferred language code (`fi`, `sv` or `en`); defaults to `fi`.
+    #[validate(custom(function = "crate::utils::lang::validate_language"))]
+    pub language: Option<String>,
 }
 
 #[derive(Debug, Deserialize, Validate, ToSchema)]

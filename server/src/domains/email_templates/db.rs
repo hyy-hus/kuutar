@@ -4,7 +4,7 @@ use serde_json::Value;
 use sqlx::PgPool;
 
 use super::{
-    defaults::{VARIABLES, default_body, default_subject},
+    defaults::{default_body, default_subject, variables},
     models::{EmailTemplate, EmailTemplateKey, UpdateEmailTemplate},
 };
 use crate::{
@@ -61,7 +61,7 @@ fn merge(key: EmailTemplateKey, stored: Option<StoredTemplate>) -> EmailTemplate
         body,
         customized,
         updated_at,
-        variables: VARIABLES.iter().map(|name| name.to_string()).collect(),
+        variables: variables(key).iter().map(|name| name.to_string()).collect(),
     }
 }
 

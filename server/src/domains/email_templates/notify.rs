@@ -60,12 +60,7 @@ async fn send_reservation_email(
     .ok_or(AppError::NotFound)?;
 
     let lang = normalize_language(&recipient.language);
-    let template = db::get(pool, key).await?;
-    let (subject, body) = db::pick_language(&template, lang)
-        .ok_or_else(|| AppError::InternalServerError("Email template is empty".to_string()))?;
-
     let vars = reservation_variables(pool, config, &reservation, &recipient.name, lang).await?;
-    let rendered = render::render(&body, &vars);
 
     // The account holder always gets the mail; the contact person is copied in.
     let cc = reservation
@@ -75,11 +70,76 @@ async fn send_reservation_email(
         .map(str::trim)
         .filter(|cc| !cc.is_empty() && !cc.eq_ignore_ascii_case(&recipient.email));
 
+    deliver(pool, config, key, lang, &recipient.email, cc, &vars).await
+}
+
+/// Queues the welcome email for a newly created user without blocking the request.
+pub fn spawn_welcome_email(pool: &PgPool, config: &Config, user_id: Uuid) {
+    if config.smtp_host.is_none() {
+        tracing::debug!("SMTP_HOST not set, skipping welcome email");
+        return;
+    }
+
+    let (pool, config) = (pool.clone(), config.clone());
+    tokio::spawn(async move {
+        if let Err(err) = send_welcome_email(&pool, &config, user_id).await {
+            tracing::error!("Failed to send welcome email to user {user_id}: {err}");
+        }
+    });
+}
+
+async fn send_welcome_email(pool: &PgPool, config: &Config, user_id: Uuid) -> Result<(), AppError> {
+    let user = sqlx::query!(
+        r#"SELECT name, email, language FROM users WHERE id = $1 AND deleted_at IS NULL"#,
+        user_id
+    )
+    .fetch_optional(pool)
+    .await?
+    .ok_or(AppError::NotFound)?;
+
+    let lang = normalize_language(&user.language);
+    let vars = Variables::from([
+        ("user_name", user.name.clone()),
+        ("email", user.email.clone()),
+        (
+            "app_url",
+            config.app_base_url.trim_end_matches('/').to_string(),
+        ),
+    ]);
+
+    deliver(
+        pool,
+        config,
+        EmailTemplateKey::UserWelcome,
+        lang,
+        &user.email,
+        None,
+        &vars,
+    )
+    .await
+}
+
+/// Renders the stored (or default) template for `lang` and sends it.
+async fn deliver(
+    pool: &PgPool,
+    config: &Config,
+    key: EmailTemplateKey,
+    lang: &str,
+    to: &str,
+    cc: Option<&str>,
+    vars: &Variables,
+) -> Result<(), AppError> {
+    let template = db::get(pool, key).await?;
+    let (subject, body) = db::pick_language(&template, lang)
+        .ok_or_else(|| AppError::InternalServerError("Email template is empty".to_string()))?;
+
+    let rendered = render::render(&body, vars);
+
     mail::send_email(
         config,
-        &recipient.email,
+        to,
         cc,
-        &render::substitute(&subject, &vars),
+        &render::substitute(&subject, vars),
         rendered.html,
         rendered.text,
     )
@@ -159,6 +219,8 @@ pub fn sample_variables(config: &Config, lang: &str) -> Variables {
 
     Variables::from([
         ("user_name", "Matti Meikäläinen".to_string()),
+        ("email", "matti@example.com".to_string()),
+        ("app_url", base.to_string()),
         ("title", "Kokous".to_string()),
         (
             "status",
