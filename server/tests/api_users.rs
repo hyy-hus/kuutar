@@ -186,6 +186,45 @@ async fn test_update_me(pool: PgPool) {
 }
 
 #[sqlx::test]
+async fn test_update_me_ignores_group_and_saves_contact_defaults(pool: PgPool) {
+    let (_user_id, group_id, token) = setup_authenticated_user(&pool).await;
+    let other_group_id: Uuid =
+        sqlx::query_scalar!("INSERT INTO groups (name) VALUES ('Other group') RETURNING id")
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+    let app = app(pool, test_config());
+
+    let payload = json!({
+        "group_id": other_group_id,
+        "default_contact_person": "Pat Contact",
+        "default_contact_phone": "+358401234567"
+    });
+
+    let response = app
+        .oneshot(
+            Request::builder()
+                .method("PATCH")
+                .uri("/users/me")
+                .header(header::AUTHORIZATION, format!("Bearer {token}"))
+                .header(header::CONTENT_TYPE, "application/json")
+                .body(Body::from(payload.to_string()))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let body = to_bytes(response.into_body(), usize::MAX).await.unwrap();
+    let json: Value = serde_json::from_slice(&body).unwrap();
+
+    assert_eq!(json["group_id"], group_id.to_string());
+    assert_eq!(json["default_contact_person"], "Pat Contact");
+    assert_eq!(json["default_contact_phone"], "+358401234567");
+}
+
+#[sqlx::test]
 async fn test_delete_me(pool: PgPool) {
     let (user_id, _group_id, token) = setup_authenticated_user(&pool).await;
     let app = app(pool.clone(), test_config());

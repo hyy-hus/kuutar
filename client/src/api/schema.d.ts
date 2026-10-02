@@ -2605,7 +2605,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Current user updated */
+            /** @description Current user updated (group_id is ignored) */
             200: {
                 headers: {
                     [name: string]: unknown;

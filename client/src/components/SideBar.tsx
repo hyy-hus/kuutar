@@ -15,6 +15,7 @@ import {
 	ShieldAlert,
 	Sun,
 	User,
+	UserCog,
 	Users,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -106,6 +107,12 @@ export function SideBar({ theme, toggleTheme }: SideBarProps) {
 			label: t("sopimukset", "Sopimukset"),
 			icon: FileText,
 			adminOnly: true,
+		},
+		{
+			to: "/me",
+			label: t("omatTiedot", "Omat tiedot"),
+			icon: UserCog,
+			authOnly: true,
 		},
 	];
 
