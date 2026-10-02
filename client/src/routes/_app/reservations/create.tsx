@@ -62,6 +62,7 @@ function CreateReservationPage() {
 
 	const handleSubmit = async (values: ReservationFormValues) => {
 		const created = await createReservation.mutateAsync({
+			user_id: values.user_id || null,
 			title: values.title,
 			description: values.description || null,
 			status: values.status,

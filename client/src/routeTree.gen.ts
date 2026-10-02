@@ -16,6 +16,7 @@ import { Route as AppMeRouteImport } from './routes/_app/me'
 import { Route as AppSandboxRouteImport } from './routes/_app/sandbox'
 import { Route as ContractsBatchPrintRouteImport } from './routes/contracts/batch-print'
 import { Route as AppAdminIndexRouteImport } from './routes/_app/admin/index'
+import { Route as AppAdminEmailTemplatesRouteImport } from './routes/_app/admin/email-templates'
 import { Route as AppAdminReservationsRouteImport } from './routes/_app/admin/reservations'
 import { Route as AppCalendarIndexRouteImport } from './routes/_app/calendar/index'
 import { Route as AppCollectionsIndexRouteImport } from './routes/_app/collections/index'
@@ -79,6 +80,11 @@ const ContractsBatchPrintRoute = ContractsBatchPrintRouteImport.update({
 const AppAdminIndexRoute = AppAdminIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => AppAdminRoute,
+} as any)
+const AppAdminEmailTemplatesRoute = AppAdminEmailTemplatesRouteImport.update({
+  id: '/email-templates',
+  path: '/email-templates',
   getParentRoute: () => AppAdminRoute,
 } as any)
 const AppAdminReservationsRoute = AppAdminReservationsRouteImport.update({
@@ -239,6 +245,7 @@ export interface FileRoutesByFullPath {
   '/me': typeof AppMeRoute
   '/sandbox': typeof AppSandboxRoute
   '/contracts/batch-print': typeof ContractsBatchPrintRoute
+  '/admin/email-templates': typeof AppAdminEmailTemplatesRoute
   '/admin/reservations': typeof AppAdminReservationsRoute
   '/collections/$id': typeof AppCollectionsIdRoute
   '/collections/create': typeof AppCollectionsCreateRoute
@@ -276,6 +283,7 @@ export interface FileRoutesByTo {
   '/sandbox': typeof AppSandboxRoute
   '/contracts/batch-print': typeof ContractsBatchPrintRoute
   '/': typeof AppIndexRoute
+  '/admin/email-templates': typeof AppAdminEmailTemplatesRoute
   '/admin/reservations': typeof AppAdminReservationsRoute
   '/collections/$id': typeof AppCollectionsIdRoute
   '/collections/create': typeof AppCollectionsCreateRoute
@@ -316,6 +324,7 @@ export interface FileRoutesById {
   '/_app/sandbox': typeof AppSandboxRoute
   '/contracts/batch-print': typeof ContractsBatchPrintRoute
   '/_app/': typeof AppIndexRoute
+  '/_app/admin/email-templates': typeof AppAdminEmailTemplatesRoute
   '/_app/admin/reservations': typeof AppAdminReservationsRoute
   '/_app/collections/$id': typeof AppCollectionsIdRoute
   '/_app/collections/create': typeof AppCollectionsCreateRoute
@@ -356,6 +365,7 @@ export interface FileRouteTypes {
     | '/me'
     | '/sandbox'
     | '/contracts/batch-print'
+    | '/admin/email-templates'
     | '/admin/reservations'
     | '/collections/$id'
     | '/collections/create'
@@ -393,6 +403,7 @@ export interface FileRouteTypes {
     | '/sandbox'
     | '/contracts/batch-print'
     | '/'
+    | '/admin/email-templates'
     | '/admin/reservations'
     | '/collections/$id'
     | '/collections/create'
@@ -432,6 +443,7 @@ export interface FileRouteTypes {
     | '/_app/sandbox'
     | '/contracts/batch-print'
     | '/_app/'
+    | '/_app/admin/email-templates'
     | '/_app/admin/reservations'
     | '/_app/collections/$id'
     | '/_app/collections/create'
@@ -519,6 +531,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/admin/'
       preLoaderRoute: typeof AppAdminIndexRouteImport
+      parentRoute: typeof AppAdminRoute
+    }
+    '/_app/admin/email-templates': {
+      id: '/_app/admin/email-templates'
+      path: '/email-templates'
+      fullPath: '/admin/email-templates'
+      preLoaderRoute: typeof AppAdminEmailTemplatesRouteImport
       parentRoute: typeof AppAdminRoute
     }
     '/_app/admin/reservations': {
@@ -735,6 +754,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AppAdminRouteChildren {
+  AppAdminEmailTemplatesRoute: typeof AppAdminEmailTemplatesRoute
   AppAdminReservationsRoute: typeof AppAdminReservationsRoute
   AppAdminIndexRoute: typeof AppAdminIndexRoute
   AppAdminGroupsIdRoute: typeof AppAdminGroupsIdRoute
@@ -750,6 +770,7 @@ interface AppAdminRouteChildren {
 }
 
 const AppAdminRouteChildren: AppAdminRouteChildren = {
+  AppAdminEmailTemplatesRoute: AppAdminEmailTemplatesRoute,
   AppAdminReservationsRoute: AppAdminReservationsRoute,
   AppAdminIndexRoute: AppAdminIndexRoute,
   AppAdminGroupsIdRoute: AppAdminGroupsIdRoute,
