@@ -15,11 +15,21 @@ const hourDates = Array.from(
 interface WeekViewProps {
 	start: Date;
 	days: number;
+	/** Height of one hour row in rem */
+	hourHeightRem: number;
 	events: CalendarEvent[];
 	onSlotDoubleClick?: (startTimeISO: string, endTimeISO: string) => void;
 }
 
-function CurrentTimeIndicator({ start, days }: { start: Date; days: number }) {
+function CurrentTimeIndicator({
+	start,
+	days,
+	hourHeightRem,
+}: {
+	start: Date;
+	days: number;
+	hourHeightRem: number;
+}) {
 	const [now, setNow] = useState(() => new Date());
 
 	useEffect(() => {
@@ -46,7 +56,7 @@ function CurrentTimeIndicator({ start, days }: { start: Date; days: number }) {
 	if (!isTodayVisible) return null;
 
 	const minutesSinceMidnight = now.getHours() * 60 + now.getMinutes();
-	const topOffset = `calc(3rem + ${(minutesSinceMidnight / 60) * 5}rem)`;
+	const topOffset = `calc(3rem + ${(minutesSinceMidnight / 60) * hourHeightRem}rem)`;
 
 	return (
 		<div
@@ -64,6 +74,7 @@ function CurrentTimeIndicator({ start, days }: { start: Date; days: number }) {
 export function WeekView({
 	start,
 	days,
+	hourHeightRem,
 	events,
 	onSlotDoubleClick,
 }: WeekViewProps) {
@@ -76,17 +87,27 @@ export function WeekView({
 		col: number;
 	} | null>(null);
 
+	const prevHourHeightRef = useRef<number | null>(null);
+
 	useEffect(() => {
-		if (scrollRef.current) {
+		const scroller = scrollRef.current;
+		if (!scroller) return;
+		const prevHourHeight = prevHourHeightRef.current;
+		prevHourHeightRef.current = hourHeightRem;
+
+		if (prevHourHeight === null) {
 			// Start with the previous hour at the top, so the current hour is in view with some context.
-			// Hour rows are 5rem; the sticky 3rem header covers the area above them.
+			// The sticky 3rem header covers the area above the hour rows.
 			const remPx = Number.parseFloat(
 				getComputedStyle(document.documentElement).fontSize,
 			);
 			const firstHour = Math.max(0, new Date().getHours() - 1);
-			scrollRef.current.scrollTop = firstHour * 5 * remPx;
+			scroller.scrollTop = firstHour * hourHeightRem * remPx;
+		} else if (prevHourHeight !== hourHeightRem) {
+			// Keep the same hour at the top when the row height changes
+			scroller.scrollTop *= hourHeightRem / prevHourHeight;
 		}
-	}, []);
+	}, [hourHeightRem]);
 
 	const eventsByDay = useMemo(
 		() => splitEventsByDay(events, start, days),
@@ -129,13 +150,18 @@ export function WeekView({
 			className="flex-1 min-h-0 overflow-auto border border-stone-200 dark:border-stone-800 rounded-md bg-stone-50 dark:bg-stone-950"
 		>
 			<div
-				className="relative grid grid-rows-[3rem_repeat(24,5rem)] divide-x divide-y divide-stone-200 dark:divide-stone-800 min-w-full"
+				className="relative grid divide-x divide-y divide-stone-200 dark:divide-stone-800 min-w-full"
 				style={{
+					gridTemplateRows: `3rem repeat(24, ${hourHeightRem}rem)`,
 					gridTemplateColumns: `3.5rem repeat(${days}, minmax(${days === 1 ? "100%" : "11rem"}, 1fr))`,
 				}}
 			>
 				{/* Current Time Indicator anchored to gridColumn */}
-				<CurrentTimeIndicator start={start} days={days} />
+				<CurrentTimeIndicator
+					start={start}
+					days={days}
+					hourHeightRem={hourHeightRem}
+				/>
 
 				{/* Grid Cells */}
 				{Array.from({ length: 25 }).map((_, row) =>

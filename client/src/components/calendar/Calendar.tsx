@@ -2,7 +2,7 @@
 
 import { Link, useNavigate } from "@tanstack/react-router";
 import { ChevronLeft, ChevronRight, Loader2, Plus } from "lucide-react";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "#/components/Button";
 import { useReservations } from "#/hooks/useReservations";
@@ -32,6 +32,22 @@ const formatYYYYMMDD = (d: Date): string => {
 	return `${year}-${month}-${day}`;
 };
 
+/** Height of one hour row in rem, from most compact to roomiest */
+const HOUR_HEIGHTS = [3, 5, 7] as const;
+type HourHeight = (typeof HOUR_HEIGHTS)[number];
+const DEFAULT_HOUR_HEIGHT: HourHeight = 5;
+const HOUR_HEIGHT_STORAGE_KEY = "kuutar.calendar.hourHeight";
+
+/** Reads the remembered row height; storage can be unavailable (e.g. private mode) */
+function readStoredHourHeight(): HourHeight {
+	try {
+		const stored = Number(localStorage.getItem(HOUR_HEIGHT_STORAGE_KEY));
+		return HOUR_HEIGHTS.find((h) => h === stored) ?? DEFAULT_HOUR_HEIGHT;
+	} catch {
+		return DEFAULT_HOUR_HEIGHT;
+	}
+}
+
 const getMonday = (d: Date): Date => {
 	const target = new Date(d);
 	const day = target.getDay();
@@ -48,6 +64,16 @@ export function Calendar({
 	const { t } = useTranslation();
 	const navigate = useNavigate();
 	const start = useMemo(() => parseLocalDate(startStr), [startStr]);
+	const [hourHeight, setHourHeight] = useState(readStoredHourHeight);
+
+	const handleHourHeightChange = (next: HourHeight) => {
+		setHourHeight(next);
+		try {
+			localStorage.setItem(HOUR_HEIGHT_STORAGE_KEY, String(next));
+		} catch {
+			// Not persisting is fine; it just resets on reload
+		}
+	};
 
 	const { data: resources, isLoading: loadingResources } = useResources();
 
@@ -320,6 +346,19 @@ export function Calendar({
 						<option value={5}>{t("5Piv", "5 päivää")}</option>
 						<option value={7}>{t("1Viikko", "1 viikko")}</option>
 					</select>
+
+					<select
+						value={hourHeight}
+						onChange={(e) =>
+							handleHourHeightChange(Number(e.target.value) as HourHeight)
+						}
+						aria-label={t("tuntirivinKorkeus", "Tuntirivin korkeus")}
+						className="px-2 py-1 text-xs bg-stone-50 dark:bg-stone-950 border border-stone-300 dark:border-stone-700 rounded-md font-medium"
+					>
+						<option value={3}>{t("tiivis", "Tiivis")}</option>
+						<option value={5}>{t("normaali", "Normaali")}</option>
+						<option value={7}>{t("vlj", "Väljä")}</option>
+					</select>
 				</div>
 			</div>
 
@@ -344,6 +383,7 @@ export function Calendar({
 			<WeekView
 				start={start}
 				days={days}
+				hourHeightRem={hourHeight}
 				events={calendarEvents}
 				onSlotDoubleClick={handleSlotDoubleClick}
 			/>
