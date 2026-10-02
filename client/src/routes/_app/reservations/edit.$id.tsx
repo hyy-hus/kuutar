@@ -5,6 +5,7 @@ import {
 	ReservationForm,
 	type ReservationFormValues,
 } from "#/components/ReservationForm";
+import { getDefaultContact, useAuth } from "#/hooks/useAuth";
 import { useReservation, useUpdateReservation } from "#/hooks/useReservations";
 import { requireAuthGuard } from "#/utils/authGuard";
 import { formatDateTimeLocal } from "#/utils/date";
@@ -22,6 +23,7 @@ function EditReservationPage() {
 	const navigate = useNavigate();
 	const { data: reservation, isLoading } = useReservation(id);
 	const updateReservation = useUpdateReservation();
+	const { user } = useAuth();
 
 	if (isLoading)
 		return (
@@ -40,6 +42,12 @@ function EditReservationPage() {
 	const resourceIds = Array.from(
 		new Set(reservation.occurrences?.map((occ) => occ.resource_id) || []),
 	);
+
+	// Fall back to the owner's saved defaults when the reservation has no contact info
+	const fallbackContact =
+		user && user.id === reservation.user_id
+			? getDefaultContact(user)
+			: getDefaultContact(null);
 
 	const handleSubmit = async (values: ReservationFormValues) => {
 		await updateReservation.mutateAsync({
@@ -73,9 +81,12 @@ function EditReservationPage() {
 					description: reservation.description ?? "",
 					status: reservation.status,
 					admin_notes: reservation.admin_notes ?? "",
-					contact_person: reservation.contact_person ?? "",
-					contact_email: reservation.contact_email ?? "",
-					contact_phone: reservation.contact_phone ?? "",
+					contact_person:
+						reservation.contact_person || fallbackContact.contact_person,
+					contact_email:
+						reservation.contact_email || fallbackContact.contact_email,
+					contact_phone:
+						reservation.contact_phone || fallbackContact.contact_phone,
 					rrule: reservation.rrule,
 					resource_ids: resourceIds,
 					start_time: firstOccurrence

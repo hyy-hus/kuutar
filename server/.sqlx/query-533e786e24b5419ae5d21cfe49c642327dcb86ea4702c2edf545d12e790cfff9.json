@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        SELECT id, group_id, name, email, role AS \"role: Role\", created_at, updated_at\n        FROM users\n        WHERE deleted_at IS NULL\n        ORDER BY name ASC, email ASC\n        ",
+  "query": "\n        SELECT id, group_id, name, email, default_contact_person, default_contact_email, default_contact_phone, role AS \"role: Role\", created_at, updated_at\n        FROM users\n        WHERE deleted_at IS NULL\n        ORDER BY name ASC, email ASC\n        ",
   "describe": {
     "columns": [
       {
@@ -49,6 +49,39 @@
       },
       {
         "ordinal": 4,
+        "name": "default_contact_person",
+        "type_info": "Varchar",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "default_contact_person"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "default_contact_email",
+        "type_info": "Varchar",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "default_contact_email"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "default_contact_phone",
+        "type_info": "Varchar",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "default_contact_phone"
+          }
+        }
+      },
+      {
+        "ordinal": 7,
         "name": "role: Role",
         "type_info": {
           "Custom": {
@@ -69,7 +102,7 @@
         }
       },
       {
-        "ordinal": 5,
+        "ordinal": 8,
         "name": "created_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -80,7 +113,7 @@
         }
       },
       {
-        "ordinal": 6,
+        "ordinal": 9,
         "name": "updated_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -99,10 +132,13 @@
       false,
       false,
       false,
+      true,
+      true,
+      true,
       false,
       false,
       false
     ]
   },
-  "hash": "c0a44d0a235390d959705c559c5fa4b7592125c0ba3fda3f04fb7a1fc8913a9f"
+  "hash": "533e786e24b5419ae5d21cfe49c642327dcb86ea4702c2edf545d12e790cfff9"
 }

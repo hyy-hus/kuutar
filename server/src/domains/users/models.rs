@@ -2,7 +2,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use uuid::Uuid;
-use validator::Validate;
+use validator::{Validate, ValidateEmail};
 
 use crate::utils::trim::{deserialize_trimmed_option_string, deserialize_trimmed_string};
 
@@ -13,6 +13,9 @@ pub struct User {
     pub role: Role,
     pub name: String,
     pub email: String,
+    pub default_contact_person: Option<String>,
+    pub default_contact_email: Option<String>,
+    pub default_contact_phone: Option<String>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -47,6 +50,29 @@ pub struct UpdateUser {
     pub password: Option<String>,
 
     pub group_id: Option<Uuid>,
+
+    /// Empty string clears the value; omitted leaves it unchanged.
+    #[serde(default, deserialize_with = "deserialize_trimmed_option_string")]
+    #[validate(length(max = 255))]
+    pub default_contact_person: Option<String>,
+
+    /// Empty string clears the value; omitted leaves it unchanged.
+    #[serde(default, deserialize_with = "deserialize_trimmed_option_string")]
+    #[validate(custom(function = "validate_optional_email"))]
+    pub default_contact_email: Option<String>,
+
+    /// Empty string clears the value; omitted leaves it unchanged.
+    #[serde(default, deserialize_with = "deserialize_trimmed_option_string")]
+    #[validate(length(max = 64))]
+    pub default_contact_phone: Option<String>,
+}
+
+fn validate_optional_email(value: &str) -> Result<(), validator::ValidationError> {
+    if value.is_empty() || value.validate_email() {
+        Ok(())
+    } else {
+        Err(validator::ValidationError::new("email"))
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, sqlx::Type, ToSchema)]

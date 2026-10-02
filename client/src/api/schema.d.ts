@@ -849,6 +849,12 @@ export interface components {
             title?: string | null;
         };
         UpdateUser: {
+            /** @description Empty string clears the value; omitted leaves it unchanged. */
+            default_contact_email?: string | null;
+            /** @description Empty string clears the value; omitted leaves it unchanged. */
+            default_contact_person?: string | null;
+            /** @description Empty string clears the value; omitted leaves it unchanged. */
+            default_contact_phone?: string | null;
             email?: string | null;
             /** Format: uuid */
             group_id?: string | null;
@@ -858,6 +864,9 @@ export interface components {
         User: {
             /** Format: date-time */
             created_at: string;
+            default_contact_email?: string | null;
+            default_contact_person?: string | null;
+            default_contact_phone?: string | null;
             email: string;
             /** Format: uuid */
             group_id: string;
@@ -2024,6 +2033,13 @@ export interface operations {
             };
             /** @description Unauthorized */
             401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden - Only the owner or an admin can delete */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };

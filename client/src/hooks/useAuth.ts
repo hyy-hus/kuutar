@@ -110,6 +110,24 @@ export function useMe() {
 	});
 }
 
+/** The user's saved default contact info, shaped like the reservation form's contact fields */
+export function getDefaultContact(
+	user:
+		| {
+				default_contact_person?: string | null;
+				default_contact_email?: string | null;
+				default_contact_phone?: string | null;
+		  }
+		| null
+		| undefined,
+) {
+	return {
+		contact_person: user?.default_contact_person ?? "",
+		contact_email: user?.default_contact_email ?? "",
+		contact_phone: user?.default_contact_phone ?? "",
+	};
+}
+
 export function useIsAdmin(): { isAdmin: boolean; isLoading: boolean } {
 	const { data: user, isLoading } = useMe();
 	return {

@@ -213,11 +213,19 @@ pub async fn get_reservation(
     Path(id): Path<Uuid>,
     opt_user: OptionalAuthUser,
 ) -> Result<Json<ReservationWithOccurrences>, AppError> {
-    let is_admin = opt_user.0.as_ref().map(|u| u.role == Role::Admin).unwrap_or(false);
+    let is_admin = opt_user
+        .0
+        .as_ref()
+        .map(|u| u.role == Role::Admin)
+        .unwrap_or(false);
     let viewer_id = opt_user.0.as_ref().map(|u| u.id);
 
     let reservation = db::find_by_id(&auth_state.pool, id, true).await?;
-    Ok(Json(sanitize_reservation_for_role(reservation, is_admin, viewer_id)))
+    Ok(Json(sanitize_reservation_for_role(
+        reservation,
+        is_admin,
+        viewer_id,
+    )))
 }
 
 #[utoipa::path(

@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import i18next from "i18next";
 import { api } from "#/api/client";
 import type { components } from "#/api/schema";
+import { authKeys } from "#/hooks/useAuth";
 
 export type User = components["schemas"]["User"];
 export type CreateUserPayload = components["schemas"]["CreateUser"];
@@ -122,6 +123,30 @@ export function useUpdateUser() {
 			return data;
 		},
 		onSuccess: (updatedUser) => {
+			queryClient.setQueryData(userKeys.detail(updatedUser.id), updatedUser);
+			queryClient.invalidateQueries({ queryKey: userKeys.lists() });
+		},
+	});
+}
+
+/** Updates the authenticated user's own profile (name, email, default contact info) */
+export function useUpdateMe() {
+	const queryClient = useQueryClient();
+
+	return useMutation({
+		mutationFn: async (payload: UpdateUserPayload) => {
+			const { data, error } = await api.PATCH("/users/me", { body: payload });
+			if (error || !data)
+				throw new Error(
+					i18next.t(
+						"kayttajanPaivitysEpaonnistui",
+						"Käyttäjän päivitys epäonnistui.",
+					),
+				);
+			return data;
+		},
+		onSuccess: (updatedUser) => {
+			queryClient.setQueryData(authKeys.me(), updatedUser);
 			queryClient.setQueryData(userKeys.detail(updatedUser.id), updatedUser);
 			queryClient.invalidateQueries({ queryKey: userKeys.lists() });
 		},
