@@ -2,12 +2,14 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import type { CalendarEvent } from "#/utils/calendarUtils";
+import { type CalendarEvent, splitEventsByDay } from "#/utils/calendarUtils";
+import { formatDateTimeLocal, useDateFormatter } from "#/utils/date";
 import { DayColumn } from "./DayColumn";
 
-const hours = Array.from(
+/** One sample timestamp per hour of the day, for the locale-formatted hour labels */
+const hourDates = Array.from(
 	{ length: 24 },
-	(_, i) => `${i.toString().padStart(2, "0")}:00`,
+	(_, i) => new Date(2000, 0, 1, i, 0, 0, 0),
 );
 
 interface WeekViewProps {
@@ -59,11 +61,6 @@ function CurrentTimeIndicator({ start, days }: { start: Date; days: number }) {
 	);
 }
 
-const formatDateTimeLocal = (date: Date) => {
-	const pad = (n: number) => String(n).padStart(2, "0");
-	return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
-};
-
 export function WeekView({
 	start,
 	days,
@@ -71,6 +68,8 @@ export function WeekView({
 	onSlotDoubleClick,
 }: WeekViewProps) {
 	const { t, i18n } = useTranslation();
+	const { formatTime } = useDateFormatter();
+	const hours = hourDates.map((d) => formatTime(d));
 	const scrollRef = useRef<HTMLDivElement>(null);
 	const [hoveredCell, setHoveredCell] = useState<{
 		row: number;
@@ -83,31 +82,10 @@ export function WeekView({
 		}
 	}, []);
 
-	const eventsByDay = useMemo(() => {
-		const slots: CalendarEvent[][] = Array.from({ length: days }, () => []);
-		const startDateOnly = new Date(
-			start.getFullYear(),
-			start.getMonth(),
-			start.getDate(),
-		).getTime();
-
-		events.forEach((evt) => {
-			const evtDateOnly = new Date(
-				evt.start.getFullYear(),
-				evt.start.getMonth(),
-				evt.start.getDate(),
-			).getTime();
-			const dayOffset = Math.round(
-				(evtDateOnly - startDateOnly) / (1000 * 60 * 60 * 24),
-			);
-
-			if (dayOffset >= 0 && dayOffset < days) {
-				slots[dayOffset].push(evt);
-			}
-		});
-
-		return slots;
-	}, [events, start, days]);
+	const eventsByDay = useMemo(
+		() => splitEventsByDay(events, start, days),
+		[events, start, days],
+	);
 
 	const handleCellDoubleClick = (row: number, col: number) => {
 		if (row === 0 || col === 0 || !onSlotDoubleClick) return;

@@ -1,9 +1,9 @@
 import { useMemo } from "react";
-import { type CalendarEvent, layoutDay } from "#/utils/calendarUtils";
+import { type DaySegment, layoutDay } from "#/utils/calendarUtils";
 import { ReservationBlock } from "./ReservationBlock";
 
 interface DayColumnProps {
-	events: CalendarEvent[];
+	events: DaySegment[];
 	columnIndex: number;
 }
 

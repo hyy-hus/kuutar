@@ -14,7 +14,20 @@ export interface CalendarEvent {
 	resourceName?: string;
 }
 
-export interface PlacedEvent extends CalendarEvent {
+/**
+ * The part of an event that falls on a single calendar day. `start` and `end`
+ * are clipped to the day; `eventStart` and `eventEnd` keep the full event times.
+ */
+export interface DaySegment extends CalendarEvent {
+	eventStart: Date;
+	eventEnd: Date;
+	/** The event began on an earlier day */
+	continuesBefore: boolean;
+	/** The event goes on past midnight */
+	continuesAfter: boolean;
+}
+
+export interface PlacedEvent extends DaySegment {
 	col: number;
 	span: number;
 }
@@ -44,14 +57,52 @@ export const currentYearRange = (): { start: Date; end: Date } => {
 	};
 };
 
-export function layoutDay(events: CalendarEvent[]) {
+/**
+ * Splits events into per-day segments for `days` columns starting at `rangeStart`,
+ * so an event crossing midnight shows up in every day column it covers.
+ */
+export function splitEventsByDay(
+	events: CalendarEvent[],
+	rangeStart: Date,
+	days: number,
+): DaySegment[][] {
+	return Array.from({ length: days }, (_, i) => {
+		const dayStart = new Date(
+			rangeStart.getFullYear(),
+			rangeStart.getMonth(),
+			rangeStart.getDate() + i,
+		);
+		const dayEnd = new Date(
+			rangeStart.getFullYear(),
+			rangeStart.getMonth(),
+			rangeStart.getDate() + i + 1,
+		);
+
+		return events
+			.filter(
+				(evt) =>
+					evt.start < dayEnd && (evt.end > dayStart || evt.start >= dayStart),
+			)
+			.map((evt) => ({
+				...evt,
+				start: evt.start < dayStart ? dayStart : evt.start,
+				end: evt.end > dayEnd ? dayEnd : evt.end,
+				eventStart: evt.start,
+				eventEnd: evt.end,
+				continuesBefore: evt.start < dayStart,
+				continuesAfter: evt.end > dayEnd,
+			}));
+	});
+}
+
+export function layoutDay(events: DaySegment[]) {
 	if (!events.length) return { maxCols: 1, placed: [] };
 
 	const sorted = [...events].sort(
 		(a, b) => a.start.getTime() - b.start.getTime(),
 	);
-	const groups: CalendarEvent[][] = [];
-	let currentGroup: CalendarEvent[] = [];
+	const groups: DaySegment[][] = [];
+	let currentGroup: DaySegment[] = [];
 	let groupEnd = 0;
 
 	for (const evt of sorted) {
@@ -72,7 +123,7 @@ export function layoutDay(events: CalendarEvent[]) {
 	const placed: PlacedEvent[] = [];
 
 	for (const group of groups) {
-		const columns: CalendarEvent[][] = [];
+		const columns: DaySegment[][] = [];
 		for (const evt of group) {
 			let placedInCol = false;
 			for (let i = 0; i < columns.length; i++) {

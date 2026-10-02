@@ -1,6 +1,5 @@
 import { Link } from "@tanstack/react-router";
 import { AlertOctagon, Clock, User as UserIcon } from "lucide-react";
-import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import {
 	getMinutesBetween,
@@ -17,14 +16,18 @@ interface ReservationBlockProps {
 
 export function ReservationBlock({ event, maxCols }: ReservationBlockProps) {
 	const { t } = useTranslation();
-	const { formatTime } = useDateFormatter();
+	const { formatTime, formatDateRange } = useDateFormatter();
 	const startMins = getMinutesSinceMidnight(event.start);
 	const durationMins = getMinutesBetween(event.start, event.end);
-	const timeString = `${formatTime(event.start)} – ${formatTime(event.end)}`;
+	const isMultiDay = event.continuesBefore || event.continuesAfter;
+	// Label the whole event, not just this day's segment, adding dates when it spans days
+	const timeString = isMultiDay
+		? formatDateRange(event.eventStart, event.eventEnd)
+		: `${formatTime(event.eventStart)} – ${formatTime(event.eventEnd)}`;
 
-	// Exact percentage math over 1440 minutes in a 24h day
+	// Exact percentage math over 1440 minutes in a 24h day, kept inside the column
 	const topPct = (startMins / 1440) * 100;
-	const heightPct = (durationMins / 1440) * 100;
+	const heightPct = Math.min((durationMins / 1440) * 100, 100 - topPct);
 
 	// Column width calculation for overlapping events
 	const colWidthPct = 100 / maxCols;
@@ -38,14 +41,13 @@ export function ReservationBlock({ event, maxCols }: ReservationBlockProps) {
 		? `${event.resourceName ?? ""}: ${event.title} (${timeString})`
 		: `${event.resourceName ?? ""}: ${event.title}${isPending ? ` [${t("odottaa", "Odottaa")}]` : ""}${event.userName ? ` [${event.userName}]` : ""} (${timeString})`;
 
-	useEffect(() => {
-		console.log(event);
-	}, [event]);
-
 	return (
 		<div
 			className={cn(
 				"absolute pointer-events-auto border text-xs p-1 rounded-xs overflow-hidden shadow-xs hover:z-20 transition-all z-15 box-border",
+				// Open edges show that the event carries on from / into the neighbouring day
+				event.continuesBefore && "rounded-t-none border-t-0",
+				event.continuesAfter && "rounded-b-none border-b-0",
 				isRestriction
 					? "bg-amber-100 dark:bg-amber-950/80 border-amber-400 dark:border-amber-700 hover:bg-amber-200 dark:hover:bg-amber-900"
 					: isPending
