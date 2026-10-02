@@ -3,7 +3,9 @@ import {
 	addDays,
 	formatYYYYMMDD,
 	localDayRangeISO,
+	monthGridRange,
 	parseLocalDate,
+	startOfMonth,
 	startOfWeek,
 } from "./date";
 
@@ -40,5 +42,22 @@ describe("local date helpers", () => {
 		// Helsinki is UTC+3 before the change and UTC+2 after it
 		expect(startISO).toBe("2026-10-24T21:00:00.000Z");
 		expect(endISO).toBe("2026-10-25T21:59:59.999Z");
+	});
+
+	it("covers a month with whole Monday-to-Sunday weeks", () => {
+		// October 2026 runs Thu 1st to Sat 31st and contains the autumn clock change
+		const october = monthGridRange(startOfMonth(new Date(2026, 9, 15, 12)));
+		expect(formatYYYYMMDD(october.start)).toBe("2026-09-28");
+		expect(october.days).toBe(35);
+
+		// February 2027 starts on a Monday and ends on a Sunday: exactly four weeks
+		const february = monthGridRange(new Date(2027, 1, 1));
+		expect(formatYYYYMMDD(february.start)).toBe("2027-02-01");
+		expect(february.days).toBe(28);
+
+		// March 2026 starts on a Sunday and needs six rows
+		const march = monthGridRange(new Date(2026, 2, 1));
+		expect(formatYYYYMMDD(march.start)).toBe("2026-02-23");
+		expect(march.days).toBe(42);
 	});
 });

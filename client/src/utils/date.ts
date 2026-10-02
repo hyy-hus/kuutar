@@ -34,6 +34,10 @@ export interface DateFormatter {
 	formatWeekday: (dateInput?: DateInput) => string;
 	/** Formats a short day & month without the year, e.g. "19.10." */
 	formatDayMonth: (dateInput?: DateInput) => string;
+	/** Formats the abbreviated weekday name, e.g. "ma" */
+	formatWeekdayShort: (dateInput?: DateInput) => string;
+	/** Formats the month and year, e.g. "lokakuu 2026" */
+	formatMonthYear: (dateInput?: DateInput) => string;
 }
 
 function toDate(dateInput: DateInput): Date | null {
@@ -109,6 +113,13 @@ function createDateFormatter(locale: string): DateFormatter {
 		day: "numeric",
 		month: "numeric",
 	});
+	const weekdayShortFormatter = new Intl.DateTimeFormat(locale, {
+		weekday: "short",
+	});
+	const monthYearFormatter = new Intl.DateTimeFormat(locale, {
+		month: "long",
+		year: "numeric",
+	});
 
 	const formatWeekday = (dateInput?: DateInput) => {
 		const date = toDate(dateInput);
@@ -120,6 +131,16 @@ function createDateFormatter(locale: string): DateFormatter {
 		return date ? dayMonthFormatter.format(date) : "—";
 	};
 
+	const formatWeekdayShort = (dateInput?: DateInput) => {
+		const date = toDate(dateInput);
+		return date ? weekdayShortFormatter.format(date) : "—";
+	};
+
+	const formatMonthYear = (dateInput?: DateInput) => {
+		const date = toDate(dateInput);
+		return date ? monthYearFormatter.format(date) : "—";
+	};
+
 	return {
 		formatDate,
 		formatDateOnly,
@@ -127,6 +148,8 @@ function createDateFormatter(locale: string): DateFormatter {
 		formatDateRange,
 		formatWeekday,
 		formatDayMonth,
+		formatWeekdayShort,
+		formatMonthYear,
 	};
 }
 
@@ -179,6 +202,27 @@ export function startOfWeek(date: Date = new Date()): Date {
 		date.getMonth(),
 		date.getDate() - daysSinceMonday,
 	);
+}
+
+/** Local midnight on the first day of the month containing `date` */
+export function startOfMonth(date: Date = new Date()): Date {
+	return new Date(date.getFullYear(), date.getMonth(), 1);
+}
+
+/** The full weeks (Monday to Sunday) covering the month that starts at `monthStart` */
+export function monthGridRange(monthStart: Date): {
+	start: Date;
+	days: number;
+} {
+	const start = startOfWeek(monthStart);
+	const monthEnd = new Date(
+		monthStart.getFullYear(),
+		monthStart.getMonth() + 1,
+		0,
+	);
+	const end = addDays(startOfWeek(monthEnd), 6);
+	const days = Math.round((end.getTime() - start.getTime()) / 86_400_000) + 1;
+	return { start, days };
 }
 
 /** Local midnight `days` calendar days after `date` (DST-safe, unlike adding 24-hour steps) */
