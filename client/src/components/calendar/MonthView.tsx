@@ -49,22 +49,29 @@ function MonthEventItem({ event }: { event: DaySegment }) {
 				: "bg-stone-200 dark:bg-stone-800 border-stone-400 dark:border-stone-600 text-stone-900 dark:text-stone-100 hover:bg-stone-300 dark:hover:bg-stone-700",
 	);
 
+	// In narrow day cells the title gets the whole line and may wrap; the time and icon would
+	// leave no room for it, and the colours and the tooltip still tell the rest
 	const content = (
 		<>
 			{isRestriction ? (
-				<AlertOctagon size={10} className="text-amber-600 shrink-0" />
+				<AlertOctagon
+					size={10}
+					className="text-amber-600 shrink-0 @max-[7rem]:hidden"
+				/>
 			) : (
 				isPending && (
 					<Clock
 						size={10}
-						className="text-purple-600 dark:text-purple-400 shrink-0"
+						className="text-purple-600 dark:text-purple-400 shrink-0 @max-[7rem]:hidden"
 					/>
 				)
 			)}
-			<span className="font-mono text-[10px] text-stone-500 dark:text-stone-400 shrink-0">
+			<span className="font-mono text-[10px] text-stone-500 dark:text-stone-400 shrink-0 @max-[7rem]:hidden">
 				{timeLabel}
 			</span>
-			<span className="font-semibold truncate">{event.title}</span>
+			<span className="font-semibold truncate @max-[7rem]:whitespace-normal @max-[7rem]:line-clamp-2 @max-[7rem]:wrap-break-word">
+				{event.title}
+			</span>
 		</>
 	);
 
@@ -165,7 +172,7 @@ export function MonthView({ monthStart, events, onDayClick }: MonthViewProps) {
 								{date.getDate()}
 							</button>
 
-							<div className="flex flex-col gap-0.5 min-h-0 overflow-y-auto no-scrollbar">
+							<div className="@container flex flex-col gap-0.5 min-h-0 overflow-y-auto no-scrollbar">
 								{dayEvents.map((evt) => (
 									<MonthEventItem key={evt.id} event={evt} />
 								))}
