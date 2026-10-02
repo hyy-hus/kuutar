@@ -183,13 +183,13 @@ export function WeekView({
 								key={cellKey}
 								className={`transition-colors flex flex-col justify-between items-center p-1 text-xs select-none ${
 									row === 0
-										? "sticky top-0 z-20 bg-stone-100 dark:bg-stone-900 border-b border-stone-300 dark:border-stone-700 font-semibold cursor-default justify-center"
+										? "sticky top-0 z-30 bg-stone-100 dark:bg-stone-900 border-b border-stone-300 dark:border-stone-700 font-semibold cursor-default justify-center"
 										: ""
 								} ${
 									col === 0
-										? "sticky left-0 z-20 bg-stone-100 dark:bg-stone-900 border-r border-stone-300 dark:border-stone-700 font-mono text-stone-500 cursor-default justify-center text-[11px]"
+										? "sticky left-0 z-25 bg-stone-100 dark:bg-stone-900 border-r border-stone-300 dark:border-stone-700 font-mono text-stone-500 cursor-default justify-center text-[11px]"
 										: ""
-								} ${row === 0 && col === 0 ? "z-30" : ""}`}
+								} ${row === 0 && col === 0 ? "z-40" : ""}`}
 								style={{
 									gridRow: row + 1,
 									gridColumn: col + 1,

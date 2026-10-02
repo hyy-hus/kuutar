@@ -264,7 +264,7 @@ export function Calendar({
 	}
 
 	return (
-		<div className="flex flex-col gap-3 p-1 md:p-2 flex-1 min-h-0 min-w-0">
+		<div className="flex flex-col gap-3 p-1 md:p-2 h-full min-h-0 min-w-0">
 			{/* Header & New Reservation Button */}
 			<div className="flex items-center justify-between gap-2 shrink-0">
 				<h1 className="text-lg md:text-xl font-bold tracking-tight">
