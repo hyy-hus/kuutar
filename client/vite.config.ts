@@ -37,6 +37,16 @@ const config = defineConfig({
 		projects: [
 			{
 				extends: true,
+				test: {
+					name: "unit",
+					include: ["src/**/*.test.ts"],
+					environment: "node",
+					// A zone with daylight saving, so date tests cover the clock changes
+					env: { TZ: "Europe/Helsinki" },
+				},
+			},
+			{
+				extends: true,
 				plugins: [
 					storybookTest({
 						configDir: path.join(import.meta.dirname, ".storybook"),
