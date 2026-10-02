@@ -177,33 +177,74 @@ export function useDeleteUser() {
 	});
 }
 
-export function useBatchCreateUsers() {
+export type BatchUserOperation =
+	| {
+			kind: "create";
+			payload: CreateUserPayload;
+			/** Contact info is not accepted by POST /users, so it is patched in afterwards */
+			contact?: UpdateUserPayload;
+	  }
+	| { kind: "update"; id: string; email: string; payload: UpdateUserPayload };
+
+function apiErrorMessage(error: unknown, fallback: string) {
+	return typeof error === "object" && error !== null && "error" in error
+		? String((error as { error: unknown }).error)
+		: fallback;
+}
+
+/** Creates new users and/or updates existing ones; failures are collected per user. */
+export function useBatchUpsertUsers() {
 	const queryClient = useQueryClient();
 
 	return useMutation({
-		mutationFn: async (payloads: CreateUserPayload[]) => {
+		mutationFn: async (operations: BatchUserOperation[]) => {
 			const results = await Promise.allSettled(
-				payloads.map(async (payload) => {
-					const { data, error } = await api.POST("/users", { body: payload });
-
-					if (error) {
-						// Extract error message from API response
-						const apiMessage =
-							typeof error === "object" && error !== null && "error" in error
-								? String((error as { error: unknown }).error)
-								: i18next.t(
-										"kayttajanLuominenEpaonnistui",
-										"Käyttäjän luominen epäonnistui.",
-									);
-
-						throw new Error(`${payload.email}: ${apiMessage}`);
+				operations.map(async (op) => {
+					if (op.kind === "update") {
+						const { data, error } = await api.PATCH("/users/{id}", {
+							params: { path: { id: op.id } },
+							body: op.payload,
+						});
+						if (error || !data)
+							throw new Error(
+								`${op.email}: ${apiErrorMessage(
+									error,
+									i18next.t(
+										"kayttajanPaivitysEpaonnistui",
+										"Käyttäjän päivitys epäonnistui.",
+									),
+								)}`,
+							);
+						return data;
 					}
 
-					if (!data)
+					const { data, error } = await api.POST("/users", {
+						body: op.payload,
+					});
+					if (error || !data)
 						throw new Error(
-							`${payload.email}: ${i18next.t("eiVastaustaPalvelimelta", "Ei vastausta palvelimelta.")}`,
+							`${op.payload.email}: ${apiErrorMessage(
+								error,
+								i18next.t(
+									"kayttajanLuominenEpaonnistui",
+									"Käyttäjän luominen epäonnistui.",
+								),
+							)}`,
 						);
-					return data;
+					if (!op.contact) return data;
+
+					const patched = await api.PATCH("/users/{id}", {
+						params: { path: { id: data.id } },
+						body: op.contact,
+					});
+					if (patched.error || !patched.data)
+						throw new Error(
+							`${op.payload.email}: ${i18next.t(
+								"yhteystietojenTallennusEpaonnistui",
+								"Käyttäjä luotiin, mutta yhteystietojen tallennus epäonnistui.",
+							)}`,
+						);
+					return patched.data;
 				}),
 			);
 
@@ -217,8 +258,9 @@ export function useBatchCreateUsers() {
 
 			return results.map((r) => (r as PromiseFulfilledResult<User>).value);
 		},
-		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: userKeys.lists() });
+		onSettled: () => {
+			// Some operations may have succeeded even when others failed
+			queryClient.invalidateQueries({ queryKey: userKeys.all });
 		},
 	});
 }
