@@ -1,4 +1,4 @@
-import { useForm, useStore } from "@tanstack/react-form";
+import { useForm, useSelector } from "@tanstack/react-form";
 import {
 	AlertTriangle,
 	CheckCircle2,
@@ -151,7 +151,7 @@ export function ReservationForm({
 		},
 	});
 
-	const selectedResourceIds = useStore(
+	const selectedResourceIds = useSelector(
 		form.store,
 		(state) => state.values.resource_ids,
 	);
