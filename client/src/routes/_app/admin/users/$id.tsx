@@ -1,17 +1,18 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { ArrowLeft, Edit, KeyRound, ShieldAlert, Trash2 } from "lucide-react";
+import { Edit, KeyRound, ShieldAlert, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { BackLink } from "#/components/BackLink";
 import { Button } from "#/components/Button";
 import { Chip } from "#/components/Chip";
 import { useGroup } from "#/hooks/useGroups";
 import { useDeleteUser, useUser } from "#/hooks/useUsers";
-import { requireAuthGuard } from "#/utils/authGuard";
+import { requireAdminGuard } from "#/utils/authGuard";
 import { useDateFormatter } from "#/utils/date";
 import { readable_uuid } from "#/utils/uuid";
 
-export const Route = createFileRoute("/_app/users/$id")({
+export const Route = createFileRoute("/_app/admin/users/$id")({
 	beforeLoad: async ({ context }) => {
-		await requireAuthGuard(context);
+		await requireAdminGuard(context);
 	},
 	component: ViewUserPage,
 });
@@ -48,7 +49,7 @@ function ViewUserPage() {
 			)
 		) {
 			await deleteUser.mutateAsync(id);
-			navigate({ to: "/users" });
+			navigate({ to: "/admin/users" });
 		}
 	};
 
@@ -72,12 +73,9 @@ function ViewUserPage() {
 
 	return (
 		<div className="p-4 max-w-xl flex flex-col gap-6">
-			<Link
-				to="/users"
-				className="inline-flex items-center gap-1 text-xs text-stone-500 hover:underline"
-			>
-				<ArrowLeft size={14} /> {t("takaisinKyttjiin", "Takaisin käyttäjiin")}
-			</Link>
+			<BackLink to="/admin/users">
+				{t("takaisinKyttjiin", "Takaisin käyttäjiin")}
+			</BackLink>
 
 			{/* Header */}
 			<div className="flex items-center justify-between">
@@ -143,7 +141,7 @@ function ViewUserPage() {
 					className="w-full flex items-center justify-center gap-2"
 					asChild
 				>
-					<Link to="/users/edit/$id" params={{ id: user.id }}>
+					<Link to="/admin/users/edit/$id" params={{ id: user.id }}>
 						<span>{t("muokkaa", "Muokkaa")}</span>
 						<Edit size={16} />
 					</Link>

@@ -14,12 +14,12 @@ import { Chip } from "#/components/Chip";
 import { useIsAdmin } from "#/hooks/useAuth";
 import { useGroups } from "#/hooks/useGroups";
 import { type User, useUsers } from "#/hooks/useUsers";
-import { requireAuthGuard } from "#/utils/authGuard";
+import { requireAdminGuard } from "#/utils/authGuard";
 import { readable_uuid } from "#/utils/uuid";
 
-export const Route = createFileRoute("/_app/users/")({
+export const Route = createFileRoute("/_app/admin/users/")({
 	beforeLoad: async ({ context }) => {
-		await requireAuthGuard(context);
+		await requireAdminGuard(context);
 	},
 	component: RouteComponent,
 });
@@ -71,7 +71,7 @@ function UserCard({ user, groupName }: { user: User; groupName?: string }) {
 					asChild
 					className="gap-1.5 text-xs"
 				>
-					<Link to="/users/$id" params={{ id: user.id }}>
+					<Link to="/admin/users/$id" params={{ id: user.id }}>
 						<span>{t("nyt", "Näytä")}</span>
 						<Eye size={14} />
 					</Link>
@@ -135,7 +135,7 @@ function UserList() {
 							</Link>
 						</Button>
 						<Button asChild size="sm" className="gap-1.5">
-							<Link to="/users/create">
+							<Link to="/admin/users/create">
 								<Plus size={16} />
 								<span>{t("rekisteriKyttj", "Rekisteröi käyttäjä")}</span>
 							</Link>

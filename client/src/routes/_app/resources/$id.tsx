@@ -1,7 +1,8 @@
 // src/routes/resources/$id.tsx
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { ArrowLeft, Edit, Trash2 } from "lucide-react";
+import { Edit, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { BackLink } from "#/components/BackLink";
 import { Button } from "#/components/Button";
 import { Chip } from "#/components/Chip";
 import { RichTextContent } from "#/components/RichTextContent";
@@ -53,13 +54,9 @@ function ViewResourcePage() {
 	return (
 		<div className="p-4 max-w-xl flex flex-col gap-6">
 			{/* Back navigation */}
-			<Link
-				to="/resources"
-				className="inline-flex items-center gap-1 text-xs text-stone-500 hover:underline"
-			>
-				<ArrowLeft size={14} />{" "}
+			<BackLink to="/resources">
 				{t("takaisinResursseihin", "Takaisin resursseihin")}
-			</Link>
+			</BackLink>
 
 			{/* 1. Header: Name & ID Chip */}
 			<div className="flex items-center justify-between">

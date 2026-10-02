@@ -12,7 +12,7 @@ import {
 import { useTranslation } from "react-i18next";
 import { Button } from "#/components/Button";
 import { Chip } from "#/components/Chip";
-import { useIsAdmin } from "#/hooks/useAuth";
+import { useAuth, useIsAdmin } from "#/hooks/useAuth";
 import { useDeleteReservation, useReservation } from "#/hooks/useReservations";
 import { useResources } from "#/hooks/useResorces";
 import { useDateFormatter } from "#/utils/date";
@@ -28,6 +28,7 @@ function ViewReservationPage() {
 	const { id } = Route.useParams();
 	const navigate = useNavigate();
 	const { isAdmin } = useIsAdmin();
+	const { user } = useAuth();
 
 	const { data: reservation, isLoading, isError } = useReservation(id);
 	const { data: resources } = useResources();
@@ -55,6 +56,7 @@ function ViewReservationPage() {
 		);
 	}
 
+	const canEdit = isAdmin || (!!user && user.id === reservation.user_id);
 	const occurrences = reservation.occurrences || [];
 	const resourceMap = new Map(resources?.map((r) => [r.id, r.name]));
 
@@ -85,12 +87,14 @@ function ViewReservationPage() {
 				</Link>
 
 				<div className="flex items-center gap-2">
-					<Link to="/reservations/edit/$id" params={{ id }}>
-						<Button variant="outline" size="sm" className="gap-1 text-xs">
-							<Edit size={14} />
-							<span>{t("muokkaa", "Muokkaa")}</span>
-						</Button>
-					</Link>
+					{canEdit && (
+						<Link to="/reservations/edit/$id" params={{ id }}>
+							<Button variant="outline" size="sm" className="gap-1 text-xs">
+								<Edit size={14} />
+								<span>{t("muokkaa", "Muokkaa")}</span>
+							</Button>
+						</Link>
+					)}
 					<Button
 						variant="outline"
 						size="sm"

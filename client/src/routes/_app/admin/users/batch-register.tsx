@@ -3,6 +3,7 @@ import { AlertCircle, CheckCircle2, Trash2, Upload, Users } from "lucide-react";
 import Papa from "papaparse";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { BackLink } from "#/components/BackLink";
 import { useGroups } from "#/hooks/useGroups";
 import { type CreateUserPayload, useBatchCreateUsers } from "#/hooks/useUsers";
 
@@ -136,7 +137,7 @@ function BatchRegisterUserPage() {
 
 		try {
 			await batchCreate.mutateAsync(payloads);
-			navigate({ to: "/users" });
+			navigate({ to: "/admin/users" });
 		} catch (err) {
 			const rawMessage = (err as Error).message;
 			// Split multi-line error details into individual UI bullet points
@@ -147,6 +148,9 @@ function BatchRegisterUserPage() {
 
 	return (
 		<div className="max-w-4xl mx-auto space-y-6 p-6">
+			<BackLink to="/admin/users">
+				{t("takaisinKyttjiin", "Takaisin käyttäjiin")}
+			</BackLink>
 			<div>
 				<h1 className="text-xl font-bold tracking-tight">
 					{t("batchRegisterUsers", "Käyttäjien massarekisteröinti")}
@@ -305,7 +309,7 @@ function BatchRegisterUserPage() {
 					<div className="flex justify-end gap-3 pt-2">
 						<button
 							type="button"
-							onClick={() => navigate({ to: "/users" })}
+							onClick={() => navigate({ to: "/admin/users" })}
 							className="px-4 py-2 text-xs font-mono border border-stone-300 dark:border-stone-700 rounded-md hover:bg-stone-100 dark:hover:bg-stone-800"
 						>
 							{t("cancel", "Peruuta")}

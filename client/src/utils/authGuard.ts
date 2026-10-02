@@ -32,3 +32,18 @@ export async function requireAuthGuard(context: {
 
 	return user;
 }
+
+export async function requireAdminGuard(
+	context: Parameters<typeof requireAuthGuard>[0],
+) {
+	const user = await requireAuthGuard(context);
+
+	if (user.role !== "admin") {
+		throw redirect({
+			to: "/",
+			replace: true,
+		});
+	}
+
+	return user;
+}

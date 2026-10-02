@@ -1,12 +1,13 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
+import { BackLink } from "#/components/BackLink";
 import { UserForm, type UserFormValues } from "#/components/UserForm";
 import { useRegisterUser } from "#/hooks/useUsers";
-import { requireAuthGuard } from "#/utils/authGuard";
+import { requireAdminGuard } from "#/utils/authGuard";
 
-export const Route = createFileRoute("/_app/users/create")({
+export const Route = createFileRoute("/_app/admin/users/create")({
 	beforeLoad: async ({ context }) => {
-		await requireAuthGuard(context);
+		await requireAdminGuard(context);
 	},
 	component: CreateUserPage,
 });
@@ -26,11 +27,14 @@ function CreateUserPage() {
 			password: values.password,
 		});
 
-		navigate({ to: "/users" });
+		navigate({ to: "/admin/users" });
 	};
 
 	return (
 		<div className="p-4 space-y-4">
+			<BackLink to="/admin/users">
+				{t("takaisinKyttjiin", "Takaisin käyttäjiin")}
+			</BackLink>
 			<h1 className="text-xl font-bold text-stone-900 dark:text-stone-100">
 				{t("rekisteriUusiKyttj", "Rekisteröi uusi käyttäjä")}
 			</h1>

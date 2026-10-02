@@ -1,6 +1,7 @@
 // src/routes/_app/reservations/create.tsx
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
+import { BackLink } from "#/components/BackLink";
 import {
 	ReservationForm,
 	type ReservationFormValues,
@@ -75,6 +76,9 @@ function CreateReservationPage() {
 
 	return (
 		<div className="max-w-xl mx-auto p-2 sm:p-4 space-y-4 pb-12">
+			<BackLink to="/reservations">
+				{t("takaisinVarauksiin", "Takaisin varauksiin")}
+			</BackLink>
 			<h1 className="text-xl font-bold text-stone-900 dark:text-stone-100">
 				{t("uusiVaraus", "Uusi varaus")}
 			</h1>

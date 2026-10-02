@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
+import { BackLink } from "#/components/BackLink";
 import {
 	ReservationForm,
 	type ReservationFormValues,
@@ -60,6 +61,9 @@ function EditReservationPage() {
 
 	return (
 		<div className="p-4 space-y-4">
+			<BackLink to="/reservations/$id" params={{ id }}>
+				{t("takaisinVaraukseen", "Takaisin varaukseen")}
+			</BackLink>
 			<h1 className="text-xl font-bold text-stone-900 dark:text-stone-100">
 				{t("muokkaaVarausta", "Muokkaa varausta")}
 			</h1>

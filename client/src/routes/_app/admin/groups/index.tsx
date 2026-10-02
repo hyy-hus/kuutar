@@ -10,7 +10,7 @@ import { requireAuthGuard } from "#/utils/authGuard";
 import { getLocalizedPlainText } from "#/utils/richText";
 import { readable_uuid } from "#/utils/uuid";
 
-export const Route = createFileRoute("/_app/groups/")({
+export const Route = createFileRoute("/_app/admin/groups/")({
 	beforeLoad: async ({ context }) => {
 		await requireAuthGuard(context);
 	},
@@ -45,7 +45,7 @@ function GroupCard({ group }: { group: Group }) {
 					asChild
 					className="gap-1.5 text-xs"
 				>
-					<Link to="/groups/$id" params={{ id: group.id }}>
+					<Link to="/admin/groups/$id" params={{ id: group.id }}>
 						<span>{t("nyt", "Näytä")}</span>
 						<Eye size={14} />
 					</Link>
@@ -99,7 +99,7 @@ function GroupList() {
 
 				{isAdmin && (
 					<Button asChild size="sm" className="gap-1.5 shrink-0">
-						<Link to="/groups/create">
+						<Link to="/admin/groups/create">
 							<Plus size={16} />
 							<span>{t("lisRyhm", "Lisää ryhmä")}</span>
 						</Link>

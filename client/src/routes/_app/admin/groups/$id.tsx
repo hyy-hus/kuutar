@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { ArrowLeft, Edit, Trash2 } from "lucide-react";
+import { Edit, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { BackLink } from "#/components/BackLink";
 import { Button } from "#/components/Button";
 import { Chip } from "#/components/Chip";
 import { RichTextContent } from "#/components/RichTextContent";
@@ -9,7 +10,7 @@ import { requireAuthGuard } from "#/utils/authGuard";
 import { useDateFormatter } from "#/utils/date";
 import { readable_uuid } from "#/utils/uuid";
 
-export const Route = createFileRoute("/_app/groups/$id")({
+export const Route = createFileRoute("/_app/admin/groups/$id")({
 	beforeLoad: async ({ context }) => {
 		await requireAuthGuard(context);
 	},
@@ -44,18 +45,15 @@ function ViewGroupPage() {
 			)
 		) {
 			await deleteGroup.mutateAsync(id);
-			navigate({ to: "/groups" });
+			navigate({ to: "/admin/groups" });
 		}
 	};
 
 	return (
 		<div className="p-4 max-w-xl flex flex-col gap-6">
-			<Link
-				to="/groups"
-				className="inline-flex items-center gap-1 text-xs text-stone-500 hover:underline"
-			>
-				<ArrowLeft size={14} /> {t("takaisinRyhmiin", "Takaisin ryhmiin")}
-			</Link>
+			<BackLink to="/admin/groups">
+				{t("takaisinRyhmiin", "Takaisin ryhmiin")}
+			</BackLink>
 
 			<div className="flex items-center justify-between">
 				<h1 className="text-2xl font-bold text-stone-900 dark:text-stone-100">
@@ -89,7 +87,7 @@ function ViewGroupPage() {
 					className="w-full flex items-center justify-center gap-2"
 					asChild
 				>
-					<Link to="/groups/edit/$id" params={{ id: group.id }}>
+					<Link to="/admin/groups/edit/$id" params={{ id: group.id }}>
 						<span>{t("muokkaa", "Muokkaa")}</span>
 						<Edit size={16} />
 					</Link>
