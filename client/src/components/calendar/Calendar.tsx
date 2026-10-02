@@ -8,6 +8,9 @@ import {
 	Columns3,
 	Loader2,
 	Plus,
+	Rows2,
+	Rows3,
+	Rows4,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -49,6 +52,8 @@ const FIELD_CLASS =
 const HOUR_HEIGHTS = [3, 5, 7] as const;
 type HourHeight = (typeof HOUR_HEIGHTS)[number];
 const DEFAULT_HOUR_HEIGHT: HourHeight = 5;
+/** Icon for each row height: more rows for more compact */
+const HOUR_HEIGHT_ICONS = { 3: Rows4, 5: Rows3, 7: Rows2 } as const;
 const HOUR_HEIGHT_STORAGE_KEY = "kuutar.calendar.hourHeight";
 
 /** Reads the remembered row height; storage can be unavailable (e.g. private mode) */
@@ -87,6 +92,19 @@ export function Calendar({
 			// Not persisting is fine; it just resets on reload
 		}
 	};
+
+	/** Steps through the row heights, from compact to roomy and back */
+	const cycleHourHeight = () => {
+		const index = HOUR_HEIGHTS.indexOf(hourHeight);
+		handleHourHeightChange(HOUR_HEIGHTS[(index + 1) % HOUR_HEIGHTS.length]);
+	};
+	const HourHeightIcon = HOUR_HEIGHT_ICONS[hourHeight];
+	const hourHeightNames: Record<HourHeight, string> = {
+		3: t("tiivis", "Tiivis"),
+		5: t("normaali", "Normaali"),
+		7: t("vlj", "Väljä"),
+	};
+	const hourHeightLabel = `${t("tuntirivinKorkeus", "Tuntirivin korkeus")}: ${hourHeightNames[hourHeight]}`;
 
 	const { data: resources, isLoading: loadingResources } = useResources();
 
@@ -343,97 +361,104 @@ export function Calendar({
 				</Button>
 			</div>
 
-			{/* Controls Bar: the groups wrap onto their own lines on narrow screens */}
-			<div className="flex flex-wrap items-center gap-2 shrink-0 bg-stone-100 dark:bg-stone-900 p-2 rounded-md border border-stone-200 dark:border-stone-800">
-				<div className="flex items-center gap-1">
-					<Button
-						variant="field"
-						size="iconSm"
-						onClick={() => moveStart(-1)}
-						aria-label={t("edellinenJakso", "Edellinen jakso")}
-					>
-						<ChevronLeft size={16} />
-					</Button>
+			{/* Controls Bar: stays on one line, dropping labels as it narrows and scrolling as a last resort */}
+			<div className="@container shrink-0 bg-stone-100 dark:bg-stone-900 p-2 rounded-md border border-stone-200 dark:border-stone-800 overflow-x-auto no-scrollbar">
+				<div className="flex items-center gap-2 @max-md:gap-1.5 w-max min-w-full">
+					<div className="flex items-center gap-1 shrink-0">
+						<Button
+							variant="field"
+							size="iconSm"
+							className="@max-md:w-7"
+							onClick={() => moveStart(-1)}
+							aria-label={t("edellinenJakso", "Edellinen jakso")}
+						>
+							<ChevronLeft size={16} />
+						</Button>
 
-					<input
-						type="date"
-						value={formatYYYYMMDD(start)}
-						// The input value is already YYYY-MM-DD; valueAsDate would be UTC midnight
-						onChange={(e) =>
-							e.target.value && onSearchChange({ start: e.target.value })
-						}
-						className={cn(FIELD_CLASS, "font-mono")}
-					/>
+						<input
+							type="date"
+							value={formatYYYYMMDD(start)}
+							// The input value is already YYYY-MM-DD; valueAsDate would be UTC midnight
+							onChange={(e) =>
+								e.target.value && onSearchChange({ start: e.target.value })
+							}
+							// On narrow bars drop the monospace font, the side padding and Chrome/Safari's
+							// picker icon; tapping the field opens the picker on phones anyway
+							className={cn(
+								FIELD_CLASS,
+								"font-mono @max-md:font-sans @max-md:px-1 @max-md:[&::-webkit-calendar-picker-indicator]:hidden",
+							)}
+						/>
 
-					<Button
-						variant="field"
-						size="iconSm"
-						onClick={() => moveStart(1)}
-						aria-label={t("seuraavaJakso", "Seuraava jakso")}
-					>
-						<ChevronRight size={16} />
-					</Button>
-				</div>
+						<Button
+							variant="field"
+							size="iconSm"
+							className="@max-md:w-7"
+							onClick={() => moveStart(1)}
+							aria-label={t("seuraavaJakso", "Seuraava jakso")}
+						>
+							<ChevronRight size={16} />
+						</Button>
+					</div>
 
-				<div className="flex flex-wrap items-center gap-1">
-					<fieldset
-						aria-label={t("nkym", "Näkymä")}
-						className="flex h-8 rounded-md border border-stone-300 dark:border-stone-700 overflow-hidden"
-					>
-						{viewModes.map(({ mode, label, icon: Icon }) => {
-							const isActive = mode === view;
-							return (
-								<button
-									key={mode}
-									type="button"
-									onClick={() => handleViewChange(mode)}
-									aria-pressed={isActive}
-									title={label}
-									className={cn(
-										"flex items-center gap-1 px-2 text-xs font-medium cursor-pointer transition-colors",
-										isActive
-											? "bg-stone-900 text-stone-50 dark:bg-stone-100 dark:text-stone-900"
-											: "bg-stone-50 dark:bg-stone-950 hover:bg-stone-200 dark:hover:bg-stone-800",
-									)}
+					<div className="flex items-center gap-1 shrink-0">
+						<fieldset
+							aria-label={t("nkym", "Näkymä")}
+							className="flex h-8 rounded-md border border-stone-300 dark:border-stone-700 overflow-hidden"
+						>
+							{viewModes.map(({ mode, label, icon: Icon }) => {
+								const isActive = mode === view;
+								return (
+									<button
+										key={mode}
+										type="button"
+										onClick={() => handleViewChange(mode)}
+										aria-pressed={isActive}
+										title={label}
+										className={cn(
+											"flex items-center gap-1 px-2 text-xs font-medium cursor-pointer transition-colors",
+											isActive
+												? "bg-stone-900 text-stone-50 dark:bg-stone-100 dark:text-stone-900"
+												: "bg-stone-50 dark:bg-stone-950 hover:bg-stone-200 dark:hover:bg-stone-800",
+										)}
+									>
+										<Icon size={14} className="shrink-0" />
+										<span className="hidden @xl:inline">{label}</span>
+									</button>
+								);
+							})}
+						</fieldset>
+
+						{isMonth ? (
+							// The date input already tells the month, so the label is a bonus where there is room
+							<span className="hidden @md:inline text-sm font-semibold capitalize whitespace-nowrap">
+								{formatMonthYear(start)}
+							</span>
+						) : (
+							<>
+								<select
+									value={days}
+									onChange={(e) => handleDaysChange(Number(e.target.value))}
+									className={FIELD_CLASS}
 								>
-									<Icon size={14} className="shrink-0" />
-									<span className="hidden md:inline">{label}</span>
-								</button>
-							);
-						})}
-					</fieldset>
+									<option value={1}>{t("1Piv", "1 päivä")}</option>
+									<option value={3}>{t("3Piv", "3 päivää")}</option>
+									<option value={5}>{t("5Piv", "5 päivää")}</option>
+									<option value={7}>{t("1Viikko", "1 viikko")}</option>
+								</select>
 
-					{isMonth ? (
-						<span className="text-sm font-semibold capitalize">
-							{formatMonthYear(start)}
-						</span>
-					) : (
-						<>
-							<select
-								value={days}
-								onChange={(e) => handleDaysChange(Number(e.target.value))}
-								className={FIELD_CLASS}
-							>
-								<option value={1}>{t("1Piv", "1 päivä")}</option>
-								<option value={3}>{t("3Piv", "3 päivää")}</option>
-								<option value={5}>{t("5Piv", "5 päivää")}</option>
-								<option value={7}>{t("1Viikko", "1 viikko")}</option>
-							</select>
-
-							<select
-								value={hourHeight}
-								onChange={(e) =>
-									handleHourHeightChange(Number(e.target.value) as HourHeight)
-								}
-								aria-label={t("tuntirivinKorkeus", "Tuntirivin korkeus")}
-								className={FIELD_CLASS}
-							>
-								<option value={3}>{t("tiivis", "Tiivis")}</option>
-								<option value={5}>{t("normaali", "Normaali")}</option>
-								<option value={7}>{t("vlj", "Väljä")}</option>
-							</select>
-						</>
-					)}
+								<Button
+									variant="field"
+									size="iconSm"
+									onClick={cycleHourHeight}
+									aria-label={hourHeightLabel}
+									title={hourHeightLabel}
+								>
+									<HourHeightIcon size={16} />
+								</Button>
+							</>
+						)}
+					</div>
 				</div>
 			</div>
 
