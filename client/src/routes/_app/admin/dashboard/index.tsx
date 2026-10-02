@@ -37,13 +37,6 @@ export interface AdminDashboardSearch {
 	resource_id?: string;
 }
 
-const formatTimeOnly = (isoStr: string) => {
-	const d = new Date(isoStr);
-	const hours = String(d.getHours()).padStart(2, "0");
-	const minutes = String(d.getMinutes()).padStart(2, "0");
-	return `${hours}.${minutes}`;
-};
-
 /** Orders reservations by their first occurrence; ones without times go last */
 const sortByDateAsc = (
 	a: ReservationWithOccurrences,
@@ -89,7 +82,7 @@ function AdminReservationRow({
 	onHoverReservation: (res: ReservationWithOccurrences | null) => void;
 }) {
 	const { t } = useTranslation();
-	const { formatDate } = useDateFormatter();
+	const { formatDate, formatDateRange } = useDateFormatter();
 	const firstOccurrence = reservationWithOcc.occurrences?.[0];
 	const isPending = reservationWithOcc.status === "pending";
 	const isCancelled = reservationWithOcc.status === "cancelled";
@@ -134,12 +127,9 @@ function AdminReservationRow({
 		window.open(url, "_blank");
 	};
 
-	const formattedTimeSpan = useMemo(() => {
-		if (!firstOccurrence) return null;
-		const startFormatted = formatDate(firstOccurrence.start_time);
-		const endTimeFormatted = formatTimeOnly(firstOccurrence.end_time);
-		return `${startFormatted} – ${endTimeFormatted}`;
-	}, [firstOccurrence, formatDate]);
+	const formattedTimeSpan = firstOccurrence
+		? formatDateRange(firstOccurrence.start_time, firstOccurrence.end_time)
+		: null;
 
 	return (
 		<tr
@@ -156,18 +146,26 @@ function AdminReservationRow({
 			)}
 		>
 			{/* Reservation Title & User */}
-			<td className="py-2 px-3 align-middle min-w-[200px]">
-				<div className="flex items-center gap-2 truncate">
+			<td className="py-2 px-3 align-middle min-w-[200px] max-w-xl">
+				<div className="flex items-center gap-2 min-w-0">
 					<Link
 						to="/reservations/$id"
 						params={{ id: reservationWithOcc.id }}
-						className="font-bold hover:underline text-stone-900 dark:text-stone-100 text-xs truncate shrink-0"
+						title={reservationWithOcc.title}
+						className="font-bold hover:underline text-stone-900 dark:text-stone-100 text-xs truncate max-w-[16rem]"
 					>
 						{reservationWithOcc.title}
 					</Link>
 
 					{reservationWithOcc.user_name && (
-						<span className="text-[11px] text-stone-500 dark:text-stone-400 flex items-center gap-0.5 font-sans truncate">
+						<span
+							title={
+								reservationWithOcc.user_email
+									? `${reservationWithOcc.user_name} (${reservationWithOcc.user_email})`
+									: reservationWithOcc.user_name
+							}
+							className="text-[11px] text-stone-500 dark:text-stone-400 flex items-center gap-0.5 font-sans min-w-0 max-w-[20rem]"
+						>
 							<UserIcon
 								size={11}
 								className="shrink-0 text-stone-400 dark:text-stone-500"
@@ -182,6 +180,15 @@ function AdminReservationRow({
 							)}
 						</span>
 					)}
+				</div>
+				<div className="mt-0.5 flex flex-wrap gap-x-3 text-[10px] text-stone-400 dark:text-stone-500 font-sans">
+					<span>
+						{t("luotu", "Luotu:")} {formatDate(reservationWithOcc.created_at)}
+					</span>
+					<span>
+						{t("muokattu", "Muokattu:")}{" "}
+						{formatDate(reservationWithOcc.updated_at)}
+					</span>
 				</div>
 			</td>
 
