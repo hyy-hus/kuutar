@@ -1,12 +1,13 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
+import { BackLink } from "#/components/BackLink";
 import { CollectionForm } from "#/components/CollectionForm";
 import { useCollection, useUpdateCollection } from "#/hooks/useCollections";
-import { requireAuthGuard } from "#/utils/authGuard";
+import { requireAdminGuard } from "#/utils/authGuard";
 
 export const Route = createFileRoute("/_app/collections/edit/$id")({
 	beforeLoad: async ({ context }) => {
-		await requireAuthGuard(context);
+		await requireAdminGuard(context);
 	},
 	component: EditCollectionPage,
 });
@@ -41,6 +42,9 @@ function EditCollectionPage() {
 
 	return (
 		<div className="p-4 space-y-4">
+			<BackLink to="/collections/$id" params={{ id }}>
+				{t("takaisinKokoelmaan", "Takaisin kokoelmaan")}
+			</BackLink>
 			<h1 className="text-xl font-bold text-stone-900 dark:text-stone-100">
 				{t("muokkaaKokoelmaa", "Muokkaa kokoelmaa")}
 			</h1>

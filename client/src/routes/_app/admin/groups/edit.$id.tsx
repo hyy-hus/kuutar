@@ -1,12 +1,13 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
+import { BackLink } from "#/components/BackLink";
 import { GroupForm } from "#/components/GroupForm";
 import { useGroup, useUpdateGroup } from "#/hooks/useGroups";
-import { requireAuthGuard } from "#/utils/authGuard";
+import { requireAdminGuard } from "#/utils/authGuard";
 
-export const Route = createFileRoute("/_app/groups/edit/$id")({
+export const Route = createFileRoute("/_app/admin/groups/edit/$id")({
 	beforeLoad: async ({ context }) => {
-		await requireAuthGuard(context);
+		await requireAdminGuard(context);
 	},
 	component: EditGroupPage,
 });
@@ -30,11 +31,14 @@ function EditGroupPage() {
 			id: group.id,
 			payload: values,
 		});
-		navigate({ to: "/groups/$id", params: { id: group.id } });
+		navigate({ to: "/admin/groups/$id", params: { id: group.id } });
 	};
 
 	return (
 		<div className="p-4 space-y-4">
+			<BackLink to="/admin/groups/$id" params={{ id }}>
+				{t("takaisinRyhmn", "Takaisin ryhmään")}
+			</BackLink>
 			<h1 className="text-xl font-bold text-stone-900 dark:text-stone-100">
 				{t("muokkaaRyhm", "Muokkaa ryhmää")}
 			</h1>

@@ -1,16 +1,17 @@
 // src/routes/resources/create.tsx
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
+import { BackLink } from "#/components/BackLink";
 import {
 	ResourceForm,
 	type ResourceFormValues,
 } from "#/components/ResourceForm";
 import { useCreateResource } from "#/hooks/useResorces";
-import { requireAuthGuard } from "#/utils/authGuard";
+import { requireAdminGuard } from "#/utils/authGuard";
 
 export const Route = createFileRoute("/_app/resources/create")({
 	beforeLoad: async ({ context }) => {
-		await requireAuthGuard(context);
+		await requireAdminGuard(context);
 	},
 	component: CreateResourcePage,
 });
@@ -35,6 +36,9 @@ function CreateResourcePage() {
 
 	return (
 		<div className="p-4 space-y-4">
+			<BackLink to="/resources">
+				{t("takaisinResursseihin", "Takaisin resursseihin")}
+			</BackLink>
 			<h1 className="text-xl font-bold text-stone-900 dark:text-stone-100">
 				{t("uusiResurssi", "Uusi resurssi")}
 			</h1>

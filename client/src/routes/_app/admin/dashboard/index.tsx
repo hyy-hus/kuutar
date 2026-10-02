@@ -5,6 +5,7 @@ import {
 	Check,
 	CheckCircle2,
 	Clock,
+	FileJson,
 	FileText,
 	Loader2,
 	Printer,
@@ -398,21 +399,36 @@ function AdminDashboardPage() {
 					{t("yllpidonHallintapaneeli", "Ylläpidon hallintapaneeli")}
 				</h1>
 
-				<Button
-					size="sm"
-					disabled={confirmedReservations.length === 0}
-					onClick={handleBatchPrintConfirmed}
-					className="bg-amber-600 hover:bg-amber-700 text-white gap-1.5 justify-center w-full sm:w-auto text-xs shrink-0"
-				>
-					<Printer size={16} />
-					<span className="truncate">
-						{t(
-							"tulostaKaikkiSopimukset",
-							"Tulosta vahvistettujen varausten sopimukset ({{length}})",
-							{ length: confirmedReservations.length },
-						)}
-					</span>
-				</Button>
+				<div className="flex flex-col sm:flex-row gap-2">
+					<Button
+						variant="secondary"
+						asChild
+						size="sm"
+						className="gap-1.5 justify-center w-full sm:w-auto text-xs shrink-0"
+					>
+						<Link to="/admin/reservations">
+							<FileJson size={16} />
+							<span>
+								{t("varaustenTuontiJaVienti", "Varausten tuonti ja vienti")}
+							</span>
+						</Link>
+					</Button>
+					<Button
+						size="sm"
+						disabled={confirmedReservations.length === 0}
+						onClick={handleBatchPrintConfirmed}
+						className="bg-amber-600 hover:bg-amber-700 text-white gap-1.5 justify-center w-full sm:w-auto text-xs shrink-0"
+					>
+						<Printer size={16} />
+						<span className="truncate">
+							{t(
+								"tulostaKaikkiSopimukset",
+								"Tulosta vahvistettujen varausten sopimukset ({{length}})",
+								{ length: confirmedReservations.length },
+							)}
+						</span>
+					</Button>
+				</div>
 			</div>
 
 			<div className="flex flex-wrap items-center gap-2 shrink-0 p-2 bg-stone-100 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-md">

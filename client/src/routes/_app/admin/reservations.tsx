@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { BackLink } from "#/components/BackLink";
 import { Button } from "#/components/Button";
 import {
 	exportReservationsToPortableJson,
@@ -190,6 +191,9 @@ function AdminReservationsSyncPage() {
 
 	return (
 		<div className="max-w-5xl mx-auto space-y-8 p-4 sm:p-6">
+			<BackLink to="/admin/dashboard">
+				{t("takaisinHallintapaneeliin", "Takaisin hallintapaneeliin")}
+			</BackLink>
 			<div>
 				<h1 className="text-xl font-bold tracking-tight text-stone-900 dark:text-stone-100">
 					{t("reservationsDataSync", "Varausten siirto ja synkronointi")}

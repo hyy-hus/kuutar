@@ -14,7 +14,7 @@ import {
 } from "#/hooks/useContracts";
 import type { ReservationWithOccurrences } from "#/hooks/useReservations";
 import { useResources } from "#/hooks/useResorces";
-import { requireAuthGuard } from "#/utils/authGuard";
+import { requireAdminGuard } from "#/utils/authGuard";
 import { type DateFormatter, useDateFormatter } from "#/utils/date";
 
 export interface BatchPrintSearch {
@@ -30,7 +30,7 @@ export const Route = createFileRoute("/contracts/batch-print")({
 				: [],
 	}),
 	beforeLoad: async ({ context }) => {
-		await requireAuthGuard(context);
+		await requireAdminGuard(context);
 	},
 	component: BatchPrintPage,
 });

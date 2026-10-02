@@ -6,11 +6,13 @@ import {
 	Box,
 	Calendar,
 	ChevronDown,
+	FileText,
 	Folder,
 	Globe,
 	Home,
 	Moon,
 	Shield,
+	ShieldAlert,
 	Sun,
 	User,
 	Users,
@@ -39,7 +41,12 @@ export function SideBar({ theme, toggleTheme }: SideBarProps) {
 	const currentLocale = i18n.language || "fi";
 
 	const navItems = [
-		{ to: "/", label: t("etusivu", "Etusivu"), icon: Home, public: true },
+		{
+			to: "/",
+			label: t("etusivu", "Etusivu"),
+			icon: Home,
+			public: true,
+		},
 		{
 			to: "/calendar",
 			label: t("kalenteri", "Kalenteri"),
@@ -65,6 +72,12 @@ export function SideBar({ theme, toggleTheme }: SideBarProps) {
 			authOnly: true,
 		},
 		{
+			to: "/restrictions",
+			label: t("rajoitukset", "Rajoitukset"),
+			icon: ShieldAlert,
+			adminOnly: true,
+		},
+		{
 			to: "/resources",
 			label: t("resurssit", "Resurssit"),
 			icon: Box,
@@ -77,15 +90,21 @@ export function SideBar({ theme, toggleTheme }: SideBarProps) {
 			adminOnly: true,
 		},
 		{
-			to: "/groups",
+			to: "/admin/users",
+			label: t("kyttjt", "Käyttäjät"),
+			icon: User,
+			adminOnly: true,
+		},
+		{
+			to: "/admin/groups",
 			label: t("ryhmt", "Ryhmät"),
 			icon: Users,
 			adminOnly: true,
 		},
 		{
-			to: "/users",
-			label: t("kyttjt", "Käyttäjät"),
-			icon: User,
+			to: "/contracts",
+			label: t("sopimukset", "Sopimukset"),
+			icon: FileText,
 			adminOnly: true,
 		},
 	];

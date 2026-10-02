@@ -1,16 +1,17 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
+import { BackLink } from "#/components/BackLink";
 import {
 	RestrictionForm,
 	type RestrictionFormValues,
 } from "#/components/RestrictionForm";
 import { useRestriction, useUpdateRestriction } from "#/hooks/useRestrictions";
-import { requireAuthGuard } from "#/utils/authGuard";
+import { requireAdminGuard } from "#/utils/authGuard";
 import { formatDateTimeLocal } from "#/utils/date";
 
 export const Route = createFileRoute("/_app/restrictions/edit/$id")({
 	beforeLoad: async ({ context }) => {
-		await requireAuthGuard(context);
+		await requireAdminGuard(context);
 	},
 	component: EditRestrictionPage,
 });
@@ -71,6 +72,9 @@ function EditRestrictionPage() {
 
 	return (
 		<div className="max-w-xl mx-auto p-4 space-y-4">
+			<BackLink to="/restrictions/$id" params={{ id }}>
+				{t("takaisinRajoitukseen", "Takaisin rajoitukseen")}
+			</BackLink>
 			<h1 className="text-xl font-bold text-stone-900 dark:text-stone-100">
 				{t("muokkaaRajoitusta", "Muokkaa aikarajoitusta")}
 			</h1>

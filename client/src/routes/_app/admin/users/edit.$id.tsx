@@ -1,12 +1,13 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
+import { BackLink } from "#/components/BackLink";
 import { UserForm, type UserFormValues } from "#/components/UserForm";
 import { useUpdateUser, useUser } from "#/hooks/useUsers";
-import { requireAuthGuard } from "#/utils/authGuard";
+import { requireAdminGuard } from "#/utils/authGuard";
 
-export const Route = createFileRoute("/_app/users/edit/$id")({
+export const Route = createFileRoute("/_app/admin/users/edit/$id")({
 	beforeLoad: async ({ context }) => {
-		await requireAuthGuard(context);
+		await requireAdminGuard(context);
 	},
 	component: EditUserPage,
 });
@@ -37,11 +38,14 @@ function EditUserPage() {
 				...(values.password ? { password: values.password } : {}),
 			},
 		});
-		navigate({ to: "/users/$id", params: { id: user.id } });
+		navigate({ to: "/admin/users/$id", params: { id: user.id } });
 	};
 
 	return (
 		<div className="p-4 space-y-4">
+			<BackLink to="/admin/users/$id" params={{ id }}>
+				{t("takaisinKyttjn", "Takaisin käyttäjään")}
+			</BackLink>
 			<h1 className="text-xl font-bold text-stone-900 dark:text-stone-100">
 				{t("muokkaaKyttj", "Muokkaa käyttäjää")}
 			</h1>

@@ -22,12 +22,12 @@ import {
 	useCreateContract,
 	useUpdateContract,
 } from "#/hooks/useContracts";
-import { requireAuthGuard } from "#/utils/authGuard";
+import { requireAdminGuard } from "#/utils/authGuard";
 import { useDateFormatter } from "#/utils/date";
 
 export const Route = createFileRoute("/_app/contracts/")({
 	beforeLoad: async ({ context }) => {
-		await requireAuthGuard(context);
+		await requireAdminGuard(context);
 	},
 	component: ContractsListPage,
 });

@@ -1,11 +1,12 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
+import { BackLink } from "#/components/BackLink";
 import {
 	RestrictionForm,
 	type RestrictionFormValues,
 } from "#/components/RestrictionForm";
 import { useCreateRestriction } from "#/hooks/useRestrictions";
-import { requireAuthGuard } from "#/utils/authGuard";
+import { requireAdminGuard } from "#/utils/authGuard";
 import { formatDateTimeLocal } from "#/utils/date";
 
 export interface CreateRestrictionSearch {
@@ -38,7 +39,7 @@ export const Route = createFileRoute("/_app/restrictions/create")({
 			typeof search.resource_id === "string" ? search.resource_id : undefined,
 	}),
 	beforeLoad: async ({ context }) => {
-		await requireAuthGuard(context);
+		await requireAdminGuard(context);
 	},
 	component: CreateRestrictionPage,
 });
@@ -70,6 +71,9 @@ function CreateRestrictionPage() {
 
 	return (
 		<div className="max-w-xl mx-auto p-2 sm:p-4 space-y-4 pb-12">
+			<BackLink to="/restrictions">
+				{t("takaisinRajoituksiin", "Takaisin rajoituksiin")}
+			</BackLink>
 			<h1 className="text-xl font-bold text-stone-900 dark:text-stone-100">
 				{t("uusiAikarajoitus", "Uusi aikarajoitus")}
 			</h1>

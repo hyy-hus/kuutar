@@ -14,15 +14,13 @@ import { Route as AppIndexRouteImport } from './routes/_app/index'
 import { Route as AppAdminRouteImport } from './routes/_app/admin'
 import { Route as AppSandboxRouteImport } from './routes/_app/sandbox'
 import { Route as ContractsBatchPrintRouteImport } from './routes/contracts/batch-print'
+import { Route as AppAdminIndexRouteImport } from './routes/_app/admin/index'
 import { Route as AppAdminReservationsRouteImport } from './routes/_app/admin/reservations'
 import { Route as AppCalendarIndexRouteImport } from './routes/_app/calendar/index'
 import { Route as AppCollectionsIndexRouteImport } from './routes/_app/collections/index'
 import { Route as AppCollectionsIdRouteImport } from './routes/_app/collections/$id'
 import { Route as AppCollectionsCreateRouteImport } from './routes/_app/collections/create'
 import { Route as AppContractsIndexRouteImport } from './routes/_app/contracts/index'
-import { Route as AppGroupsIndexRouteImport } from './routes/_app/groups/index'
-import { Route as AppGroupsIdRouteImport } from './routes/_app/groups/$id'
-import { Route as AppGroupsCreateRouteImport } from './routes/_app/groups/create'
 import { Route as AppReservationsIndexRouteImport } from './routes/_app/reservations/index'
 import { Route as AppReservationsIdRouteImport } from './routes/_app/reservations/$id'
 import { Route as AppReservationsCreateRouteImport } from './routes/_app/reservations/create'
@@ -33,17 +31,20 @@ import { Route as AppRestrictionsIndexRouteImport } from './routes/_app/restrict
 import { Route as AppRestrictionsIdRouteImport } from './routes/_app/restrictions/$id'
 import { Route as AppRestrictionsCreateRouteImport } from './routes/_app/restrictions/create'
 import { Route as AppStatsIndexRouteImport } from './routes/_app/stats/index'
-import { Route as AppUsersIndexRouteImport } from './routes/_app/users/index'
-import { Route as AppUsersIdRouteImport } from './routes/_app/users/$id'
-import { Route as AppUsersCreateRouteImport } from './routes/_app/users/create'
 import { Route as AppAdminDashboardIndexRouteImport } from './routes/_app/admin/dashboard/index'
+import { Route as AppAdminGroupsIndexRouteImport } from './routes/_app/admin/groups/index'
+import { Route as AppAdminGroupsIdRouteImport } from './routes/_app/admin/groups/$id'
+import { Route as AppAdminGroupsCreateRouteImport } from './routes/_app/admin/groups/create'
+import { Route as AppAdminUsersIndexRouteImport } from './routes/_app/admin/users/index'
+import { Route as AppAdminUsersIdRouteImport } from './routes/_app/admin/users/$id'
 import { Route as AppAdminUsersBatchRegisterRouteImport } from './routes/_app/admin/users/batch-register'
+import { Route as AppAdminUsersCreateRouteImport } from './routes/_app/admin/users/create'
 import { Route as AppCollectionsEditIdRouteImport } from './routes/_app/collections/edit.$id'
-import { Route as AppGroupsEditIdRouteImport } from './routes/_app/groups/edit.$id'
 import { Route as AppReservationsEditIdRouteImport } from './routes/_app/reservations/edit.$id'
 import { Route as AppResourcesEditIdRouteImport } from './routes/_app/resources/edit/$id'
 import { Route as AppRestrictionsEditIdRouteImport } from './routes/_app/restrictions/edit.$id'
-import { Route as AppUsersEditIdRouteImport } from './routes/_app/users/edit.$id'
+import { Route as AppAdminGroupsEditIdRouteImport } from './routes/_app/admin/groups/edit.$id'
+import { Route as AppAdminUsersEditIdRouteImport } from './routes/_app/admin/users/edit.$id'
 
 const AppRoute = AppRouteImport.update({
   id: '/_app',
@@ -68,6 +69,11 @@ const ContractsBatchPrintRoute = ContractsBatchPrintRouteImport.update({
   id: '/contracts/batch-print',
   path: '/contracts/batch-print',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AppAdminIndexRoute = AppAdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppAdminRoute,
 } as any)
 const AppAdminReservationsRoute = AppAdminReservationsRouteImport.update({
   id: '/reservations',
@@ -97,21 +103,6 @@ const AppCollectionsCreateRoute = AppCollectionsCreateRouteImport.update({
 const AppContractsIndexRoute = AppContractsIndexRouteImport.update({
   id: '/contracts/',
   path: '/contracts/',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppGroupsIndexRoute = AppGroupsIndexRouteImport.update({
-  id: '/groups/',
-  path: '/groups/',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppGroupsIdRoute = AppGroupsIdRouteImport.update({
-  id: '/groups/$id',
-  path: '/groups/$id',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppGroupsCreateRoute = AppGroupsCreateRouteImport.update({
-  id: '/groups/create',
-  path: '/groups/create',
   getParentRoute: () => AppRoute,
 } as any)
 const AppReservationsIndexRoute = AppReservationsIndexRouteImport.update({
@@ -164,24 +155,34 @@ const AppStatsIndexRoute = AppStatsIndexRouteImport.update({
   path: '/stats/',
   getParentRoute: () => AppRoute,
 } as any)
-const AppUsersIndexRoute = AppUsersIndexRouteImport.update({
-  id: '/users/',
-  path: '/users/',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppUsersIdRoute = AppUsersIdRouteImport.update({
-  id: '/users/$id',
-  path: '/users/$id',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppUsersCreateRoute = AppUsersCreateRouteImport.update({
-  id: '/users/create',
-  path: '/users/create',
-  getParentRoute: () => AppRoute,
-} as any)
 const AppAdminDashboardIndexRoute = AppAdminDashboardIndexRouteImport.update({
   id: '/dashboard/',
   path: '/dashboard/',
+  getParentRoute: () => AppAdminRoute,
+} as any)
+const AppAdminGroupsIndexRoute = AppAdminGroupsIndexRouteImport.update({
+  id: '/groups/',
+  path: '/groups/',
+  getParentRoute: () => AppAdminRoute,
+} as any)
+const AppAdminGroupsIdRoute = AppAdminGroupsIdRouteImport.update({
+  id: '/groups/$id',
+  path: '/groups/$id',
+  getParentRoute: () => AppAdminRoute,
+} as any)
+const AppAdminGroupsCreateRoute = AppAdminGroupsCreateRouteImport.update({
+  id: '/groups/create',
+  path: '/groups/create',
+  getParentRoute: () => AppAdminRoute,
+} as any)
+const AppAdminUsersIndexRoute = AppAdminUsersIndexRouteImport.update({
+  id: '/users/',
+  path: '/users/',
+  getParentRoute: () => AppAdminRoute,
+} as any)
+const AppAdminUsersIdRoute = AppAdminUsersIdRouteImport.update({
+  id: '/users/$id',
+  path: '/users/$id',
   getParentRoute: () => AppAdminRoute,
 } as any)
 const AppAdminUsersBatchRegisterRoute =
@@ -190,14 +191,14 @@ const AppAdminUsersBatchRegisterRoute =
     path: '/users/batch-register',
     getParentRoute: () => AppAdminRoute,
   } as any)
+const AppAdminUsersCreateRoute = AppAdminUsersCreateRouteImport.update({
+  id: '/users/create',
+  path: '/users/create',
+  getParentRoute: () => AppAdminRoute,
+} as any)
 const AppCollectionsEditIdRoute = AppCollectionsEditIdRouteImport.update({
   id: '/collections/edit/$id',
   path: '/collections/edit/$id',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppGroupsEditIdRoute = AppGroupsEditIdRouteImport.update({
-  id: '/groups/edit/$id',
-  path: '/groups/edit/$id',
   getParentRoute: () => AppRoute,
 } as any)
 const AppReservationsEditIdRoute = AppReservationsEditIdRouteImport.update({
@@ -215,10 +216,15 @@ const AppRestrictionsEditIdRoute = AppRestrictionsEditIdRouteImport.update({
   path: '/restrictions/edit/$id',
   getParentRoute: () => AppRoute,
 } as any)
-const AppUsersEditIdRoute = AppUsersEditIdRouteImport.update({
+const AppAdminGroupsEditIdRoute = AppAdminGroupsEditIdRouteImport.update({
+  id: '/groups/edit/$id',
+  path: '/groups/edit/$id',
+  getParentRoute: () => AppAdminRoute,
+} as any)
+const AppAdminUsersEditIdRoute = AppAdminUsersEditIdRouteImport.update({
   id: '/users/edit/$id',
   path: '/users/edit/$id',
-  getParentRoute: () => AppRoute,
+  getParentRoute: () => AppAdminRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -229,69 +235,70 @@ export interface FileRoutesByFullPath {
   '/admin/reservations': typeof AppAdminReservationsRoute
   '/collections/$id': typeof AppCollectionsIdRoute
   '/collections/create': typeof AppCollectionsCreateRoute
-  '/groups/$id': typeof AppGroupsIdRoute
-  '/groups/create': typeof AppGroupsCreateRoute
   '/reservations/$id': typeof AppReservationsIdRoute
   '/reservations/create': typeof AppReservationsCreateRoute
   '/resources/$id': typeof AppResourcesIdRoute
   '/resources/create': typeof AppResourcesCreateRoute
   '/restrictions/$id': typeof AppRestrictionsIdRoute
   '/restrictions/create': typeof AppRestrictionsCreateRoute
-  '/users/$id': typeof AppUsersIdRoute
-  '/users/create': typeof AppUsersCreateRoute
+  '/admin/': typeof AppAdminIndexRoute
   '/calendar/': typeof AppCalendarIndexRoute
   '/collections/': typeof AppCollectionsIndexRoute
   '/contracts/': typeof AppContractsIndexRoute
-  '/groups/': typeof AppGroupsIndexRoute
   '/reservations/': typeof AppReservationsIndexRoute
   '/resources/': typeof AppResourcesIndexRoute
   '/restrictions/': typeof AppRestrictionsIndexRoute
   '/stats/': typeof AppStatsIndexRoute
-  '/users/': typeof AppUsersIndexRoute
+  '/admin/groups/$id': typeof AppAdminGroupsIdRoute
+  '/admin/groups/create': typeof AppAdminGroupsCreateRoute
+  '/admin/users/$id': typeof AppAdminUsersIdRoute
   '/admin/users/batch-register': typeof AppAdminUsersBatchRegisterRoute
+  '/admin/users/create': typeof AppAdminUsersCreateRoute
   '/collections/edit/$id': typeof AppCollectionsEditIdRoute
-  '/groups/edit/$id': typeof AppGroupsEditIdRoute
   '/reservations/edit/$id': typeof AppReservationsEditIdRoute
   '/resources/edit/$id': typeof AppResourcesEditIdRoute
   '/restrictions/edit/$id': typeof AppRestrictionsEditIdRoute
-  '/users/edit/$id': typeof AppUsersEditIdRoute
   '/admin/dashboard/': typeof AppAdminDashboardIndexRoute
+  '/admin/groups/': typeof AppAdminGroupsIndexRoute
+  '/admin/users/': typeof AppAdminUsersIndexRoute
+  '/admin/groups/edit/$id': typeof AppAdminGroupsEditIdRoute
+  '/admin/users/edit/$id': typeof AppAdminUsersEditIdRoute
 }
 export interface FileRoutesByTo {
-  '/admin': typeof AppAdminRouteWithChildren
   '/sandbox': typeof AppSandboxRoute
   '/contracts/batch-print': typeof ContractsBatchPrintRoute
   '/': typeof AppIndexRoute
   '/admin/reservations': typeof AppAdminReservationsRoute
   '/collections/$id': typeof AppCollectionsIdRoute
   '/collections/create': typeof AppCollectionsCreateRoute
-  '/groups/$id': typeof AppGroupsIdRoute
-  '/groups/create': typeof AppGroupsCreateRoute
   '/reservations/$id': typeof AppReservationsIdRoute
   '/reservations/create': typeof AppReservationsCreateRoute
   '/resources/$id': typeof AppResourcesIdRoute
   '/resources/create': typeof AppResourcesCreateRoute
   '/restrictions/$id': typeof AppRestrictionsIdRoute
   '/restrictions/create': typeof AppRestrictionsCreateRoute
-  '/users/$id': typeof AppUsersIdRoute
-  '/users/create': typeof AppUsersCreateRoute
+  '/admin': typeof AppAdminIndexRoute
   '/calendar': typeof AppCalendarIndexRoute
   '/collections': typeof AppCollectionsIndexRoute
   '/contracts': typeof AppContractsIndexRoute
-  '/groups': typeof AppGroupsIndexRoute
   '/reservations': typeof AppReservationsIndexRoute
   '/resources': typeof AppResourcesIndexRoute
   '/restrictions': typeof AppRestrictionsIndexRoute
   '/stats': typeof AppStatsIndexRoute
-  '/users': typeof AppUsersIndexRoute
+  '/admin/groups/$id': typeof AppAdminGroupsIdRoute
+  '/admin/groups/create': typeof AppAdminGroupsCreateRoute
+  '/admin/users/$id': typeof AppAdminUsersIdRoute
   '/admin/users/batch-register': typeof AppAdminUsersBatchRegisterRoute
+  '/admin/users/create': typeof AppAdminUsersCreateRoute
   '/collections/edit/$id': typeof AppCollectionsEditIdRoute
-  '/groups/edit/$id': typeof AppGroupsEditIdRoute
   '/reservations/edit/$id': typeof AppReservationsEditIdRoute
   '/resources/edit/$id': typeof AppResourcesEditIdRoute
   '/restrictions/edit/$id': typeof AppRestrictionsEditIdRoute
-  '/users/edit/$id': typeof AppUsersEditIdRoute
   '/admin/dashboard': typeof AppAdminDashboardIndexRoute
+  '/admin/groups': typeof AppAdminGroupsIndexRoute
+  '/admin/users': typeof AppAdminUsersIndexRoute
+  '/admin/groups/edit/$id': typeof AppAdminGroupsEditIdRoute
+  '/admin/users/edit/$id': typeof AppAdminUsersEditIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -303,33 +310,34 @@ export interface FileRoutesById {
   '/_app/admin/reservations': typeof AppAdminReservationsRoute
   '/_app/collections/$id': typeof AppCollectionsIdRoute
   '/_app/collections/create': typeof AppCollectionsCreateRoute
-  '/_app/groups/$id': typeof AppGroupsIdRoute
-  '/_app/groups/create': typeof AppGroupsCreateRoute
   '/_app/reservations/$id': typeof AppReservationsIdRoute
   '/_app/reservations/create': typeof AppReservationsCreateRoute
   '/_app/resources/$id': typeof AppResourcesIdRoute
   '/_app/resources/create': typeof AppResourcesCreateRoute
   '/_app/restrictions/$id': typeof AppRestrictionsIdRoute
   '/_app/restrictions/create': typeof AppRestrictionsCreateRoute
-  '/_app/users/$id': typeof AppUsersIdRoute
-  '/_app/users/create': typeof AppUsersCreateRoute
+  '/_app/admin/': typeof AppAdminIndexRoute
   '/_app/calendar/': typeof AppCalendarIndexRoute
   '/_app/collections/': typeof AppCollectionsIndexRoute
   '/_app/contracts/': typeof AppContractsIndexRoute
-  '/_app/groups/': typeof AppGroupsIndexRoute
   '/_app/reservations/': typeof AppReservationsIndexRoute
   '/_app/resources/': typeof AppResourcesIndexRoute
   '/_app/restrictions/': typeof AppRestrictionsIndexRoute
   '/_app/stats/': typeof AppStatsIndexRoute
-  '/_app/users/': typeof AppUsersIndexRoute
+  '/_app/admin/groups/$id': typeof AppAdminGroupsIdRoute
+  '/_app/admin/groups/create': typeof AppAdminGroupsCreateRoute
+  '/_app/admin/users/$id': typeof AppAdminUsersIdRoute
   '/_app/admin/users/batch-register': typeof AppAdminUsersBatchRegisterRoute
+  '/_app/admin/users/create': typeof AppAdminUsersCreateRoute
   '/_app/collections/edit/$id': typeof AppCollectionsEditIdRoute
-  '/_app/groups/edit/$id': typeof AppGroupsEditIdRoute
   '/_app/reservations/edit/$id': typeof AppReservationsEditIdRoute
   '/_app/resources/edit/$id': typeof AppResourcesEditIdRoute
   '/_app/restrictions/edit/$id': typeof AppRestrictionsEditIdRoute
-  '/_app/users/edit/$id': typeof AppUsersEditIdRoute
   '/_app/admin/dashboard/': typeof AppAdminDashboardIndexRoute
+  '/_app/admin/groups/': typeof AppAdminGroupsIndexRoute
+  '/_app/admin/users/': typeof AppAdminUsersIndexRoute
+  '/_app/admin/groups/edit/$id': typeof AppAdminGroupsEditIdRoute
+  '/_app/admin/users/edit/$id': typeof AppAdminUsersEditIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -341,69 +349,70 @@ export interface FileRouteTypes {
     | '/admin/reservations'
     | '/collections/$id'
     | '/collections/create'
-    | '/groups/$id'
-    | '/groups/create'
     | '/reservations/$id'
     | '/reservations/create'
     | '/resources/$id'
     | '/resources/create'
     | '/restrictions/$id'
     | '/restrictions/create'
-    | '/users/$id'
-    | '/users/create'
+    | '/admin/'
     | '/calendar/'
     | '/collections/'
     | '/contracts/'
-    | '/groups/'
     | '/reservations/'
     | '/resources/'
     | '/restrictions/'
     | '/stats/'
-    | '/users/'
+    | '/admin/groups/$id'
+    | '/admin/groups/create'
+    | '/admin/users/$id'
     | '/admin/users/batch-register'
+    | '/admin/users/create'
     | '/collections/edit/$id'
-    | '/groups/edit/$id'
     | '/reservations/edit/$id'
     | '/resources/edit/$id'
     | '/restrictions/edit/$id'
-    | '/users/edit/$id'
     | '/admin/dashboard/'
+    | '/admin/groups/'
+    | '/admin/users/'
+    | '/admin/groups/edit/$id'
+    | '/admin/users/edit/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
-    | '/admin'
     | '/sandbox'
     | '/contracts/batch-print'
     | '/'
     | '/admin/reservations'
     | '/collections/$id'
     | '/collections/create'
-    | '/groups/$id'
-    | '/groups/create'
     | '/reservations/$id'
     | '/reservations/create'
     | '/resources/$id'
     | '/resources/create'
     | '/restrictions/$id'
     | '/restrictions/create'
-    | '/users/$id'
-    | '/users/create'
+    | '/admin'
     | '/calendar'
     | '/collections'
     | '/contracts'
-    | '/groups'
     | '/reservations'
     | '/resources'
     | '/restrictions'
     | '/stats'
-    | '/users'
+    | '/admin/groups/$id'
+    | '/admin/groups/create'
+    | '/admin/users/$id'
     | '/admin/users/batch-register'
+    | '/admin/users/create'
     | '/collections/edit/$id'
-    | '/groups/edit/$id'
     | '/reservations/edit/$id'
     | '/resources/edit/$id'
     | '/restrictions/edit/$id'
-    | '/users/edit/$id'
     | '/admin/dashboard'
+    | '/admin/groups'
+    | '/admin/users'
+    | '/admin/groups/edit/$id'
+    | '/admin/users/edit/$id'
   id:
     | '__root__'
     | '/_app'
@@ -414,33 +423,34 @@ export interface FileRouteTypes {
     | '/_app/admin/reservations'
     | '/_app/collections/$id'
     | '/_app/collections/create'
-    | '/_app/groups/$id'
-    | '/_app/groups/create'
     | '/_app/reservations/$id'
     | '/_app/reservations/create'
     | '/_app/resources/$id'
     | '/_app/resources/create'
     | '/_app/restrictions/$id'
     | '/_app/restrictions/create'
-    | '/_app/users/$id'
-    | '/_app/users/create'
+    | '/_app/admin/'
     | '/_app/calendar/'
     | '/_app/collections/'
     | '/_app/contracts/'
-    | '/_app/groups/'
     | '/_app/reservations/'
     | '/_app/resources/'
     | '/_app/restrictions/'
     | '/_app/stats/'
-    | '/_app/users/'
+    | '/_app/admin/groups/$id'
+    | '/_app/admin/groups/create'
+    | '/_app/admin/users/$id'
     | '/_app/admin/users/batch-register'
+    | '/_app/admin/users/create'
     | '/_app/collections/edit/$id'
-    | '/_app/groups/edit/$id'
     | '/_app/reservations/edit/$id'
     | '/_app/resources/edit/$id'
     | '/_app/restrictions/edit/$id'
-    | '/_app/users/edit/$id'
     | '/_app/admin/dashboard/'
+    | '/_app/admin/groups/'
+    | '/_app/admin/users/'
+    | '/_app/admin/groups/edit/$id'
+    | '/_app/admin/users/edit/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -485,6 +495,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ContractsBatchPrintRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_app/admin/': {
+      id: '/_app/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AppAdminIndexRouteImport
+      parentRoute: typeof AppAdminRoute
+    }
     '/_app/admin/reservations': {
       id: '/_app/admin/reservations'
       path: '/reservations'
@@ -525,27 +542,6 @@ declare module '@tanstack/react-router' {
       path: '/contracts'
       fullPath: '/contracts/'
       preLoaderRoute: typeof AppContractsIndexRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/groups/': {
-      id: '/_app/groups/'
-      path: '/groups'
-      fullPath: '/groups/'
-      preLoaderRoute: typeof AppGroupsIndexRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/groups/$id': {
-      id: '/_app/groups/$id'
-      path: '/groups/$id'
-      fullPath: '/groups/$id'
-      preLoaderRoute: typeof AppGroupsIdRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/groups/create': {
-      id: '/_app/groups/create'
-      path: '/groups/create'
-      fullPath: '/groups/create'
-      preLoaderRoute: typeof AppGroupsCreateRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/reservations/': {
@@ -618,32 +614,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppStatsIndexRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/users/': {
-      id: '/_app/users/'
-      path: '/users'
-      fullPath: '/users/'
-      preLoaderRoute: typeof AppUsersIndexRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/users/$id': {
-      id: '/_app/users/$id'
-      path: '/users/$id'
-      fullPath: '/users/$id'
-      preLoaderRoute: typeof AppUsersIdRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/users/create': {
-      id: '/_app/users/create'
-      path: '/users/create'
-      fullPath: '/users/create'
-      preLoaderRoute: typeof AppUsersCreateRouteImport
-      parentRoute: typeof AppRoute
-    }
     '/_app/admin/dashboard/': {
       id: '/_app/admin/dashboard/'
       path: '/dashboard'
       fullPath: '/admin/dashboard/'
       preLoaderRoute: typeof AppAdminDashboardIndexRouteImport
+      parentRoute: typeof AppAdminRoute
+    }
+    '/_app/admin/groups/': {
+      id: '/_app/admin/groups/'
+      path: '/groups'
+      fullPath: '/admin/groups/'
+      preLoaderRoute: typeof AppAdminGroupsIndexRouteImport
+      parentRoute: typeof AppAdminRoute
+    }
+    '/_app/admin/groups/$id': {
+      id: '/_app/admin/groups/$id'
+      path: '/groups/$id'
+      fullPath: '/admin/groups/$id'
+      preLoaderRoute: typeof AppAdminGroupsIdRouteImport
+      parentRoute: typeof AppAdminRoute
+    }
+    '/_app/admin/groups/create': {
+      id: '/_app/admin/groups/create'
+      path: '/groups/create'
+      fullPath: '/admin/groups/create'
+      preLoaderRoute: typeof AppAdminGroupsCreateRouteImport
+      parentRoute: typeof AppAdminRoute
+    }
+    '/_app/admin/users/': {
+      id: '/_app/admin/users/'
+      path: '/users'
+      fullPath: '/admin/users/'
+      preLoaderRoute: typeof AppAdminUsersIndexRouteImport
+      parentRoute: typeof AppAdminRoute
+    }
+    '/_app/admin/users/$id': {
+      id: '/_app/admin/users/$id'
+      path: '/users/$id'
+      fullPath: '/admin/users/$id'
+      preLoaderRoute: typeof AppAdminUsersIdRouteImport
       parentRoute: typeof AppAdminRoute
     }
     '/_app/admin/users/batch-register': {
@@ -653,18 +663,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAdminUsersBatchRegisterRouteImport
       parentRoute: typeof AppAdminRoute
     }
+    '/_app/admin/users/create': {
+      id: '/_app/admin/users/create'
+      path: '/users/create'
+      fullPath: '/admin/users/create'
+      preLoaderRoute: typeof AppAdminUsersCreateRouteImport
+      parentRoute: typeof AppAdminRoute
+    }
     '/_app/collections/edit/$id': {
       id: '/_app/collections/edit/$id'
       path: '/collections/edit/$id'
       fullPath: '/collections/edit/$id'
       preLoaderRoute: typeof AppCollectionsEditIdRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/groups/edit/$id': {
-      id: '/_app/groups/edit/$id'
-      path: '/groups/edit/$id'
-      fullPath: '/groups/edit/$id'
-      preLoaderRoute: typeof AppGroupsEditIdRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/reservations/edit/$id': {
@@ -688,26 +698,51 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppRestrictionsEditIdRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/users/edit/$id': {
-      id: '/_app/users/edit/$id'
+    '/_app/admin/groups/edit/$id': {
+      id: '/_app/admin/groups/edit/$id'
+      path: '/groups/edit/$id'
+      fullPath: '/admin/groups/edit/$id'
+      preLoaderRoute: typeof AppAdminGroupsEditIdRouteImport
+      parentRoute: typeof AppAdminRoute
+    }
+    '/_app/admin/users/edit/$id': {
+      id: '/_app/admin/users/edit/$id'
       path: '/users/edit/$id'
-      fullPath: '/users/edit/$id'
-      preLoaderRoute: typeof AppUsersEditIdRouteImport
-      parentRoute: typeof AppRoute
+      fullPath: '/admin/users/edit/$id'
+      preLoaderRoute: typeof AppAdminUsersEditIdRouteImport
+      parentRoute: typeof AppAdminRoute
     }
   }
 }
 
 interface AppAdminRouteChildren {
   AppAdminReservationsRoute: typeof AppAdminReservationsRoute
+  AppAdminIndexRoute: typeof AppAdminIndexRoute
+  AppAdminGroupsIdRoute: typeof AppAdminGroupsIdRoute
+  AppAdminGroupsCreateRoute: typeof AppAdminGroupsCreateRoute
+  AppAdminUsersIdRoute: typeof AppAdminUsersIdRoute
   AppAdminUsersBatchRegisterRoute: typeof AppAdminUsersBatchRegisterRoute
+  AppAdminUsersCreateRoute: typeof AppAdminUsersCreateRoute
   AppAdminDashboardIndexRoute: typeof AppAdminDashboardIndexRoute
+  AppAdminGroupsIndexRoute: typeof AppAdminGroupsIndexRoute
+  AppAdminUsersIndexRoute: typeof AppAdminUsersIndexRoute
+  AppAdminGroupsEditIdRoute: typeof AppAdminGroupsEditIdRoute
+  AppAdminUsersEditIdRoute: typeof AppAdminUsersEditIdRoute
 }
 
 const AppAdminRouteChildren: AppAdminRouteChildren = {
   AppAdminReservationsRoute: AppAdminReservationsRoute,
+  AppAdminIndexRoute: AppAdminIndexRoute,
+  AppAdminGroupsIdRoute: AppAdminGroupsIdRoute,
+  AppAdminGroupsCreateRoute: AppAdminGroupsCreateRoute,
+  AppAdminUsersIdRoute: AppAdminUsersIdRoute,
   AppAdminUsersBatchRegisterRoute: AppAdminUsersBatchRegisterRoute,
+  AppAdminUsersCreateRoute: AppAdminUsersCreateRoute,
   AppAdminDashboardIndexRoute: AppAdminDashboardIndexRoute,
+  AppAdminGroupsIndexRoute: AppAdminGroupsIndexRoute,
+  AppAdminUsersIndexRoute: AppAdminUsersIndexRoute,
+  AppAdminGroupsEditIdRoute: AppAdminGroupsEditIdRoute,
+  AppAdminUsersEditIdRoute: AppAdminUsersEditIdRoute,
 }
 
 const AppAdminRouteWithChildren = AppAdminRoute._addFileChildren(
@@ -720,31 +755,23 @@ interface AppRouteChildren {
   AppIndexRoute: typeof AppIndexRoute
   AppCollectionsIdRoute: typeof AppCollectionsIdRoute
   AppCollectionsCreateRoute: typeof AppCollectionsCreateRoute
-  AppGroupsIdRoute: typeof AppGroupsIdRoute
-  AppGroupsCreateRoute: typeof AppGroupsCreateRoute
   AppReservationsIdRoute: typeof AppReservationsIdRoute
   AppReservationsCreateRoute: typeof AppReservationsCreateRoute
   AppResourcesIdRoute: typeof AppResourcesIdRoute
   AppResourcesCreateRoute: typeof AppResourcesCreateRoute
   AppRestrictionsIdRoute: typeof AppRestrictionsIdRoute
   AppRestrictionsCreateRoute: typeof AppRestrictionsCreateRoute
-  AppUsersIdRoute: typeof AppUsersIdRoute
-  AppUsersCreateRoute: typeof AppUsersCreateRoute
   AppCalendarIndexRoute: typeof AppCalendarIndexRoute
   AppCollectionsIndexRoute: typeof AppCollectionsIndexRoute
   AppContractsIndexRoute: typeof AppContractsIndexRoute
-  AppGroupsIndexRoute: typeof AppGroupsIndexRoute
   AppReservationsIndexRoute: typeof AppReservationsIndexRoute
   AppResourcesIndexRoute: typeof AppResourcesIndexRoute
   AppRestrictionsIndexRoute: typeof AppRestrictionsIndexRoute
   AppStatsIndexRoute: typeof AppStatsIndexRoute
-  AppUsersIndexRoute: typeof AppUsersIndexRoute
   AppCollectionsEditIdRoute: typeof AppCollectionsEditIdRoute
-  AppGroupsEditIdRoute: typeof AppGroupsEditIdRoute
   AppReservationsEditIdRoute: typeof AppReservationsEditIdRoute
   AppResourcesEditIdRoute: typeof AppResourcesEditIdRoute
   AppRestrictionsEditIdRoute: typeof AppRestrictionsEditIdRoute
-  AppUsersEditIdRoute: typeof AppUsersEditIdRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
@@ -753,31 +780,23 @@ const AppRouteChildren: AppRouteChildren = {
   AppIndexRoute: AppIndexRoute,
   AppCollectionsIdRoute: AppCollectionsIdRoute,
   AppCollectionsCreateRoute: AppCollectionsCreateRoute,
-  AppGroupsIdRoute: AppGroupsIdRoute,
-  AppGroupsCreateRoute: AppGroupsCreateRoute,
   AppReservationsIdRoute: AppReservationsIdRoute,
   AppReservationsCreateRoute: AppReservationsCreateRoute,
   AppResourcesIdRoute: AppResourcesIdRoute,
   AppResourcesCreateRoute: AppResourcesCreateRoute,
   AppRestrictionsIdRoute: AppRestrictionsIdRoute,
   AppRestrictionsCreateRoute: AppRestrictionsCreateRoute,
-  AppUsersIdRoute: AppUsersIdRoute,
-  AppUsersCreateRoute: AppUsersCreateRoute,
   AppCalendarIndexRoute: AppCalendarIndexRoute,
   AppCollectionsIndexRoute: AppCollectionsIndexRoute,
   AppContractsIndexRoute: AppContractsIndexRoute,
-  AppGroupsIndexRoute: AppGroupsIndexRoute,
   AppReservationsIndexRoute: AppReservationsIndexRoute,
   AppResourcesIndexRoute: AppResourcesIndexRoute,
   AppRestrictionsIndexRoute: AppRestrictionsIndexRoute,
   AppStatsIndexRoute: AppStatsIndexRoute,
-  AppUsersIndexRoute: AppUsersIndexRoute,
   AppCollectionsEditIdRoute: AppCollectionsEditIdRoute,
-  AppGroupsEditIdRoute: AppGroupsEditIdRoute,
   AppReservationsEditIdRoute: AppReservationsEditIdRoute,
   AppResourcesEditIdRoute: AppResourcesEditIdRoute,
   AppRestrictionsEditIdRoute: AppRestrictionsEditIdRoute,
-  AppUsersEditIdRoute: AppUsersEditIdRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)

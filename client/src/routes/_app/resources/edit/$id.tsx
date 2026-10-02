@@ -1,16 +1,17 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
+import { BackLink } from "#/components/BackLink";
 import {
 	ResourceForm,
 	type ResourceFormValues,
 } from "#/components/ResourceForm";
 import { useContracts } from "#/hooks/useContracts";
 import { useResource, useUpdateResource } from "#/hooks/useResorces";
-import { requireAuthGuard } from "#/utils/authGuard";
+import { requireAdminGuard } from "#/utils/authGuard";
 
 export const Route = createFileRoute("/_app/resources/edit/$id")({
 	beforeLoad: async ({ context }) => {
-		await requireAuthGuard(context);
+		await requireAdminGuard(context);
 	},
 	component: EditResourcePage,
 });
@@ -72,6 +73,9 @@ function EditResourcePage() {
 
 	return (
 		<div className="p-4 space-y-4 max-w-xl mx-auto">
+			<BackLink to="/resources/$id" params={{ id: resourceId }}>
+				{t("takaisinResurssiin", "Takaisin resurssiin")}
+			</BackLink>
 			<h1 className="text-xl font-bold text-stone-900 dark:text-stone-100">
 				{t("muokkaaResurssia", "Muokkaa resurssia")}
 			</h1>
