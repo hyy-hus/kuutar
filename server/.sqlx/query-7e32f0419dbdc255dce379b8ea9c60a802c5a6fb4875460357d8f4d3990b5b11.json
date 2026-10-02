@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        SELECT id, group_id, name, email, default_contact_person, default_contact_email, default_contact_phone, role AS \"role: Role\", created_at, updated_at\n        FROM users\n        WHERE deleted_at IS NULL\n        ORDER BY name ASC, email ASC\n        ",
+  "query": "\n        INSERT INTO users (group_id, name, email, password_hash)\n        VALUES ($1, $2, $3, $4)\n        RETURNING id, group_id, name, email, default_contact_person, default_contact_email, default_contact_phone, language, role AS \"role: Role\", created_at, updated_at\n        ",
   "describe": {
     "columns": [
       {
@@ -82,6 +82,17 @@
       },
       {
         "ordinal": 7,
+        "name": "language",
+        "type_info": "Varchar",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "language"
+          }
+        }
+      },
+      {
+        "ordinal": 8,
         "name": "role: Role",
         "type_info": {
           "Custom": {
@@ -102,7 +113,7 @@
         }
       },
       {
-        "ordinal": 8,
+        "ordinal": 9,
         "name": "created_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -113,7 +124,7 @@
         }
       },
       {
-        "ordinal": 9,
+        "ordinal": 10,
         "name": "updated_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -125,7 +136,12 @@
       }
     ],
     "parameters": {
-      "Left": []
+      "Left": [
+        "Uuid",
+        "Varchar",
+        "Text",
+        "Text"
+      ]
     },
     "nullable": [
       false,
@@ -137,8 +153,9 @@
       true,
       false,
       false,
+      false,
       false
     ]
   },
-  "hash": "533e786e24b5419ae5d21cfe49c642327dcb86ea4702c2edf545d12e790cfff9"
+  "hash": "7e32f0419dbdc255dce379b8ea9c60a802c5a6fb4875460357d8f4d3990b5b11"
 }

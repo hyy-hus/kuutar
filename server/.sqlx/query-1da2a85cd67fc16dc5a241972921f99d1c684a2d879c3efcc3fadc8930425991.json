@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        SELECT id, group_id, name, email, default_contact_person, default_contact_email, default_contact_phone, role AS \"role: Role\", created_at, updated_at\n        FROM users\n        WHERE id = $1 AND deleted_at IS NULL\n        ",
+  "query": "\n        SELECT id, group_id, name, email, default_contact_person, default_contact_email, default_contact_phone, language, role AS \"role: Role\", created_at, updated_at\n        FROM users\n        WHERE id = $1 AND deleted_at IS NULL\n        ",
   "describe": {
     "columns": [
       {
@@ -82,6 +82,17 @@
       },
       {
         "ordinal": 7,
+        "name": "language",
+        "type_info": "Varchar",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "language"
+          }
+        }
+      },
+      {
+        "ordinal": 8,
         "name": "role: Role",
         "type_info": {
           "Custom": {
@@ -102,7 +113,7 @@
         }
       },
       {
-        "ordinal": 8,
+        "ordinal": 9,
         "name": "created_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -113,7 +124,7 @@
         }
       },
       {
-        "ordinal": 9,
+        "ordinal": 10,
         "name": "updated_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -139,8 +150,9 @@
       true,
       false,
       false,
+      false,
       false
     ]
   },
-  "hash": "14fb5db44667425eb0b6869a662989dda9ffe691436203834ee9b983fac625e4"
+  "hash": "1da2a85cd67fc16dc5a241972921f99d1c684a2d879c3efcc3fadc8930425991"
 }
