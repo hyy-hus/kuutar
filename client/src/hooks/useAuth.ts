@@ -86,9 +86,13 @@ export async function fetchMe() {
 	}
 
 	// 2. Fetch user profile if token is present
-	const { data, error } = await api.GET("/users/me");
+	const { data, error, response } = await api.GET("/users/me");
 
 	if (error || !data) {
+		// Transient failures (network, 5xx) must not log the user out
+		if (response && response.status !== 401) {
+			throw new Error(`Failed to fetch user (${response.status})`);
+		}
 		// 3. Clear invalid/expired token so subsequent checks short-circuit
 		if (typeof window !== "undefined") {
 			localStorage.removeItem("access_token");
