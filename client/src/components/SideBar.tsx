@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useAuth, useIsAdmin } from "#/hooks/useAuth";
+import { SUPPORTED_LANGUAGES, selectLanguage } from "#/i18n";
 
 interface SideBarProps {
 	isSidebarOpen: boolean;
@@ -29,8 +30,6 @@ const LANGUAGE_LABELS: Record<string, string> = {
 	en: "English",
 	sv: "Svenska",
 };
-
-const AVAILABLE_LOCALES = ["fi", "en", "sv"] as const;
 
 export function SideBar({ theme, toggleTheme }: SideBarProps) {
 	const { t, i18n } = useTranslation();
@@ -134,10 +133,10 @@ export function SideBar({ theme, toggleTheme }: SideBarProps) {
 					</div>
 					<select
 						value={currentLocale}
-						onChange={(e) => i18n.changeLanguage(e.target.value)}
+						onChange={(e) => selectLanguage(e.target.value)}
 						className="w-full h-8 pl-8 pr-7 text-xs font-mono font-medium rounded-md border border-stone-300 dark:border-stone-700 bg-stone-200/60 dark:bg-stone-800/60 text-stone-900 dark:text-stone-100 appearance-none cursor-pointer hover:bg-stone-200 dark:hover:bg-stone-800 transition-colors focus:outline-none focus:ring-1 focus:ring-purple-600"
 					>
-						{AVAILABLE_LOCALES.map((code) => (
+						{SUPPORTED_LANGUAGES.map((code) => (
 							<option
 								key={code}
 								value={code}
