@@ -77,12 +77,6 @@ export function Calendar({
 
 	const { data: resources, isLoading: loadingResources } = useResources();
 
-	useEffect(() => {
-		if (window.innerWidth < 640 && days > 1 && !selectedResourceIds) {
-			onSearchChange({ days: 1, start: formatYYYYMMDD(start) });
-		}
-	}, [days, onSearchChange, selectedResourceIds, start]);
-
 	const activeResourceIds = useMemo(() => {
 		if (selectedResourceIds && selectedResourceIds.length > 0) {
 			return selectedResourceIds;
