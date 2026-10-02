@@ -49,6 +49,10 @@ pub struct UpdateUser {
     #[validate(length(min = 8, message = "Password must be at least 8 characters"))]
     pub password: Option<String>,
 
+    /// Required by `PATCH /users/me` when a non-admin changes their password.
+    #[serde(default)]
+    pub current_password: Option<String>,
+
     pub group_id: Option<Uuid>,
 
     /// Empty string clears the value; omitted leaves it unchanged.

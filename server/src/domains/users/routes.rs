@@ -8,7 +8,7 @@ use validator::Validate;
 
 use super::{
     db,
-    models::{CreateUser, UpdateUser, User},
+    models::{CreateUser, Role, UpdateUser, User},
 };
 use crate::{
     domains::auth::{
@@ -103,6 +103,7 @@ pub async fn create_user(
     request_body = UpdateUser,
     responses(
         (status = 200, description = "Current user updated (group_id is ignored)", body = User),
+        (status = 403, description = "Current password missing or incorrect when changing password"),
         (status = 409, description = "Email already in use")
     )
 )]
@@ -115,6 +116,17 @@ pub async fn update_me(
 
     // Users cannot move themselves between groups; that is an admin action
     payload.group_id = None;
+
+    // Non-admins must prove they know the current password to change it
+    if payload.password.is_some() && auth_user.role != Role::Admin {
+        let current = payload.current_password.as_deref().unwrap_or_default();
+        let stored_hash = db::get_password_hash(&state.pool, auth_user.id).await?;
+        if current.is_empty() || !password::verify_password(current, &stored_hash)? {
+            return Err(AppError::Forbidden(
+                "Current password is incorrect".to_string(),
+            ));
+        }
+    }
 
     let new_password_hash = match &payload.password {
         Some(pwd) => Some(password::hash_password(pwd)?),

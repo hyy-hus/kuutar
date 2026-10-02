@@ -224,6 +224,85 @@ async fn test_update_me_ignores_group_and_saves_contact_defaults(pool: PgPool) {
     assert_eq!(json["default_contact_phone"], "+358401234567");
 }
 
+async fn patch_me(pool: &PgPool, token: &str, payload: Value) -> StatusCode {
+    app(pool.clone(), test_config())
+        .oneshot(
+            Request::builder()
+                .method("PATCH")
+                .uri("/users/me")
+                .header(header::AUTHORIZATION, format!("Bearer {token}"))
+                .header(header::CONTENT_TYPE, "application/json")
+                .body(Body::from(payload.to_string()))
+                .unwrap(),
+        )
+        .await
+        .unwrap()
+        .status()
+}
+
+#[sqlx::test]
+async fn test_update_me_password_requires_current_password_for_non_admin(pool: PgPool) {
+    let config = test_config();
+    let (_admin_id, group_id, admin_token) = setup_authenticated_user(&pool).await;
+
+    let hash = kuutar::domains::auth::password::hash_password("OldPassword123").unwrap();
+    let user_id: Uuid = sqlx::query_scalar!(
+        "INSERT INTO users (group_id, email, password_hash) VALUES ($1, $2, $3) RETURNING id",
+        group_id,
+        format!("plain_{}@example.com", Uuid::new_v4()),
+        hash
+    )
+    .fetch_one(&pool)
+    .await
+    .unwrap();
+    let token = encode_jwt(
+        user_id,
+        group_id,
+        Role::User,
+        &config.jwt_secret,
+        config.jwt_expiration_seconds,
+    )
+    .unwrap();
+
+    // Missing and wrong current password are rejected
+    assert_eq!(
+        patch_me(&pool, &token, json!({"password": "NewPassword123"})).await,
+        StatusCode::FORBIDDEN
+    );
+    assert_eq!(
+        patch_me(
+            &pool,
+            &token,
+            json!({"password": "NewPassword123", "current_password": "wrong"})
+        )
+        .await,
+        StatusCode::FORBIDDEN
+    );
+
+    // Correct current password is accepted
+    assert_eq!(
+        patch_me(
+            &pool,
+            &token,
+            json!({"password": "NewPassword123", "current_password": "OldPassword123"})
+        )
+        .await,
+        StatusCode::OK
+    );
+
+    // Changing other fields never needs it
+    assert_eq!(
+        patch_me(&pool, &token, json!({"name": "Renamed"})).await,
+        StatusCode::OK
+    );
+
+    // Admins can change their own password without it
+    assert_eq!(
+        patch_me(&pool, &admin_token, json!({"password": "AdminNewPass123"})).await,
+        StatusCode::OK
+    );
+}
+
 #[sqlx::test]
 async fn test_delete_me(pool: PgPool) {
     let (user_id, _group_id, token) = setup_authenticated_user(&pool).await;

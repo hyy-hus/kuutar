@@ -849,6 +849,8 @@ export interface components {
             title?: string | null;
         };
         UpdateUser: {
+            /** @description Required by `PATCH /users/me` when a non-admin changes their password. */
+            current_password?: string | null;
             /** @description Empty string clears the value; omitted leaves it unchanged. */
             default_contact_email?: string | null;
             /** @description Empty string clears the value; omitted leaves it unchanged. */
@@ -2613,6 +2615,13 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["User"];
                 };
+            };
+            /** @description Current password missing or incorrect when changing password */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Email already in use */
             409: {
