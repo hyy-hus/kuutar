@@ -29,6 +29,8 @@ function CreateResourcePage() {
 			allow_recurring: values.allow_recurring ?? true,
 			blocks_only: values.blocks_only ?? false,
 			is_public: values.is_public ?? true,
+			reservation_restricted: values.reservation_restricted ?? false,
+			group_ids: values.group_ids,
 			reservable_until: values.reservable_until,
 			contract_ids: values.contract_ids,
 		});
