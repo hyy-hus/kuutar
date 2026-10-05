@@ -27,6 +27,7 @@ function CreateResourcePage() {
 			description: values.description,
 			collection_id: values.collection_id,
 			allow_recurring: values.allow_recurring ?? true,
+			blocks_only: values.blocks_only ?? false,
 			is_public: values.is_public ?? true,
 			reservable_until: values.reservable_until,
 			contract_ids: values.contract_ids,
