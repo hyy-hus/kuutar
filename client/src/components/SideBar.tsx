@@ -5,6 +5,7 @@ import {
 	Bookmark,
 	Box,
 	Calendar,
+	CalendarCheck,
 	ChevronDown,
 	FileText,
 	Folder,
@@ -72,6 +73,12 @@ export function SideBar({ theme, toggleTheme }: SideBarProps) {
 			to: "/restrictions",
 			label: t("rajoitukset", "Rajoitukset"),
 			icon: ShieldAlert,
+			adminOnly: true,
+		},
+		{
+			to: "/reservable-blocks",
+			label: t("varausjaksot", "Varausjaksot"),
+			icon: CalendarCheck,
 			adminOnly: true,
 		},
 		{
