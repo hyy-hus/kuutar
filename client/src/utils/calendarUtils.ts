@@ -5,6 +5,9 @@ export interface CalendarEvent {
 	reservationId?: string;
 	restrictionId?: string;
 	isRestriction?: boolean;
+	/** An available reservable block that can be clicked to reserve */
+	isBlock?: boolean;
+	blockId?: string;
 	status?: string;
 	title: string;
 	userName?: string;

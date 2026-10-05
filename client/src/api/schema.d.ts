@@ -331,6 +331,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/reservable-blocks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_reservable_blocks"];
+        put?: never;
+        post: operations["create_reservable_block"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/reservable-blocks/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_reservable_block"];
+        put?: never;
+        post?: never;
+        delete: operations["delete_reservable_block"];
+        options?: never;
+        head?: never;
+        patch: operations["update_reservable_block"];
+        trace?: never;
+    };
     "/reservations": {
         parameters: {
             query?: never;
@@ -626,6 +658,20 @@ export interface components {
             /** Format: date-time */
             start_time: string;
         };
+        CreateReservableBlockOccurrencePayload: {
+            /** Format: date-time */
+            end_time: string;
+            /** Format: uuid */
+            resource_id: string;
+            /** Format: date-time */
+            start_time: string;
+        };
+        CreateReservableBlockPayload: {
+            description?: string | null;
+            occurrences: components["schemas"]["CreateReservableBlockOccurrencePayload"][];
+            rrule?: string | null;
+            title: string;
+        };
         CreateReservationPayload: {
             admin_notes?: string | null;
             contact_email?: string | null;
@@ -646,6 +692,7 @@ export interface components {
         };
         CreateResource: {
             allow_recurring?: boolean;
+            blocks_only?: boolean;
             /** Format: uuid */
             collection_id: string;
             contract_ids?: string[] | null;
@@ -800,6 +847,36 @@ export interface components {
         RequestOtpPayload: {
             email: string;
         };
+        ReservableBlock: {
+            /** Format: date-time */
+            created_at: string;
+            description?: string | null;
+            /** Format: uuid */
+            id: string;
+            rrule?: string | null;
+            title: string;
+            /** Format: date-time */
+            updated_at: string;
+        };
+        ReservableBlockOccurrence: {
+            /** Format: uuid */
+            block_id: string;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            end_time: string;
+            /** Format: uuid */
+            id: string;
+            /** @description True when a confirmed or pending reservation already overlaps this occurrence */
+            reserved: boolean;
+            /** Format: uuid */
+            resource_id: string;
+            /** Format: date-time */
+            start_time: string;
+        };
+        ReservableBlockWithOccurrences: components["schemas"]["ReservableBlock"] & {
+            occurrences: components["schemas"]["ReservableBlockOccurrence"][];
+        };
         Reservation: {
             admin_notes?: string | null;
             contact_email?: string | null;
@@ -831,6 +908,8 @@ export interface components {
         };
         Resource: {
             allow_recurring: boolean;
+            /** @description When true, non-admin users can only reserve whole reservable blocks */
+            blocks_only: boolean;
             /** Format: uuid */
             collection_id: string;
             /** Format: date-time */
@@ -931,6 +1010,13 @@ export interface components {
             } | null;
             name: string;
         };
+        UpdateReservableBlockPayload: {
+            description?: string | null;
+            /** @description Replaces all occurrences when provided */
+            occurrences?: components["schemas"]["CreateReservableBlockOccurrencePayload"][] | null;
+            rrule?: string | null;
+            title?: string | null;
+        };
         UpdateReservationPayload: {
             admin_notes?: string | null;
             contact_email?: string | null;
@@ -947,6 +1033,7 @@ export interface components {
         };
         UpdateResource: {
             allow_recurring?: boolean | null;
+            blocks_only?: boolean | null;
             contract_ids?: string[] | null;
             /** @description Localized Tiptap documents, e.g. {"fi": {"type": "doc", ...}} */
             description?: {
@@ -2073,6 +2160,165 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["HealthStatus"];
                 };
+            };
+        };
+    };
+    list_reservable_blocks: {
+        parameters: {
+            query?: {
+                start_date?: string | null;
+                end_date?: string | null;
+                resource_id?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReservableBlockWithOccurrences"][];
+                };
+            };
+        };
+    };
+    create_reservable_block: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateReservableBlockPayload"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReservableBlockWithOccurrences"];
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_reservable_block: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReservableBlockWithOccurrences"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    delete_reservable_block: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    update_reservable_block: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateReservableBlockPayload"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReservableBlockWithOccurrences"];
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

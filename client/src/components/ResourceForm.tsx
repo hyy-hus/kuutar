@@ -54,6 +54,7 @@ export function ResourceForm({
 			description: toLocalizedRichText(defaultValues?.description),
 			collection_id: defaultValues?.collection_id ?? "",
 			allow_recurring: defaultValues?.allow_recurring ?? true,
+			blocks_only: defaultValues?.blocks_only ?? false,
 			is_public: defaultValues?.is_public ?? true,
 			reservable_until: toDateInputValue(defaultValues?.reservable_until),
 			contract_ids: defaultValues?.contract_ids ?? [],
@@ -264,6 +265,38 @@ export function ResourceForm({
 									"Salli toistuvat varaukset tälle resurssille",
 								)}
 							</label>
+						</div>
+					)}
+				</form.Field>
+
+				{/* Blocks Only Toggle */}
+				<form.Field name="blocks_only">
+					{(field) => (
+						<div className="p-3 bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-md space-y-1">
+							<div className="flex items-center gap-3">
+								<input
+									type="checkbox"
+									id={field.name}
+									checked={field.state.value ?? false}
+									onChange={(e) => field.handleChange(e.target.checked)}
+									className="w-4 h-4 text-purple-600 rounded border-stone-300 focus:ring-purple-500 dark:border-stone-700 dark:bg-stone-950"
+								/>
+								<label
+									htmlFor={field.name}
+									className="text-xs font-medium text-stone-800 dark:text-stone-200 cursor-pointer select-none"
+								>
+									{t(
+										"vainVarausjaksot",
+										"Varattavissa vain ylläpitäjän määrittelemissä varausjaksoissa",
+									)}
+								</label>
+							</div>
+							<p className="text-[11px] text-stone-500 pl-7">
+								{t(
+									"vainVarausjaksotOhje",
+									"Käyttäjät voivat varata vain kokonaisia varausjaksoja. Ylläpitäjä voi edelleen tehdä varauksia jaksojen ulkopuolelle.",
+								)}
+							</p>
 						</div>
 					)}
 				</form.Field>

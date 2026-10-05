@@ -1,7 +1,7 @@
 // src/components/calendar/MonthView.tsx
 
 import { Link } from "@tanstack/react-router";
-import { AlertOctagon, Clock } from "lucide-react";
+import { AlertOctagon, CalendarCheck, Clock } from "lucide-react";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -10,7 +10,12 @@ import {
 	splitEventsByDay,
 } from "#/utils/calendarUtils";
 import { cn } from "#/utils/cn";
-import { addDays, monthGridRange, useDateFormatter } from "#/utils/date";
+import {
+	addDays,
+	formatDateTimeLocal,
+	monthGridRange,
+	useDateFormatter,
+} from "#/utils/date";
 
 interface MonthViewProps {
 	/** First day of the shown month */
@@ -33,6 +38,7 @@ function MonthEventItem({ event }: { event: DaySegment }) {
 	const { t } = useTranslation();
 	const { formatTime, formatDateRange } = useDateFormatter();
 	const isRestriction = Boolean(event.isRestriction);
+	const isBlock = Boolean(event.isBlock);
 	const isPending = event.status === "pending";
 	// A segment carried over from the previous day has no start time of its own on this day
 	const timeLabel = event.continuesBefore ? "…" : formatTime(event.start);
@@ -42,18 +48,25 @@ function MonthEventItem({ event }: { event: DaySegment }) {
 
 	const className = cn(
 		"flex items-center gap-1 min-w-0 rounded-xs border px-1 text-[11px] leading-4 hover:underline",
-		isRestriction
-			? "bg-amber-100 dark:bg-amber-950/80 border-amber-400 dark:border-amber-700 text-amber-900 dark:text-amber-200 hover:bg-amber-200 dark:hover:bg-amber-900"
-			: isPending
-				? "bg-purple-50/70 dark:bg-purple-950/40 border-dashed border-purple-400 dark:border-purple-600 text-stone-900 dark:text-stone-100 hover:bg-purple-100 dark:hover:bg-purple-900/60"
-				: "bg-stone-200 dark:bg-stone-800 border-stone-400 dark:border-stone-600 text-stone-900 dark:text-stone-100 hover:bg-stone-300 dark:hover:bg-stone-700",
+		isBlock
+			? "bg-emerald-50 dark:bg-emerald-950/50 border-dashed border-emerald-500 dark:border-emerald-700 text-emerald-900 dark:text-emerald-200 hover:bg-emerald-100 dark:hover:bg-emerald-900/70"
+			: isRestriction
+				? "bg-amber-100 dark:bg-amber-950/80 border-amber-400 dark:border-amber-700 text-amber-900 dark:text-amber-200 hover:bg-amber-200 dark:hover:bg-amber-900"
+				: isPending
+					? "bg-purple-50/70 dark:bg-purple-950/40 border-dashed border-purple-400 dark:border-purple-600 text-stone-900 dark:text-stone-100 hover:bg-purple-100 dark:hover:bg-purple-900/60"
+					: "bg-stone-200 dark:bg-stone-800 border-stone-400 dark:border-stone-600 text-stone-900 dark:text-stone-100 hover:bg-stone-300 dark:hover:bg-stone-700",
 	);
 
 	// In narrow day cells the title gets the whole line and may wrap; the time and icon would
 	// leave no room for it, and the colours and the tooltip still tell the rest
 	const content = (
 		<>
-			{isRestriction ? (
+			{isBlock ? (
+				<CalendarCheck
+					size={10}
+					className="text-emerald-600 shrink-0 @max-[7rem]:hidden"
+				/>
+			) : isRestriction ? (
 				<AlertOctagon
 					size={10}
 					className="text-amber-600 shrink-0 @max-[7rem]:hidden"
@@ -75,7 +88,20 @@ function MonthEventItem({ event }: { event: DaySegment }) {
 		</>
 	);
 
-	return isRestriction ? (
+	return isBlock ? (
+		<Link
+			to="/reservations/create"
+			search={{
+				start_time: formatDateTimeLocal(event.eventStart),
+				end_time: formatDateTimeLocal(event.eventEnd),
+				resource_ids: [event.resourceId],
+			}}
+			className={className}
+			title={tooltipText}
+		>
+			{content}
+		</Link>
+	) : isRestriction ? (
 		<Link
 			to="/restrictions/$id"
 			params={{ id: event.restrictionId || "" }}

@@ -16,6 +16,8 @@ pub struct Resource {
     #[schema(value_type = Option<HashMap<String, serde_json::Value>>)]
     pub description: Option<serde_json::Value>,
     pub allow_recurring: bool,
+    /// When true, non-admin users can only reserve whole reservable blocks
+    pub blocks_only: bool,
     pub reservable_until: Option<DateTime<Utc>>,
     pub is_public: bool,
     pub created_at: DateTime<Utc>,
@@ -44,6 +46,9 @@ pub struct CreateResource {
 
     #[serde(default)]
     pub allow_recurring: bool,
+
+    #[serde(default)]
+    pub blocks_only: bool,
 
     pub reservable_until: Option<DateTime<Utc>>,
 
@@ -74,6 +79,8 @@ pub struct UpdateResource {
     pub description: Option<LocalizedRichText>,
 
     pub allow_recurring: Option<bool>,
+
+    pub blocks_only: Option<bool>,
 
     pub reservable_until: Option<DateTime<Utc>>,
 

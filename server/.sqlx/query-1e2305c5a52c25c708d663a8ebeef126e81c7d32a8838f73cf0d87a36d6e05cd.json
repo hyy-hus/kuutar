@@ -1,0 +1,17 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        UPDATE reservable_blocks\n        SET\n            title = COALESCE($1, title),\n            description = COALESCE($2, description),\n            rrule = COALESCE($3, rrule),\n            updated_at = NOW()\n        WHERE id = $4 AND deleted_at IS NULL\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Varchar",
+        "Text",
+        "Varchar",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "1e2305c5a52c25c708d663a8ebeef126e81c7d32a8838f73cf0d87a36d6e05cd"
+}

@@ -295,7 +295,7 @@ pub async fn create_reservation(
         ));
     }
 
-    let reservation = db::create(&auth_state.pool, owner_id, payload).await?;
+    let reservation = db::create(&auth_state.pool, owner_id, payload, !is_admin).await?;
 
     // Pending reservations get an acknowledgement; ones an admin creates as
     // confirmed get the confirmation straight away.
@@ -416,7 +416,7 @@ pub async fn update_reservation(
         .await?;
     }
 
-    let reservation = db::update(&auth_state.pool, id, payload).await?;
+    let reservation = db::update(&auth_state.pool, id, payload, !is_admin).await?;
 
     // Notify on confirmation and cancellation. Falling back to pending (e.g. after
     // an edit that needs re-approval) is deliberately silent.
