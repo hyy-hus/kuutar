@@ -15,7 +15,7 @@ pub async fn list_all(
         Resource,
         r#"
         SELECT r.id, r.collection_id, r.name, r.description, r.allow_recurring, r.blocks_only, r.reservable_until, r.is_public,
-               r.reservation_restricted,
+               r.reservation_restricted, r.color,
                COALESCE(ARRAY(SELECT rg.group_id FROM resource_groups rg WHERE rg.resource_id = r.id ORDER BY rg.group_id), '{}') AS "reservable_group_ids!",
                ($1 OR NOT r.reservation_restricted OR EXISTS (
                    SELECT 1 FROM resource_groups rg WHERE rg.resource_id = r.id AND rg.group_id = $2
@@ -46,7 +46,7 @@ pub async fn find_by_id(
         Resource,
         r#"
         SELECT r.id, r.collection_id, r.name, r.description, r.allow_recurring, r.blocks_only, r.reservable_until, r.is_public,
-               r.reservation_restricted,
+               r.reservation_restricted, r.color,
                COALESCE(ARRAY(SELECT rg.group_id FROM resource_groups rg WHERE rg.resource_id = r.id ORDER BY rg.group_id), '{}') AS "reservable_group_ids!",
                ($1 OR NOT r.reservation_restricted OR EXISTS (
                    SELECT 1 FROM resource_groups rg WHERE rg.resource_id = r.id AND rg.group_id = $2
@@ -96,8 +96,8 @@ pub async fn create(pool: &PgPool, dto: CreateResource) -> Result<Resource, AppE
 
     let id = sqlx::query_scalar!(
         r#"
-        INSERT INTO resources (collection_id, name, description, allow_recurring, reservable_until, is_public, blocks_only, reservation_restricted)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        INSERT INTO resources (collection_id, name, description, allow_recurring, reservable_until, is_public, blocks_only, reservation_restricted, color)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
         RETURNING id
         "#,
         dto.collection_id,
@@ -107,7 +107,8 @@ pub async fn create(pool: &PgPool, dto: CreateResource) -> Result<Resource, AppE
         dto.reservable_until,
         dto.is_public,
         dto.blocks_only,
-        dto.reservation_restricted
+        dto.reservation_restricted,
+        dto.color.filter(|c| !c.is_empty())
     )
     .fetch_one(&mut *tx)
     .await?;
@@ -150,8 +151,10 @@ pub async fn update(pool: &PgPool, id: Uuid, dto: UpdateResource) -> Result<Reso
             description = COALESCE($5, description),
             blocks_only = COALESCE($6, blocks_only),
             reservation_restricted = COALESCE($7, reservation_restricted),
+            -- An empty string clears the color
+            color = CASE WHEN $8::text IS NULL THEN color ELSE NULLIF($8, '') END,
             updated_at = NOW()
-        WHERE id = $8 AND deleted_at IS NULL
+        WHERE id = $9 AND deleted_at IS NULL
         "#,
         dto.name,
         dto.allow_recurring,
@@ -160,6 +163,7 @@ pub async fn update(pool: &PgPool, id: Uuid, dto: UpdateResource) -> Result<Reso
         dto.description.map(rich_text::to_json),
         dto.blocks_only,
         dto.reservation_restricted,
+        dto.color,
         id
     )
     .execute(&mut *tx)

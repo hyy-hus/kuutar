@@ -26,6 +26,8 @@ pub struct Resource {
     pub reservable_group_ids: Vec<Uuid>,
     /// Whether the requesting user may reserve this resource (always true for admins)
     pub can_reserve: bool,
+    /// Palette key (see `RESOURCE_COLORS`) for the resource's calendar events
+    pub color: Option<String>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 
@@ -67,7 +69,23 @@ pub struct CreateResource {
     /// Groups allowed to reserve the resource when `reservation_restricted` is set
     pub group_ids: Option<Vec<Uuid>>,
 
+    #[validate(custom(function = "validate_color"))]
+    pub color: Option<String>,
+
     pub contract_ids: Option<Vec<Uuid>>,
+}
+
+/// Calendar color keys; must match the CHECK constraint on `resources.color`
+pub const RESOURCE_COLORS: &[&str] = &[
+    "red", "orange", "amber", "lime", "emerald", "teal", "sky", "blue", "violet", "pink",
+];
+
+fn validate_color(color: &str) -> Result<(), validator::ValidationError> {
+    if color.is_empty() || RESOURCE_COLORS.contains(&color) {
+        Ok(())
+    } else {
+        Err(validator::ValidationError::new("invalid_color"))
+    }
 }
 
 fn default_true() -> bool {
@@ -102,6 +120,10 @@ pub struct UpdateResource {
 
     /// Replaces the set of groups allowed to reserve the resource
     pub group_ids: Option<Vec<Uuid>>,
+
+    /// Palette key; an empty string clears the color
+    #[validate(custom(function = "validate_color"))]
+    pub color: Option<String>,
 
     pub contract_ids: Option<Vec<Uuid>>,
 }

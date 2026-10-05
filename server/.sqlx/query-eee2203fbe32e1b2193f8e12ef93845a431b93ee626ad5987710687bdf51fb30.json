@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        INSERT INTO resources (collection_id, name, description, allow_recurring, reservable_until, is_public, blocks_only, reservation_restricted)\n        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)\n        RETURNING id\n        ",
+  "query": "\n        INSERT INTO resources (collection_id, name, description, allow_recurring, reservable_until, is_public, blocks_only, reservation_restricted, color)\n        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)\n        RETURNING id\n        ",
   "describe": {
     "columns": [
       {
@@ -24,12 +24,13 @@
         "Timestamptz",
         "Bool",
         "Bool",
-        "Bool"
+        "Bool",
+        "Text"
       ]
     },
     "nullable": [
       false
     ]
   },
-  "hash": "1f4ec08230626c19d675ed9fac06125367c5f2e437f6045fba5e6b134733a874"
+  "hash": "eee2203fbe32e1b2193f8e12ef93845a431b93ee626ad5987710687bdf51fb30"
 }
