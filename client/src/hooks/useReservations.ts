@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import i18next from "i18next";
 import { api } from "#/api/client";
 import type { components } from "#/api/schema";
+import { reservableBlockKeys } from "#/hooks/useReservableBlocks";
 import { formatYYYYMMDD } from "#/utils/date";
 
 // Schema Type Exports
@@ -155,6 +156,8 @@ export function useCreateReservation() {
 		},
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: reservationKeys.all });
+			// A reservation can take up (or free) a reservable block
+			queryClient.invalidateQueries({ queryKey: reservableBlockKeys.all });
 		},
 	});
 }
@@ -189,6 +192,8 @@ export function useUpdateReservation() {
 				updatedReservation,
 			);
 			queryClient.invalidateQueries({ queryKey: reservationKeys.all });
+			// A reservation can take up (or free) a reservable block
+			queryClient.invalidateQueries({ queryKey: reservableBlockKeys.all });
 		},
 	});
 }
@@ -215,6 +220,8 @@ export function useDeleteReservation() {
 				queryKey: reservationKeys.detail(deletedId),
 			});
 			queryClient.invalidateQueries({ queryKey: reservationKeys.all });
+			// A reservation can take up (or free) a reservable block
+			queryClient.invalidateQueries({ queryKey: reservableBlockKeys.all });
 		},
 	});
 }
@@ -269,6 +276,8 @@ export function useBatchImportReservations() {
 		},
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: reservationKeys.all });
+			// A reservation can take up (or free) a reservable block
+			queryClient.invalidateQueries({ queryKey: reservableBlockKeys.all });
 		},
 	});
 }
