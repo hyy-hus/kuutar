@@ -117,6 +117,30 @@ export function splitEventsByDay(
 	});
 }
 
+/** Hour of the next morning up to which an overnight event is not repeated on its second day */
+export const OVERNIGHT_TAIL_END_HOUR = 8;
+
+/**
+ * Whether a segment is just the early-morning tail of an event that began the previous day
+ * and ends by `OVERNIGHT_TAIL_END_HOUR`. Compact views show such events only on the day they start.
+ */
+export function isOvernightTail(segment: DaySegment): boolean {
+	if (!segment.continuesBefore) return false;
+	const dayStart = segment.start;
+	const previousDay = new Date(
+		dayStart.getFullYear(),
+		dayStart.getMonth(),
+		dayStart.getDate() - 1,
+	);
+	const tailEnd = new Date(
+		dayStart.getFullYear(),
+		dayStart.getMonth(),
+		dayStart.getDate(),
+		OVERNIGHT_TAIL_END_HOUR,
+	);
+	return segment.eventStart >= previousDay && segment.eventEnd <= tailEnd;
+}
+
 export function layoutDay(events: DaySegment[]) {
 	if (!events.length) return { maxCols: 1, placed: [] };
 
