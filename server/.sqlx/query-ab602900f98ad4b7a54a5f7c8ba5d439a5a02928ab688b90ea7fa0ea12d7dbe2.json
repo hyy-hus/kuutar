@@ -1,0 +1,37 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT\n            (EXTRACT(ISODOW FROM occ.start_time AT TIME ZONE 'Europe/Helsinki')::int4 - 1) AS \"weekday!\",\n            EXTRACT(HOUR FROM occ.start_time AT TIME ZONE 'Europe/Helsinki')::int4 AS \"hour!\",\n            COUNT(*) AS \"count!\"\n        FROM occurrences occ\n        JOIN reservations r ON r.id = occ.reservation_id\n        JOIN resources res ON res.id = occ.resource_id\n        WHERE r.deleted_at IS NULL AND r.status <> 'cancelled'\n          AND res.deleted_at IS NULL AND res.is_public\n          AND occ.start_time <= now()\n          AND ($1::timestamptz IS NULL OR occ.start_time >= $1)\n        GROUP BY 1, 2\n        ORDER BY 1, 2\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "weekday!",
+        "type_info": "Int4",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 1,
+        "name": "hour!",
+        "type_info": "Int4",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 2,
+        "name": "count!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Timestamptz"
+      ]
+    },
+    "nullable": [
+      null,
+      null,
+      null
+    ]
+  },
+  "hash": "ab602900f98ad4b7a54a5f7c8ba5d439a5a02928ab688b90ea7fa0ea12d7dbe2"
+}

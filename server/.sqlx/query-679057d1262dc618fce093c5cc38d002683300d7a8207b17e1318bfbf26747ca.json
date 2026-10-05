@@ -1,0 +1,69 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT\n            res.id AS \"resource_id!\",\n            res.name AS \"resource_name!\",\n            res.color,\n            COUNT(*) AS \"count!\",\n            (SUM(EXTRACT(EPOCH FROM occ.end_time - occ.start_time)) / 3600)::float8 AS \"hours!\"\n        FROM occurrences occ\n        JOIN reservations r ON r.id = occ.reservation_id\n        JOIN resources res ON res.id = occ.resource_id\n        WHERE r.deleted_at IS NULL AND r.status <> 'cancelled' AND res.deleted_at IS NULL\n          AND occ.start_time <= now()\n          AND ($1::timestamptz IS NULL OR occ.start_time >= $1)\n          AND (NOT $2 OR res.is_public)\n          AND ($3::uuid IS NULL OR r.user_id = $3)\n        GROUP BY res.id, res.name, res.color\n        ORDER BY 4 DESC, res.name\n        LIMIT $4\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "resource_id!",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "resources",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "resource_name!",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "resources",
+            "name": "name"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "color",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "resources",
+            "name": "color"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "count!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 4,
+        "name": "hours!",
+        "type_info": "Float8",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Timestamptz",
+        "Bool",
+        "Uuid",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      true,
+      null,
+      null
+    ]
+  },
+  "hash": "679057d1262dc618fce093c5cc38d002683300d7a8207b17e1318bfbf26747ca"
+}

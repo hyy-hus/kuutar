@@ -51,6 +51,7 @@
         "react": "^19.2.0",
         "react-dom": "^19.2.0",
         "react-i18next": "^17.0.13",
+        "recharts": "^3.10.1",
         "rrule": "^2.8.1",
         "tailwind-merge": "^3.6.0",
         "tailwindcss": "^4.1.18",

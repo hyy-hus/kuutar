@@ -1,0 +1,83 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT\n            r.id AS \"reservation_id!\",\n            r.title AS \"title!\",\n            res.name AS \"resource_name!\",\n            occ.start_time AS \"start_time!\",\n            occ.end_time AS \"end_time!\",\n            r.status::text AS \"status!\"\n        FROM occurrences occ\n        JOIN reservations r ON r.id = occ.reservation_id\n        JOIN resources res ON res.id = occ.resource_id\n        WHERE r.deleted_at IS NULL AND r.status <> 'cancelled' AND res.deleted_at IS NULL\n          AND r.user_id = $1 AND occ.start_time > now()\n        ORDER BY occ.start_time\n        LIMIT 5\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "reservation_id!",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "reservations",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "title!",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "reservations",
+            "name": "title"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "resource_name!",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "resources",
+            "name": "name"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "start_time!",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "occurrences",
+            "name": "start_time"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "end_time!",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "occurrences",
+            "name": "end_time"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "status!",
+        "type_info": "Text",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      null
+    ]
+  },
+  "hash": "9429411da2749c329bed042d7f446f29672c9375b0f0a48832dc8a3b7245b18f"
+}
