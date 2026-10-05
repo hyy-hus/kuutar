@@ -695,6 +695,7 @@ export interface components {
             blocks_only?: boolean;
             /** Format: uuid */
             collection_id: string;
+            color?: string | null;
             contract_ids?: string[] | null;
             /** @description Localized Tiptap documents, e.g. {"fi": {"type": "doc", ...}} */
             description?: {
@@ -917,6 +918,8 @@ export interface components {
             can_reserve: boolean;
             /** Format: uuid */
             collection_id: string;
+            /** @description Palette key (see `RESOURCE_COLORS`) for the resource's calendar events */
+            color?: string | null;
             /** Format: date-time */
             created_at: string;
             /** Format: date-time */
@@ -1043,6 +1046,8 @@ export interface components {
         UpdateResource: {
             allow_recurring?: boolean | null;
             blocks_only?: boolean | null;
+            /** @description Palette key; an empty string clears the color */
+            color?: string | null;
             contract_ids?: string[] | null;
             /** @description Localized Tiptap documents, e.g. {"fi": {"type": "doc", ...}} */
             description?: {

@@ -15,6 +15,8 @@ export interface CalendarEvent {
 	end: Date;
 	resourceId: string;
 	resourceName?: string;
+	/** Palette key of the (first) resource, for coloring */
+	resourceColor?: string;
 }
 
 /**
