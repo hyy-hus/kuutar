@@ -15,6 +15,8 @@ import {
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "#/components/Button";
+import { useIsAdmin } from "#/hooks/useAuth";
+import { useReservableBlocks } from "#/hooks/useReservableBlocks";
 import { useReservations } from "#/hooks/useReservations";
 import { useResources } from "#/hooks/useResorces";
 import { useRestrictions } from "#/hooks/useRestrictions";
@@ -107,6 +109,7 @@ export function Calendar({
 	const hourHeightLabel = `${t("tuntirivinKorkeus", "Tuntirivin korkeus")}: ${hourHeightNames[hourHeight]}`;
 
 	const { data: resources, isLoading: loadingResources } = useResources();
+	const { isAdmin } = useIsAdmin();
 
 	const activeResourceIds = useMemo(() => {
 		if (selectedResourceIds && selectedResourceIds.length > 0) {
@@ -138,6 +141,12 @@ export function Calendar({
 
 	const { data: restrictions, isLoading: loadingRestrictions } =
 		useRestrictions({
+			start_date: startDateISO,
+			end_date: endDateISO,
+		});
+
+	const { data: reservableBlocks, isLoading: loadingBlocks } =
+		useReservableBlocks({
 			start_date: startDateISO,
 			end_date: endDateISO,
 		});
@@ -201,12 +210,18 @@ export function Calendar({
 	};
 
 	const handleSlotDoubleClick = (startTime: string, endTime: string) => {
+		// Blocks-only resources can't be reserved at an arbitrary slot (admins excepted)
+		const slotResourceIds = isAdmin
+			? activeResourceIds
+			: activeResourceIds.filter(
+					(id) => !resources?.find((r) => r.id === id)?.blocks_only,
+				);
 		navigate({
 			to: "/reservations/create",
 			search: {
 				start_time: startTime,
 				end_time: endTime,
-				resource_ids: activeResourceIds.length > 1 ? [] : activeResourceIds,
+				resource_ids: slotResourceIds.length > 1 ? [] : slotResourceIds,
 			},
 		});
 	};
@@ -321,12 +336,35 @@ export function Calendar({
 			});
 		}
 
+		// 3. Process free reservable blocks, which are clickable to reserve
+		if (reservableBlocks) {
+			reservableBlocks.forEach((block) => {
+				block.occurrences.forEach((occ) => {
+					if (occ.reserved || !activeResourceIds.includes(occ.resource_id)) {
+						return;
+					}
+					events.push({
+						id: `block-${occ.id}`,
+						blockId: block.id,
+						isBlock: true,
+						title: block.title,
+						start: new Date(occ.start_time),
+						end: new Date(occ.end_time),
+						resourceId: occ.resource_id,
+						resourceName: resourcesMap.get(occ.resource_id),
+					});
+				});
+			});
+		}
+
 		// Deduplicate
 		const uniqueEvents = new Map<string, CalendarEvent>();
 		events.forEach((evt) => {
-			const key = evt.isRestriction
-				? `restr_${evt.restrictionId}_${evt.start.getTime()}_${evt.end.getTime()}`
-				: `res_${evt.reservationId}_${evt.start.getTime()}_${evt.end.getTime()}`;
+			const key = evt.isBlock
+				? evt.id
+				: evt.isRestriction
+					? `restr_${evt.restrictionId}_${evt.start.getTime()}_${evt.end.getTime()}`
+					: `res_${evt.reservationId}_${evt.start.getTime()}_${evt.end.getTime()}`;
 
 			if (!uniqueEvents.has(key)) {
 				uniqueEvents.set(key, evt);
@@ -334,9 +372,20 @@ export function Calendar({
 		});
 
 		return Array.from(uniqueEvents.values());
-	}, [reservations, restrictions, resources, activeResourceIds]);
+	}, [
+		reservations,
+		restrictions,
+		reservableBlocks,
+		resources,
+		activeResourceIds,
+	]);
 
-	if (loadingResources || loadingReservations || loadingRestrictions) {
+	if (
+		loadingResources ||
+		loadingReservations ||
+		loadingRestrictions ||
+		loadingBlocks
+	) {
 		return (
 			<div className="p-8 flex items-center justify-center gap-2 text-stone-500">
 				<Loader2 className="animate-spin" size={18} />

@@ -1,10 +1,15 @@
 import { Link } from "@tanstack/react-router";
-import { AlertOctagon, Clock, User as UserIcon } from "lucide-react";
+import {
+	AlertOctagon,
+	CalendarCheck,
+	Clock,
+	User as UserIcon,
+} from "lucide-react";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { getSegmentGridMinutes, type PlacedEvent } from "#/utils/calendarUtils";
 import { cn } from "#/utils/cn";
-import { useDateFormatter } from "#/utils/date";
+import { formatDateTimeLocal, useDateFormatter } from "#/utils/date";
 
 /** Approximate rem heights of the block's parts, for deciding which lines fit */
 const TITLE_LINE_REM = 1;
@@ -53,15 +58,37 @@ export function ReservationBlock({
 	const widthPct = event.span * colWidthPct;
 
 	const isRestriction = Boolean(event.isRestriction);
+	const isBlock = Boolean(event.isBlock);
 	const isPending = event.status === "pending";
 
-	const tooltipText = isRestriction
-		? `${event.resourceName ?? ""}: ${event.title} (${timeString})`
-		: `${event.resourceName ?? ""}: ${event.title}${isPending ? ` [${t("odottaa", "Odottaa")}]` : ""}${event.userName ? ` [${event.userName}]` : ""} (${timeString})`;
+	const tooltipText = isBlock
+		? `${t("vapaaVarausjakso", "Vapaa varausjakso")}: ${event.resourceName ?? ""}: ${event.title} (${timeString})`
+		: isRestriction
+			? `${event.resourceName ?? ""}: ${event.title} (${timeString})`
+			: `${event.resourceName ?? ""}: ${event.title}${isPending ? ` [${t("odottaa", "Odottaa")}]` : ""}${event.userName ? ` [${event.userName}]` : ""} (${timeString})`;
 
 	// Detail lines in order of importance, cut down to what fits
 	const details: { key: string; node: ReactNode }[] = [];
-	if (isRestriction) {
+	if (isBlock) {
+		if (event.resourceName) {
+			details.push({
+				key: "resource",
+				node: (
+					<span className="text-[10px] text-emerald-800 dark:text-emerald-300 truncate font-medium">
+						{event.resourceName}
+					</span>
+				),
+			});
+		}
+		details.push({
+			key: "time",
+			node: (
+				<span className="text-[10px] italic text-emerald-700 dark:text-emerald-400 truncate">
+					{timeString}
+				</span>
+			),
+		});
+	} else if (isRestriction) {
 		if (event.resourceName) {
 			details.push({
 				key: "resource",
@@ -128,7 +155,9 @@ export function ReservationBlock({
 	const content = (
 		<>
 			<div className="flex items-center gap-1 font-bold truncate shrink-0">
-				{isRestriction ? (
+				{isBlock ? (
+					<CalendarCheck size={12} className="text-emerald-600 shrink-0" />
+				) : isRestriction ? (
 					<AlertOctagon size={12} className="text-amber-600 shrink-0" />
 				) : (
 					isPending && (
@@ -157,11 +186,13 @@ export function ReservationBlock({
 				// Open edges show that the event carries on from / into the neighbouring day
 				event.continuesBefore && "rounded-t-none border-t-0",
 				event.continuesAfter && "rounded-b-none border-b-0",
-				isRestriction
-					? "bg-amber-100 dark:bg-amber-950/80 border-amber-400 dark:border-amber-700 hover:bg-amber-200 dark:hover:bg-amber-900"
-					: isPending
-						? "bg-purple-50/70 dark:bg-purple-950/40 border-dashed border-purple-400 dark:border-purple-600 opacity-80 hover:opacity-100 hover:bg-purple-100 dark:hover:bg-purple-900/60"
-						: "bg-stone-200 dark:bg-stone-800 border-stone-400 dark:border-stone-600 hover:bg-stone-300 dark:hover:bg-stone-700",
+				isBlock
+					? "bg-emerald-50 dark:bg-emerald-950/50 border-dashed border-emerald-500 dark:border-emerald-700 hover:bg-emerald-100 dark:hover:bg-emerald-900/70"
+					: isRestriction
+						? "bg-amber-100 dark:bg-amber-950/80 border-amber-400 dark:border-amber-700 hover:bg-amber-200 dark:hover:bg-amber-900"
+						: isPending
+							? "bg-purple-50/70 dark:bg-purple-950/40 border-dashed border-purple-400 dark:border-purple-600 opacity-80 hover:opacity-100 hover:bg-purple-100 dark:hover:bg-purple-900/60"
+							: "bg-stone-200 dark:bg-stone-800 border-stone-400 dark:border-stone-600 hover:bg-stone-300 dark:hover:bg-stone-700",
 			)}
 			style={{
 				top: `${topPct}%`,
@@ -171,7 +202,19 @@ export function ReservationBlock({
 			}}
 			title={tooltipText}
 		>
-			{isRestriction ? (
+			{isBlock ? (
+				<Link
+					to="/reservations/create"
+					search={{
+						start_time: formatDateTimeLocal(event.eventStart),
+						end_time: formatDateTimeLocal(event.eventEnd),
+						resource_ids: [event.resourceId],
+					}}
+					className="flex flex-col h-full w-full overflow-hidden text-emerald-900 dark:text-emerald-200 hover:underline"
+				>
+					{content}
+				</Link>
+			) : isRestriction ? (
 				<Link
 					to="/restrictions/$id"
 					params={{ id: event.restrictionId || "" }}
