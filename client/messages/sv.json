@@ -564,5 +564,7 @@
 	"vainValitutRyhmatVoivatVarata": "Endast valda grupper kan boka",
 	"vainValitutRyhmatOhje": "Resursen syns för alla, men endast valda grupper och administratörer kan boka den. Befintliga bokningar ändras inte.",
 	"rajattuVarausoikeus": "Begränsad bokningsrätt",
-	"eiVarattavissaOlevia": "Din grupp har inte rätt att boka några resurser."
+	"eiVarattavissaOlevia": "Din grupp har inte rätt att boka några resurser.",
+	"vari": "Färg i kalendern",
+	"eiVaria": "Ingen färg"
 }

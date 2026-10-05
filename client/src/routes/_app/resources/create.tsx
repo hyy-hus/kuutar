@@ -31,6 +31,7 @@ function CreateResourcePage() {
 			is_public: values.is_public ?? true,
 			reservation_restricted: values.reservation_restricted ?? false,
 			group_ids: values.group_ids,
+			color: values.color || undefined,
 			reservable_until: values.reservable_until,
 			contract_ids: values.contract_ids,
 		});

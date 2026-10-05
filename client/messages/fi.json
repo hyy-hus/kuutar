@@ -564,5 +564,7 @@
 	"vainValitutRyhmatVoivatVarata": "Vain valitut ryhmät voivat varata",
 	"vainValitutRyhmatOhje": "Resurssi näkyy kaikille, mutta varata voivat vain valitut ryhmät ja ylläpitäjät. Olemassa olevia varauksia ei muuteta.",
 	"rajattuVarausoikeus": "Rajattu varausoikeus",
-	"eiVarattavissaOlevia": "Ryhmälläsi ei ole oikeutta varata yhtään resurssia."
+	"eiVarattavissaOlevia": "Ryhmälläsi ei ole oikeutta varata yhtään resurssia.",
+	"vari": "Väri kalenterissa",
+	"eiVaria": "Ei väriä"
 }

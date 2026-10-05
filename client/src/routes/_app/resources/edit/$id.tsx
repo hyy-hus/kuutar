@@ -66,6 +66,8 @@ function EditResourcePage() {
 				is_public: values.is_public ?? false,
 				reservation_restricted: values.reservation_restricted,
 				group_ids: values.group_ids,
+				// An empty string clears the color
+				color: values.color ?? "",
 				reservable_until: values.reservable_until ?? null,
 				contract_ids: values.contract_ids,
 			},
@@ -92,6 +94,7 @@ function EditResourcePage() {
 					is_public: resource.is_public,
 					reservation_restricted: resource.reservation_restricted,
 					group_ids: resource.reservable_group_ids,
+					color: resource.color,
 					reservable_until: resource.reservable_until,
 					contract_ids: initialContractIds,
 				}}
