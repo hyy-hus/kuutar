@@ -700,10 +700,13 @@ export interface components {
             description?: {
                 [key: string]: unknown;
             } | null;
+            /** @description Groups allowed to reserve the resource when `reservation_restricted` is set */
+            group_ids?: string[] | null;
             is_public?: boolean;
             name: string;
             /** Format: date-time */
             reservable_until?: string | null;
+            reservation_restricted?: boolean;
         };
         CreateRestrictionOccurrencePayload: {
             /** Format: date-time */
@@ -910,6 +913,8 @@ export interface components {
             allow_recurring: boolean;
             /** @description When true, non-admin users can only reserve whole reservable blocks */
             blocks_only: boolean;
+            /** @description Whether the requesting user may reserve this resource (always true for admins) */
+            can_reserve: boolean;
             /** Format: uuid */
             collection_id: string;
             /** Format: date-time */
@@ -924,8 +929,12 @@ export interface components {
             id: string;
             is_public: boolean;
             name: string;
+            /** @description Groups allowed to reserve this resource when `reservation_restricted` is set */
+            reservable_group_ids: string[];
             /** Format: date-time */
             reservable_until?: string | null;
+            /** @description When true, non-admins can only reserve if their group is in `reservable_group_ids` */
+            reservation_restricted: boolean;
             /** Format: date-time */
             updated_at: string;
         };
@@ -1039,10 +1048,13 @@ export interface components {
             description?: {
                 [key: string]: unknown;
             } | null;
+            /** @description Replaces the set of groups allowed to reserve the resource */
+            group_ids?: string[] | null;
             is_public?: boolean | null;
             name?: string | null;
             /** Format: date-time */
             reservable_until?: string | null;
+            reservation_restricted?: boolean | null;
         };
         UpdateRestrictionPayload: {
             description?: string | null;
