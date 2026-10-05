@@ -560,5 +560,9 @@
 	"varausjaksoOhje": "Tämän resurssin voi varata vain kokonaisina varausjaksoina.",
 	"vainVarausjaksot": "Varattavissa vain ylläpitäjän määrittelemissä varausjaksoissa",
 	"vainVarausjaksotOhje": "Käyttäjät voivat varata vain kokonaisia varausjaksoja. Ylläpitäjä voi edelleen tehdä varauksia jaksojen ulkopuolelle.",
-	"vapaaVarausjakso": "Vapaa varausjakso"
+	"vapaaVarausjakso": "Vapaa varausjakso",
+	"vainValitutRyhmatVoivatVarata": "Vain valitut ryhmät voivat varata",
+	"vainValitutRyhmatOhje": "Resurssi näkyy kaikille, mutta varata voivat vain valitut ryhmät ja ylläpitäjät. Olemassa olevia varauksia ei muuteta.",
+	"rajattuVarausoikeus": "Rajattu varausoikeus",
+	"eiVarattavissaOlevia": "Ryhmälläsi ei ole oikeutta varata yhtään resurssia."
 }

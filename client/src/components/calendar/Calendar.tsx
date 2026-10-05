@@ -210,12 +210,14 @@ export function Calendar({
 	};
 
 	const handleSlotDoubleClick = (startTime: string, endTime: string) => {
-		// Blocks-only resources can't be reserved at an arbitrary slot (admins excepted)
+		// Blocks-only resources can't be reserved at an arbitrary slot, and restricted
+		// ones only by granted groups (admins excepted)
 		const slotResourceIds = isAdmin
 			? activeResourceIds
-			: activeResourceIds.filter(
-					(id) => !resources?.find((r) => r.id === id)?.blocks_only,
-				);
+			: activeResourceIds.filter((id) => {
+					const res = resources?.find((r) => r.id === id);
+					return !res?.blocks_only && res?.can_reserve !== false;
+				});
 		navigate({
 			to: "/reservations/create",
 			search: {

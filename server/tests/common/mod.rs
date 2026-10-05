@@ -30,21 +30,20 @@ pub fn test_config() -> Config {
     }
 }
 
-/// Creates a test group and user with the given role, returning a valid Bearer token header string.
-pub async fn setup_user_token(pool: &PgPool, role: Role) -> (String, Uuid, Uuid) {
-    let config = test_config();
-
-    let group_id = sqlx::query_scalar!(
-        r#"
-        INSERT INTO groups (name)
-        VALUES ($1)
-        RETURNING id
-        "#,
+/// Creates a test group, returning its id.
+pub async fn create_group(pool: &PgPool) -> Uuid {
+    sqlx::query_scalar!(
+        "INSERT INTO groups (name) VALUES ($1) RETURNING id",
         format!("Test Group {}", Uuid::new_v4())
     )
     .fetch_one(pool)
     .await
-    .unwrap();
+    .unwrap()
+}
+
+/// Creates a user with the given role in an existing group, returning a Bearer token and user id.
+pub async fn setup_user_in_group(pool: &PgPool, role: Role, group_id: Uuid) -> (String, Uuid) {
+    let config = test_config();
 
     let user_id = sqlx::query_scalar!(
         r#"
@@ -70,7 +69,14 @@ pub async fn setup_user_token(pool: &PgPool, role: Role) -> (String, Uuid, Uuid)
     )
     .unwrap();
 
-    (format!("Bearer {token}"), user_id, group_id)
+    (format!("Bearer {token}"), user_id)
+}
+
+/// Creates a test group and user with the given role, returning a valid Bearer token header string.
+pub async fn setup_user_token(pool: &PgPool, role: Role) -> (String, Uuid, Uuid) {
+    let group_id = create_group(pool).await;
+    let (token, user_id) = setup_user_in_group(pool, role, group_id).await;
+    (token, user_id, group_id)
 }
 
 /// Helper to get an Admin Bearer token header string.

@@ -560,5 +560,9 @@
 	"varausjaksoOhje": "Den här resursen kan bara bokas som hela bokningsblock.",
 	"vainVarausjaksot": "Kan bara bokas i block som en administratör har definierat",
 	"vainVarausjaksotOhje": "Användare kan bara boka hela block. Administratörer kan fortfarande boka utanför blocken.",
-	"vapaaVarausjakso": "Ledigt bokningsblock"
+	"vapaaVarausjakso": "Ledigt bokningsblock",
+	"vainValitutRyhmatVoivatVarata": "Endast valda grupper kan boka",
+	"vainValitutRyhmatOhje": "Resursen syns för alla, men endast valda grupper och administratörer kan boka den. Befintliga bokningar ändras inte.",
+	"rajattuVarausoikeus": "Begränsad bokningsrätt",
+	"eiVarattavissaOlevia": "Din grupp har inte rätt att boka några resurser."
 }

@@ -274,7 +274,17 @@ pub async fn create_reservation(
     db::validate_resource_reservable_until(&auth_state.pool, is_admin, &payload.occurrences)
         .await?;
 
-    // 3. Validate occurrences against time restrictions
+    // 3. Validate that the owner's group may reserve the chosen resources
+    db::validate_resource_group_access(
+        &auth_state.pool,
+        owner_id,
+        is_admin,
+        &[],
+        &payload.occurrences,
+    )
+    .await?;
+
+    // 4. Validate occurrences against time restrictions
     db::validate_occurrence_restrictions(
         &auth_state.pool,
         owner_id,
@@ -283,7 +293,7 @@ pub async fn create_reservation(
     )
     .await?;
 
-    // 4. Default status for non-admin users to Pending & clear admin-only fields if supplied
+    // 5. Default status for non-admin users to Pending & clear admin-only fields if supplied
     if !is_admin {
         payload.status = Some(ReservationStatus::Pending);
         payload.admin_notes = None;
@@ -406,6 +416,18 @@ pub async fn update_reservation(
     // Validate new occurrences against reservable_until boundary and time restrictions
     if let Some(ref new_occurrences) = payload.occurrences {
         db::validate_resource_reservable_until(&auth_state.pool, is_admin, new_occurrences).await?;
+
+        // Only resources newly added to the reservation need group access
+        let existing_resource_ids: Vec<Uuid> =
+            existing.occurrences.iter().map(|o| o.resource_id).collect();
+        db::validate_resource_group_access(
+            &auth_state.pool,
+            auth_user.id,
+            is_admin,
+            &existing_resource_ids,
+            new_occurrences,
+        )
+        .await?;
 
         db::validate_occurrence_restrictions(
             &auth_state.pool,

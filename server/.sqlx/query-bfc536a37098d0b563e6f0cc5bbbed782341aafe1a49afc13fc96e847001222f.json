@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        SELECT id, collection_id, name, description, allow_recurring, blocks_only, reservable_until, is_public, created_at, updated_at, deleted_at\n        FROM resources\n        WHERE deleted_at IS NULL\n          AND ($1 = TRUE OR is_public = TRUE)\n        ORDER BY name ASC\n        ",
+  "query": "\n        SELECT r.id, r.collection_id, r.name, r.description, r.allow_recurring, r.blocks_only, r.reservable_until, r.is_public,\n               r.reservation_restricted,\n               COALESCE(ARRAY(SELECT rg.group_id FROM resource_groups rg WHERE rg.resource_id = r.id ORDER BY rg.group_id), '{}') AS \"reservable_group_ids!\",\n               ($1 OR NOT r.reservation_restricted OR EXISTS (\n                   SELECT 1 FROM resource_groups rg WHERE rg.resource_id = r.id AND rg.group_id = $2\n               )) AS \"can_reserve!\",\n               r.created_at, r.updated_at, r.deleted_at\n        FROM resources r\n        WHERE r.deleted_at IS NULL\n          AND ($1 = TRUE OR r.is_public = TRUE)\n        ORDER BY r.name ASC\n        ",
   "describe": {
     "columns": [
       {
@@ -93,6 +93,29 @@
       },
       {
         "ordinal": 8,
+        "name": "reservation_restricted",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "resources",
+            "name": "reservation_restricted"
+          }
+        }
+      },
+      {
+        "ordinal": 9,
+        "name": "reservable_group_ids!",
+        "type_info": "UuidArray",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 10,
+        "name": "can_reserve!",
+        "type_info": "Bool",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 11,
         "name": "created_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -103,7 +126,7 @@
         }
       },
       {
-        "ordinal": 9,
+        "ordinal": 12,
         "name": "updated_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -114,7 +137,7 @@
         }
       },
       {
-        "ordinal": 10,
+        "ordinal": 13,
         "name": "deleted_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -127,7 +150,8 @@
     ],
     "parameters": {
       "Left": [
-        "Bool"
+        "Bool",
+        "Uuid"
       ]
     },
     "nullable": [
@@ -140,9 +164,12 @@
       true,
       false,
       false,
+      null,
+      null,
+      false,
       false,
       true
     ]
   },
-  "hash": "58cca59e281cb8829008938c90fa016e6325ff8fb909b9e30212a8baad51ae4f"
+  "hash": "bfc536a37098d0b563e6f0cc5bbbed782341aafe1a49afc13fc96e847001222f"
 }

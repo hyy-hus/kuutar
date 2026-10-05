@@ -1,0 +1,29 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT r.name\n        FROM resources r\n        JOIN users u ON u.id = $1 AND u.deleted_at IS NULL\n        WHERE r.id = ANY($2)\n          AND r.deleted_at IS NULL\n          AND r.reservation_restricted = TRUE\n          AND NOT EXISTS (\n              SELECT 1 FROM resource_groups rg\n              WHERE rg.resource_id = r.id AND rg.group_id = u.group_id\n          )\n        ORDER BY r.name\n        LIMIT 1\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "name",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "resources",
+            "name": "name"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "UuidArray"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "d6ab0c9538b68ee37cb6af03bd52832f504f8b8825a18ec091c043528b9de492"
+}

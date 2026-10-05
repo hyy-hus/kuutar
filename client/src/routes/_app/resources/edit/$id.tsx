@@ -64,6 +64,8 @@ function EditResourcePage() {
 				allow_recurring: values.allow_recurring,
 				blocks_only: values.blocks_only,
 				is_public: values.is_public ?? false,
+				reservation_restricted: values.reservation_restricted,
+				group_ids: values.group_ids,
 				reservable_until: values.reservable_until ?? null,
 				contract_ids: values.contract_ids,
 			},
@@ -88,6 +90,8 @@ function EditResourcePage() {
 					allow_recurring: resource.allow_recurring,
 					blocks_only: resource.blocks_only,
 					is_public: resource.is_public,
+					reservation_restricted: resource.reservation_restricted,
+					group_ids: resource.reservable_group_ids,
 					reservable_until: resource.reservable_until,
 					contract_ids: initialContractIds,
 				}}

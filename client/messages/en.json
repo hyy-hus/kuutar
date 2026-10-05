@@ -560,5 +560,9 @@
 	"varausjaksoOhje": "This resource can only be reserved as whole reservable blocks.",
 	"vainVarausjaksot": "Reservable only in blocks defined by an admin",
 	"vainVarausjaksotOhje": "Users can only reserve whole blocks. Admins can still make reservations outside the blocks.",
-	"vapaaVarausjakso": "Free reservable block"
+	"vapaaVarausjakso": "Free reservable block",
+	"vainValitutRyhmatVoivatVarata": "Only selected groups can reserve",
+	"vainValitutRyhmatOhje": "The resource is visible to everyone, but only the selected groups and admins can reserve it. Existing reservations are not changed.",
+	"rajattuVarausoikeus": "Restricted reservations",
+	"eiVarattavissaOlevia": "Your group is not allowed to reserve any resources."
 }

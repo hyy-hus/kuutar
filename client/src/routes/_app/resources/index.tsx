@@ -1,6 +1,6 @@
 // src/routes/_app/resources/index.tsx
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Eye, Folder, Loader2, Plus, RefreshCw } from "lucide-react";
+import { Eye, Folder, Loader2, Plus, RefreshCw, Users } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "#/components/Button";
 import { Chip } from "#/components/Chip";
@@ -57,7 +57,12 @@ function ResourceCard({
 			{/* Bottom Controls */}
 			<div className="flex items-center justify-between gap-2 pt-2 border-t border-stone-200 dark:border-stone-800 shrink-0">
 				{/* Capability Badge */}
-				{(resource as { allow_recurring?: boolean }).allow_recurring ? (
+				{resource.reservation_restricted ? (
+					<span className="inline-flex items-center gap-1 text-[10px] font-mono text-amber-700 dark:text-amber-400 bg-amber-100 dark:bg-amber-950/40 px-1.5 py-0.5 rounded">
+						<Users size={10} />
+						<span>{t("rajattuVarausoikeus", "Rajattu varausoikeus")}</span>
+					</span>
+				) : (resource as { allow_recurring?: boolean }).allow_recurring ? (
 					<span className="inline-flex items-center gap-1 text-[10px] font-mono text-stone-600 dark:text-stone-400 bg-stone-200/60 dark:bg-stone-800 px-1.5 py-0.5 rounded">
 						<RefreshCw size={10} />
 						<span>{t("toistuva", "Toistuva")}</span>

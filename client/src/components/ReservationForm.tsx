@@ -181,6 +181,25 @@ export function ReservationForm({
 	);
 	const blocksOnlyMode = !isAdmin && blocksOnlyResourceId !== undefined;
 
+	/** Resources the user may pick: those they can reserve, plus any already on the reservation */
+	const selectableResources = (selectedIds: string[]) =>
+		(resources ?? []).filter(
+			(r) => r.can_reserve || selectedIds.includes(r.id),
+		);
+
+	// A new reservation must not start with resources the user can't reserve
+	// (e.g. prefilled from the URL or a calendar link)
+	useEffect(() => {
+		if (!isCreate || !resources) return;
+		const current = form.getFieldValue("resource_ids");
+		const allowed = current.filter(
+			(id) => resources.find((r) => r.id === id)?.can_reserve !== false,
+		);
+		if (allowed.length !== current.length) {
+			form.setFieldValue("resource_ids", allowed);
+		}
+	}, [isCreate, resources, form]);
+
 	const blockRange = useMemo(() => {
 		const today = new Date();
 		return localDayRangeISO(today, addDays(today, BLOCK_LOOKAHEAD_DAYS));
@@ -577,7 +596,15 @@ export function ReservationForm({
 									</div>
 								) : (
 									<div className="flex flex-wrap gap-2 p-2 bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-md max-h-36 overflow-y-auto">
-										{resources?.map((res) => {
+										{selectableResources(field.state.value).length === 0 && (
+											<p className="text-xs text-stone-500">
+												{t(
+													"eiVarattavissaOlevia",
+													"Ryhmälläsi ei ole oikeutta varata yhtään resurssia.",
+												)}
+											</p>
+										)}
+										{selectableResources(field.state.value).map((res) => {
 											const isChecked = field.state.value.includes(res.id);
 											return (
 												<button
