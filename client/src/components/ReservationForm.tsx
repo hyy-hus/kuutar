@@ -1,6 +1,7 @@
 import { useForm, useSelector } from "@tanstack/react-form";
 import {
 	AlertTriangle,
+	CalendarCheck,
 	CheckCircle2,
 	FileText,
 	Loader2,
@@ -22,6 +23,7 @@ import {
 	getStaticContractUrl,
 	useContracts,
 } from "#/hooks/useContracts";
+import { useReservableBlocks } from "#/hooks/useReservableBlocks";
 import {
 	type CreateOccurrencePayload,
 	type Occurrence,
@@ -32,6 +34,7 @@ import { useResources } from "#/hooks/useResorces";
 import { useRestrictions } from "#/hooks/useRestrictions";
 import { useUsers } from "#/hooks/useUsers";
 import {
+	addDays,
 	formatDateTimeLocal,
 	formatYYYYMMDD,
 	localDayRangeISO,
@@ -39,6 +42,9 @@ import {
 	useDateFormatter,
 } from "#/utils/date";
 import { generateOccurrences, parseRRule } from "#/utils/rruleUtils";
+
+/** How far ahead a user can browse reservable blocks in the form */
+const BLOCK_LOOKAHEAD_DAYS = 90;
 
 export interface ReservationFormValues {
 	/** Admins only: the user the reservation is made for; empty means the admin themselves */
@@ -166,6 +172,71 @@ export function ReservationForm({
 		form.store,
 		(state) => state.values.resource_ids,
 	);
+	const startTime = useSelector(form.store, (state) => state.values.start_time);
+	const endTime = useSelector(form.store, (state) => state.values.end_time);
+
+	// Resources that can only be reserved in blocks: users pick a block, admins may go outside
+	const blocksOnlyResourceId = selectedResourceIds.find(
+		(id) => resources?.find((r) => r.id === id)?.blocks_only,
+	);
+	const blocksOnlyMode = !isAdmin && blocksOnlyResourceId !== undefined;
+
+	const blockRange = useMemo(() => {
+		const today = new Date();
+		return localDayRangeISO(today, addDays(today, BLOCK_LOOKAHEAD_DAYS));
+	}, []);
+	const { data: blocks, isLoading: loadingBlocks } = useReservableBlocks(
+		{
+			start_date: blockRange.startISO,
+			end_date: blockRange.endISO,
+			resource_id: blocksOnlyResourceId,
+		},
+		{ enabled: blocksOnlyResourceId !== undefined },
+	);
+
+	const blockOptions = useMemo(() => {
+		const startMs = startTime ? new Date(startTime).getTime() : Number.NaN;
+		const endMs = endTime ? new Date(endTime).getTime() : Number.NaN;
+		return (blocks ?? [])
+			.flatMap((block) =>
+				block.occurrences.map((occ) => ({
+					id: occ.id,
+					title: block.title,
+					start: new Date(occ.start_time),
+					end: new Date(occ.end_time),
+					reserved: occ.reserved,
+				})),
+			)
+			.map((opt) => ({
+				...opt,
+				selected:
+					opt.start.getTime() === startMs && opt.end.getTime() === endMs,
+			}))
+			.filter((opt) => !opt.reserved || opt.selected)
+			.filter((opt) => {
+				// Mirror the server's reservable_until limit for non-admins
+				const limit = resources?.find(
+					(r) => r.id === blocksOnlyResourceId,
+				)?.reservable_until;
+				return !limit || opt.end.getTime() <= new Date(limit).getTime();
+			});
+	}, [blocks, startTime, endTime, resources, blocksOnlyResourceId]);
+
+	const hasSelectedBlock = blockOptions.some((opt) => opt.selected);
+	const adminOutsideBlocks =
+		isAdmin &&
+		blocksOnlyResourceId !== undefined &&
+		Boolean(startTime && endTime) &&
+		!loadingBlocks &&
+		!(blocks ?? []).some((block) =>
+			block.occurrences.some(
+				(occ) =>
+					new Date(occ.start_time).getTime() ===
+						new Date(startTime).getTime() &&
+					new Date(occ.end_time).getTime() === new Date(endTime).getTime(),
+			),
+		);
+
 	const applicableContracts = useMemo(
 		() => getApplicableContracts(activeContracts, selectedResourceIds),
 		[activeContracts, selectedResourceIds],
@@ -513,9 +584,21 @@ export function ReservationForm({
 													key={res.id}
 													type="button"
 													onClick={() => {
+														// A blocks-only resource has its own block times, so for
+														// non-admins it can't be combined with other resources
+														const exclusive =
+															!isAdmin &&
+															(res.blocks_only ||
+																field.state.value.some(
+																	(id) =>
+																		resources?.find((r) => r.id === id)
+																			?.blocks_only,
+																));
 														const nextValue = isChecked
 															? field.state.value.filter((id) => id !== res.id)
-															: [...field.state.value, res.id];
+															: exclusive
+																? [res.id]
+																: [...field.state.value, res.id];
 														field.handleChange(nextValue);
 														setContractsApproved(false);
 													}}
@@ -544,158 +627,192 @@ export function ReservationForm({
 					}}
 				</form.Field>
 
-				<div className="grid grid-cols-2 gap-2">
-					<form.Field
-						name="start_time"
-						validators={{
-							onChange: ({ value, fieldApi }) => {
-								if (!value)
-									return t("valitseAlkamisaika", "Alkamisaika on pakollinen.");
-								const endTime = fieldApi.form.getFieldValue("end_time");
-								if (endTime && new Date(value) >= new Date(endTime)) {
-									return t(
-										"alkamisaikaJalkeenPaattymisajan",
-										"Alkamisajan on oltava ennen päättymisaikaa.",
-									);
-								}
-								return undefined;
-							},
+				{blocksOnlyMode ? (
+					<BlockPicker
+						options={blockOptions}
+						isLoading={loadingBlocks}
+						onSelect={(opt) => {
+							form.setFieldValue("start_time", formatDateTimeLocal(opt.start));
+							form.setFieldValue("end_time", formatDateTimeLocal(opt.end));
 						}}
-					>
-						{(field) => {
-							const hasError = Boolean(field.state.meta.errors.length);
-							return (
-								<div className="space-y-1">
-									<label
-										htmlFor={field.name}
-										className="text-xs font-medium text-stone-700 dark:text-stone-300"
-									>
-										{t("alkamisaika", "Alkamisaika")}
-									</label>
-									<Input
-										id={field.name}
-										type="datetime-local"
-										value={field.state.value}
-										onChange={(e) => {
-											const nextStart = e.target.value;
-											const prevStart = new Date(field.state.value);
-											const prevEnd = new Date(
-												field.form.getFieldValue("end_time"),
-											);
-											const duration = prevEnd.getTime() - prevStart.getTime();
-
-											// Keep the previous duration when the new start passes the end.
-											// End is updated first so the start validator sees the new end.
-											if (
-												nextStart &&
-												duration > 0 &&
-												new Date(nextStart) >= prevEnd
-											) {
-												field.form.setFieldValue(
-													"end_time",
-													formatDateTimeLocal(
-														new Date(new Date(nextStart).getTime() + duration),
-													),
-												);
-											}
-											field.handleChange(nextStart);
-										}}
-										onBlur={field.handleBlur}
-										isError={hasError}
-									/>
-									{hasError && (
-										<p className="text-[11px] text-red-500">
-											{field.state.meta.errors.join(", ")}
-										</p>
-									)}
-								</div>
-							);
-						}}
-					</form.Field>
-
-					<form.Field
-						name="end_time"
-						validators={{
-							onChangeListenTo: ["start_time", "resource_ids"],
-							onChange: ({ value, fieldApi }) => {
-								if (!value)
-									return t(
-										"valitsePaattymisaika",
-										"Päättymisaika on pakollinen.",
-									);
-								const startTime = fieldApi.form.getFieldValue("start_time");
-								if (startTime && new Date(value) <= new Date(startTime)) {
-									return t(
-										"paattymisaikaEnnenAlkamisaikaa",
-										"Päättymisajan on oltava alkamisajan jälkeen.",
-									);
-								}
-
-								const selectedResourceIds =
-									fieldApi.form.getFieldValue("resource_ids") || [];
-								for (const rId of selectedResourceIds) {
-									const res = resources?.find((r) => r.id === rId);
-									if (res?.reservable_until) {
-										const limit = new Date(res.reservable_until).getTime();
-										if (new Date(value).getTime() > limit) {
+					/>
+				) : (
+					<>
+						<div className="grid grid-cols-2 gap-2">
+							<form.Field
+								name="start_time"
+								validators={{
+									onChange: ({ value, fieldApi }) => {
+										if (!value)
 											return t(
-												"resurssiEiVarattavissaAsti",
-												"Resurssia '{{name}}' voi varata vain päivämäärään {{date}} asti.",
-												{
-													name: res.name,
-													date: formatDate(res.reservable_until),
-												},
+												"valitseAlkamisaika",
+												"Alkamisaika on pakollinen.",
+											);
+										const endTime = fieldApi.form.getFieldValue("end_time");
+										if (endTime && new Date(value) >= new Date(endTime)) {
+											return t(
+												"alkamisaikaJalkeenPaattymisajan",
+												"Alkamisajan on oltava ennen päättymisaikaa.",
 											);
 										}
-									}
-								}
+										return undefined;
+									},
+								}}
+							>
+								{(field) => {
+									const hasError = Boolean(field.state.meta.errors.length);
+									return (
+										<div className="space-y-1">
+											<label
+												htmlFor={field.name}
+												className="text-xs font-medium text-stone-700 dark:text-stone-300"
+											>
+												{t("alkamisaika", "Alkamisaika")}
+											</label>
+											<Input
+												id={field.name}
+												type="datetime-local"
+												value={field.state.value}
+												onChange={(e) => {
+													const nextStart = e.target.value;
+													const prevStart = new Date(field.state.value);
+													const prevEnd = new Date(
+														field.form.getFieldValue("end_time"),
+													);
+													const duration =
+														prevEnd.getTime() - prevStart.getTime();
 
-								return undefined;
-							},
-						}}
-					>
-						{(field) => {
-							const hasError = Boolean(field.state.meta.errors.length);
-							return (
-								<div className="space-y-1">
-									<label
-										htmlFor={field.name}
-										className="text-xs font-medium text-stone-700 dark:text-stone-300"
-									>
-										{t("pttymisaika", "Päättymisaika")}
-									</label>
-									<Input
-										id={field.name}
-										type="datetime-local"
-										value={field.state.value}
-										onChange={(e) => field.handleChange(e.target.value)}
-										onBlur={field.handleBlur}
-										isError={hasError}
-									/>
-									{hasError && (
-										<p className="text-[11px] text-red-500">
-											{field.state.meta.errors.join(", ")}
-										</p>
+													// Keep the previous duration when the new start passes the end.
+													// End is updated first so the start validator sees the new end.
+													if (
+														nextStart &&
+														duration > 0 &&
+														new Date(nextStart) >= prevEnd
+													) {
+														field.form.setFieldValue(
+															"end_time",
+															formatDateTimeLocal(
+																new Date(
+																	new Date(nextStart).getTime() + duration,
+																),
+															),
+														);
+													}
+													field.handleChange(nextStart);
+												}}
+												onBlur={field.handleBlur}
+												isError={hasError}
+											/>
+											{hasError && (
+												<p className="text-[11px] text-red-500">
+													{field.state.meta.errors.join(", ")}
+												</p>
+											)}
+										</div>
+									);
+								}}
+							</form.Field>
+
+							<form.Field
+								name="end_time"
+								validators={{
+									onChangeListenTo: ["start_time", "resource_ids"],
+									onChange: ({ value, fieldApi }) => {
+										if (!value)
+											return t(
+												"valitsePaattymisaika",
+												"Päättymisaika on pakollinen.",
+											);
+										const startTime = fieldApi.form.getFieldValue("start_time");
+										if (startTime && new Date(value) <= new Date(startTime)) {
+											return t(
+												"paattymisaikaEnnenAlkamisaikaa",
+												"Päättymisajan on oltava alkamisajan jälkeen.",
+											);
+										}
+
+										const selectedResourceIds =
+											fieldApi.form.getFieldValue("resource_ids") || [];
+										for (const rId of selectedResourceIds) {
+											const res = resources?.find((r) => r.id === rId);
+											if (res?.reservable_until) {
+												const limit = new Date(res.reservable_until).getTime();
+												if (new Date(value).getTime() > limit) {
+													return t(
+														"resurssiEiVarattavissaAsti",
+														"Resurssia '{{name}}' voi varata vain päivämäärään {{date}} asti.",
+														{
+															name: res.name,
+															date: formatDate(res.reservable_until),
+														},
+													);
+												}
+											}
+										}
+
+										return undefined;
+									},
+								}}
+							>
+								{(field) => {
+									const hasError = Boolean(field.state.meta.errors.length);
+									return (
+										<div className="space-y-1">
+											<label
+												htmlFor={field.name}
+												className="text-xs font-medium text-stone-700 dark:text-stone-300"
+											>
+												{t("pttymisaika", "Päättymisaika")}
+											</label>
+											<Input
+												id={field.name}
+												type="datetime-local"
+												value={field.state.value}
+												onChange={(e) => field.handleChange(e.target.value)}
+												onBlur={field.handleBlur}
+												isError={hasError}
+											/>
+											{hasError && (
+												<p className="text-[11px] text-red-500">
+													{field.state.meta.errors.join(", ")}
+												</p>
+											)}
+										</div>
+									);
+								}}
+							</form.Field>
+						</div>
+						{adminOutsideBlocks && (
+							<p
+								role="note"
+								className="flex items-start gap-2 p-2.5 text-xs text-emerald-900 dark:text-emerald-200 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-800 rounded-md"
+							>
+								<CalendarCheck size={14} className="shrink-0 mt-0.5" />
+								<span>
+									{t(
+										"ajatVarausjaksojenUlkopuolella",
+										"Valitut ajat eivät ole varausjakso. Ylläpitäjänä voit silti tallentaa varauksen.",
 									)}
-								</div>
-							);
-						}}
-					</form.Field>
-				</div>
+								</span>
+							</p>
+						)}
+					</>
+				)}
 
 				{/* Recurrence Rule Fields */}
 				<form.Subscribe selector={(state) => state.values.resource_ids}>
 					{(selectedResourceIds) => {
 						const canRecur =
-							isAdmin ||
-							(selectedResourceIds.length > 0 &&
-								selectedResourceIds.every((id) => {
-									const resource = resources?.find((r) => r.id === id);
-									return (
-										(resource as { allow_recurring?: boolean })
-											?.allow_recurring ?? true
-									);
-								}));
+							!blocksOnlyMode &&
+							(isAdmin ||
+								(selectedResourceIds.length > 0 &&
+									selectedResourceIds.every((id) => {
+										const resource = resources?.find((r) => r.id === id);
+										return (
+											(resource as { allow_recurring?: boolean })
+												?.allow_recurring ?? true
+										);
+									})));
 
 						return (
 							<RecurrenceSection
@@ -787,7 +904,8 @@ export function ReservationForm({
 								formSubmitting ||
 								hasRestrictionViolation ||
 								hasReservationConflict ||
-								needsContractApproval
+								needsContractApproval ||
+								(blocksOnlyMode && !hasSelectedBlock)
 							}
 							className="w-full flex items-center justify-center gap-2 mt-4"
 						>
@@ -804,6 +922,78 @@ export function ReservationForm({
 				}}
 			</form.Subscribe>
 		</form>
+	);
+}
+
+interface BlockOption {
+	id: string;
+	title: string;
+	start: Date;
+	end: Date;
+	selected: boolean;
+}
+
+interface BlockPickerProps {
+	options: BlockOption[];
+	isLoading: boolean;
+	onSelect: (option: BlockOption) => void;
+}
+
+/** Lets a user choose one of the reservable blocks of a blocks-only resource */
+function BlockPicker({ options, isLoading, onSelect }: BlockPickerProps) {
+	const { t } = useTranslation();
+	const { formatDateRange } = useDateFormatter();
+
+	return (
+		<div className="p-3 bg-stone-100 dark:bg-stone-900 border-2 border-emerald-300 dark:border-emerald-800 rounded-sm space-y-2">
+			<div className="flex items-center gap-1.5 text-xs font-bold text-stone-800 dark:text-stone-200">
+				<CalendarCheck size={14} className="text-emerald-600" />
+				<span>{t("valitseVarausjakso", "Valitse varausjakso")}</span>
+			</div>
+
+			{isLoading ? (
+				<div className="flex items-center gap-2 text-xs text-stone-500 py-1">
+					<Loader2 className="animate-spin" size={14} />
+					<span>{t("ladataanVarausjaksoja", "Ladataan varausjaksoja...")}</span>
+				</div>
+			) : options.length === 0 ? (
+				<p className="text-xs text-stone-500">
+					{t(
+						"eiVapaitaVarausjaksoja",
+						"Tälle resurssille ei ole vapaita varausjaksoja.",
+					)}
+				</p>
+			) : (
+				<ul className="space-y-1 max-h-56 overflow-y-auto">
+					{options.map((opt) => (
+						<li key={opt.id}>
+							<button
+								type="button"
+								aria-pressed={opt.selected}
+								onClick={() => onSelect(opt)}
+								className={`w-full text-left px-2.5 py-1.5 text-xs rounded-md border transition-colors ${
+									opt.selected
+										? "bg-emerald-600 text-white border-emerald-600"
+										: "bg-white dark:bg-stone-950 border-stone-300 dark:border-stone-700 hover:bg-stone-100 dark:hover:bg-stone-800"
+								}`}
+							>
+								<span className="font-semibold">{opt.title}</span>
+								<span className="block font-mono text-[11px] opacity-80">
+									{formatDateRange(opt.start, opt.end)}
+								</span>
+							</button>
+						</li>
+					))}
+				</ul>
+			)}
+
+			<p className="text-[11px] text-stone-500">
+				{t(
+					"varausjaksoOhje",
+					"Tämän resurssin voi varata vain kokonaisina varausjaksoina.",
+				)}
+			</p>
+		</div>
 	);
 }
 
