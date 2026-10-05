@@ -33,6 +33,7 @@ import {
 	startOfWeek,
 	useDateFormatter,
 } from "#/utils/date";
+import { getResourceColor } from "#/utils/resourceColors";
 import { ToggleChip } from "../Chip";
 import { MonthView } from "./MonthView";
 import { WeekView } from "./WeekView";
@@ -232,6 +233,9 @@ export function Calendar({
 		if (!resources) return [];
 
 		const resourcesMap = new Map(resources.map((r) => [r.id, r.name]));
+		const colorsMap = new Map(
+			resources.map((r) => [r.id, r.color ?? undefined]),
+		);
 		const events: CalendarEvent[] = [];
 
 		// 1. Process Reservations
@@ -275,6 +279,7 @@ export function Calendar({
 						end: new Date(firstOcc.end_time),
 						resourceId: firstOcc.resource_id,
 						resourceName: resourceNames,
+						resourceColor: colorsMap.get(firstOcc.resource_id),
 						userName: res.user_name ?? undefined,
 					});
 				});
@@ -354,6 +359,7 @@ export function Calendar({
 						end: new Date(occ.end_time),
 						resourceId: occ.resource_id,
 						resourceName: resourcesMap.get(occ.resource_id),
+						resourceColor: colorsMap.get(occ.resource_id),
 					});
 				});
 			});
@@ -523,7 +529,18 @@ export function Calendar({
 								selected={isSelected}
 								onClick={() => toggleResource(res.id)}
 							>
-								{res.name}
+								<span className="inline-flex items-center gap-1.5">
+									{getResourceColor(res.color) && (
+										<span
+											aria-hidden="true"
+											className={cn(
+												"size-2 rounded-full shrink-0",
+												getResourceColor(res.color)?.swatch,
+											)}
+										/>
+									)}
+									{res.name}
+								</span>
 							</ToggleChip>
 						</div>
 					);
