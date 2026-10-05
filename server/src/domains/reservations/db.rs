@@ -165,8 +165,14 @@ pub async fn create(
     pool: &PgPool,
     user_id: Uuid,
     dto: CreateReservationPayload,
+    enforce_blocks: bool,
 ) -> Result<ReservationWithOccurrences, AppError> {
     let mut tx = pool.begin().await?;
+
+    if enforce_blocks {
+        validate_block_only_occurrences(&mut tx, None, dto.rrule.as_deref(), &dto.occurrences)
+            .await?;
+    }
 
     let initial_status = dto.status.unwrap_or(ReservationStatus::Pending);
 
@@ -218,8 +224,14 @@ pub async fn update(
     pool: &PgPool,
     id: Uuid,
     dto: UpdateReservationPayload,
+    enforce_blocks: bool,
 ) -> Result<ReservationWithOccurrences, AppError> {
     let mut tx = pool.begin().await?;
+
+    if enforce_blocks && let Some(new_occurrences) = &dto.occurrences {
+        validate_block_only_occurrences(&mut tx, Some(id), dto.rrule.as_deref(), new_occurrences)
+            .await?;
+    }
 
     let result = sqlx::query!(
         r#"
@@ -482,6 +494,118 @@ pub async fn validate_resource_reservable_until(
                     )));
                 }
             }
+        }
+    }
+
+    Ok(())
+}
+
+/// Enforces `blocks_only` resources: every occurrence on such a resource must match a
+/// reservable block exactly (resource, start and end) and must not overlap another
+/// confirmed or pending reservation. Callers skip this for admins.
+///
+/// Runs inside the caller's transaction and locks the affected resource rows, so two
+/// concurrent requests cannot both book the same block.
+pub async fn validate_block_only_occurrences(
+    conn: &mut sqlx::PgConnection,
+    exclude_reservation_id: Option<Uuid>,
+    rrule: Option<&str>,
+    occurrences: &[CreateOccurrencePayload],
+) -> Result<(), AppError> {
+    if occurrences.is_empty() {
+        return Ok(());
+    }
+
+    let resource_ids: Vec<Uuid> = occurrences.iter().map(|o| o.resource_id).collect();
+    let blocks_only_ids = sqlx::query_scalar!(
+        r#"
+        SELECT id FROM resources
+        WHERE id = ANY($1) AND blocks_only = TRUE AND deleted_at IS NULL
+        ORDER BY id
+        FOR UPDATE
+        "#,
+        &resource_ids
+    )
+    .fetch_all(&mut *conn)
+    .await?;
+
+    if blocks_only_ids.is_empty() {
+        return Ok(());
+    }
+
+    if rrule.is_some() {
+        return Err(AppError::Forbidden(
+            "Toistuvia varauksia ei voi tehdä resurssille, jonka voi varata vain varausjaksoissa."
+                .to_string(),
+        ));
+    }
+
+    for resource_id in &blocks_only_ids {
+        if occurrences
+            .iter()
+            .filter(|o| o.resource_id == *resource_id)
+            .count()
+            > 1
+        {
+            return Err(AppError::BadRequest(
+                "Resurssille voi valita vain yhden varausjakson kerrallaan.".to_string(),
+            ));
+        }
+    }
+
+    for occ in occurrences
+        .iter()
+        .filter(|o| blocks_only_ids.contains(&o.resource_id))
+    {
+        let in_block = sqlx::query_scalar!(
+            r#"
+            SELECT EXISTS (
+                SELECT 1
+                FROM reservable_block_occurrences bo
+                JOIN reservable_blocks b ON b.id = bo.block_id
+                WHERE b.deleted_at IS NULL
+                  AND bo.resource_id = $1
+                  AND bo.start_time = $2
+                  AND bo.end_time = $3
+            ) AS "exists!"
+            "#,
+            occ.resource_id,
+            occ.start_time,
+            occ.end_time
+        )
+        .fetch_one(&mut *conn)
+        .await?;
+
+        if !in_block {
+            return Err(AppError::Forbidden(
+                "Resurssin voi varata vain määritellyissä varausjaksoissa.".to_string(),
+            ));
+        }
+
+        let taken = sqlx::query_scalar!(
+            r#"
+            SELECT EXISTS (
+                SELECT 1
+                FROM occurrences o
+                JOIN reservations r ON r.id = o.reservation_id
+                WHERE o.resource_id = $1
+                  AND r.deleted_at IS NULL
+                  AND r.status IN ('confirmed', 'pending')
+                  AND ($4::uuid IS NULL OR r.id <> $4)
+                  AND o.start_time < $3
+                  AND o.end_time > $2
+            ) AS "exists!"
+            "#,
+            occ.resource_id,
+            occ.start_time,
+            occ.end_time,
+            exclude_reservation_id
+        )
+        .fetch_one(&mut *conn)
+        .await?;
+
+        if taken {
+            return Err(AppError::Conflict("Varausjakso on jo varattu.".to_string()));
         }
     }
 
