@@ -581,6 +581,36 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** @description System-wide figures including private resources; admins only */
+        AdminStats: {
+            /**
+             * Format: double
+             * @description Average days between creating a reservation and its occurrences
+             */
+            avg_lead_time_days?: number | null;
+            groups: components["schemas"]["GroupStat"][];
+            monthly: components["schemas"]["MonthlyStat"][];
+            new_users: components["schemas"]["NewUsersMonth"][];
+            /** Format: double */
+            oldest_pending_hours?: number | null;
+            /**
+             * Format: int64
+             * @description Pending reservations right now, regardless of range
+             */
+            pending_now: number;
+            /** @description Reservations created in the range, by status */
+            statuses: components["schemas"]["StatusCounts"];
+            top_resources: components["schemas"]["TopResourceStat"][];
+            top_users: components["schemas"]["UserStat"][];
+            /** Format: int64 */
+            total_groups: number;
+            /** Format: int64 */
+            total_resources: number;
+            /** Format: int64 */
+            total_users: number;
+            totals: components["schemas"]["UsageTotals"];
+            unused_resources: components["schemas"]["UnusedResource"][];
+        };
         AuthTokens: {
             access_token: string;
             /** Format: int64 */
@@ -773,6 +803,15 @@ export interface components {
             /** Format: date-time */
             updated_at: string;
         };
+        GroupStat: {
+            /** Format: int64 */
+            count: number;
+            /** Format: uuid */
+            group_id: string;
+            group_name: string;
+            /** Format: double */
+            hours: number;
+        };
         HashMap: {
             [key: string]: string;
         };
@@ -780,9 +819,42 @@ export interface components {
             status: string;
             version: string;
         };
+        HeatCell: {
+            /** Format: int64 */
+            count: number;
+            /** Format: int32 */
+            hour: number;
+            /**
+             * Format: int32
+             * @description 0 = Monday … 6 = Sunday
+             */
+            weekday: number;
+        };
         LoginPayload: {
             email: string;
             password: string;
+        };
+        MonthlyStat: {
+            /** Format: int64 */
+            count: number;
+            /** Format: double */
+            hours: number;
+            /** @description `YYYY-MM` in Europe/Helsinki */
+            month: string;
+        };
+        /** @description The requesting user's own reservations */
+        MyStats: {
+            favourite_resources: components["schemas"]["TopResourceStat"][];
+            monthly: components["schemas"]["MonthlyStat"][];
+            /** @description Reservations created in the range, by status */
+            statuses: components["schemas"]["StatusCounts"];
+            totals: components["schemas"]["UsageTotals"];
+            upcoming: components["schemas"]["UpcomingOccurrence"][];
+        };
+        NewUsersMonth: {
+            /** Format: int64 */
+            count: number;
+            month: string;
         };
         Occurrence: {
             /** Format: date-time */
@@ -837,6 +909,15 @@ export interface components {
             subject?: {
                 [key: string]: string;
             } | null;
+        };
+        /** @description Usage of public resources; visible to everyone */
+        PublicStats: {
+            monthly: components["schemas"]["MonthlyStat"][];
+            /** Format: int64 */
+            public_resources: number;
+            top_resources: components["schemas"]["TopResourceStat"][];
+            totals: components["schemas"]["UsageTotals"];
+            weekday_hour: components["schemas"]["HeatCell"][];
         };
         RefreshPayload: {
             refresh_token: string;
@@ -972,25 +1053,49 @@ export interface components {
         };
         /** @enum {string} */
         Role: "admin" | "user";
-        SystemStats: {
+        /**
+         * @description Time window for usage statistics, counted back from now
+         * @enum {string}
+         */
+        StatsRange: "30d" | "90d" | "12m" | "all";
+        StatsResponse: {
+            admin?: null | components["schemas"]["AdminStats"];
+            me?: null | components["schemas"]["MyStats"];
+            public: components["schemas"]["PublicStats"];
+        };
+        StatusCounts: {
             /** Format: int64 */
-            confirmed_reservations: number;
+            cancelled: number;
             /** Format: int64 */
-            pending_reservations: number;
-            top_resources: components["schemas"]["TopResourceStat"][];
+            confirmed: number;
             /** Format: int64 */
-            total_reservations: number;
-            /** Format: int64 */
-            total_resources: number;
-            /** Format: int64 */
-            total_users: number;
+            pending: number;
         };
         TopResourceStat: {
+            color?: string | null;
             /** Format: int64 */
-            reservation_count: number;
+            count: number;
+            /** Format: double */
+            hours: number;
             /** Format: uuid */
             resource_id: string;
             resource_name: string;
+        };
+        UnusedResource: {
+            /** Format: uuid */
+            resource_id: string;
+            resource_name: string;
+        };
+        UpcomingOccurrence: {
+            /** Format: date-time */
+            end_time: string;
+            /** Format: uuid */
+            reservation_id: string;
+            resource_name: string;
+            /** Format: date-time */
+            start_time: string;
+            status: string;
+            title: string;
         };
         UpdateCollection: {
             /** @description Localized Tiptap documents, e.g. {"fi": {"type": "doc", ...}} */
@@ -1083,6 +1188,17 @@ export interface components {
             name?: string | null;
             password?: string | null;
         };
+        UsageTotals: {
+            /** Format: double */
+            hours: number;
+            /**
+             * Format: int64
+             * @description Occurrences that took place in the range
+             */
+            occurrences: number;
+            /** Format: int64 */
+            resources_used: number;
+        };
         User: {
             /** Format: date-time */
             created_at: string;
@@ -1100,6 +1216,15 @@ export interface components {
             role: components["schemas"]["Role"];
             /** Format: date-time */
             updated_at: string;
+        };
+        UserStat: {
+            /** Format: int64 */
+            count: number;
+            email: string;
+            /** Format: double */
+            hours: number;
+            /** Format: uuid */
+            user_id: string;
         };
         VerifyOtpPayload: {
             code: string;
@@ -3023,21 +3148,31 @@ export interface operations {
     };
     get_stats: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description Defaults to `90d` */
+                range?: components["schemas"]["StatsRange"];
+            };
             header?: never;
             path?: never;
             cookie?: never;
         };
         requestBody?: never;
         responses: {
-            /** @description System usage and metrics breakdown */
+            /** @description Usage statistics; `me` is included for authenticated users and `admin` for admins */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["SystemStats"];
+                    "application/json": components["schemas"]["StatsResponse"];
                 };
+            };
+            /** @description Invalid range */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

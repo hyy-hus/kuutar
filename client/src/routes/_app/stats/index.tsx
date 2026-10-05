@@ -1,42 +1,47 @@
-// client/src/routes/_app/stats.tsx
-import { createFileRoute } from "@tanstack/react-router";
-import {
-	AlertCircle,
-	Bookmark,
-	Box,
-	CheckCircle2,
-	Clock,
-	Loader2,
-	TrendingUp,
-	Users,
-} from "lucide-react";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { AlertCircle, Loader2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { RangeSelect } from "#/components/stats/RangeSelect";
+import {
+	AdminSection,
+	MySection,
+	OverviewSection,
+} from "#/components/stats/Sections";
 import { useStats } from "#/hooks/useStats";
+import { parseStatsRange, type StatsRange } from "#/utils/statsUtils";
 
 export const Route = createFileRoute("/_app/stats/")({
+	validateSearch: (search: Record<string, unknown>) => ({
+		range: parseStatsRange(search.range),
+	}),
 	component: StatsPage,
 });
 
 function StatsPage() {
 	const { t } = useTranslation();
-	const { data: stats, isLoading, isError } = useStats();
+	const { range } = Route.useSearch();
+	const navigate = useNavigate({ from: Route.fullPath });
+	const { data: stats, isLoading, isError } = useStats(range);
+
+	const setRange = (next: StatsRange) =>
+		navigate({ search: { range: next }, replace: true });
 
 	return (
 		<div className="flex flex-col min-h-full -m-2 sm:-m-4">
-			<div className="flex-1 p-2 sm:p-4 max-w-6xl mx-auto w-full space-y-6 pb-12">
-				{/* Header Section */}
-				<div className="space-y-1 border-b border-stone-200 dark:border-stone-800 pb-4">
-					<div className="flex items-center gap-2">
+			<div className="flex-1 p-2 sm:p-4 max-w-6xl mx-auto w-full space-y-8 pb-12">
+				<div className="flex flex-wrap items-end justify-between gap-4 border-b border-stone-200 dark:border-stone-800 pb-4">
+					<div className="space-y-1">
 						<h1 className="text-2xl font-black text-stone-900 dark:text-stone-100 tracking-tight">
 							{t("tilastot", "Tilastot")}
 						</h1>
+						<p className="text-xs text-stone-600 dark:text-stone-400 font-mono">
+							{t(
+								"tilastoaVaraustenTilanteesta",
+								"Tilastoa varausten tilanteesta",
+							)}
+						</p>
 					</div>
-					<p className="text-xs text-stone-600 dark:text-stone-400 font-mono">
-						{t(
-							"tilastoaVaraustenTilanteesta",
-							"Tilastoa varausten tilanteesta",
-						)}
-					</p>
+					<RangeSelect value={range} onChange={setRange} />
 				</div>
 
 				{isLoading ? (
@@ -46,7 +51,7 @@ function StatsPage() {
 							{t("ladataanTilastoja", "Ladataan tilastoja...")}
 						</span>
 					</div>
-				) : isError ? (
+				) : isError || !stats ? (
 					<div className="p-6 border-2 border-rose-300 dark:border-rose-900 bg-rose-50 dark:bg-rose-950/40 rounded-md text-xs font-mono text-rose-800 dark:text-rose-300 flex items-center gap-2">
 						<AlertCircle size={16} />
 						<span>
@@ -58,150 +63,9 @@ function StatsPage() {
 					</div>
 				) : (
 					<>
-						{/* Summary Metric Cards */}
-						<div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-							<div className="p-4 border-2 border-stone-800 dark:border-stone-700 rounded-md bg-stone-100 dark:bg-stone-900 space-y-1">
-								<div className="flex items-center justify-between text-stone-500">
-									<span className="text-xs font-mono font-bold uppercase">
-										{t("varaukset", "Varaukset")}
-									</span>
-									<Bookmark size={16} />
-								</div>
-								<p className="text-2xl font-black text-stone-900 dark:text-stone-100 font-mono">
-									{stats?.total_reservations ?? 0}
-								</p>
-							</div>
-
-							<div className="p-4 border-2 border-stone-800 dark:border-stone-700 rounded-md bg-stone-100 dark:bg-stone-900 space-y-1">
-								<div className="flex items-center justify-between text-stone-500">
-									<span className="text-xs font-mono font-bold uppercase">
-										{t("resurssit", "Resurssit")}
-									</span>
-									<Box size={16} />
-								</div>
-								<p className="text-2xl font-black text-stone-900 dark:text-stone-100 font-mono">
-									{stats?.total_resources ?? 0}
-								</p>
-							</div>
-
-							<div className="p-4 border-2 border-stone-800 dark:border-stone-700 rounded-md bg-stone-100 dark:bg-stone-900 space-y-1">
-								<div className="flex items-center justify-between text-amber-600 dark:text-amber-400">
-									<span className="text-xs font-mono font-bold uppercase">
-										{t("odottavat", "Odottavat")}
-									</span>
-									<Clock size={16} />
-								</div>
-								<p className="text-2xl font-black text-stone-900 dark:text-stone-100 font-mono">
-									{stats?.pending_reservations ?? 0}
-								</p>
-							</div>
-
-							<div className="p-4 border-2 border-stone-800 dark:border-stone-700 rounded-md bg-stone-100 dark:bg-stone-900 space-y-1">
-								<div className="flex items-center justify-between text-stone-500">
-									<span className="text-xs font-mono font-bold uppercase">
-										{t("kyttjt", "Käyttäjät")}
-									</span>
-									<Users size={16} />
-								</div>
-								<p className="text-2xl font-black text-stone-900 dark:text-stone-100 font-mono">
-									{stats?.total_users ?? 0}
-								</p>
-							</div>
-						</div>
-
-						{/* Visual Breakdown Grid */}
-						<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-							{/* Top Reserved Resources */}
-							<div className="p-5 border-2 border-stone-800 dark:border-stone-700 rounded-md bg-stone-50 dark:bg-stone-900 space-y-4">
-								<h2 className="font-bold text-sm text-stone-900 dark:text-stone-100 flex items-center gap-2">
-									<TrendingUp
-										size={16}
-										className="text-purple-600 dark:text-purple-400"
-									/>
-									<span>
-										{t("suosituimmatResurssit", "Suosituimmat resurssit")}
-									</span>
-								</h2>
-
-								{stats?.top_resources && stats.top_resources.length > 0 ? (
-									<ul className="space-y-3">
-										{stats.top_resources.map((item) => {
-											const maxCount =
-												stats.top_resources[0]?.reservation_count || 1;
-											const pct = Math.round(
-												(item.reservation_count / maxCount) * 100,
-											);
-
-											return (
-												<li key={item.resource_id} className="space-y-1">
-													<div className="flex items-center justify-between text-xs font-mono">
-														<span className="font-bold text-stone-900 dark:text-stone-100 truncate">
-															{item.resource_name}
-														</span>
-														<span className="text-stone-500 shrink-0">
-															{t(
-																"reservation_countVaraus",
-																"{{reservation_count}} varaus",
-																{ reservation_count: item.reservation_count },
-															)}
-															{item.reservation_count !== 1 && "ta"}
-														</span>
-													</div>
-													<div className="h-2 w-full bg-stone-200 dark:bg-stone-800 rounded-full overflow-hidden">
-														<div
-															className="h-full bg-purple-600 dark:bg-purple-500 rounded-full transition-all duration-500"
-															style={{ width: `${pct}%` }}
-														/>
-													</div>
-												</li>
-											);
-										})}
-									</ul>
-								) : (
-									<p className="text-xs text-stone-500 font-mono">
-										{t(
-											"eiVielVaraustilastojaSaatavilla",
-											"Ei vielä varaustilastoja saatavilla.",
-										)}
-									</p>
-								)}
-							</div>
-
-							{/* Status Distribution */}
-							<div className="p-5 border-2 border-stone-800 dark:border-stone-700 rounded-md bg-stone-50 dark:bg-stone-900 space-y-4">
-								<h2 className="font-bold text-sm text-stone-900 dark:text-stone-100 flex items-center gap-2">
-									<CheckCircle2
-										size={16}
-										className="text-emerald-600 dark:text-emerald-400"
-									/>
-									<span>
-										{t("varaustenTilajakauma", "Varausten tilajakauma")}
-									</span>
-								</h2>
-
-								<div className="space-y-3 text-xs font-mono">
-									<div className="p-3 border border-stone-200 dark:border-stone-800 rounded bg-stone-100 dark:bg-stone-950 flex items-center justify-between">
-										<span className="flex items-center gap-2 text-emerald-700 dark:text-emerald-400">
-											<span className="w-2 h-2 rounded-full bg-emerald-500" />
-											{t("vahvistetutVaraukset", "Vahvistetut varaukset")}
-										</span>
-										<span className="font-bold text-stone-900 dark:text-stone-100">
-											{stats?.confirmed_reservations ?? 0}
-										</span>
-									</div>
-
-									<div className="p-3 border border-stone-200 dark:border-stone-800 rounded bg-stone-100 dark:bg-stone-950 flex items-center justify-between">
-										<span className="flex items-center gap-2 text-amber-700 dark:text-amber-400">
-											<span className="w-2 h-2 rounded-full bg-amber-500" />
-											{t("odottavatPyynnt", "Odottavat pyynnöt")}
-										</span>
-										<span className="font-bold text-stone-900 dark:text-stone-100">
-											{stats?.pending_reservations ?? 0}
-										</span>
-									</div>
-								</div>
-							</div>
-						</div>
+						<OverviewSection stats={stats.public} />
+						{stats.me && <MySection stats={stats.me} />}
+						{stats.admin && <AdminSection stats={stats.admin} />}
 					</>
 				)}
 			</div>

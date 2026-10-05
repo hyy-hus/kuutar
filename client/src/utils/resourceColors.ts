@@ -85,3 +85,27 @@ export function getResourceColor(
 		? CLASSES[key as ResourceColor]
 		: undefined;
 }
+
+// Tailwind 500 shades, for chart libraries that need real color values
+const HEX: Record<ResourceColor, string> = {
+	red: "#ef4444",
+	orange: "#f97316",
+	amber: "#f59e0b",
+	lime: "#84cc16",
+	emerald: "#10b981",
+	teal: "#14b8a6",
+	sky: "#0ea5e9",
+	blue: "#3b82f6",
+	violet: "#8b5cf6",
+	pink: "#ec4899",
+};
+
+/** Chart color for resources without a palette color */
+export const DEFAULT_CHART_COLOR = "#9333ea";
+
+/** The hex color for a palette key, or the default chart color */
+export function getResourceHex(key?: string | null): string {
+	return key && Object.hasOwn(HEX, key)
+		? HEX[key as ResourceColor]
+		: DEFAULT_CHART_COLOR;
+}
