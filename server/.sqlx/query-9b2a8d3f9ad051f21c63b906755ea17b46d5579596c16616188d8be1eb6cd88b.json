@@ -1,0 +1,98 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT\n            bo.id,\n            bo.block_id,\n            bo.resource_id,\n            bo.start_time,\n            bo.end_time,\n            bo.created_at,\n            EXISTS (\n                SELECT 1\n                FROM occurrences o\n                JOIN reservations r ON r.id = o.reservation_id\n                WHERE o.resource_id = bo.resource_id\n                  AND r.deleted_at IS NULL\n                  AND r.status IN ('confirmed', 'pending')\n                  AND o.start_time < bo.end_time\n                  AND o.end_time > bo.start_time\n            ) AS \"reserved!\"\n        FROM reservable_block_occurrences bo\n        JOIN reservable_blocks b ON b.id = bo.block_id\n        WHERE b.deleted_at IS NULL\n          AND ($1::uuid IS NULL OR bo.block_id = $1)\n          AND ($2::timestamptz IS NULL OR bo.end_time > $2)\n          AND ($3::timestamptz IS NULL OR bo.start_time < $3)\n          AND ($4::uuid IS NULL OR bo.resource_id = $4)\n        ORDER BY bo.start_time ASC\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "reservable_block_occurrences",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "block_id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "reservable_block_occurrences",
+            "name": "block_id"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "resource_id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "reservable_block_occurrences",
+            "name": "resource_id"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "start_time",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "reservable_block_occurrences",
+            "name": "start_time"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "end_time",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "reservable_block_occurrences",
+            "name": "end_time"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "created_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "reservable_block_occurrences",
+            "name": "created_at"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "reserved!",
+        "type_info": "Bool",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Timestamptz",
+        "Timestamptz",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      null
+    ]
+  },
+  "hash": "9b2a8d3f9ad051f21c63b906755ea17b46d5579596c16616188d8be1eb6cd88b"
+}

@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        UPDATE resources\n        SET \n            name = COALESCE($1, name),\n            allow_recurring = COALESCE($2, allow_recurring),\n            reservable_until = CASE \n                WHEN $3::timestamptz IS NOT NULL THEN $3\n                ELSE reservable_until \n            END,\n            is_public = COALESCE($4, is_public),\n            description = COALESCE($5, description),\n            updated_at = NOW()\n        WHERE id = $6 AND deleted_at IS NULL\n        RETURNING id, collection_id, name, description, allow_recurring, reservable_until, is_public, created_at, updated_at, deleted_at\n        ",
+  "query": "\n        UPDATE resources\n        SET \n            name = COALESCE($1, name),\n            allow_recurring = COALESCE($2, allow_recurring),\n            reservable_until = CASE \n                WHEN $3::timestamptz IS NOT NULL THEN $3\n                ELSE reservable_until \n            END,\n            is_public = COALESCE($4, is_public),\n            description = COALESCE($5, description),\n            blocks_only = COALESCE($6, blocks_only),\n            updated_at = NOW()\n        WHERE id = $7 AND deleted_at IS NULL\n        RETURNING id, collection_id, name, description, allow_recurring, blocks_only, reservable_until, is_public, created_at, updated_at, deleted_at\n        ",
   "describe": {
     "columns": [
       {
@@ -60,6 +60,17 @@
       },
       {
         "ordinal": 5,
+        "name": "blocks_only",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "resources",
+            "name": "blocks_only"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
         "name": "reservable_until",
         "type_info": "Timestamptz",
         "origin": {
@@ -70,7 +81,7 @@
         }
       },
       {
-        "ordinal": 6,
+        "ordinal": 7,
         "name": "is_public",
         "type_info": "Bool",
         "origin": {
@@ -81,7 +92,7 @@
         }
       },
       {
-        "ordinal": 7,
+        "ordinal": 8,
         "name": "created_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -92,7 +103,7 @@
         }
       },
       {
-        "ordinal": 8,
+        "ordinal": 9,
         "name": "updated_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -103,7 +114,7 @@
         }
       },
       {
-        "ordinal": 9,
+        "ordinal": 10,
         "name": "deleted_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -121,6 +132,7 @@
         "Timestamptz",
         "Bool",
         "Jsonb",
+        "Bool",
         "Uuid"
       ]
     },
@@ -130,6 +142,7 @@
       false,
       true,
       false,
+      false,
       true,
       false,
       false,
@@ -137,5 +150,5 @@
       true
     ]
   },
-  "hash": "c0005da14166017aaef111d14a59674ba92378c9ca89d531e9e1a136d6fc1e1f"
+  "hash": "227c5df92205d2d4f01ea44dc260594f701862bea49eaa0c0ae70b08ededa1b8"
 }

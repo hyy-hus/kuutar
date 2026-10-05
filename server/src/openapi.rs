@@ -6,6 +6,7 @@ use crate::domains::collections;
 use crate::domains::contracts;
 use crate::domains::email_templates;
 use crate::domains::groups;
+use crate::domains::reservable_blocks;
 use crate::domains::reservations;
 use crate::domains::resources;
 use crate::domains::restrictions;
@@ -92,6 +93,13 @@ impl Modify for SecurityAddon {
         restrictions::routes::update_restriction,
         restrictions::routes::delete_restriction,
 
+        // Reservable blocks
+        reservable_blocks::routes::list_reservable_blocks,
+        reservable_blocks::routes::get_reservable_block,
+        reservable_blocks::routes::create_reservable_block,
+        reservable_blocks::routes::update_reservable_block,
+        reservable_blocks::routes::delete_reservable_block,
+
         // Contracts
         contracts::routes::list_contracts,
         contracts::routes::get_contract,
@@ -146,6 +154,12 @@ impl Modify for SecurityAddon {
             restrictions::models::Restriction,
             restrictions::models::CreateRestrictionPayload,
             restrictions::models::UpdateRestrictionPayload,
+            reservable_blocks::models::ReservableBlock,
+            reservable_blocks::models::ReservableBlockOccurrence,
+            reservable_blocks::models::ReservableBlockWithOccurrences,
+            reservable_blocks::models::CreateReservableBlockPayload,
+            reservable_blocks::models::CreateReservableBlockOccurrencePayload,
+            reservable_blocks::models::UpdateReservableBlockPayload,
             contracts::models::Contract,
             contracts::models::CreateContract,
             contracts::models::UpdateContract,
@@ -169,6 +183,7 @@ impl Modify for SecurityAddon {
         (name = "Groups", description = "Group management endpoints"),
         (name = "Reservations", description = "Reservation and occurrence management endpoints"),
         (name = "Restrictions", description = "Time restriction and group exemption management endpoints"),
+        (name = "Reservable blocks", description = "Reservable time block management for blocks-only resources"),
         (name = "Contracts", description = "Contract document management endpoints"),
         (name = "Email templates", description = "Editable notification email templates"),
         (name = "Stats", description = "System statistics and usage analytics endpoints")

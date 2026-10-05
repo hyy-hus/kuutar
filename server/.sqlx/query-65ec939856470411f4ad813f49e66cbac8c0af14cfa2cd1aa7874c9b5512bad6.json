@@ -1,0 +1,26 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT EXISTS (\n                SELECT 1\n                FROM occurrences o\n                JOIN reservations r ON r.id = o.reservation_id\n                WHERE o.resource_id = $1\n                  AND r.deleted_at IS NULL\n                  AND r.status IN ('confirmed', 'pending')\n                  AND ($4::uuid IS NULL OR r.id <> $4)\n                  AND o.start_time < $3\n                  AND o.end_time > $2\n            ) AS \"exists!\"\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "exists!",
+        "type_info": "Bool",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Timestamptz",
+        "Timestamptz",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "65ec939856470411f4ad813f49e66cbac8c0af14cfa2cd1aa7874c9b5512bad6"
+}

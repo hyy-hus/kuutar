@@ -1,0 +1,25 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT EXISTS (\n                SELECT 1\n                FROM reservable_block_occurrences bo\n                JOIN reservable_blocks b ON b.id = bo.block_id\n                WHERE b.deleted_at IS NULL\n                  AND bo.resource_id = $1\n                  AND bo.start_time = $2\n                  AND bo.end_time = $3\n            ) AS \"exists!\"\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "exists!",
+        "type_info": "Bool",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Timestamptz",
+        "Timestamptz"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "ef1a0fb3e8dfed3f9b1a9de824da8cdf0d5b85e482fbc78cc33e60cb24ccfb28"
+}

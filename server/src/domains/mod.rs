@@ -3,6 +3,7 @@ pub mod collections;
 pub mod contracts;
 pub mod email_templates;
 pub mod groups;
+pub mod reservable_blocks;
 pub mod reservations;
 pub mod resources;
 pub mod restrictions;
