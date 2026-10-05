@@ -563,7 +563,6 @@
 	"vapaaVarausjakso": "Ledigt bokningsblock",
 	"vainValitutRyhmatVoivatVarata": "Endast valda grupper kan boka",
 	"vainValitutRyhmatOhje": "Resursen syns för alla, men endast valda grupper och administratörer kan boka den. Befintliga bokningar ändras inte.",
-	"eiVarausoikeutta": "Din grupp har inte rätt att boka den här resursen",
-	"rajattu": "Begränsad",
-	"rajattuVarausoikeus": "Begränsad bokningsrätt"
+	"rajattuVarausoikeus": "Begränsad bokningsrätt",
+	"eiVarattavissaOlevia": "Din grupp har inte rätt att boka några resurser."
 }

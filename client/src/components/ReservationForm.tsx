@@ -181,6 +181,25 @@ export function ReservationForm({
 	);
 	const blocksOnlyMode = !isAdmin && blocksOnlyResourceId !== undefined;
 
+	/** Resources the user may pick: those they can reserve, plus any already on the reservation */
+	const selectableResources = (selectedIds: string[]) =>
+		(resources ?? []).filter(
+			(r) => r.can_reserve || selectedIds.includes(r.id),
+		);
+
+	// A new reservation must not start with resources the user can't reserve
+	// (e.g. prefilled from the URL or a calendar link)
+	useEffect(() => {
+		if (!isCreate || !resources) return;
+		const current = form.getFieldValue("resource_ids");
+		const allowed = current.filter(
+			(id) => resources.find((r) => r.id === id)?.can_reserve !== false,
+		);
+		if (allowed.length !== current.length) {
+			form.setFieldValue("resource_ids", allowed);
+		}
+	}, [isCreate, resources, form]);
+
 	const blockRange = useMemo(() => {
 		const today = new Date();
 		return localDayRangeISO(today, addDays(today, BLOCK_LOOKAHEAD_DAYS));
@@ -577,22 +596,20 @@ export function ReservationForm({
 									</div>
 								) : (
 									<div className="flex flex-wrap gap-2 p-2 bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-md max-h-36 overflow-y-auto">
-										{resources?.map((res) => {
+										{selectableResources(field.state.value).length === 0 && (
+											<p className="text-xs text-stone-500">
+												{t(
+													"eiVarattavissaOlevia",
+													"Ryhmälläsi ei ole oikeutta varata yhtään resurssia.",
+												)}
+											</p>
+										)}
+										{selectableResources(field.state.value).map((res) => {
 											const isChecked = field.state.value.includes(res.id);
 											return (
 												<button
 													key={res.id}
 													type="button"
-													// A selected resource stays toggleable so it can be dropped
-													disabled={!res.can_reserve && !isChecked}
-													title={
-														!res.can_reserve
-															? t(
-																	"eiVarausoikeutta",
-																	"Ryhmälläsi ei ole oikeutta varata tätä resurssia",
-																)
-															: undefined
-													}
 													onClick={() => {
 														// A blocks-only resource has its own block times, so for
 														// non-admins it can't be combined with other resources
@@ -616,17 +633,12 @@ export function ReservationForm({
 														isChecked
 															? "bg-purple-600 text-white border-purple-600 dark:bg-purple-500 dark:border-purple-500"
 															: "bg-white dark:bg-stone-800 text-stone-700 dark:text-stone-300 border-stone-300 dark:border-stone-700 hover:bg-stone-100 dark:hover:bg-stone-700"
-													} ${!res.can_reserve && !isChecked ? "opacity-50 cursor-not-allowed hover:bg-white dark:hover:bg-stone-800" : ""}`}
+													}`}
 												>
 													<span
 														className={`w-2 h-2 rounded-full ${isChecked ? "bg-white" : "bg-stone-400"}`}
 													/>
 													{res.name}
-													{!res.can_reserve && (
-														<span className="text-[10px] opacity-80">
-															{t("rajattu", "Rajattu")}
-														</span>
-													)}
 												</button>
 											);
 										})}
