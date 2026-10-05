@@ -583,6 +583,16 @@ export function ReservationForm({
 												<button
 													key={res.id}
 													type="button"
+													// A selected resource stays toggleable so it can be dropped
+													disabled={!res.can_reserve && !isChecked}
+													title={
+														!res.can_reserve
+															? t(
+																	"eiVarausoikeutta",
+																	"Ryhmälläsi ei ole oikeutta varata tätä resurssia",
+																)
+															: undefined
+													}
 													onClick={() => {
 														// A blocks-only resource has its own block times, so for
 														// non-admins it can't be combined with other resources
@@ -606,12 +616,17 @@ export function ReservationForm({
 														isChecked
 															? "bg-purple-600 text-white border-purple-600 dark:bg-purple-500 dark:border-purple-500"
 															: "bg-white dark:bg-stone-800 text-stone-700 dark:text-stone-300 border-stone-300 dark:border-stone-700 hover:bg-stone-100 dark:hover:bg-stone-700"
-													}`}
+													} ${!res.can_reserve && !isChecked ? "opacity-50 cursor-not-allowed hover:bg-white dark:hover:bg-stone-800" : ""}`}
 												>
 													<span
 														className={`w-2 h-2 rounded-full ${isChecked ? "bg-white" : "bg-stone-400"}`}
 													/>
 													{res.name}
+													{!res.can_reserve && (
+														<span className="text-[10px] opacity-80">
+															{t("rajattu", "Rajattu")}
+														</span>
+													)}
 												</button>
 											);
 										})}
