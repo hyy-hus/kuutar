@@ -6,7 +6,9 @@ import { useCollections } from "#/hooks/useCollections";
 import { getLocalizedText, useContracts } from "#/hooks/useContracts";
 import { useGroups } from "#/hooks/useGroups";
 import type { CreateResource } from "#/hooks/useResorces";
+import { cn } from "#/utils/cn";
 import { formatYYYYMMDD } from "#/utils/date";
+import { getResourceColor, RESOURCE_COLORS } from "#/utils/resourceColors";
 import {
 	compactLocalizedRichText,
 	toLocalizedRichText,
@@ -18,6 +20,7 @@ export interface ResourceFormValues
 	extends Omit<CreateResource, "reservable_until"> {
 	reservable_until?: string | null;
 	is_public?: boolean;
+	color?: string | null;
 	reservation_restricted?: boolean;
 	group_ids?: string[];
 	contract_ids?: string[];
@@ -63,6 +66,7 @@ export function ResourceForm({
 			is_public: defaultValues?.is_public ?? true,
 			reservation_restricted: defaultValues?.reservation_restricted ?? false,
 			group_ids: defaultValues?.group_ids ?? [],
+			color: defaultValues?.color ?? "",
 			reservable_until: toDateInputValue(defaultValues?.reservable_until),
 			contract_ids: defaultValues?.contract_ids ?? [],
 		},
@@ -191,6 +195,47 @@ export function ResourceForm({
 						</div>
 					);
 				}}
+			</form.Field>
+
+			{/* Calendar color */}
+			<form.Field name="color">
+				{(field) => (
+					<fieldset className="space-y-1">
+						<legend className="text-xs font-medium text-stone-700 dark:text-stone-300">
+							{t("vari", "Väri kalenterissa")}
+						</legend>
+						<div className="flex flex-wrap items-center gap-2">
+							<button
+								type="button"
+								aria-pressed={!field.state.value}
+								onClick={() => field.handleChange("")}
+								className={cn(
+									"px-2 py-1 rounded-sm text-xs border cursor-pointer",
+									!field.state.value
+										? "border-stone-900 dark:border-stone-100 font-semibold"
+										: "border-stone-300 dark:border-stone-700",
+								)}
+							>
+								{t("eiVaria", "Ei väriä")}
+							</button>
+							{RESOURCE_COLORS.map((key) => (
+								<button
+									key={key}
+									type="button"
+									aria-label={key}
+									aria-pressed={field.state.value === key}
+									onClick={() => field.handleChange(key)}
+									className={cn(
+										"size-6 rounded-full cursor-pointer ring-offset-2 ring-offset-stone-50 dark:ring-offset-stone-950",
+										getResourceColor(key)?.swatch,
+										field.state.value === key &&
+											"ring-2 ring-stone-900 dark:ring-stone-100",
+									)}
+								/>
+							))}
+						</div>
+					</fieldset>
+				)}
 			</form.Field>
 
 			{/* Reservable Until Cutoff Date */}

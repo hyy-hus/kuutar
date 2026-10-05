@@ -16,6 +16,7 @@ import {
 	monthGridRange,
 	useDateFormatter,
 } from "#/utils/date";
+import { getResourceColor } from "#/utils/resourceColors";
 
 interface MonthViewProps {
 	/** First day of the shown month */
@@ -40,6 +41,11 @@ function MonthEventItem({ event }: { event: DaySegment }) {
 	const isRestriction = Boolean(event.isRestriction);
 	const isBlock = Boolean(event.isBlock);
 	const isPending = event.status === "pending";
+	// Blocks and restrictions keep their own look
+	const color =
+		isBlock || isRestriction
+			? undefined
+			: getResourceColor(event.resourceColor);
 	// A segment carried over from the previous day has no start time of its own on this day
 	const timeLabel = event.continuesBefore ? "…" : formatTime(event.start);
 	const timeString = formatDateRange(event.eventStart, event.eventEnd);
@@ -54,7 +60,13 @@ function MonthEventItem({ event }: { event: DaySegment }) {
 				? "bg-amber-100 dark:bg-amber-950/80 border-amber-400 dark:border-amber-700 text-amber-900 dark:text-amber-200 hover:bg-amber-200 dark:hover:bg-amber-900"
 				: isPending
 					? "bg-purple-50/70 dark:bg-purple-950/40 border-dashed border-purple-400 dark:border-purple-600 text-stone-900 dark:text-stone-100 hover:bg-purple-100 dark:hover:bg-purple-900/60"
-					: "bg-stone-200 dark:bg-stone-800 border-stone-400 dark:border-stone-600 text-stone-900 dark:text-stone-100 hover:bg-stone-300 dark:hover:bg-stone-700",
+					: cn(
+							"border-stone-400 dark:border-stone-600 text-stone-900 dark:text-stone-100",
+							color
+								? color.tint
+								: "bg-stone-200 dark:bg-stone-800 hover:bg-stone-300 dark:hover:bg-stone-700",
+						),
+		color && ["border-l-4", color.stripe],
 	);
 
 	// In narrow day cells the title gets the whole line and may wrap; the time and icon would

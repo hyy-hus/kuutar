@@ -564,5 +564,7 @@
 	"vainValitutRyhmatVoivatVarata": "Only selected groups can reserve",
 	"vainValitutRyhmatOhje": "The resource is visible to everyone, but only the selected groups and admins can reserve it. Existing reservations are not changed.",
 	"rajattuVarausoikeus": "Restricted reservations",
-	"eiVarattavissaOlevia": "Your group is not allowed to reserve any resources."
+	"eiVarattavissaOlevia": "Your group is not allowed to reserve any resources.",
+	"vari": "Calendar color",
+	"eiVaria": "No color"
 }

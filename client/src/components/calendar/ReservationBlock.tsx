@@ -10,6 +10,7 @@ import { useTranslation } from "react-i18next";
 import { getSegmentGridMinutes, type PlacedEvent } from "#/utils/calendarUtils";
 import { cn } from "#/utils/cn";
 import { formatDateTimeLocal, useDateFormatter } from "#/utils/date";
+import { getResourceColor } from "#/utils/resourceColors";
 
 /** Approximate rem heights of the block's parts, for deciding which lines fit */
 const TITLE_LINE_REM = 1;
@@ -60,6 +61,11 @@ export function ReservationBlock({
 	const isRestriction = Boolean(event.isRestriction);
 	const isBlock = Boolean(event.isBlock);
 	const isPending = event.status === "pending";
+	// Blocks and restrictions keep their own look
+	const color =
+		isBlock || isRestriction
+			? undefined
+			: getResourceColor(event.resourceColor);
 
 	const tooltipText = isBlock
 		? `${t("vapaaVarausjakso", "Vapaa varausjakso")}: ${event.resourceName ?? ""}: ${event.title} (${timeString})`
@@ -192,7 +198,14 @@ export function ReservationBlock({
 						? "bg-amber-100 dark:bg-amber-950/80 border-amber-400 dark:border-amber-700 hover:bg-amber-200 dark:hover:bg-amber-900"
 						: isPending
 							? "bg-purple-50/70 dark:bg-purple-950/40 border-dashed border-purple-400 dark:border-purple-600 opacity-80 hover:opacity-100 hover:bg-purple-100 dark:hover:bg-purple-900/60"
-							: "bg-stone-200 dark:bg-stone-800 border-stone-400 dark:border-stone-600 hover:bg-stone-300 dark:hover:bg-stone-700",
+							: cn(
+									"border-stone-400 dark:border-stone-600",
+									color
+										? color.tint
+										: "bg-stone-200 dark:bg-stone-800 hover:bg-stone-300 dark:hover:bg-stone-700",
+								),
+				// A stripe in the resource's color marks which resource the event is on
+				color && ["border-l-4", color.stripe],
 			)}
 			style={{
 				top: `${topPct}%`,
