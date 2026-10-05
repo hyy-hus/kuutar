@@ -1,0 +1,30 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT\n            to_char(date_trunc('month', created_at AT TIME ZONE 'Europe/Helsinki'), 'YYYY-MM') AS \"month!\",\n            COUNT(*) AS \"count!\"\n        FROM users\n        WHERE deleted_at IS NULL AND ($1::timestamptz IS NULL OR created_at >= $1)\n        GROUP BY 1\n        ORDER BY 1\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "month!",
+        "type_info": "Text",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 1,
+        "name": "count!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Timestamptz"
+      ]
+    },
+    "nullable": [
+      null,
+      null
+    ]
+  },
+  "hash": "05ccc2a1e37126fddcfa4847e9631d30fd0b972a27c64217084ed5cc56e70176"
+}

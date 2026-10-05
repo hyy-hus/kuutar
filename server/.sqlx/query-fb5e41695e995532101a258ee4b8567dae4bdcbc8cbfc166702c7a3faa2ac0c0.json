@@ -1,11 +1,11 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        SELECT COUNT(*) \n        FROM users \n        WHERE deleted_at IS NULL\n        ",
+  "query": "SELECT COUNT(*) AS \"count!\" FROM resources WHERE deleted_at IS NULL AND is_public",
   "describe": {
     "columns": [
       {
         "ordinal": 0,
-        "name": "count",
+        "name": "count!",
         "type_info": "Int8",
         "origin": "Expression"
       }
@@ -17,5 +17,5 @@
       null
     ]
   },
-  "hash": "e7f68fac4a53f3d13dc81ad36aa27bac779d8a438f26498c92b62c82c9603315"
+  "hash": "fb5e41695e995532101a258ee4b8567dae4bdcbc8cbfc166702c7a3faa2ac0c0"
 }
