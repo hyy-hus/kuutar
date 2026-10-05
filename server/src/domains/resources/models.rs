@@ -20,6 +20,12 @@ pub struct Resource {
     pub blocks_only: bool,
     pub reservable_until: Option<DateTime<Utc>>,
     pub is_public: bool,
+    /// When true, non-admins can only reserve if their group is in `reservable_group_ids`
+    pub reservation_restricted: bool,
+    /// Groups allowed to reserve this resource when `reservation_restricted` is set
+    pub reservable_group_ids: Vec<Uuid>,
+    /// Whether the requesting user may reserve this resource (always true for admins)
+    pub can_reserve: bool,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 
@@ -55,6 +61,12 @@ pub struct CreateResource {
     #[serde(default = "default_true")]
     pub is_public: bool,
 
+    #[serde(default)]
+    pub reservation_restricted: bool,
+
+    /// Groups allowed to reserve the resource when `reservation_restricted` is set
+    pub group_ids: Option<Vec<Uuid>>,
+
     pub contract_ids: Option<Vec<Uuid>>,
 }
 
@@ -85,6 +97,11 @@ pub struct UpdateResource {
     pub reservable_until: Option<DateTime<Utc>>,
 
     pub is_public: Option<bool>,
+
+    pub reservation_restricted: Option<bool>,
+
+    /// Replaces the set of groups allowed to reserve the resource
+    pub group_ids: Option<Vec<Uuid>>,
 
     pub contract_ids: Option<Vec<Uuid>>,
 }

@@ -35,8 +35,9 @@ pub async fn list_resources(
     State(auth_state): State<AuthState>,
     opt_user: OptionalAuthUser,
 ) -> Result<Json<Vec<Resource>>, AppError> {
-    let is_admin = opt_user.0.map(|u| u.role == Role::Admin).unwrap_or(false);
-    let resources = db::list_all(&auth_state.pool, is_admin).await?;
+    let is_admin = opt_user.0.as_ref().is_some_and(|u| u.role == Role::Admin);
+    let group_id = opt_user.0.as_ref().map(|u| u.group_id);
+    let resources = db::list_all(&auth_state.pool, is_admin, group_id).await?;
     Ok(Json(resources))
 }
 
@@ -59,8 +60,9 @@ pub async fn get_resource(
     Path(id): Path<Uuid>,
     opt_user: OptionalAuthUser,
 ) -> Result<Json<Resource>, AppError> {
-    let is_admin = opt_user.0.map(|u| u.role == Role::Admin).unwrap_or(false);
-    let resource = db::find_by_id(&auth_state.pool, id, is_admin).await?;
+    let is_admin = opt_user.0.as_ref().is_some_and(|u| u.role == Role::Admin);
+    let group_id = opt_user.0.as_ref().map(|u| u.group_id);
+    let resource = db::find_by_id(&auth_state.pool, id, is_admin, group_id).await?;
     Ok(Json(resource))
 }
 
