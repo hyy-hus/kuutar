@@ -461,6 +461,60 @@ pub async fn validate_occurrence_restrictions(
     Ok(())
 }
 
+/// Enforces `reservation_restricted` resources: non-admins may only reserve them when their
+/// group is listed in `resource_groups`. Resources in `existing_resource_ids` (already on the
+/// reservation being edited) are skipped, so revoking access never blocks edits to existing
+/// reservations. Admins bypass this check.
+pub async fn validate_resource_group_access(
+    pool: &PgPool,
+    user_id: Uuid,
+    is_admin: bool,
+    existing_resource_ids: &[Uuid],
+    occurrences: &[CreateOccurrencePayload],
+) -> Result<(), AppError> {
+    if is_admin || occurrences.is_empty() {
+        return Ok(());
+    }
+
+    let resource_ids: Vec<Uuid> = occurrences
+        .iter()
+        .map(|o| o.resource_id)
+        .filter(|id| !existing_resource_ids.contains(id))
+        .collect();
+    if resource_ids.is_empty() {
+        return Ok(());
+    }
+
+    let denied = sqlx::query_scalar!(
+        r#"
+        SELECT r.name
+        FROM resources r
+        JOIN users u ON u.id = $1 AND u.deleted_at IS NULL
+        WHERE r.id = ANY($2)
+          AND r.deleted_at IS NULL
+          AND r.reservation_restricted = TRUE
+          AND NOT EXISTS (
+              SELECT 1 FROM resource_groups rg
+              WHERE rg.resource_id = r.id AND rg.group_id = u.group_id
+          )
+        ORDER BY r.name
+        LIMIT 1
+        "#,
+        user_id,
+        &resource_ids
+    )
+    .fetch_optional(pool)
+    .await?;
+
+    if let Some(name) = denied {
+        return Err(AppError::Forbidden(format!(
+            "Ryhmälläsi ei ole oikeutta varata resurssia '{name}'."
+        )));
+    }
+
+    Ok(())
+}
+
 /// Validates proposed occurrences against the resource's `reservable_until` boundary.
 /// Admins bypass this check.
 pub async fn validate_resource_reservable_until(
