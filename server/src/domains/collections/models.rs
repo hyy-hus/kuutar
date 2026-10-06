@@ -65,9 +65,30 @@ pub struct UpdateCollection {
 
 /// Icon keys; must match the CHECK constraint on `collections.icon`
 pub const COLLECTION_ICONS: &[&str] = &[
-    "layers", "wrench", "car", "home", "projector", "camera", "music", "utensils", "bike", "tent",
-    "users", "monitor", "mic", "book", "gamepad", "palette", "hammer", "truck", "sofa", "trees",
-    "dumbbell", "laptop", "printer", "shirt",
+    "layers",
+    "wrench",
+    "car",
+    "home",
+    "projector",
+    "camera",
+    "music",
+    "utensils",
+    "bike",
+    "tent",
+    "users",
+    "monitor",
+    "mic",
+    "book",
+    "gamepad",
+    "palette",
+    "hammer",
+    "truck",
+    "sofa",
+    "trees",
+    "dumbbell",
+    "laptop",
+    "printer",
+    "shirt",
 ];
 
 fn validate_icon(icon: &str) -> Result<(), validator::ValidationError> {

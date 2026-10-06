@@ -158,7 +158,10 @@ async fn test_collection_icon_lifecycle(pool: PgPool) {
             let res = app.oneshot(req).await.unwrap();
             let status = res.status();
             let bytes = res.into_body().collect().await.unwrap().to_bytes();
-            (status, serde_json::from_slice::<Value>(&bytes).unwrap_or(Value::Null))
+            (
+                status,
+                serde_json::from_slice::<Value>(&bytes).unwrap_or(Value::Null),
+            )
         }
     };
 
