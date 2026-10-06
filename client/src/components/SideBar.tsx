@@ -6,6 +6,7 @@ import {
 	Box,
 	Calendar,
 	CalendarCheck,
+	CalendarSync,
 	ChevronDown,
 	FileText,
 	Folder,
@@ -109,6 +110,12 @@ export function SideBar({ theme, toggleTheme }: SideBarProps) {
 			to: "/contracts",
 			label: t("sopimukset", "Sopimukset"),
 			icon: FileText,
+			adminOnly: true,
+		},
+		{
+			to: "/admin/outlook",
+			label: t("outlookSynkronointi", "Outlook-synkronointi"),
+			icon: CalendarSync,
 			adminOnly: true,
 		},
 		{

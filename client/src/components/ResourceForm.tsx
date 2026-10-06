@@ -21,6 +21,7 @@ export interface ResourceFormValues
 	reservable_until?: string | null;
 	is_public?: boolean;
 	color?: string | null;
+	outlook_email?: string | null;
 	reservation_restricted?: boolean;
 	group_ids?: string[];
 	contract_ids?: string[];
@@ -67,6 +68,7 @@ export function ResourceForm({
 			reservation_restricted: defaultValues?.reservation_restricted ?? false,
 			group_ids: defaultValues?.group_ids ?? [],
 			color: defaultValues?.color ?? "",
+			outlook_email: defaultValues?.outlook_email ?? "",
 			reservable_until: toDateInputValue(defaultValues?.reservable_until),
 			contract_ids: defaultValues?.contract_ids ?? [],
 		},
@@ -236,6 +238,52 @@ export function ResourceForm({
 						</div>
 					</fieldset>
 				)}
+			</form.Field>
+
+			{/* Outlook mailbox */}
+			<form.Field
+				name="outlook_email"
+				validators={{
+					onChange: ({ value }) =>
+						value && !/^\S+@\S+$/.test(value.trim())
+							? t("virheellinenSahkoposti", "Virheellinen sähköposti")
+							: undefined,
+				}}
+			>
+				{(field) => {
+					const hasError = Boolean(field.state.meta.errors.length);
+					return (
+						<div className="space-y-1">
+							<label
+								htmlFor={field.name}
+								className="text-xs font-medium text-stone-700 dark:text-stone-300"
+							>
+								{t("outlookPostilaatikko", "Outlook-resurssin sähköposti")}
+							</label>
+							<Input
+								id={field.name}
+								type="email"
+								value={field.state.value ?? ""}
+								onChange={(e) => field.handleChange(e.target.value)}
+								onBlur={field.handleBlur}
+								isError={hasError}
+								placeholder="sauna@hyy.fi"
+							/>
+							{hasError ? (
+								<p className="text-[11px] text-red-500">
+									{field.state.meta.errors.join(", ")}
+								</p>
+							) : (
+								<p className="text-[11px] text-stone-500 dark:text-stone-400">
+									{t(
+										"outlookPostilaatikkoOhje",
+										"Outlookissa kutsuttu resurssi näytetään tämän resurssin varauksena. Jätä tyhjäksi, jos resurssi ei ole Outlookissa.",
+									)}
+								</p>
+							)}
+						</div>
+					);
+				}}
 			</form.Field>
 
 			{/* Reservable Until Cutoff Date */}

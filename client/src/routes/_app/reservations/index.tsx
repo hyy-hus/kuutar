@@ -14,6 +14,7 @@ import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "#/components/Button";
 import { Chip } from "#/components/Chip";
+import { OutlookBadge } from "#/components/OutlookBadge";
 import { PeriodNavigator } from "#/components/PeriodNavigator";
 import {
 	type ReservationStatus,
@@ -68,6 +69,7 @@ function UserReservationCard({
 	const firstOccurrence = reservationWithOcc.occurrences?.[0];
 	const isPending = reservationWithOcc.status === "pending";
 	const isCancelled = reservationWithOcc.status === "cancelled";
+	const isOutlook = reservationWithOcc.source === "outlook";
 
 	return (
 		<li
@@ -96,7 +98,10 @@ function UserReservationCard({
 						</p>
 					)}
 				</div>
-				<Chip>{readable_uuid(reservationWithOcc.id)}</Chip>
+				<div className="flex items-center gap-1 shrink-0">
+					{isOutlook && <OutlookBadge />}
+					<Chip>{readable_uuid(reservationWithOcc.id)}</Chip>
+				</div>
 			</div>
 
 			<div className="flex flex-wrap items-center justify-between gap-2 min-w-0">
@@ -124,7 +129,7 @@ function UserReservationCard({
 					</Link>
 				</Button>
 
-				{isCancelled ? (
+				{isOutlook ? null : isCancelled ? (
 					<Button
 						variant="outline"
 						size="sm"

@@ -32,6 +32,7 @@ function CreateResourcePage() {
 			reservation_restricted: values.reservation_restricted ?? false,
 			group_ids: values.group_ids,
 			color: values.color || undefined,
+			outlook_email: values.outlook_email || undefined,
 			reservable_until: values.reservable_until,
 			contract_ids: values.contract_ids,
 		});

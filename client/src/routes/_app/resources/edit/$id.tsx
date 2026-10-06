@@ -68,6 +68,8 @@ function EditResourcePage() {
 				group_ids: values.group_ids,
 				// An empty string clears the color
 				color: values.color ?? "",
+				// An empty string clears the mailbox
+				outlook_email: values.outlook_email ?? "",
 				reservable_until: values.reservable_until ?? null,
 				contract_ids: values.contract_ids,
 			},
@@ -95,6 +97,7 @@ function EditResourcePage() {
 					reservation_restricted: resource.reservation_restricted,
 					group_ids: resource.reservable_group_ids,
 					color: resource.color,
+					outlook_email: resource.outlook_email,
 					reservable_until: resource.reservable_until,
 					contract_ids: initialContractIds,
 				}}

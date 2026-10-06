@@ -331,6 +331,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/outlook-sync/run": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["run_sync"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/outlook-sync/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_status"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/reservable-blocks": {
         parameters: {
             query?: never;
@@ -735,6 +767,8 @@ export interface components {
             group_ids?: string[] | null;
             is_public?: boolean;
             name: string;
+            /** @description Outlook room/equipment mailbox whose invites are shown as reservations of this resource */
+            outlook_email?: string | null;
             /** Format: date-time */
             reservable_until?: string | null;
             reservation_restricted?: boolean;
@@ -977,6 +1011,8 @@ export interface components {
             /** Format: uuid */
             id: string;
             rrule?: string | null;
+            /** @description `kuutar`, or `outlook` for events imported from Outlook (edited there, read-only here) */
+            source: string;
             status: components["schemas"]["ReservationStatus"];
             title: string;
             /** Format: date-time */
@@ -1013,6 +1049,8 @@ export interface components {
             id: string;
             is_public: boolean;
             name: string;
+            /** @description Outlook room/equipment mailbox of the resource (admins only) */
+            outlook_email?: string | null;
             /** @description Groups allowed to reserve this resource when `reservation_restricted` is set */
             reservable_group_ids: string[];
             /** Format: date-time */
@@ -1070,6 +1108,36 @@ export interface components {
             confirmed: number;
             /** Format: int64 */
             pending: number;
+        };
+        SyncLogEntry: {
+            /** Format: date-time */
+            created_at: string;
+            detail?: string | null;
+            ical_uid?: string | null;
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            reservation_id?: string | null;
+            /** @description imported | updated | cancelled | ignored | error */
+            result: string;
+            subject?: string | null;
+        };
+        SyncRunReport: {
+            cancelled: number;
+            errors: number;
+            ignored: number;
+            imported: number;
+            messages: number;
+            updated: number;
+        };
+        SyncStatus: {
+            /** @description False when the GRAPH_* settings are missing */
+            enabled: boolean;
+            intake_mailbox?: string | null;
+            last_error?: string | null;
+            /** Format: date-time */
+            last_run_at?: string | null;
+            recent: components["schemas"]["SyncLogEntry"][];
         };
         TopResourceStat: {
             color?: string | null;
@@ -1162,6 +1230,8 @@ export interface components {
             group_ids?: string[] | null;
             is_public?: boolean | null;
             name?: string | null;
+            /** @description Outlook mailbox; an empty string clears it */
+            outlook_email?: string | null;
             /** Format: date-time */
             reservable_until?: string | null;
             reservation_restricted?: boolean | null;
@@ -2302,6 +2372,70 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["HealthStatus"];
                 };
+            };
+        };
+    };
+    run_sync: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SyncRunReport"];
+                };
+            };
+            /** @description Outlook sync is not configured */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description A sync is already running */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_status: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SyncStatus"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
