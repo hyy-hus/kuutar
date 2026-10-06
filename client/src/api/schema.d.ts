@@ -713,7 +713,6 @@ export interface components {
             description?: {
                 [key: string]: unknown;
             } | null;
-            /** @description Icon key (see `COLLECTION_ICONS`) */
             icon?: string | null;
             name: string;
         };
