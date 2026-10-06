@@ -64,6 +64,41 @@ pub struct Config {
     #[arg(long, env = "APP_BASE_URL", default_value = "http://localhost:5173")]
     pub app_base_url: String,
 
+    // --- Outlook / Microsoft Graph (optional; the integration is off without GRAPH_TENANT_ID) ---
+    #[arg(long, env = "GRAPH_TENANT_ID")]
+    pub graph_tenant_id: Option<String>,
+
+    #[arg(long, env = "GRAPH_CLIENT_ID")]
+    pub graph_client_id: Option<String>,
+
+    #[arg(long, env = "GRAPH_CLIENT_SECRET")]
+    pub graph_client_secret: Option<String>,
+
+    /// Mailbox that receives the forwarded Outlook invites
+    #[arg(long, env = "GRAPH_INTAKE_MAILBOX")]
+    pub graph_intake_mailbox: Option<String>,
+
+    #[arg(long, env = "GRAPH_POLL_SECONDS", default_value_t = 60)]
+    pub graph_poll_seconds: u64,
+
+    #[arg(
+        long,
+        env = "GRAPH_BASE_URL",
+        default_value = "https://graph.microsoft.com/v1.0"
+    )]
+    pub graph_base_url: String,
+
+    #[arg(
+        long,
+        env = "GRAPH_LOGIN_URL",
+        default_value = "https://login.microsoftonline.com"
+    )]
+    pub graph_login_url: String,
+
+    /// Owner of imported events whose organizer is not a Kuutar user (defaults to the seed admin)
+    #[arg(long, env = "OUTLOOK_FALLBACK_USER_EMAIL")]
+    pub outlook_fallback_user_email: Option<String>,
+
     // --- S3 / Scaleway Object Storage Configuration ---
     #[arg(long, env = "S3_BUCKET_NAME")]
     pub s3_bucket_name: String,
@@ -83,4 +118,14 @@ pub struct Config {
 
     #[arg(long, env = "AWS_SECRET_ACCESS_KEY")]
     pub aws_secret_access_key: String,
+}
+
+impl Config {
+    /// True when every Graph setting needed to read the intake mailbox is present.
+    pub fn outlook_enabled(&self) -> bool {
+        self.graph_tenant_id.is_some()
+            && self.graph_client_id.is_some()
+            && self.graph_client_secret.is_some()
+            && self.graph_intake_mailbox.is_some()
+    }
 }

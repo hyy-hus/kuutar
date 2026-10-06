@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        SELECT r.id, r.collection_id, r.name, r.description, r.allow_recurring, r.blocks_only, r.reservable_until, r.is_public,\n               r.reservation_restricted, r.color,\n               COALESCE(ARRAY(SELECT rg.group_id FROM resource_groups rg WHERE rg.resource_id = r.id ORDER BY rg.group_id), '{}') AS \"reservable_group_ids!\",\n               ($1 OR NOT r.reservation_restricted OR EXISTS (\n                   SELECT 1 FROM resource_groups rg WHERE rg.resource_id = r.id AND rg.group_id = $2\n               )) AS \"can_reserve!\",\n               r.created_at, r.updated_at, r.deleted_at\n        FROM resources r\n        WHERE r.id = $3\n          AND r.deleted_at IS NULL\n          AND ($1 = TRUE OR r.is_public = TRUE)\n        ",
+  "query": "\n        SELECT r.id, r.collection_id, r.name, r.description, r.allow_recurring, r.blocks_only, r.reservable_until, r.is_public,\n               r.reservation_restricted, r.color,\n               CASE WHEN $1 THEN r.outlook_email END AS outlook_email,\n               COALESCE(ARRAY(SELECT rg.group_id FROM resource_groups rg WHERE rg.resource_id = r.id ORDER BY rg.group_id), '{}') AS \"reservable_group_ids!\",\n               ($1 OR NOT r.reservation_restricted OR EXISTS (\n                   SELECT 1 FROM resource_groups rg WHERE rg.resource_id = r.id AND rg.group_id = $2\n               )) AS \"can_reserve!\",\n               r.created_at, r.updated_at, r.deleted_at\n        FROM resources r\n        WHERE r.id = $3\n          AND r.deleted_at IS NULL\n          AND ($1 = TRUE OR r.is_public = TRUE)\n        ",
   "describe": {
     "columns": [
       {
@@ -115,18 +115,24 @@
       },
       {
         "ordinal": 10,
+        "name": "outlook_email",
+        "type_info": "Text",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 11,
         "name": "reservable_group_ids!",
         "type_info": "UuidArray",
         "origin": "Expression"
       },
       {
-        "ordinal": 11,
+        "ordinal": 12,
         "name": "can_reserve!",
         "type_info": "Bool",
         "origin": "Expression"
       },
       {
-        "ordinal": 12,
+        "ordinal": 13,
         "name": "created_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -137,7 +143,7 @@
         }
       },
       {
-        "ordinal": 13,
+        "ordinal": 14,
         "name": "updated_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -148,7 +154,7 @@
         }
       },
       {
-        "ordinal": 14,
+        "ordinal": 15,
         "name": "deleted_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -179,10 +185,11 @@
       true,
       null,
       null,
+      null,
       false,
       false,
       true
     ]
   },
-  "hash": "69e0cc6e43c2c0918e5acb3645e20366b020ee1b579ebbba1a454f1ce36a9f67"
+  "hash": "50c76375aed954f0049ea534c44d9e6892ebdcb5178904d98cde3ab22379f1af"
 }

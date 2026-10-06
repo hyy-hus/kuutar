@@ -44,6 +44,9 @@ pub struct Reservation {
     pub rrule: Option<String>,
     pub status: ReservationStatus,
 
+    /// `kuutar`, or `outlook` for events imported from Outlook (edited there, read-only here)
+    pub source: String,
+
     pub contract_id: Option<Uuid>,
     pub contract_printed_at: Option<DateTime<Utc>>,
 

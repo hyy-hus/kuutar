@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        SELECT \n            r.id, \n            r.user_id,\n            u.name AS \"user_name?\",\n            u.email AS \"user_email?\",\n            r.title, \n            r.description, \n            r.admin_notes,\n            r.contact_person, \n            r.contact_email, \n            r.contact_phone,\n            r.rrule, \n            r.status AS \"status: ReservationStatus\",\n            r.contract_id, \n            r.contract_printed_at,\n            r.created_at, \n            r.updated_at\n        FROM reservations r\n        LEFT JOIN users u ON u.id = r.user_id\n        WHERE r.id = $1 AND r.deleted_at IS NULL\n        ",
+  "query": "\n        SELECT \n            r.id, \n            r.user_id,\n            u.name AS \"user_name?\",\n            u.email AS \"user_email?\",\n            r.title, \n            r.description, \n            r.admin_notes,\n            r.contact_person, \n            r.contact_email, \n            r.contact_phone,\n            r.rrule, \n            r.status AS \"status: ReservationStatus\",\n            r.source,\n            r.contract_id, \n            r.contract_printed_at,\n            r.created_at, \n            r.updated_at\n        FROM reservations r\n        LEFT JOIN users u ON u.id = r.user_id\n        WHERE r.id = $1 AND r.deleted_at IS NULL\n        ",
   "describe": {
     "columns": [
       {
@@ -148,6 +148,17 @@
       },
       {
         "ordinal": 12,
+        "name": "source",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "reservations",
+            "name": "source"
+          }
+        }
+      },
+      {
+        "ordinal": 13,
         "name": "contract_id",
         "type_info": "Uuid",
         "origin": {
@@ -158,7 +169,7 @@
         }
       },
       {
-        "ordinal": 13,
+        "ordinal": 14,
         "name": "contract_printed_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -169,7 +180,7 @@
         }
       },
       {
-        "ordinal": 14,
+        "ordinal": 15,
         "name": "created_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -180,7 +191,7 @@
         }
       },
       {
-        "ordinal": 15,
+        "ordinal": 16,
         "name": "updated_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -209,11 +220,12 @@
       true,
       true,
       false,
+      false,
       true,
       true,
       false,
       false
     ]
   },
-  "hash": "276306fa338285d442bb4d3d8ae4a9fb679517551a3ec31f56caec78a78f7b81"
+  "hash": "34525b1f8887590c9d6158a77af9a83fc7363a08894bb093fb312935ac554f2a"
 }

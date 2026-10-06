@@ -1,0 +1,21 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                UPDATE reservations\n                SET user_id = $1, title = $2, description = $3,\n                    contact_person = $4, contact_email = $5, rrule = $6,\n                    status = 'confirmed', ical_sequence = $7, updated_at = NOW()\n                WHERE id = $8\n                ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Text",
+        "Text",
+        "Varchar",
+        "Varchar",
+        "Text",
+        "Int4",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "b9df15a40fa2d3e173af262190785b951c4db43f76bc6128cef155d3b7437fc8"
+}

@@ -1,0 +1,35 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                INSERT INTO reservations (\n                    user_id, title, description, contact_person, contact_email, rrule,\n                    status, source, ical_uid, ical_sequence\n                )\n                VALUES ($1, $2, $3, $4, $5, $6, 'confirmed', 'outlook', $7, $8)\n                RETURNING id\n                ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "reservations",
+            "name": "id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Text",
+        "Text",
+        "Varchar",
+        "Varchar",
+        "Text",
+        "Text",
+        "Int4"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "c32a3e55a383d06ed350f3b23485c9f8abfcc36525d9ba4cf9bb33b3d1194b01"
+}

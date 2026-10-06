@@ -1,0 +1,21 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        INSERT INTO outlook_sync_log (\n            graph_message_id, received_at, subject, ical_uid, result, detail,\n            reservation_id, attempts\n        )\n        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)\n        ON CONFLICT (graph_message_id) DO UPDATE\n        SET ical_uid = EXCLUDED.ical_uid, result = EXCLUDED.result, detail = EXCLUDED.detail,\n            reservation_id = EXCLUDED.reservation_id, attempts = EXCLUDED.attempts,\n            updated_at = NOW()\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Timestamptz",
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        "Uuid",
+        "Int4"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "40c55c29899016f4a3dc429368306805774b46d3b9f424223ca3dfe565407711"
+}

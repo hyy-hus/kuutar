@@ -10,8 +10,8 @@ use axum::{Json, Router, response::IntoResponse, routing::get};
 use config::Config;
 use domains::{
     auth::{self, AuthState},
-    collections, contracts, email_templates, groups, reservable_blocks, reservations, resources,
-    restrictions, stats,
+    collections, contracts, email_templates, groups, outlook_sync, reservable_blocks, reservations,
+    resources, restrictions, stats,
 };
 use openapi::ApiDoc;
 use serde::Serialize;
@@ -63,6 +63,7 @@ pub fn app(pool: PgPool, config: Config) -> Router {
             "/reservable-blocks",
             reservable_blocks::router(auth_state.clone()),
         )
+        .nest("/outlook-sync", outlook_sync::router(auth_state.clone()))
         .nest("/stats", stats::router(auth_state))
         .layer(cors)
 }

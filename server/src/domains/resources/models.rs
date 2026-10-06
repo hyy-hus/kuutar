@@ -28,6 +28,9 @@ pub struct Resource {
     pub can_reserve: bool,
     /// Palette key (see `RESOURCE_COLORS`) for the resource's calendar events
     pub color: Option<String>,
+    /// Outlook room/equipment mailbox of the resource (admins only)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub outlook_email: Option<String>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 
@@ -73,6 +76,10 @@ pub struct CreateResource {
     pub color: Option<String>,
 
     pub contract_ids: Option<Vec<Uuid>>,
+
+    /// Outlook room/equipment mailbox whose invites are shown as reservations of this resource
+    #[validate(custom(function = "validate_outlook_email"))]
+    pub outlook_email: Option<String>,
 }
 
 /// Calendar color keys; must match the CHECK constraint on `resources.color`
@@ -85,6 +92,15 @@ fn validate_color(color: &str) -> Result<(), validator::ValidationError> {
         Ok(())
     } else {
         Err(validator::ValidationError::new("invalid_color"))
+    }
+}
+
+fn validate_outlook_email(email: &str) -> Result<(), validator::ValidationError> {
+    let email = email.trim();
+    if email.is_empty() || (email.contains('@') && !email.contains(char::is_whitespace)) {
+        Ok(())
+    } else {
+        Err(validator::ValidationError::new("invalid_email"))
     }
 }
 
@@ -126,6 +142,10 @@ pub struct UpdateResource {
     pub color: Option<String>,
 
     pub contract_ids: Option<Vec<Uuid>>,
+
+    /// Outlook mailbox; an empty string clears it
+    #[validate(custom(function = "validate_outlook_email"))]
+    pub outlook_email: Option<String>,
 }
 
 #[cfg(test)]

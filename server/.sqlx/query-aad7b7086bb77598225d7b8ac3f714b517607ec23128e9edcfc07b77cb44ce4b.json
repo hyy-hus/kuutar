@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        INSERT INTO resources (collection_id, name, description, allow_recurring, reservable_until, is_public, blocks_only, reservation_restricted, color)\n        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)\n        RETURNING id\n        ",
+  "query": "\n        INSERT INTO resources (collection_id, name, description, allow_recurring, reservable_until, is_public, blocks_only, reservation_restricted, color, outlook_email)\n        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NULLIF(LOWER(TRIM($10)), ''))\n        RETURNING id\n        ",
   "describe": {
     "columns": [
       {
@@ -25,6 +25,7 @@
         "Bool",
         "Bool",
         "Bool",
+        "Text",
         "Text"
       ]
     },
@@ -32,5 +33,5 @@
       false
     ]
   },
-  "hash": "eee2203fbe32e1b2193f8e12ef93845a431b93ee626ad5987710687bdf51fb30"
+  "hash": "aad7b7086bb77598225d7b8ac3f714b517607ec23128e9edcfc07b77cb44ce4b"
 }
