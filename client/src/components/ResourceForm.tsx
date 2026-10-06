@@ -31,6 +31,9 @@ export interface ResourceFormValues
 	outlook_email?: string | null;
 	reservation_restricted?: boolean;
 	group_ids?: string[];
+	default_duration_minutes?: number | null;
+	min_duration_minutes?: number | null;
+	max_duration_minutes?: number | null;
 	auto_confirm?: boolean;
 	auto_confirm_group_ids?: string[];
 	contract_ids?: string[];
@@ -76,6 +79,9 @@ export function ResourceForm({
 			is_public: defaultValues?.is_public ?? true,
 			reservation_restricted: defaultValues?.reservation_restricted ?? false,
 			group_ids: defaultValues?.group_ids ?? [],
+			default_duration_minutes: defaultValues?.default_duration_minutes ?? null,
+			min_duration_minutes: defaultValues?.min_duration_minutes ?? null,
+			max_duration_minutes: defaultValues?.max_duration_minutes ?? null,
 			auto_confirm: defaultValues?.auto_confirm ?? false,
 			auto_confirm_group_ids: defaultValues?.auto_confirm_group_ids ?? [],
 			color: defaultValues?.color ?? "",
@@ -458,6 +464,103 @@ export function ResourceForm({
 						</div>
 					)}
 				</form.Field>
+
+				{/* Booking durations (minutes) */}
+				<fieldset className="p-3 bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-md space-y-2">
+					<legend className="px-1 text-xs font-medium text-stone-800 dark:text-stone-200">
+						{t("varauksenKesto", "Varauksen kesto")}
+					</legend>
+					<div className="grid grid-cols-3 gap-2">
+						{(
+							[
+								["default_duration_minutes", t("oletuskesto", "Oletus (min)")],
+								[
+									"min_duration_minutes",
+									t("vahimmaiskesto", "Vähintään (min)"),
+								],
+								["max_duration_minutes", t("enimmaiskesto", "Enintään (min)")],
+							] as const
+						).map(([name, label]) => (
+							<form.Field
+								key={name}
+								name={name}
+								validators={{
+									onChangeListenTo: [
+										"default_duration_minutes",
+										"min_duration_minutes",
+										"max_duration_minutes",
+									],
+									onChange: ({ fieldApi }) => {
+										const get = (n: typeof name) =>
+											fieldApi.form.getFieldValue(n) ?? null;
+										const def = get("default_duration_minutes");
+										const min = get("min_duration_minutes");
+										const max = get("max_duration_minutes");
+										if (
+											name === "min_duration_minutes" &&
+											min &&
+											max &&
+											min > max
+										)
+											return t(
+												"vahimmaiskestoLiianSuuri",
+												"Vähintään ei voi ylittää enimmäiskestoa.",
+											);
+										if (name === "default_duration_minutes" && def) {
+											if (min && def < min)
+												return t(
+													"oletuskestoAlleMinimin",
+													"Oletus on vähimmäiskestoa lyhyempi.",
+												);
+											if (max && def > max)
+												return t(
+													"oletuskestoYliMaksimin",
+													"Oletus on enimmäiskestoa pidempi.",
+												);
+										}
+										return undefined;
+									},
+								}}
+							>
+								{(field) => (
+									<div className="space-y-1">
+										<label
+											htmlFor={field.name}
+											className="text-xs font-medium text-stone-700 dark:text-stone-300"
+										>
+											{label}
+										</label>
+										<Input
+											id={field.name}
+											type="number"
+											min={1}
+											step={1}
+											value={field.state.value ?? ""}
+											onChange={(e) =>
+												field.handleChange(
+													e.target.value ? Number(e.target.value) : null,
+												)
+											}
+											onBlur={field.handleBlur}
+											isError={Boolean(field.state.meta.errors.length)}
+										/>
+										{field.state.meta.errors.length > 0 && (
+											<p className="text-[11px] text-red-500">
+												{field.state.meta.errors.join(", ")}
+											</p>
+										)}
+									</div>
+								)}
+							</form.Field>
+						))}
+					</div>
+					<p className="text-[11px] text-stone-500 dark:text-stone-400">
+						{t(
+							"varauksenKestoOhje",
+							"Oletus esitäyttää päättymisajan. Vähimmäis- ja enimmäiskesto koskevat muita kuin ylläpitäjiä. Jätä tyhjäksi, jos rajaa ei ole.",
+						)}
+					</p>
+				</fieldset>
 
 				{/* Auto-confirm Toggle + optional group limit */}
 				<form.Field name="auto_confirm">

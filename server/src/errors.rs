@@ -74,6 +74,17 @@ impl From<sqlx::Error> for AppError {
                         AppError::BadRequest(message.to_string())
                     }
 
+                    // HTTP 400 Bad Request - Check Constraint Violations
+                    Some("23514") => {
+                        let message = match db_err.constraint() {
+                            Some("resources_duration_order") => {
+                                "Kestojen on oltava järjestyksessä: vähimmäis ≤ oletus ≤ enimmäiskesto."
+                            }
+                            _ => "Invalid value.",
+                        };
+                        AppError::BadRequest(message.to_string())
+                    }
+
                     _ => AppError::Database(err),
                 }
             }

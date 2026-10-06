@@ -785,6 +785,8 @@ export interface components {
             collection_id: string;
             color?: string | null;
             contract_ids?: string[] | null;
+            /** Format: int32 */
+            default_duration_minutes?: number | null;
             /** @description Localized Tiptap documents, e.g. {"fi": {"type": "doc", ...}} */
             description?: {
                 [key: string]: unknown;
@@ -792,6 +794,10 @@ export interface components {
             /** @description Groups allowed to reserve the resource when `reservation_restricted` is set */
             group_ids?: string[] | null;
             is_public?: boolean;
+            /** Format: int32 */
+            max_duration_minutes?: number | null;
+            /** Format: int32 */
+            min_duration_minutes?: number | null;
             name: string;
             /** @description Outlook room/equipment mailbox whose invites are shown as reservations of this resource */
             outlook_email?: string | null;
@@ -1074,6 +1080,11 @@ export interface components {
             color?: string | null;
             /** Format: date-time */
             created_at: string;
+            /**
+             * Format: int32
+             * @description Pre-filled booking length in minutes when a slot is picked
+             */
+            default_duration_minutes?: number | null;
             /** Format: date-time */
             deleted_at?: string | null;
             /** @description Localized Tiptap documents, e.g. {"fi": {"type": "doc", ...}} */
@@ -1083,6 +1094,16 @@ export interface components {
             /** Format: uuid */
             id: string;
             is_public: boolean;
+            /**
+             * Format: int32
+             * @description Longest booking length in minutes (not enforced for admins)
+             */
+            max_duration_minutes?: number | null;
+            /**
+             * Format: int32
+             * @description Shortest booking length in minutes (not enforced for admins)
+             */
+            min_duration_minutes?: number | null;
             name: string;
             /** @description Outlook room/equipment mailbox of the resource (admins only) */
             outlook_email?: string | null;
@@ -1262,6 +1283,11 @@ export interface components {
             /** @description Palette key; an empty string clears the color */
             color?: string | null;
             contract_ids?: string[] | null;
+            /**
+             * Format: int32
+             * @description Minutes; 0 clears the setting
+             */
+            default_duration_minutes?: number | null;
             /** @description Localized Tiptap documents, e.g. {"fi": {"type": "doc", ...}} */
             description?: {
                 [key: string]: unknown;
@@ -1269,6 +1295,16 @@ export interface components {
             /** @description Replaces the set of groups allowed to reserve the resource */
             group_ids?: string[] | null;
             is_public?: boolean | null;
+            /**
+             * Format: int32
+             * @description Minutes; 0 clears the setting
+             */
+            max_duration_minutes?: number | null;
+            /**
+             * Format: int32
+             * @description Minutes; 0 clears the setting
+             */
+            min_duration_minutes?: number | null;
             name?: string | null;
             /** @description Outlook mailbox; an empty string clears it */
             outlook_email?: string | null;

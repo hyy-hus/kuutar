@@ -271,6 +271,7 @@ pub async fn create_reservation(
     validate_recurring_permission(&auth_state.pool, &payload, auth_user.role).await?;
 
     // 2. Validate occurrences against resource's reservable_until date boundary
+    db::validate_resource_durations(&auth_state.pool, is_admin, &payload.occurrences).await?;
     db::validate_resource_reservable_until(&auth_state.pool, is_admin, &payload.occurrences)
         .await?;
 
@@ -457,6 +458,7 @@ pub async fn update_reservation(
 
     // Validate new occurrences against reservable_until boundary and time restrictions
     if let Some(ref new_occurrences) = payload.occurrences {
+        db::validate_resource_durations(&auth_state.pool, is_admin, new_occurrences).await?;
         db::validate_resource_reservable_until(&auth_state.pool, is_admin, new_occurrences).await?;
 
         // Only resources newly added to the reservation need group access

@@ -1,0 +1,52 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT name, min_duration_minutes, max_duration_minutes\n            FROM resources\n            WHERE id = $1 AND deleted_at IS NULL\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "name",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "resources",
+            "name": "name"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "min_duration_minutes",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "resources",
+            "name": "min_duration_minutes"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "max_duration_minutes",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "resources",
+            "name": "max_duration_minutes"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      true,
+      true
+    ]
+  },
+  "hash": "33e4aabd9550ebc3e6f6a0ec24d6dd43febff3da958a4f5b29103dd76cf70f25"
+}

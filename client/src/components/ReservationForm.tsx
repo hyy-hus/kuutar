@@ -41,6 +41,12 @@ import {
 	parseLocalDate,
 	useDateFormatter,
 } from "#/utils/date";
+import {
+	addMinutes,
+	checkDuration,
+	formatMinutes,
+	resolveDefaultDuration,
+} from "#/utils/duration";
 import { generateOccurrences, parseRRule } from "#/utils/rruleUtils";
 
 /** How far ahead a user can browse reservable blocks in the form */
@@ -631,6 +637,25 @@ export function ReservationForm({
 																: [...field.state.value, res.id];
 														field.handleChange(nextValue);
 														setContractsApproved(false);
+														// Pre-fill the end time from the resources' default duration
+														// until the user has set one themselves
+														const start = form.getFieldValue("start_time");
+														const defaultMinutes = resolveDefaultDuration(
+															(resources ?? []).filter((r) =>
+																nextValue.includes(r.id),
+															),
+														);
+														if (
+															isCreate &&
+															start &&
+															defaultMinutes &&
+															!form.getFieldMeta("end_time")?.isTouched
+														) {
+															form.setFieldValue(
+																"end_time",
+																addMinutes(start, defaultMinutes),
+															);
+														}
 													}}
 													className={`px-3 py-1.5 text-xs font-medium rounded-md border transition-colors flex items-center gap-1.5 ${
 														isChecked
@@ -765,6 +790,34 @@ export function ReservationForm({
 											fieldApi.form.getFieldValue("resource_ids") || [];
 										for (const rId of selectedResourceIds) {
 											const res = resources?.find((r) => r.id === rId);
+											// Admins may go outside the duration limits
+											if (res && startTime && !isAdmin) {
+												const minutes =
+													(new Date(value).getTime() -
+														new Date(startTime).getTime()) /
+													60000;
+												const broken = checkDuration(minutes, res);
+												if (broken === "min" && res.min_duration_minutes) {
+													return t(
+														"resurssinVahimmaiskesto",
+														"Resurssin '{{name}}' varauksen vähimmäiskesto on {{duration}}.",
+														{
+															name: res.name,
+															duration: formatMinutes(res.min_duration_minutes),
+														},
+													);
+												}
+												if (broken === "max" && res.max_duration_minutes) {
+													return t(
+														"resurssinEnimmaiskesto",
+														"Resurssin '{{name}}' varauksen enimmäiskesto on {{duration}}.",
+														{
+															name: res.name,
+															duration: formatMinutes(res.max_duration_minutes),
+														},
+													);
+												}
+											}
 											if (res?.reservable_until) {
 												const limit = new Date(res.reservable_until).getTime();
 												if (new Date(value).getTime() > limit) {
