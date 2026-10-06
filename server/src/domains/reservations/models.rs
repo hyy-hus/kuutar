@@ -50,6 +50,10 @@ pub struct Reservation {
     pub contract_id: Option<Uuid>,
     pub contract_printed_at: Option<DateTime<Utc>>,
 
+    pub cancelled_at: Option<DateTime<Utc>>,
+    pub cancelled_by: Option<Uuid>,
+    pub cancel_reason: Option<String>,
+
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -130,6 +134,13 @@ pub struct UpdateReservationPayload {
 
     #[validate(nested)]
     pub occurrences: Option<Vec<CreateOccurrencePayload>>,
+}
+
+#[derive(Debug, Default, Deserialize, Validate, ToSchema)]
+pub struct CancelReservationPayload {
+    /// Optional explanation, included in the cancellation email
+    #[validate(length(max = 500))]
+    pub reason: Option<String>,
 }
 
 #[derive(Debug, Deserialize, utoipa::IntoParams)]

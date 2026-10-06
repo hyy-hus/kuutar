@@ -86,6 +86,7 @@ impl Modify for SecurityAddon {
         reservations::routes::batch_import_reservations,
         reservations::routes::update_reservation,
         reservations::routes::delete_reservation,
+        reservations::routes::cancel_reservation,
 
         // Restrictions
         restrictions::routes::list_restrictions,
@@ -149,6 +150,7 @@ impl Modify for SecurityAddon {
             reservations::models::Reservation,
             reservations::models::Occurrence,
             reservations::models::ReservationStatus,
+            reservations::models::CancelReservationPayload,
             reservations::models::ReservationWithOccurrences,
             reservations::models::CreateReservationPayload,
             reservations::models::CreateOccurrencePayload,

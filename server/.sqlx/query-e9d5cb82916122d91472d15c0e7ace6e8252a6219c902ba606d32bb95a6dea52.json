@@ -1,0 +1,35 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        UPDATE reservations\n        SET \n            title = COALESCE($1, title),\n            description = COALESCE($2, description),\n            admin_notes = COALESCE($3, admin_notes),\n            contact_person = COALESCE($4, contact_person),\n            contact_email = COALESCE($5, contact_email),\n            contact_phone = COALESCE($6, contact_phone),\n            rrule = COALESCE($7, rrule),\n            status = COALESCE($8, status),\n            cancelled_at = CASE WHEN $8 IS NOT NULL AND $8 <> 'cancelled'::reservation_status THEN NULL ELSE cancelled_at END,\n            cancelled_by = CASE WHEN $8 IS NOT NULL AND $8 <> 'cancelled'::reservation_status THEN NULL ELSE cancelled_by END,\n            cancel_reason = CASE WHEN $8 IS NOT NULL AND $8 <> 'cancelled'::reservation_status THEN NULL ELSE cancel_reason END,\n            contract_id = COALESCE($9, contract_id),\n            contract_printed_at = CASE \n                WHEN $10 = TRUE THEN NOW() \n                WHEN $10 = FALSE THEN NULL\n                ELSE contract_printed_at \n            END,\n            updated_at = NOW()\n        WHERE id = $11 AND deleted_at IS NULL\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text",
+        "Text",
+        "Varchar",
+        "Varchar",
+        "Varchar",
+        "Text",
+        {
+          "Custom": {
+            "name": "reservation_status",
+            "kind": {
+              "Enum": [
+                "pending",
+                "confirmed",
+                "cancelled"
+              ]
+            }
+          }
+        },
+        "Uuid",
+        "Bool",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "e9d5cb82916122d91472d15c0e7ace6e8252a6219c902ba606d32bb95a6dea52"
+}

@@ -66,6 +66,9 @@ pub async fn list_filtered(
             r.source,
             r.contract_id, 
             r.contract_printed_at,
+            r.cancelled_at,
+            r.cancelled_by,
+            r.cancel_reason,
             r.created_at, 
             r.updated_at
         FROM reservations r
@@ -135,6 +138,9 @@ pub async fn find_by_id(
             r.source,
             r.contract_id, 
             r.contract_printed_at,
+            r.cancelled_at,
+            r.cancelled_by,
+            r.cancel_reason,
             r.created_at, 
             r.updated_at
         FROM reservations r
@@ -247,6 +253,9 @@ pub async fn update(
             contact_phone = COALESCE($6, contact_phone),
             rrule = COALESCE($7, rrule),
             status = COALESCE($8, status),
+            cancelled_at = CASE WHEN $8 IS NOT NULL AND $8 <> 'cancelled'::reservation_status THEN NULL ELSE cancelled_at END,
+            cancelled_by = CASE WHEN $8 IS NOT NULL AND $8 <> 'cancelled'::reservation_status THEN NULL ELSE cancelled_by END,
+            cancel_reason = CASE WHEN $8 IS NOT NULL AND $8 <> 'cancelled'::reservation_status THEN NULL ELSE cancel_reason END,
             contract_id = COALESCE($9, contract_id),
             contract_printed_at = CASE 
                 WHEN $10 = TRUE THEN NOW() 
@@ -297,6 +306,42 @@ pub async fn update(
     }
 
     tx.commit().await?;
+
+    find_by_id(pool, id, true).await
+}
+
+/// Marks a reservation as cancelled and records who did it and why.
+/// Returns `Conflict` if it is already cancelled.
+pub async fn cancel(
+    pool: &PgPool,
+    id: Uuid,
+    cancelled_by: Uuid,
+    reason: Option<String>,
+) -> Result<ReservationWithOccurrences, AppError> {
+    let reason = reason
+        .map(|r| r.trim().to_string())
+        .filter(|r| !r.is_empty());
+
+    let result = sqlx::query!(
+        r#"
+        UPDATE reservations
+        SET status = 'cancelled',
+            cancelled_at = NOW(),
+            cancelled_by = $2,
+            cancel_reason = $3,
+            updated_at = NOW()
+        WHERE id = $1 AND deleted_at IS NULL AND status <> 'cancelled'
+        "#,
+        id,
+        cancelled_by,
+        reason
+    )
+    .execute(pool)
+    .await?;
+
+    if result.rows_affected() == 0 {
+        return Err(AppError::Conflict("Varaus on jo peruttu.".to_string()));
+    }
 
     find_by_id(pool, id, true).await
 }

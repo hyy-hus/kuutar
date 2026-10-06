@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        SELECT \n            r.id, \n            r.user_id,\n            u.name AS \"user_name?\",\n            u.email AS \"user_email?\",\n            r.title, \n            r.description, \n            r.admin_notes,\n            r.contact_person, \n            r.contact_email, \n            r.contact_phone,\n            r.rrule, \n            r.status AS \"status: ReservationStatus\",\n            r.source,\n            r.contract_id, \n            r.contract_printed_at,\n            r.created_at, \n            r.updated_at\n        FROM reservations r\n        LEFT JOIN users u ON u.id = r.user_id\n        WHERE r.id = ANY($1) AND r.deleted_at IS NULL\n        ORDER BY r.created_at DESC\n        ",
+  "query": "\n        SELECT \n            r.id, \n            r.user_id,\n            u.name AS \"user_name?\",\n            u.email AS \"user_email?\",\n            r.title, \n            r.description, \n            r.admin_notes,\n            r.contact_person, \n            r.contact_email, \n            r.contact_phone,\n            r.rrule, \n            r.status AS \"status: ReservationStatus\",\n            r.source,\n            r.contract_id, \n            r.contract_printed_at,\n            r.cancelled_at,\n            r.cancelled_by,\n            r.cancel_reason,\n            r.created_at, \n            r.updated_at\n        FROM reservations r\n        LEFT JOIN users u ON u.id = r.user_id\n        WHERE r.id = ANY($1) AND r.deleted_at IS NULL\n        ORDER BY r.created_at DESC\n        ",
   "describe": {
     "columns": [
       {
@@ -181,6 +181,39 @@
       },
       {
         "ordinal": 15,
+        "name": "cancelled_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "reservations",
+            "name": "cancelled_at"
+          }
+        }
+      },
+      {
+        "ordinal": 16,
+        "name": "cancelled_by",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "reservations",
+            "name": "cancelled_by"
+          }
+        }
+      },
+      {
+        "ordinal": 17,
+        "name": "cancel_reason",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "reservations",
+            "name": "cancel_reason"
+          }
+        }
+      },
+      {
+        "ordinal": 18,
         "name": "created_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -191,7 +224,7 @@
         }
       },
       {
-        "ordinal": 16,
+        "ordinal": 19,
         "name": "updated_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -223,9 +256,12 @@
       false,
       true,
       true,
+      true,
+      true,
+      true,
       false,
       false
     ]
   },
-  "hash": "e612b6acb3b13832bf370939b3987cb0004e280e936a50e8be21bfd46e5ea055"
+  "hash": "cbf9f1297480d72ec58ae6ddd94df62f7e92043bbc659f2c66c62c207fd71e50"
 }

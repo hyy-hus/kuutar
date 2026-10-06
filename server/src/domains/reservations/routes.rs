@@ -10,9 +10,9 @@ use validator::Validate;
 use super::{
     db,
     models::{
-        CheckConflictsQuery, CreateOccurrencePayload, CreateReservationPayload,
-        ListReservationsQuery, Occurrence, ReservationStatus, ReservationWithOccurrences,
-        UpdateReservationPayload,
+        CancelReservationPayload, CheckConflictsQuery, CreateOccurrencePayload,
+        CreateReservationPayload, ListReservationsQuery, Occurrence, ReservationStatus,
+        ReservationWithOccurrences, UpdateReservationPayload,
     },
 };
 use crate::{
@@ -407,6 +407,14 @@ pub async fn update_reservation(
         }
     }
 
+    if payload.status == Some(ReservationStatus::Cancelled)
+        && existing.reservation.status != ReservationStatus::Cancelled
+    {
+        return Err(AppError::BadRequest(
+            "Käytä varauksen perumiseen POST /reservations/{id}/cancel.".to_string(),
+        ));
+    }
+
     if !is_admin {
         if existing.reservation.user_id != auth_user.id {
             return Err(AppError::Forbidden(
@@ -414,18 +422,15 @@ pub async fn update_reservation(
             ));
         }
 
-        let is_cancelling = payload.status == Some(ReservationStatus::Cancelled)
-            && payload.title.is_none()
-            && payload.description.is_none()
-            && payload.occurrences.is_none()
-            && payload.rrule.is_none();
-
-        if is_cancelling {
-            payload.status = Some(ReservationStatus::Cancelled);
-        } else {
-            payload.status = Some(ReservationStatus::Pending);
-            payload.mark_printed = Some(false);
+        // Cancelling has its own endpoint, and only admins can reopen a cancelled reservation
+        if existing.reservation.status == ReservationStatus::Cancelled {
+            return Err(AppError::Forbidden(
+                "Peruttua varausta voi muokata vain ylläpitäjä.".to_string(),
+            ));
         }
+
+        payload.status = Some(ReservationStatus::Pending);
+        payload.mark_printed = Some(false);
 
         // Non-admins cannot update admin notes (contact fields are theirs to edit)
         payload.admin_notes = None;
@@ -477,6 +482,63 @@ pub async fn update_reservation(
 }
 
 #[utoipa::path(
+    post,
+    path = "/reservations/{id}/cancel",
+    tag = "Reservations",
+    security(("bearer_auth" = [])),
+    params(
+        ("id" = Uuid, Path, description = "Reservation UUID")
+    ),
+    request_body = CancelReservationPayload,
+    responses(
+        (status = 200, description = "Reservation cancelled", body = ReservationWithOccurrences),
+        (status = 401, description = "Unauthorized"),
+        (status = 403, description = "Forbidden - Only the owner or an admin can cancel"),
+        (status = 404, description = "Reservation not found"),
+        (status = 409, description = "Already cancelled, or imported from Outlook")
+    )
+)]
+#[tracing::instrument(skip(auth_state, auth_user, payload))]
+pub async fn cancel_reservation(
+    State(auth_state): State<AuthState>,
+    Path(id): Path<Uuid>,
+    auth_user: AuthUser,
+    payload: Option<Json<CancelReservationPayload>>,
+) -> Result<Json<ReservationWithOccurrences>, AppError> {
+    let payload = payload.map(|Json(p)| p).unwrap_or_default();
+    payload.validate()?;
+
+    let is_admin = auth_user.role == Role::Admin;
+    let existing = db::find_by_id(&auth_state.pool, id, true).await?;
+
+    if existing.reservation.source == "outlook" {
+        return Err(AppError::Conflict(
+            "Tämä varaus tulee Outlookista. Peru se Outlookissa.".to_string(),
+        ));
+    }
+    if !is_admin && existing.reservation.user_id != auth_user.id {
+        return Err(AppError::Forbidden(
+            "Et voi perua toisen käyttäjän varausta.".to_string(),
+        ));
+    }
+
+    let reservation = db::cancel(&auth_state.pool, id, auth_user.id, payload.reason).await?;
+
+    notify::spawn_reservation_email(
+        &auth_state.pool,
+        &auth_state.config,
+        EmailTemplateKey::ReservationCancelled,
+        id,
+    );
+
+    Ok(Json(sanitize_reservation_for_role(
+        reservation,
+        is_admin,
+        Some(auth_user.id),
+    )))
+}
+
+#[utoipa::path(
     delete,
     path = "/reservations/{id}",
     tag = "Reservations",
@@ -487,25 +549,20 @@ pub async fn update_reservation(
     responses(
         (status = 204, description = "Reservation soft-deleted successfully"),
         (status = 401, description = "Unauthorized"),
-        (status = 403, description = "Forbidden - Only the owner or an admin can delete"),
+        (status = 403, description = "Forbidden - Admin access required"),
         (status = 404, description = "Reservation not found")
     )
 )]
-#[tracing::instrument(skip(auth_state, auth_user))]
+#[tracing::instrument(skip(auth_state, _admin))]
 pub async fn delete_reservation(
     State(auth_state): State<AuthState>,
     Path(id): Path<Uuid>,
-    auth_user: AuthUser,
+    _admin: RequireAdmin,
 ) -> Result<StatusCode, AppError> {
     let existing = db::find_by_id(&auth_state.pool, id, true).await?;
     if existing.reservation.source == "outlook" {
         return Err(AppError::Conflict(
             "Tämä varaus tulee Outlookista. Poista se Outlookissa.".to_string(),
-        ));
-    }
-    if auth_user.role != Role::Admin && existing.reservation.user_id != auth_user.id {
-        return Err(AppError::Forbidden(
-            "Et voi poistaa toisen käyttäjän varausta.".to_string(),
         ));
     }
 

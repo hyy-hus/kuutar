@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        UPDATE reservations\n        SET status = 'cancelled',\n            cancelled_at = NOW(),\n            cancelled_by = $2,\n            cancel_reason = $3,\n            updated_at = NOW()\n        WHERE id = $1 AND deleted_at IS NULL AND status <> 'cancelled'\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "dc96d87903d61914e7041e07f0817cdf5e7b95e90a6f62a920be79d74aa1955e"
+}
