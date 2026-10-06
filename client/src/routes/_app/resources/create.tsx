@@ -31,6 +31,8 @@ function CreateResourcePage() {
 			is_public: values.is_public ?? true,
 			reservation_restricted: values.reservation_restricted ?? false,
 			group_ids: values.group_ids,
+			auto_confirm: values.auto_confirm ?? false,
+			auto_confirm_group_ids: values.auto_confirm_group_ids,
 			color: values.color || undefined,
 			outlook_email: values.outlook_email || undefined,
 			reservable_until: values.reservable_until,

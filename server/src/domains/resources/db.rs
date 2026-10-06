@@ -15,9 +15,10 @@ pub async fn list_all(
         Resource,
         r#"
         SELECT r.id, r.collection_id, r.name, r.description, r.allow_recurring, r.blocks_only, r.reservable_until, r.is_public,
-               r.reservation_restricted, r.color,
+               r.reservation_restricted, r.auto_confirm, r.color,
                CASE WHEN $1 THEN r.outlook_email END AS outlook_email,
                COALESCE(ARRAY(SELECT rg.group_id FROM resource_groups rg WHERE rg.resource_id = r.id ORDER BY rg.group_id), '{}') AS "reservable_group_ids!",
+               COALESCE(ARRAY(SELECT ag.group_id FROM resource_auto_confirm_groups ag WHERE ag.resource_id = r.id ORDER BY ag.group_id), '{}') AS "auto_confirm_group_ids!",
                ($1 OR NOT r.reservation_restricted OR EXISTS (
                    SELECT 1 FROM resource_groups rg WHERE rg.resource_id = r.id AND rg.group_id = $2
                )) AS "can_reserve!",
@@ -47,9 +48,10 @@ pub async fn find_by_id(
         Resource,
         r#"
         SELECT r.id, r.collection_id, r.name, r.description, r.allow_recurring, r.blocks_only, r.reservable_until, r.is_public,
-               r.reservation_restricted, r.color,
+               r.reservation_restricted, r.auto_confirm, r.color,
                CASE WHEN $1 THEN r.outlook_email END AS outlook_email,
                COALESCE(ARRAY(SELECT rg.group_id FROM resource_groups rg WHERE rg.resource_id = r.id ORDER BY rg.group_id), '{}') AS "reservable_group_ids!",
+               COALESCE(ARRAY(SELECT ag.group_id FROM resource_auto_confirm_groups ag WHERE ag.resource_id = r.id ORDER BY ag.group_id), '{}') AS "auto_confirm_group_ids!",
                ($1 OR NOT r.reservation_restricted OR EXISTS (
                    SELECT 1 FROM resource_groups rg WHERE rg.resource_id = r.id AND rg.group_id = $2
                )) AS "can_reserve!",
@@ -66,6 +68,31 @@ pub async fn find_by_id(
     .fetch_optional(pool)
     .await?
     .ok_or(AppError::NotFound)
+}
+
+async fn replace_auto_confirm_groups(
+    tx: &mut sqlx::PgConnection,
+    resource_id: Uuid,
+    group_ids: &[Uuid],
+) -> Result<(), AppError> {
+    sqlx::query!(
+        "DELETE FROM resource_auto_confirm_groups WHERE resource_id = $1",
+        resource_id
+    )
+    .execute(&mut *tx)
+    .await?;
+
+    for group_id in group_ids {
+        sqlx::query!(
+            "INSERT INTO resource_auto_confirm_groups (resource_id, group_id) VALUES ($1, $2) ON CONFLICT DO NOTHING",
+            resource_id,
+            group_id
+        )
+        .execute(&mut *tx)
+        .await?;
+    }
+
+    Ok(())
 }
 
 async fn replace_groups(
@@ -98,8 +125,8 @@ pub async fn create(pool: &PgPool, dto: CreateResource) -> Result<Resource, AppE
 
     let id = sqlx::query_scalar!(
         r#"
-        INSERT INTO resources (collection_id, name, description, allow_recurring, reservable_until, is_public, blocks_only, reservation_restricted, color, outlook_email)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NULLIF(LOWER(TRIM($10)), ''))
+        INSERT INTO resources (collection_id, name, description, allow_recurring, reservable_until, is_public, blocks_only, reservation_restricted, auto_confirm, color, outlook_email)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NULLIF(LOWER(TRIM($11)), ''))
         RETURNING id
         "#,
         dto.collection_id,
@@ -110,6 +137,7 @@ pub async fn create(pool: &PgPool, dto: CreateResource) -> Result<Resource, AppE
         dto.is_public,
         dto.blocks_only,
         dto.reservation_restricted,
+        dto.auto_confirm,
         dto.color.filter(|c| !c.is_empty()),
         dto.outlook_email
     )
@@ -118,6 +146,10 @@ pub async fn create(pool: &PgPool, dto: CreateResource) -> Result<Resource, AppE
 
     if let Some(group_ids) = &dto.group_ids {
         replace_groups(&mut tx, id, group_ids).await?;
+    }
+
+    if let Some(group_ids) = &dto.auto_confirm_group_ids {
+        replace_auto_confirm_groups(&mut tx, id, group_ids).await?;
     }
 
     if let Some(contract_ids) = dto.contract_ids {
@@ -154,12 +186,13 @@ pub async fn update(pool: &PgPool, id: Uuid, dto: UpdateResource) -> Result<Reso
             description = COALESCE($5, description),
             blocks_only = COALESCE($6, blocks_only),
             reservation_restricted = COALESCE($7, reservation_restricted),
+            auto_confirm = COALESCE($8, auto_confirm),
             -- An empty string clears the color
-            color = CASE WHEN $8::text IS NULL THEN color ELSE NULLIF($8, '') END,
+            color = CASE WHEN $9::text IS NULL THEN color ELSE NULLIF($9, '') END,
             -- An empty string clears the mailbox
-            outlook_email = CASE WHEN $9::text IS NULL THEN outlook_email ELSE NULLIF(LOWER(TRIM($9)), '') END,
+            outlook_email = CASE WHEN $10::text IS NULL THEN outlook_email ELSE NULLIF(LOWER(TRIM($10)), '') END,
             updated_at = NOW()
-        WHERE id = $10 AND deleted_at IS NULL
+        WHERE id = $11 AND deleted_at IS NULL
         "#,
         dto.name,
         dto.allow_recurring,
@@ -168,6 +201,7 @@ pub async fn update(pool: &PgPool, id: Uuid, dto: UpdateResource) -> Result<Reso
         dto.description.map(rich_text::to_json),
         dto.blocks_only,
         dto.reservation_restricted,
+        dto.auto_confirm,
         dto.color,
         dto.outlook_email,
         id
@@ -181,6 +215,10 @@ pub async fn update(pool: &PgPool, id: Uuid, dto: UpdateResource) -> Result<Reso
 
     if let Some(group_ids) = &dto.group_ids {
         replace_groups(&mut tx, id, group_ids).await?;
+    }
+
+    if let Some(group_ids) = &dto.auto_confirm_group_ids {
+        replace_auto_confirm_groups(&mut tx, id, group_ids).await?;
     }
 
     if let Some(contract_ids) = dto.contract_ids {

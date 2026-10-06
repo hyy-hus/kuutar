@@ -777,6 +777,9 @@ export interface components {
         };
         CreateResource: {
             allow_recurring?: boolean;
+            auto_confirm?: boolean;
+            /** @description Groups auto-confirmed when `auto_confirm` is set; empty or omitted means every group */
+            auto_confirm_group_ids?: string[] | null;
             blocks_only?: boolean;
             /** Format: uuid */
             collection_id: string;
@@ -1057,6 +1060,10 @@ export interface components {
         };
         Resource: {
             allow_recurring: boolean;
+            /** @description When true, non-admin reservations of this resource are confirmed immediately */
+            auto_confirm: boolean;
+            /** @description Groups whose reservations are auto-confirmed; empty means every group */
+            auto_confirm_group_ids: string[];
             /** @description When true, non-admin users can only reserve whole reservable blocks */
             blocks_only: boolean;
             /** @description Whether the requesting user may reserve this resource (always true for admins) */
@@ -1248,6 +1255,9 @@ export interface components {
         };
         UpdateResource: {
             allow_recurring?: boolean | null;
+            auto_confirm?: boolean | null;
+            /** @description Replaces the set of auto-confirmed groups */
+            auto_confirm_group_ids?: string[] | null;
             blocks_only?: boolean | null;
             /** @description Palette key; an empty string clears the color */
             color?: string | null;

@@ -66,6 +66,8 @@ function EditResourcePage() {
 				is_public: values.is_public ?? false,
 				reservation_restricted: values.reservation_restricted,
 				group_ids: values.group_ids,
+				auto_confirm: values.auto_confirm,
+				auto_confirm_group_ids: values.auto_confirm_group_ids,
 				// An empty string clears the color
 				color: values.color ?? "",
 				// An empty string clears the mailbox
@@ -96,6 +98,8 @@ function EditResourcePage() {
 					is_public: resource.is_public,
 					reservation_restricted: resource.reservation_restricted,
 					group_ids: resource.reservable_group_ids,
+					auto_confirm: resource.auto_confirm,
+					auto_confirm_group_ids: resource.auto_confirm_group_ids,
 					color: resource.color,
 					outlook_email: resource.outlook_email,
 					reservable_until: resource.reservable_until,

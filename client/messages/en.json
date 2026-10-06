@@ -587,6 +587,8 @@
 	"eiVarattavissaOlevia": "Your group is not allowed to reserve any resources.",
 	"vari": "Calendar color",
 	"eiVaria": "No color",
+	"vahvistaAutomaattisesti": "Confirm reservations automatically",
+	"vahvistaAutomaattisestiOhje": "Reservations are confirmed immediately without admin approval. If you select groups, only their reservations are confirmed automatically; others wait for approval. No selection means all groups.",
 	"kuvake": "Icon",
 	"oletuskuvake": "Default",
 	"yleiskatsaus": "Overview",

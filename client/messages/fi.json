@@ -587,6 +587,8 @@
 	"eiVarattavissaOlevia": "Ryhmälläsi ei ole oikeutta varata yhtään resurssia.",
 	"vari": "Väri kalenterissa",
 	"eiVaria": "Ei väriä",
+	"vahvistaAutomaattisesti": "Vahvista varaukset automaattisesti",
+	"vahvistaAutomaattisestiOhje": "Varaukset vahvistuvat heti ilman ylläpitäjän hyväksyntää. Jos valitset ryhmiä, vain niiden varaukset vahvistuvat automaattisesti; muut jäävät odottamaan hyväksyntää. Tyhjä valinta tarkoittaa kaikkia ryhmiä.",
 	"kuvake": "Kuvake",
 	"oletuskuvake": "Oletus",
 	"yleiskatsaus": "Yleiskatsaus",

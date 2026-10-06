@@ -26,6 +26,10 @@ pub struct Resource {
     pub reservable_group_ids: Vec<Uuid>,
     /// Whether the requesting user may reserve this resource (always true for admins)
     pub can_reserve: bool,
+    /// When true, non-admin reservations of this resource are confirmed immediately
+    pub auto_confirm: bool,
+    /// Groups whose reservations are auto-confirmed; empty means every group
+    pub auto_confirm_group_ids: Vec<Uuid>,
     /// Palette key (see `RESOURCE_COLORS`) for the resource's calendar events
     pub color: Option<String>,
     /// Outlook room/equipment mailbox of the resource (admins only)
@@ -71,6 +75,12 @@ pub struct CreateResource {
 
     /// Groups allowed to reserve the resource when `reservation_restricted` is set
     pub group_ids: Option<Vec<Uuid>>,
+
+    #[serde(default)]
+    pub auto_confirm: bool,
+
+    /// Groups auto-confirmed when `auto_confirm` is set; empty or omitted means every group
+    pub auto_confirm_group_ids: Option<Vec<Uuid>>,
 
     #[validate(custom(function = "validate_color"))]
     pub color: Option<String>,
@@ -136,6 +146,11 @@ pub struct UpdateResource {
 
     /// Replaces the set of groups allowed to reserve the resource
     pub group_ids: Option<Vec<Uuid>>,
+
+    pub auto_confirm: Option<bool>,
+
+    /// Replaces the set of auto-confirmed groups
+    pub auto_confirm_group_ids: Option<Vec<Uuid>>,
 
     /// Palette key; an empty string clears the color
     #[validate(custom(function = "validate_color"))]
