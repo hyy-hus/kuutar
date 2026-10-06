@@ -534,7 +534,7 @@ export function ResourceForm({
 											id={field.name}
 											type="number"
 											min={1}
-											step={15}
+											step={1}
 											value={field.state.value ?? ""}
 											onChange={(e) =>
 												field.handleChange(
