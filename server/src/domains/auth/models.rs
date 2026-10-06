@@ -24,6 +24,19 @@ pub struct AuthTokens {
     pub expires_in: u64,    // Access token lifetime in seconds
 }
 
+/// An active login session (one per device/browser)
+#[derive(Debug, Serialize, ToSchema)]
+pub struct SessionInfo {
+    pub session_id: Uuid,
+    pub started_at: DateTime<Utc>,
+    pub last_active_at: DateTime<Utc>,
+    pub expires_at: DateTime<Utc>,
+    pub user_agent: Option<String>,
+    pub ip: Option<String>,
+    /// True for the session making this request (only known for the user's own list)
+    pub current: bool,
+}
+
 #[derive(Debug, Deserialize, Validate, ToSchema)]
 pub struct RegisterPayload {
     pub group_id: Uuid,

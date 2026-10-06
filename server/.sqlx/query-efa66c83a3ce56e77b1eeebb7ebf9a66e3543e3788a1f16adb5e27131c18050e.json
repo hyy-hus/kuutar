@@ -1,0 +1,12 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE refresh_tokens SET revoked_at = NOW() - INTERVAL '5 minutes' WHERE revoked_reason = 'rotated'",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": []
+  },
+  "hash": "efa66c83a3ce56e77b1eeebb7ebf9a66e3543e3788a1f16adb5e27131c18050e"
+}

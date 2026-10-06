@@ -88,7 +88,6 @@
 	"inlineFormAlignment": "Radjustering i formulär",
 	"inputs": "Inmatningar",
 	"invalidJsonFormat": "Ogiltigt JSON-format: {{message}}",
-	"istuntojenMitatointiEiKaytettavissa": "Återkallning av sessioner är inte tillgänglig ännu.",
 	"jaksonAlku": "Periodens början",
 	"jaksonPituus": "Periodens längd",
 	"jarjestelmatilanHakuEpaonnistui": "Det gick inte att hämta systemstatus.",
@@ -144,7 +143,6 @@
 	"kuvausValinnainen": "Beskrivning (valfri)",
 	"kyttj": "Användare",
 	"kyttjEiLytynyt": "Användaren hittades inte.",
-	"kyttjllEiOleNkyviAktiivisiaIstuntojaTaiBackendEiTueSessionhallintaaViel": "Användaren har inga synliga aktiva sessioner eller så stöder systemet inte sessionshantering ännu.",
 	"kyttjt": "Användare",
 	"ladataan": "Laddar...",
 	"ladataanHallintapaneelia": "Laddar kontrollpanelen...",
@@ -637,5 +635,14 @@
 	"vahvistaVarauksenPeruutus": "Vill du verkligen avboka bokningen {{title}}? Tiden frigörs och den som bokat meddelas.",
 	"peruutuksenSyy": "Orsak till avbokningen",
 	"eiPeruta": "Avboka inte",
-	"peruutuksenSyyValinnainen": "Orsak till avbokningen (valfritt)"
+	"peruutuksenSyyValinnainen": "Orsak till avbokningen (valfritt)",
+	"istunnonPaattaminenEpaonnistui": "Det gick inte att avsluta sessionen.",
+	"eiAktiivisiaIstuntoja": "Inga aktiva sessioner.",
+	"tuntematonLaite": "Okänd enhet",
+	"tamaLaite": "Den här enheten",
+	"viimeksiAktiivinen": "Senast aktiv",
+	"istuntoAlkoi": "Startade",
+	"paataIstunto": "Avsluta session",
+	"paata": "Avsluta",
+	"kirjauduUlosMuualta": "Logga ut från andra enheter"
 }

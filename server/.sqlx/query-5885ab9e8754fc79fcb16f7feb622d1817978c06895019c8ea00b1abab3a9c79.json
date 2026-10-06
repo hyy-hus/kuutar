@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        UPDATE refresh_tokens\n        SET revoked_at = NOW(), revoked_reason = 'reuse'\n        WHERE revoked_at IS NULL\n          AND session_id = (\n              SELECT session_id FROM refresh_tokens\n              WHERE token_hash = $1\n                AND revoked_reason = 'rotated'\n                AND revoked_at < NOW() - make_interval(secs => $2)\n          )\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Float8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "5885ab9e8754fc79fcb16f7feb622d1817978c06895019c8ea00b1abab3a9c79"
+}

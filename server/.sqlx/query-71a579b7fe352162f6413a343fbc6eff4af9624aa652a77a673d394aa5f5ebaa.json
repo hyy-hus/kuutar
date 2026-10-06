@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE refresh_tokens SET session_started_at = NOW() - INTERVAL '29 days 23 hours' WHERE user_id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "71a579b7fe352162f6413a343fbc6eff4af9624aa652a77a673d394aa5f5ebaa"
+}

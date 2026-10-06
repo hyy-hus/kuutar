@@ -1,4 +1,4 @@
-use chrono::{Duration, Utc};
+use chrono::{DateTime, Duration, Utc};
 use rand::RngExt;
 use sha2::{Digest, Sha256};
 use sqlx::PgPool;
@@ -58,24 +58,79 @@ pub async fn find_user_by_email(
     Ok(user)
 }
 
-/// Insert a new refresh token (hashed)
+/// Idle lifetime of a single refresh token
+const REFRESH_TOKEN_TTL_DAYS: i64 = 7;
+/// Absolute lifetime of a session, however often it is refreshed
+const SESSION_MAX_DAYS: i64 = 30;
+/// A rotated token replayed within this window is treated as a refresh race (e.g. two
+/// tabs sharing one stored token), not theft
+const REUSE_GRACE_SECONDS: i64 = 30;
+
+/// Where a session was started from, shown in session lists
+#[derive(Debug, Default, Clone)]
+pub struct SessionMeta {
+    pub user_agent: Option<String>,
+    pub ip: Option<String>,
+}
+
+/// The session a refresh token belongs to
+#[derive(Debug, Clone, Copy)]
+pub struct SessionRef {
+    pub id: Uuid,
+    pub started_at: DateTime<Utc>,
+}
+
+impl SessionRef {
+    pub fn new() -> Self {
+        Self {
+            id: Uuid::new_v4(),
+            started_at: Utc::now(),
+        }
+    }
+}
+
+impl Default for SessionRef {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+/// An active session as shown to the user or an admin
+#[derive(Debug)]
+pub struct ActiveSession {
+    pub session_id: Uuid,
+    pub started_at: DateTime<Utc>,
+    pub last_active_at: DateTime<Utc>,
+    pub expires_at: DateTime<Utc>,
+    pub user_agent: Option<String>,
+    pub ip: Option<String>,
+}
+
+/// Insert a new refresh token (hashed) belonging to `session`
 pub async fn create_refresh_token(
     pool: &PgPool,
     user_id: Uuid,
     raw_refresh_token: &str,
-    ttl_days: i64,
+    session: SessionRef,
+    meta: &SessionMeta,
 ) -> Result<(), AppError> {
     let token_hash = sha256_hash(raw_refresh_token);
-    let expires_at = Utc::now() + Duration::days(ttl_days);
+    // Sliding idle window, capped by the session's absolute lifetime
+    let expires_at = (Utc::now() + Duration::days(REFRESH_TOKEN_TTL_DAYS))
+        .min(session.started_at + Duration::days(SESSION_MAX_DAYS));
 
     sqlx::query!(
         r#"
-        INSERT INTO refresh_tokens (user_id, token_hash, expires_at)
-        VALUES ($1, $2, $3)
+        INSERT INTO refresh_tokens (user_id, token_hash, expires_at, session_id, session_started_at, user_agent, ip)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
         "#,
         user_id,
         token_hash,
-        expires_at
+        expires_at,
+        session.id,
+        session.started_at,
+        meta.user_agent,
+        meta.ip
     )
     .execute(pool)
     .await?;
@@ -83,71 +138,202 @@ pub async fn create_refresh_token(
     Ok(())
 }
 
-/// Verify an unrevoked and non-expired refresh token and retrieve user info
+/// Atomically consume a valid refresh token (rotation) and return its user and session.
+///
+/// A token that was already rotated and is replayed after the grace window means two
+/// parties hold the same chain, so the whole session is revoked.
 pub async fn verify_and_consume_refresh_token(
     pool: &PgPool,
     raw_refresh_token: &str,
-) -> Result<UserAuthInfo, AppError> {
+) -> Result<(UserAuthInfo, SessionRef, SessionMeta), AppError> {
     let token_hash = sha256_hash(raw_refresh_token);
 
-    // Fetch token + user
     let row = sqlx::query!(
         r#"
-        SELECT 
-            rt.id as token_id, 
-            u.id as user_id, 
-            u.group_id, 
-            u.email, 
-            u.password_hash, 
-            u.role AS "role: Role", 
-            rt.expires_at, 
-            rt.revoked_at
-        FROM refresh_tokens rt
-        JOIN users u ON u.id = rt.user_id
-        WHERE rt.token_hash = $1 AND u.deleted_at IS NULL
+        UPDATE refresh_tokens rt
+        SET revoked_at = NOW(), revoked_reason = 'rotated'
+        FROM users u
+        WHERE rt.token_hash = $1
+          AND rt.revoked_at IS NULL
+          AND rt.expires_at > NOW()
+          AND u.id = rt.user_id
+          AND u.deleted_at IS NULL
+        RETURNING
+            rt.session_id,
+            rt.session_started_at,
+            rt.user_agent,
+            rt.ip,
+            u.id AS user_id,
+            u.group_id,
+            u.email,
+            u.password_hash,
+            u.role AS "role: Role"
         "#,
         token_hash
     )
     .fetch_optional(pool)
     .await?;
 
-    let row = row.ok_or_else(|| AppError::Unauthorized("Invalid refresh token".to_string()))?;
-
-    if row.revoked_at.is_some() || row.expires_at < Utc::now() {
+    let Some(row) = row else {
+        revoke_session_on_reuse(pool, &token_hash).await?;
         return Err(AppError::Unauthorized(
-            "Refresh token expired or revoked".to_string(),
+            "Refresh token invalid, expired or revoked".to_string(),
         ));
-    }
+    };
 
-    // Revoke the used refresh token (Token Rotation pattern)
-    sqlx::query!(
-        "UPDATE refresh_tokens SET revoked_at = NOW() WHERE id = $1",
-        row.token_id
+    Ok((
+        UserAuthInfo {
+            id: row.user_id,
+            group_id: row.group_id,
+            email: row.email,
+            password_hash: row.password_hash,
+            role: row.role,
+        },
+        SessionRef {
+            id: row.session_id,
+            started_at: row.session_started_at,
+        },
+        SessionMeta {
+            user_agent: row.user_agent,
+            ip: row.ip,
+        },
+    ))
+}
+
+/// Revokes the whole session if `token_hash` is a long-rotated token being replayed
+async fn revoke_session_on_reuse(pool: &PgPool, token_hash: &str) -> Result<(), AppError> {
+    let result = sqlx::query!(
+        r#"
+        UPDATE refresh_tokens
+        SET revoked_at = NOW(), revoked_reason = 'reuse'
+        WHERE revoked_at IS NULL
+          AND session_id = (
+              SELECT session_id FROM refresh_tokens
+              WHERE token_hash = $1
+                AND revoked_reason = 'rotated'
+                AND revoked_at < NOW() - make_interval(secs => $2)
+          )
+        "#,
+        token_hash,
+        REUSE_GRACE_SECONDS as f64
     )
     .execute(pool)
     .await?;
 
-    Ok(UserAuthInfo {
-        id: row.user_id,
-        group_id: row.group_id,
-        email: row.email,
-        password_hash: row.password_hash,
-        role: row.role,
-    })
+    if result.rows_affected() > 0 {
+        tracing::warn!("Refresh token reuse detected; session revoked");
+    }
+    Ok(())
 }
 
-/// Revoke a specific refresh token (Logout)
+/// Revoke the session a refresh token belongs to (Logout)
 pub async fn revoke_refresh_token(pool: &PgPool, raw_refresh_token: &str) -> Result<(), AppError> {
     let token_hash = sha256_hash(raw_refresh_token);
 
     sqlx::query!(
-        "UPDATE refresh_tokens SET revoked_at = NOW() WHERE token_hash = $1",
+        r#"
+        UPDATE refresh_tokens
+        SET revoked_at = NOW(), revoked_reason = 'logout'
+        WHERE revoked_at IS NULL
+          AND session_id = (SELECT session_id FROM refresh_tokens WHERE token_hash = $1)
+        "#,
         token_hash
     )
     .execute(pool)
     .await?;
 
     Ok(())
+}
+
+/// Revoke one session of a user. Returns NotFound if it is not active.
+pub async fn revoke_session(
+    pool: &PgPool,
+    user_id: Uuid,
+    session_id: Uuid,
+    reason: &str,
+) -> Result<(), AppError> {
+    let result = sqlx::query!(
+        r#"
+        UPDATE refresh_tokens
+        SET revoked_at = NOW(), revoked_reason = $3
+        WHERE user_id = $1 AND session_id = $2 AND revoked_at IS NULL
+        "#,
+        user_id,
+        session_id,
+        reason
+    )
+    .execute(pool)
+    .await?;
+
+    if result.rows_affected() == 0 {
+        return Err(AppError::NotFound);
+    }
+    Ok(())
+}
+
+/// Revoke every active session of a user, optionally sparing one. Returns the number of
+/// tokens revoked.
+pub async fn revoke_all_sessions(
+    executor: impl sqlx::PgExecutor<'_>,
+    user_id: Uuid,
+    reason: &str,
+    except_session: Option<Uuid>,
+) -> Result<u64, AppError> {
+    let result = sqlx::query!(
+        r#"
+        UPDATE refresh_tokens
+        SET revoked_at = NOW(), revoked_reason = $2
+        WHERE user_id = $1
+          AND revoked_at IS NULL
+          AND ($3::uuid IS NULL OR session_id <> $3)
+        "#,
+        user_id,
+        reason,
+        except_session
+    )
+    .execute(executor)
+    .await?;
+
+    Ok(result.rows_affected())
+}
+
+/// Active (unrevoked, unexpired) sessions of a user, most recently active first
+pub async fn list_sessions(pool: &PgPool, user_id: Uuid) -> Result<Vec<ActiveSession>, AppError> {
+    let sessions = sqlx::query_as!(
+        ActiveSession,
+        r#"
+        SELECT
+            session_id,
+            session_started_at AS started_at,
+            created_at AS last_active_at,
+            expires_at,
+            user_agent,
+            ip
+        FROM refresh_tokens
+        WHERE user_id = $1 AND revoked_at IS NULL AND expires_at > NOW()
+        ORDER BY created_at DESC
+        "#,
+        user_id
+    )
+    .fetch_all(pool)
+    .await?;
+
+    Ok(sessions)
+}
+
+/// Delete tokens that expired or were revoked more than 30 days ago
+pub async fn purge_stale_tokens(pool: &PgPool) -> Result<u64, AppError> {
+    let result = sqlx::query!(
+        r#"
+        DELETE FROM refresh_tokens
+        WHERE expires_at < NOW() - INTERVAL '30 days'
+           OR revoked_at < NOW() - INTERVAL '30 days'
+        "#
+    )
+    .execute(pool)
+    .await?;
+
+    Ok(result.rows_affected())
 }
 
 /// Checks if an email has exceeded the maximum allowed failed attempts within the 5-minute lockout window.
@@ -273,7 +459,10 @@ pub async fn verify_and_consume_otp(
 
     let code_hash = sha256_hash(raw_code);
 
-    tracing::info!("[OTP VERIFY] Attempting verification for email: '{}'", email);
+    tracing::info!(
+        "[OTP VERIFY] Attempting verification for email: '{}'",
+        email
+    );
 
     let row = sqlx::query!(
         r#"
@@ -300,7 +489,8 @@ pub async fn verify_and_consume_otp(
                     email
                 );
                 return Err(AppError::TooManyRequests(
-                    "Liian monta virheellistä yritystä. Kirjautuminen on lukittu 5 minuutiksi.".to_string(),
+                    "Liian monta virheellistä yritystä. Kirjautuminen on lukittu 5 minuutiksi."
+                        .to_string(),
                 ));
             } else {
                 let remaining = 5 - fail_count;

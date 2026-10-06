@@ -4,7 +4,13 @@ import { useTranslation } from "react-i18next";
 import { BackLink } from "#/components/BackLink";
 import { Button } from "#/components/Button";
 import { Chip } from "#/components/Chip";
+import { SessionList } from "#/components/SessionList";
 import { useGroup } from "#/hooks/useGroups";
+import {
+	useRevokeAllUserSessions,
+	useRevokeUserSession,
+	useUserSessions,
+} from "#/hooks/useSessions";
 import { useDeleteUser, useUser } from "#/hooks/useUsers";
 import { requireAdminGuard } from "#/utils/authGuard";
 import { useDateFormatter } from "#/utils/date";
@@ -25,6 +31,9 @@ function ViewUserPage() {
 	const { data: user, isLoading, isError } = useUser(id);
 	const { data: group } = useGroup(user?.group_id ?? "");
 	const deleteUser = useDeleteUser();
+	const { data: sessions } = useUserSessions(id);
+	const revokeSession = useRevokeUserSession(id);
+	const revokeAllSessions = useRevokeAllUserSessions(id);
 
 	if (isLoading)
 		return (
@@ -53,7 +62,7 @@ function ViewUserPage() {
 		}
 	};
 
-	const handleRevokeSessions = async () => {
+	const handleRevokeAllSessions = async () => {
 		if (
 			confirm(
 				t(
@@ -62,12 +71,7 @@ function ViewUserPage() {
 				),
 			)
 		) {
-			alert(
-				t(
-					"istuntojenMitatointiEiKaytettavissa",
-					"Istuntojen mitätöinti ei ole vielä käytettävissä.",
-				),
-			);
+			await revokeAllSessions.mutateAsync();
 		}
 	};
 
@@ -117,16 +121,16 @@ function ViewUserPage() {
 					<KeyRound size={16} />
 					<span>{t("aktiivisetIstunnot", "Aktiiviset istunnot")}</span>
 				</div>
-				<p className="text-xs text-stone-500">
-					{t(
-						"kyttjllEiOleNkyviAktiivisiaIstuntojaTaiBackendEiTueSessionhallintaaViel",
-						"Käyttäjällä ei ole näkyviä aktiivisia istuntoja tai backend ei tue sessionhallintaa vielä.",
-					)}
-				</p>
+				<SessionList
+					sessions={sessions ?? []}
+					onRevoke={(sessionId) => revokeSession.mutate(sessionId)}
+					disabled={revokeSession.isPending}
+				/>
 				<Button
 					variant="outline"
 					size="sm"
-					onClick={handleRevokeSessions}
+					onClick={handleRevokeAllSessions}
+					disabled={revokeAllSessions.isPending || !sessions?.length}
 					className="w-full flex items-center justify-center gap-2 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-900"
 				>
 					<ShieldAlert size={16} />

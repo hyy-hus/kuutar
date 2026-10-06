@@ -13,9 +13,11 @@ use super::{
 use crate::{
     domains::{
         auth::{
-            AuthState,
+            AuthState, db as auth_db,
             extractor::{AuthUser, RequireAdmin},
+            models::SessionInfo,
             password,
+            routes::to_session_info,
         },
         email_templates::notify,
     },
@@ -132,6 +134,12 @@ pub async fn update_me(
         new_password_hash.as_deref(),
     )
     .await?;
+
+    // A password change ends every other session
+    if new_password_hash.is_some() {
+        auth_db::revoke_all_sessions(&state.pool, auth_user.id, "password", auth_user.session_id)
+            .await?;
+    }
     Ok(Json(user))
 }
 
@@ -161,6 +169,11 @@ pub async fn update_user(
     };
 
     let user = db::update_user(&state.pool, id, &payload, new_password_hash.as_deref()).await?;
+
+    // A password reset ends all of the user's sessions
+    if new_password_hash.is_some() {
+        auth_db::revoke_all_sessions(&state.pool, id, "password", None).await?;
+    }
     Ok(Json(user))
 }
 
@@ -196,5 +209,62 @@ pub async fn delete_user(
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, AppError> {
     db::delete_user(&state.pool, id).await?;
+    Ok(StatusCode::NO_CONTENT)
+}
+
+#[utoipa::path(
+    get,
+    path = "/users/{id}/sessions",
+    tag = "Users",
+    security(("bearer_auth" = [])),
+    params(("id" = Uuid, Path, description = "User ID")),
+    responses((status = 200, description = "Active sessions of the user", body = [SessionInfo]))
+)]
+pub async fn list_user_sessions(
+    State(state): State<AuthState>,
+    RequireAdmin(_admin): RequireAdmin,
+    Path(id): Path<Uuid>,
+) -> Result<Json<Vec<SessionInfo>>, AppError> {
+    let sessions = auth_db::list_sessions(&state.pool, id).await?;
+    Ok(Json(to_session_info(sessions, None)))
+}
+
+#[utoipa::path(
+    delete,
+    path = "/users/{id}/sessions",
+    tag = "Users",
+    security(("bearer_auth" = [])),
+    params(("id" = Uuid, Path, description = "User ID")),
+    responses((status = 204, description = "All sessions of the user ended"))
+)]
+pub async fn revoke_user_sessions(
+    State(state): State<AuthState>,
+    RequireAdmin(_admin): RequireAdmin,
+    Path(id): Path<Uuid>,
+) -> Result<StatusCode, AppError> {
+    auth_db::revoke_all_sessions(&state.pool, id, "admin", None).await?;
+    Ok(StatusCode::NO_CONTENT)
+}
+
+#[utoipa::path(
+    delete,
+    path = "/users/{id}/sessions/{session_id}",
+    tag = "Users",
+    security(("bearer_auth" = [])),
+    params(
+        ("id" = Uuid, Path, description = "User ID"),
+        ("session_id" = Uuid, Path, description = "Session ID")
+    ),
+    responses(
+        (status = 204, description = "Session ended"),
+        (status = 404, description = "Session not found")
+    )
+)]
+pub async fn revoke_user_session(
+    State(state): State<AuthState>,
+    RequireAdmin(_admin): RequireAdmin,
+    Path((id, session_id)): Path<(Uuid, Uuid)>,
+) -> Result<StatusCode, AppError> {
+    auth_db::revoke_session(&state.pool, id, session_id, "admin").await?;
     Ok(StatusCode::NO_CONTENT)
 }

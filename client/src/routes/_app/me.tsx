@@ -6,7 +6,13 @@ import { useTranslation } from "react-i18next";
 import { Button } from "#/components/Button";
 import { Input } from "#/components/Input";
 import { LanguageSelect } from "#/components/LanguageSelect";
+import { SessionList } from "#/components/SessionList";
 import { useAuth } from "#/hooks/useAuth";
+import {
+	useLogoutOtherSessions,
+	useMySessions,
+	useRevokeMySession,
+} from "#/hooks/useSessions";
 import { useUpdateMe } from "#/hooks/useUsers";
 import { requireAuthGuard } from "#/utils/authGuard";
 
@@ -26,6 +32,9 @@ function MePage() {
 	const { t } = useTranslation();
 	const { user } = useAuth();
 	const updateMe = useUpdateMe();
+	const { data: sessions } = useMySessions();
+	const revokeSession = useRevokeMySession();
+	const logoutOthers = useLogoutOtherSessions();
 	const [saved, setSaved] = useState(false);
 
 	const form = useForm({
@@ -306,6 +315,28 @@ function MePage() {
 					)}
 				</form.Subscribe>
 			</form>
+
+			<section className="space-y-2 pt-4 border-t border-stone-200 dark:border-stone-800">
+				<h2 className="text-sm font-bold text-stone-900 dark:text-stone-100">
+					{t("aktiivisetIstunnot", "Aktiiviset istunnot")}
+				</h2>
+				<SessionList
+					sessions={sessions ?? []}
+					onRevoke={(sessionId) => revokeSession.mutate(sessionId)}
+					disabled={revokeSession.isPending}
+				/>
+				{(sessions?.length ?? 0) > 1 && (
+					<Button
+						variant="outline"
+						size="sm"
+						className="w-full"
+						disabled={logoutOthers.isPending}
+						onClick={() => logoutOthers.mutate()}
+					>
+						{t("kirjauduUlosMuualta", "Kirjaudu ulos muilta laitteilta")}
+					</Button>
+				)}
+			</section>
 		</div>
 	);
 }

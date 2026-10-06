@@ -123,7 +123,7 @@ pub async fn delete_user(pool: &PgPool, id: Uuid) -> Result<(), AppError> {
     sqlx::query!(
         r#"
         UPDATE refresh_tokens
-        SET revoked_at = NOW()
+        SET revoked_at = NOW(), revoked_reason = 'user_deleted'
         WHERE user_id = $1 AND revoked_at IS NULL
         "#,
         id
