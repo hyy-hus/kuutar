@@ -587,6 +587,8 @@
 	"eiVarattavissaOlevia": "Your group is not allowed to reserve any resources.",
 	"vari": "Calendar color",
 	"eiVaria": "No color",
+	"kuvake": "Icon",
+	"oletuskuvake": "Default",
 	"yleiskatsaus": "Overview",
 	"tuntia": "Hours",
 	"kytettyjResursseja": "Resources in use",

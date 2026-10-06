@@ -1,12 +1,13 @@
 // src/routes/_app/collections/index.tsx
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Eye, Layers, Loader2, Plus } from "lucide-react";
+import { Eye, Loader2, Plus } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "#/components/Button";
 import { Chip } from "#/components/Chip";
 import { useIsAdmin } from "#/hooks/useAuth";
 import { type Collection, useCollections } from "#/hooks/useCollections";
 import { useResources } from "#/hooks/useResorces";
+import { getCollectionIcon } from "#/utils/collectionIcons";
 import { getLocalizedPlainText } from "#/utils/richText";
 import { readable_uuid } from "#/utils/uuid";
 
@@ -22,6 +23,7 @@ function CollectionCard({
 	resourceCount: number;
 }) {
 	const { t, i18n } = useTranslation();
+	const CollectionIcon = getCollectionIcon(collection.icon);
 	return (
 		<li className="p-3 border-2 border-stone-800 dark:border-stone-700 flex flex-col justify-between gap-3 rounded-md bg-stone-50 dark:bg-stone-900 shadow-xs hover:border-purple-600 dark:hover:border-purple-500 transition-colors min-w-0">
 			<div className="space-y-2 min-w-0">
@@ -35,7 +37,7 @@ function CollectionCard({
 
 				{/* Resource Count Badge */}
 				<div className="flex items-center gap-1.5 text-xs text-stone-500 dark:text-stone-400">
-					<Layers size={14} className="shrink-0" />
+					<CollectionIcon size={14} className="shrink-0" />
 					<span>
 						{t("resourcecountResurssia", "{{resourceCount}} resurssia", {
 							resourceCount,

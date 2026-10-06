@@ -683,6 +683,8 @@ export interface components {
             description?: {
                 [key: string]: unknown;
             } | null;
+            /** @description Icon key (see `COLLECTION_ICONS`) */
+            icon?: string | null;
             /** Format: uuid */
             id: string;
             name: string;
@@ -711,6 +713,8 @@ export interface components {
             description?: {
                 [key: string]: unknown;
             } | null;
+            /** @description Icon key (see `COLLECTION_ICONS`) */
+            icon?: string | null;
             name: string;
         };
         CreateContract: {
@@ -1195,6 +1199,8 @@ export interface components {
             description?: {
                 [key: string]: unknown;
             } | null;
+            /** @description Icon key; an empty string clears the icon */
+            icon?: string | null;
             name?: string | null;
         };
         UpdateContract: {

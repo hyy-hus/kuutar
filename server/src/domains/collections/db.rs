@@ -11,7 +11,7 @@ pub async fn list_all(pool: &PgPool) -> Result<Vec<Collection>, AppError> {
     let collections = sqlx::query_as!(
         Collection,
         r#"
-        SELECT id, name, description, created_at, updated_at, deleted_at
+        SELECT id, name, description, icon, created_at, updated_at, deleted_at
         FROM collections
         WHERE deleted_at IS NULL
         "#
@@ -27,7 +27,7 @@ pub async fn find_by_id(pool: &PgPool, id: Uuid) -> Result<Collection, AppError>
     sqlx::query_as!(
         Collection,
         r#"
-        SELECT id, name, description, created_at, updated_at, deleted_at
+        SELECT id, name, description, icon, created_at, updated_at, deleted_at
         FROM collections
         WHERE id = $1 AND deleted_at IS NULL
         "#,
@@ -43,12 +43,13 @@ pub async fn create(pool: &PgPool, dto: CreateCollection) -> Result<Collection, 
     let collection = sqlx::query_as!(
         Collection,
         r#"
-        INSERT INTO collections (name, description)
-        VALUES ($1, $2)
-        RETURNING id, name, description, created_at, updated_at, deleted_at
+        INSERT INTO collections (name, description, icon)
+        VALUES ($1, $2, $3)
+        RETURNING id, name, description, icon, created_at, updated_at, deleted_at
         "#,
         dto.name,
-        dto.description.map(rich_text::to_json)
+        dto.description.map(rich_text::to_json),
+        dto.icon.filter(|i| !i.is_empty())
     )
     .fetch_one(pool)
     .await?;
@@ -68,12 +69,14 @@ pub async fn update(
         UPDATE collections
         SET
             name = COALESCE($1, name),
-            description = COALESCE($2, description)
-        WHERE id = $3 AND deleted_at IS NULL
-        RETURNING id, name, description, created_at, updated_at, deleted_at
+            description = COALESCE($2, description),
+            icon = CASE WHEN $3::text IS NULL THEN icon ELSE NULLIF($3, '') END
+        WHERE id = $4 AND deleted_at IS NULL
+        RETURNING id, name, description, icon, created_at, updated_at, deleted_at
         "#,
         dto.name,
         dto.description.map(rich_text::to_json),
+        dto.icon,
         id
     )
     .fetch_optional(pool)

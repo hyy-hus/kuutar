@@ -14,6 +14,8 @@ pub struct Collection {
     /// Localized Tiptap documents, e.g. {"fi": {"type": "doc", ...}}
     #[schema(value_type = Option<HashMap<String, serde_json::Value>>)]
     pub description: Option<serde_json::Value>,
+    /// Icon key (see `COLLECTION_ICONS`)
+    pub icon: Option<String>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 
@@ -35,6 +37,9 @@ pub struct CreateCollection {
     #[schema(value_type = Option<HashMap<String, serde_json::Value>>)]
     #[validate(custom(function = "validate_localized_rich_text"))]
     pub description: Option<LocalizedRichText>,
+
+    #[validate(custom(function = "validate_icon"))]
+    pub icon: Option<String>,
 }
 
 #[derive(Debug, Deserialize, Validate, ToSchema)]
@@ -52,6 +57,25 @@ pub struct UpdateCollection {
     #[schema(value_type = Option<HashMap<String, serde_json::Value>>)]
     #[validate(custom(function = "validate_localized_rich_text"))]
     pub description: Option<LocalizedRichText>,
+
+    /// Icon key; an empty string clears the icon
+    #[validate(custom(function = "validate_icon"))]
+    pub icon: Option<String>,
+}
+
+/// Icon keys; must match the CHECK constraint on `collections.icon`
+pub const COLLECTION_ICONS: &[&str] = &[
+    "layers", "wrench", "car", "home", "projector", "camera", "music", "utensils", "bike", "tent",
+    "users", "monitor", "mic", "book", "gamepad", "palette", "hammer", "truck", "sofa", "trees",
+    "dumbbell", "laptop", "printer", "shirt",
+];
+
+fn validate_icon(icon: &str) -> Result<(), validator::ValidationError> {
+    if icon.is_empty() || COLLECTION_ICONS.contains(&icon) {
+        Ok(())
+    } else {
+        Err(validator::ValidationError::new("invalid_icon"))
+    }
 }
 
 #[cfg(test)]
@@ -64,6 +88,7 @@ mod tests {
         let dto = CreateCollection {
             name: "Valid Collection Name".to_string(),
             description: None,
+            icon: None,
         };
 
         assert!(dto.validate().is_ok());
@@ -74,6 +99,7 @@ mod tests {
         let dto = CreateCollection {
             name: "".to_string(),
             description: None,
+            icon: None,
         };
         let result = dto.validate();
         assert!(result.is_err());
@@ -91,9 +117,17 @@ mod tests {
         let dto = UpdateCollection {
             name: None,
             description: None,
+            icon: None,
         };
         // Option::None should pass validation for partial updates
         assert!(dto.validate().is_ok());
+    }
+
+    #[test]
+    fn test_icon_validation() {
+        assert!(validate_icon("wrench").is_ok());
+        assert!(validate_icon("").is_ok());
+        assert!(validate_icon("<svg>").is_err());
     }
 
     #[test]
