@@ -13,6 +13,10 @@ pub struct Claims {
     pub role: Role,
     pub exp: usize, // Expiration Unix Timestamp
     pub iat: usize, // Issued At Unix Timestamp
+    /// Session (refresh token chain) this token was issued for. Absent in tokens issued
+    /// before session management existed.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub sid: Option<Uuid>,
 }
 
 /// Encodes a JWT token with user_id, group_id, role, and an expiration TTL in seconds.
@@ -20,6 +24,18 @@ pub fn encode_jwt(
     user_id: Uuid,
     group_id: Uuid,
     role: Role,
+    secret: &str,
+    expiration_seconds: u64,
+) -> Result<String, AppError> {
+    encode_jwt_for_session(user_id, group_id, role, None, secret, expiration_seconds)
+}
+
+/// Like `encode_jwt`, but ties the token to a session so clients can tell which one is current.
+pub fn encode_jwt_for_session(
+    user_id: Uuid,
+    group_id: Uuid,
+    role: Role,
+    session_id: Option<Uuid>,
     secret: &str,
     expiration_seconds: u64,
 ) -> Result<String, AppError> {
@@ -32,6 +48,7 @@ pub fn encode_jwt(
         role, // Added missing role field
         exp: expire.timestamp() as usize,
         iat: now.timestamp() as usize,
+        sid: session_id,
     };
 
     encode(
@@ -77,6 +94,26 @@ mod tests {
     }
 
     #[test]
+    fn test_jwt_session_claim_roundtrip_and_legacy_tokens() {
+        let sid = Uuid::new_v4();
+        let token = encode_jwt_for_session(
+            Uuid::new_v4(),
+            Uuid::new_v4(),
+            Role::User,
+            Some(sid),
+            TEST_SECRET,
+            900,
+        )
+        .unwrap();
+        assert_eq!(decode_jwt(&token, TEST_SECRET).unwrap().sid, Some(sid));
+
+        // A token without a session claim still decodes
+        let legacy =
+            encode_jwt(Uuid::new_v4(), Uuid::new_v4(), Role::User, TEST_SECRET, 900).unwrap();
+        assert_eq!(decode_jwt(&legacy, TEST_SECRET).unwrap().sid, None);
+    }
+
+    #[test]
     fn test_decode_jwt_wrong_secret() {
         let user_id = Uuid::new_v4();
         let group_id = Uuid::new_v4();
@@ -110,6 +147,7 @@ mod tests {
             role: Role::User,
             exp: expired_time.timestamp() as usize,
             iat: (now - Duration::seconds(300)).timestamp() as usize,
+            sid: None,
         };
 
         let token = encode(

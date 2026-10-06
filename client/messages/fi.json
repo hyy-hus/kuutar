@@ -88,7 +88,6 @@
 	"inlineFormAlignment": "Lomakkeen rivitasaus",
 	"inputs": "Syötteet",
 	"invalidJsonFormat": "Virheellinen JSON-muoto: {{message}}",
-	"istuntojenMitatointiEiKaytettavissa": "Istuntojen mitätöinti ei ole vielä käytettävissä.",
 	"jaksonAlku": "Jakson alku",
 	"jaksonPituus": "Jakson pituus",
 	"jarjestelmatilanHakuEpaonnistui": "Järjestelmätilan haku epäonnistui.",
@@ -144,7 +143,6 @@
 	"kuvausValinnainen": "Kuvaus (valinnainen)",
 	"kyttj": "Käyttäjä",
 	"kyttjEiLytynyt": "Käyttäjää ei löytynyt.",
-	"kyttjllEiOleNkyviAktiivisiaIstuntojaTaiBackendEiTueSessionhallintaaViel": "Käyttäjällä ei ole näkyviä aktiivisia istuntoja tai taustajärjestelmä ei tue istuntojen hallintaa vielä.",
 	"kyttjt": "Käyttäjät",
 	"ladataan": "Ladataan...",
 	"ladataanHallintapaneelia": "Ladataan hallintapaneelia...",
@@ -637,5 +635,14 @@
 	"vahvistaVarauksenPeruutus": "Haluatko varmasti perua varauksen {{title}}? Varaus vapautuu ja varaajalle lähetetään ilmoitus.",
 	"peruutuksenSyy": "Peruutuksen syy",
 	"eiPeruta": "Älä peru",
-	"peruutuksenSyyValinnainen": "Peruutuksen syy (valinnainen)"
+	"peruutuksenSyyValinnainen": "Peruutuksen syy (valinnainen)",
+	"istunnonPaattaminenEpaonnistui": "Istunnon päättäminen epäonnistui.",
+	"eiAktiivisiaIstuntoja": "Ei aktiivisia istuntoja.",
+	"tuntematonLaite": "Tuntematon laite",
+	"tamaLaite": "Tämä laite",
+	"viimeksiAktiivinen": "Viimeksi aktiivinen",
+	"istuntoAlkoi": "Alkoi",
+	"paataIstunto": "Päätä istunto",
+	"paata": "Päätä",
+	"kirjauduUlosMuualta": "Kirjaudu ulos muilta laitteilta"
 }

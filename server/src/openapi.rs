@@ -43,6 +43,9 @@ impl Modify for SecurityAddon {
         auth::routes::login,
         auth::routes::refresh,
         auth::routes::logout,
+        auth::routes::list_my_sessions,
+        auth::routes::revoke_my_session,
+        auth::routes::logout_other_sessions,
         auth::routes::request_otp,
     auth::routes::verify_otp,
 
@@ -55,6 +58,9 @@ impl Modify for SecurityAddon {
         users::routes::update_user,
         users::routes::delete_me,
         users::routes::delete_user,
+        users::routes::list_user_sessions,
+        users::routes::revoke_user_sessions,
+        users::routes::revoke_user_session,
 
         // Collections
         collections::routes::list_collections,
@@ -130,6 +136,7 @@ impl Modify for SecurityAddon {
         schemas(
             crate::HealthStatus,
             auth::models::AuthTokens,
+            auth::models::SessionInfo,
             auth::models::RegisterPayload,
             auth::models::LoginPayload,
             auth::models::RefreshPayload,

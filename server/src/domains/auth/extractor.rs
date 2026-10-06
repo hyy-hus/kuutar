@@ -12,6 +12,8 @@ pub struct AuthUser {
     pub id: Uuid,
     pub group_id: Uuid,
     pub role: Role,
+    /// Session this access token belongs to (None for tokens issued before sessions existed)
+    pub session_id: Option<Uuid>,
 }
 
 impl<S> FromRequestParts<S> for AuthUser
@@ -40,6 +42,7 @@ where
             id: claims.sub,
             group_id: claims.group_id,
             role: claims.role,
+            session_id: claims.sid,
         })
     }
 }

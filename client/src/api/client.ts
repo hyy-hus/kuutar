@@ -59,6 +59,12 @@ export async function refreshAuthToken(): Promise<boolean> {
 		return false;
 	}
 
+	// Another tab may have rotated the shared token while this request was in flight;
+	// its new tokens are already stored, so this session is still alive
+	if (localStorage.getItem("refresh_token") !== refreshToken) {
+		return true;
+	}
+
 	localStorage.removeItem("access_token");
 	localStorage.removeItem("refresh_token");
 	localStorage.removeItem("token_expires_at");

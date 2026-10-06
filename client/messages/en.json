@@ -88,7 +88,6 @@
 	"inlineFormAlignment": "Inline form alignment",
 	"inputs": "Inputs",
 	"invalidJsonFormat": "Invalid JSON format: {{message}}",
-	"istuntojenMitatointiEiKaytettavissa": "Revoking sessions is not available yet.",
 	"jaksonAlku": "Period start",
 	"jaksonPituus": "Period length",
 	"jarjestelmatilanHakuEpaonnistui": "Failed to fetch system status.",
@@ -144,7 +143,6 @@
 	"kuvausValinnainen": "Description (optional)",
 	"kyttj": "User",
 	"kyttjEiLytynyt": "User not found.",
-	"kyttjllEiOleNkyviAktiivisiaIstuntojaTaiBackendEiTueSessionhallintaaViel": "The user has no visible active sessions or the backend does not support session management yet.",
 	"kyttjt": "Users",
 	"ladataan": "Loading...",
 	"ladataanHallintapaneelia": "Loading admin panel...",
@@ -637,5 +635,14 @@
 	"vahvistaVarauksenPeruutus": "Are you sure you want to cancel the reservation {{title}}? The slot is freed and the booker is notified.",
 	"peruutuksenSyy": "Reason for cancelling",
 	"eiPeruta": "Don't cancel",
-	"peruutuksenSyyValinnainen": "Reason for cancelling (optional)"
+	"peruutuksenSyyValinnainen": "Reason for cancelling (optional)",
+	"istunnonPaattaminenEpaonnistui": "Failed to end the session.",
+	"eiAktiivisiaIstuntoja": "No active sessions.",
+	"tuntematonLaite": "Unknown device",
+	"tamaLaite": "This device",
+	"viimeksiAktiivinen": "Last active",
+	"istuntoAlkoi": "Started",
+	"paataIstunto": "End session",
+	"paata": "End",
+	"kirjauduUlosMuualta": "Log out from other devices"
 }
