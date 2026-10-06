@@ -5,11 +5,13 @@ import { cn } from "#/utils/cn";
 export interface ChipProps {
 	children: ReactNode;
 	className?: string;
+	title?: string;
 }
 
-export function Chip({ children, className }: ChipProps) {
+export function Chip({ children, className, title }: ChipProps) {
 	return (
 		<span
+			title={title}
 			className={cn(
 				"px-2 py-1 bg-stone-300 text-stone-700 dark:bg-stone-800 dark:text-stone-300 rounded-sm font-mono text-xs inline-flex items-center justify-center",
 				className,

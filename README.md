@@ -37,6 +37,11 @@ Nimi tulee muinaissuomalaisesta kuun jumalattaresta Kuuttaresta.
 - **Varausten siirto**: varausten vienti ja tuonti JSON-muodossa ympäristöjen välillä resurssien nimien ja sähköpostiosoitteiden perusteella.
 - **Haku**: resurssien ja varausten pikahaku.
 
+### Outlook-integraatio
+- **Outlook-kutsut varauksiksi**: kutsu Outlook-tapahtumaan resurssi ja Kuutarin vastaanottoosoite (jaettu postilaatikko). Kuutar lukee kutsun Microsoft Graphin kautta ja näyttää tapahtuman vahvistettuna varauksena oikealla resurssilla. Päivitykset ja peruutukset seuraavat mukana, myös toistuvat tapahtumat.
+- **Outlook on ensisijainen**: tuodut varaukset merkitään Outlook-merkillä, eikä niitä muokata Kuutarissa. Päällekkäisyyksiä ja rajoituksia ei tarkisteta tuonnissa.
+- **Asetukset**: resurssille asetetaan sen Outlook-osoite resurssin muokkauksessa, ja palvelimelle `GRAPH_*`-muuttujat (ks. `server/.env.example`). Tila ja käsitellyt viestit näkyvät ylläpidon Outlook-synkronointisivulla.
+
 ### Muuta
 - **Kolme kieltä**: käyttöliittymä on käännetty suomeksi, ruotsiksi ja englanniksi.
 - **Avoin rajapinta**: REST-rajapinnan OpenAPI-kuvaus ja Swagger UI osoitteessa `/swagger-ui`.

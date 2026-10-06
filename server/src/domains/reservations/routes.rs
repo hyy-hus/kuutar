@@ -389,6 +389,24 @@ pub async fn update_reservation(
     let is_admin = auth_user.role == Role::Admin;
     let existing = db::find_by_id(&auth_state.pool, id, true).await?;
 
+    if existing.reservation.source == "outlook" {
+        // Outlook is the source of truth; only the internal notes are editable here
+        let only_notes = payload.admin_notes.is_some()
+            && payload.title.is_none()
+            && payload.description.is_none()
+            && payload.occurrences.is_none()
+            && payload.rrule.is_none()
+            && payload.status.is_none()
+            && payload.contact_person.is_none()
+            && payload.contact_email.is_none()
+            && payload.contact_phone.is_none();
+        if !is_admin || !only_notes {
+            return Err(AppError::Conflict(
+                "Tämä varaus tulee Outlookista. Muokkaa tai peru se Outlookissa.".to_string(),
+            ));
+        }
+    }
+
     if !is_admin {
         if existing.reservation.user_id != auth_user.id {
             return Err(AppError::Forbidden(
@@ -479,13 +497,16 @@ pub async fn delete_reservation(
     Path(id): Path<Uuid>,
     auth_user: AuthUser,
 ) -> Result<StatusCode, AppError> {
-    if auth_user.role != Role::Admin {
-        let existing = db::find_by_id(&auth_state.pool, id, true).await?;
-        if existing.reservation.user_id != auth_user.id {
-            return Err(AppError::Forbidden(
-                "Et voi poistaa toisen käyttäjän varausta.".to_string(),
-            ));
-        }
+    let existing = db::find_by_id(&auth_state.pool, id, true).await?;
+    if existing.reservation.source == "outlook" {
+        return Err(AppError::Conflict(
+            "Tämä varaus tulee Outlookista. Poista se Outlookissa.".to_string(),
+        ));
+    }
+    if auth_user.role != Role::Admin && existing.reservation.user_id != auth_user.id {
+        return Err(AppError::Forbidden(
+            "Et voi poistaa toisen käyttäjän varausta.".to_string(),
+        ));
     }
 
     db::soft_delete(&auth_state.pool, id).await?;

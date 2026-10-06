@@ -1,0 +1,98 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT id, subject, ical_uid, result, detail, reservation_id, created_at\n        FROM outlook_sync_log\n        ORDER BY updated_at DESC\n        LIMIT 50\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "outlook_sync_log",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "subject",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "outlook_sync_log",
+            "name": "subject"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "ical_uid",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "outlook_sync_log",
+            "name": "ical_uid"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "result",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "outlook_sync_log",
+            "name": "result"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "detail",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "outlook_sync_log",
+            "name": "detail"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "reservation_id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "outlook_sync_log",
+            "name": "reservation_id"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "created_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "outlook_sync_log",
+            "name": "created_at"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      false,
+      true,
+      true,
+      false,
+      true,
+      true,
+      false
+    ]
+  },
+  "hash": "b9cc31d1690b214a218955bc2af30f98c4716ec041bb8be28092aeda69391e5c"
+}

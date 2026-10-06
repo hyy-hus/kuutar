@@ -12,6 +12,7 @@ import {
 import { useTranslation } from "react-i18next";
 import { Button } from "#/components/Button";
 import { Chip } from "#/components/Chip";
+import { OutlookBadge } from "#/components/OutlookBadge";
 import { useAuth, useIsAdmin } from "#/hooks/useAuth";
 import { useDeleteReservation, useReservation } from "#/hooks/useReservations";
 import { useResources } from "#/hooks/useResorces";
@@ -58,7 +59,10 @@ function ViewReservationPage() {
 
 	// Contact details are only returned by the server to admins and the owner
 	const canSeeContact = isAdmin || (!!user && user.id === reservation.user_id);
-	const canEdit = isAdmin || (!!user && user.id === reservation.user_id);
+	const isOutlook = reservation.source === "outlook";
+	// Outlook is the source of truth for imported reservations
+	const canEdit =
+		!isOutlook && (isAdmin || (!!user && user.id === reservation.user_id));
 	const occurrences = reservation.occurrences || [];
 	const resourceMap = new Map(resources?.map((r) => [r.id, r.name]));
 
@@ -97,16 +101,18 @@ function ViewReservationPage() {
 							</Button>
 						</Link>
 					)}
-					<Button
-						variant="outline"
-						size="sm"
-						onClick={handleDelete}
-						disabled={deleteReservation.isPending}
-						className="gap-1 text-xs text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40"
-					>
-						<Trash2 size={14} />
-						<span>{t("poista", "Poista")}</span>
-					</Button>
+					{!isOutlook && (
+						<Button
+							variant="outline"
+							size="sm"
+							onClick={handleDelete}
+							disabled={deleteReservation.isPending}
+							className="gap-1 text-xs text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40"
+						>
+							<Trash2 size={14} />
+							<span>{t("poista", "Poista")}</span>
+						</Button>
+					)}
 				</div>
 			</div>
 
@@ -114,8 +120,9 @@ function ViewReservationPage() {
 			<div className="p-5 border border-stone-200 dark:border-stone-800 rounded-md bg-stone-50 dark:bg-stone-900 space-y-4">
 				<div className="flex items-start justify-between gap-3">
 					<div>
-						<h1 className="text-xl font-bold text-stone-900 dark:text-stone-100">
+						<h1 className="text-xl font-bold text-stone-900 dark:text-stone-100 flex items-center gap-2">
 							{reservation.title}
+							{isOutlook && <OutlookBadge />}
 						</h1>
 						{reservation.user_name && (
 							<p className="text-xs text-stone-600 dark:text-stone-400 flex items-center gap-1 mt-0.5">

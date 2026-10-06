@@ -16,6 +16,7 @@ import {
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "#/components/Button";
+import { OutlookBadge } from "#/components/OutlookBadge";
 import { PeriodNavigator } from "#/components/PeriodNavigator";
 import {
 	type ReservationStatus,
@@ -87,6 +88,7 @@ function AdminReservationRow({
 	const firstOccurrence = reservationWithOcc.occurrences?.[0];
 	const isPending = reservationWithOcc.status === "pending";
 	const isCancelled = reservationWithOcc.status === "cancelled";
+	const isOutlook = reservationWithOcc.source === "outlook";
 
 	const isHoveredSource = hoveredReservation?.id === reservationWithOcc.id;
 
@@ -157,6 +159,8 @@ function AdminReservationRow({
 					>
 						{reservationWithOcc.title}
 					</Link>
+
+					{isOutlook && <OutlookBadge />}
 
 					{reservationWithOcc.user_name && (
 						<span
@@ -255,7 +259,7 @@ function AdminReservationRow({
 						<span className="hidden xl:inline">{t("tulosta", "Tulosta")}</span>
 					</Button>
 
-					{isPending ? (
+					{isOutlook ? null : isPending ? (
 						<>
 							<Button
 								variant="secondary"

@@ -6,6 +6,7 @@ use crate::domains::collections;
 use crate::domains::contracts;
 use crate::domains::email_templates;
 use crate::domains::groups;
+use crate::domains::outlook_sync;
 use crate::domains::reservable_blocks;
 use crate::domains::reservations;
 use crate::domains::resources;
@@ -117,6 +118,10 @@ impl Modify for SecurityAddon {
         email_templates::routes::preview_template,
         email_templates::routes::send_test,
 
+        // Outlook sync
+        outlook_sync::routes::get_status,
+        outlook_sync::routes::run_sync,
+
         // Stats
         stats::routes::get_stats,
     ),
@@ -171,6 +176,9 @@ impl Modify for SecurityAddon {
             email_templates::models::UpdateEmailTemplate,
             email_templates::models::PreviewEmailTemplate,
             email_templates::models::EmailPreview,
+            outlook_sync::models::SyncStatus,
+            outlook_sync::models::SyncLogEntry,
+            outlook_sync::models::SyncRunReport,
             stats::models::StatsResponse,
             stats::models::StatsRange,
             stats::models::PublicStats,
@@ -194,6 +202,7 @@ impl Modify for SecurityAddon {
         (name = "Collections", description = "Collection management endpoints"),
         (name = "Resources", description = "Resource management endpoints"),
         (name = "Groups", description = "Group management endpoints"),
+        (name = "Outlook sync", description = "Outlook calendar integration via Microsoft Graph"),
         (name = "Reservations", description = "Reservation and occurrence management endpoints"),
         (name = "Restrictions", description = "Time restriction and group exemption management endpoints"),
         (name = "Reservable blocks", description = "Reservable time block management for blocks-only resources"),

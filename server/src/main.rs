@@ -37,6 +37,8 @@ async fn main() -> anyhow::Result<()> {
         kuutar::domains::auth::password::hash_password(&config.seed_admin_password)?; // Adjust path to your password hasher
     seed::seed_admin_user(&db_pool, &config, &hashed_password).await?;
 
+    kuutar::domains::outlook_sync::poller::spawn(db_pool.clone(), config.clone());
+
     let app = app(db_pool, config.clone());
 
     tracing::info!("Server running on http://{}", config.bind_addr);

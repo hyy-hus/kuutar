@@ -1,0 +1,38 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT source, contact_email FROM reservations WHERE ical_uid = 'uid-1'",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "source",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "reservations",
+            "name": "source"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "contact_email",
+        "type_info": "Varchar",
+        "origin": {
+          "Table": {
+            "table": "reservations",
+            "name": "contact_email"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      false,
+      true
+    ]
+  },
+  "hash": "bca1b26721a7a7aaa70170091735924fbf26b83481ff59828b93828053c62fc6"
+}
