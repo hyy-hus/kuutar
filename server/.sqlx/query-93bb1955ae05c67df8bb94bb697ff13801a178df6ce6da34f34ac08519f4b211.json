@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        SELECT id, name, description, created_at, updated_at, deleted_at\n        FROM collections\n        WHERE id = $1 AND deleted_at IS NULL\n        ",
+  "query": "\n        SELECT id, name, description, icon, created_at, updated_at, deleted_at\n        FROM collections\n        WHERE deleted_at IS NULL\n        ",
   "describe": {
     "columns": [
       {
@@ -38,6 +38,17 @@
       },
       {
         "ordinal": 3,
+        "name": "icon",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "collections",
+            "name": "icon"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
         "name": "created_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -48,7 +59,7 @@
         }
       },
       {
-        "ordinal": 4,
+        "ordinal": 5,
         "name": "updated_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -59,7 +70,7 @@
         }
       },
       {
-        "ordinal": 5,
+        "ordinal": 6,
         "name": "deleted_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -71,18 +82,17 @@
       }
     ],
     "parameters": {
-      "Left": [
-        "Uuid"
-      ]
+      "Left": []
     },
     "nullable": [
       false,
       false,
+      true,
       true,
       false,
       false,
       true
     ]
   },
-  "hash": "7e8f73787d642f2825c9604248dbb184633af324eae648946f6a5a4ff1c92294"
+  "hash": "93bb1955ae05c67df8bb94bb697ff13801a178df6ce6da34f34ac08519f4b211"
 }

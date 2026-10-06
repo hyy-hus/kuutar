@@ -5,6 +5,8 @@ import { Button } from "#/components/Button";
 import { Input } from "#/components/Input";
 import { LocalizedRichTextEditor } from "#/components/LocalizedRichTextEditor";
 import type { CreateCollection } from "#/hooks/useCollections";
+import { cn } from "#/utils/cn";
+import { COLLECTION_ICONS, getCollectionIcon } from "#/utils/collectionIcons";
 import {
 	compactLocalizedRichText,
 	toLocalizedRichText,
@@ -28,6 +30,7 @@ export function CollectionForm({
 		defaultValues: {
 			name: defaultValues?.name ?? "",
 			description: toLocalizedRichText(defaultValues?.description),
+			icon: defaultValues?.icon ?? "",
 		},
 		onSubmit: async ({ value }) => {
 			await onSubmit({
@@ -94,6 +97,51 @@ export function CollectionForm({
 							label={t("kuvaus", "Kuvaus")}
 						/>
 					</div>
+				)}
+			</form.Field>
+
+			<form.Field name="icon">
+				{(field) => (
+					<fieldset className="space-y-1">
+						<legend className="text-xs font-medium text-stone-700 dark:text-stone-300">
+							{t("kuvake", "Kuvake")}
+						</legend>
+						<div className="flex flex-wrap items-center gap-2">
+							<button
+								type="button"
+								aria-pressed={!field.state.value}
+								onClick={() => field.handleChange("")}
+								className={cn(
+									"px-2 py-1 rounded-sm text-xs border cursor-pointer",
+									!field.state.value
+										? "border-stone-900 dark:border-stone-100 font-semibold"
+										: "border-stone-300 dark:border-stone-700",
+								)}
+							>
+								{t("oletuskuvake", "Oletus")}
+							</button>
+							{COLLECTION_ICONS.map((key) => {
+								const Icon = getCollectionIcon(key);
+								return (
+									<button
+										key={key}
+										type="button"
+										aria-label={key}
+										aria-pressed={field.state.value === key}
+										onClick={() => field.handleChange(key)}
+										className={cn(
+											"size-8 flex items-center justify-center rounded-sm border cursor-pointer",
+											field.state.value === key
+												? "border-stone-900 dark:border-stone-100 bg-stone-200 dark:bg-stone-800"
+												: "border-stone-300 dark:border-stone-700",
+										)}
+									>
+										<Icon size={16} />
+									</button>
+								);
+							})}
+						</div>
+					</fieldset>
 				)}
 			</form.Field>
 

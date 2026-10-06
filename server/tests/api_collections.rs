@@ -138,3 +138,61 @@ async fn test_collections_error_handling(pool: PgPool) {
     let res = app.clone().oneshot(req).await.unwrap();
     assert_eq!(res.status(), StatusCode::NOT_FOUND);
 }
+
+#[sqlx::test]
+async fn test_collection_icon_lifecycle(pool: PgPool) {
+    let app = app(pool.clone(), test_config());
+    let admin_auth = setup_admin_token(&pool).await;
+
+    let send = |method: &'static str, uri: String, body: Value| {
+        let app = app.clone();
+        let auth = admin_auth.clone();
+        async move {
+            let req = Request::builder()
+                .method(method)
+                .uri(uri)
+                .header(header::CONTENT_TYPE, "application/json")
+                .header(header::AUTHORIZATION, auth)
+                .body(Body::from(body.to_string()))
+                .unwrap();
+            let res = app.oneshot(req).await.unwrap();
+            let status = res.status();
+            let bytes = res.into_body().collect().await.unwrap().to_bytes();
+            (
+                status,
+                serde_json::from_slice::<Value>(&bytes).unwrap_or(Value::Null),
+            )
+        }
+    };
+
+    // Created without an icon
+    let (status, created) = send("POST", "/collections".into(), json!({ "name": "Tools" })).await;
+    assert_eq!(status, StatusCode::CREATED);
+    assert!(created["icon"].is_null());
+    let uri = format!("/collections/{}", created["id"].as_str().unwrap());
+
+    // Invalid keys are rejected
+    let (status, _) = send("PATCH", uri.clone(), json!({ "icon": "<svg>" })).await;
+    assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
+
+    // Set, keep on unrelated update, clear with empty string
+    let (status, body) = send("PATCH", uri.clone(), json!({ "icon": "wrench" })).await;
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(body["icon"], "wrench");
+
+    let (_, body) = send("PATCH", uri.clone(), json!({ "name": "Tools 2" })).await;
+    assert_eq!(body["icon"], "wrench");
+
+    let (_, body) = send("PATCH", uri, json!({ "icon": "" })).await;
+    assert!(body["icon"].is_null());
+
+    // Created with an icon
+    let (status, body) = send(
+        "POST",
+        "/collections".into(),
+        json!({ "name": "Cars", "icon": "car" }),
+    )
+    .await;
+    assert_eq!(status, StatusCode::CREATED);
+    assert_eq!(body["icon"], "car");
+}

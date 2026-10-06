@@ -6,6 +6,7 @@ import { Button } from "#/components/Button";
 import { Chip } from "#/components/Chip";
 import { RichTextContent } from "#/components/RichTextContent";
 import { useCollection, useDeleteCollection } from "#/hooks/useCollections";
+import { getCollectionIcon } from "#/utils/collectionIcons";
 import { useDateFormatter } from "#/utils/date";
 import { readable_uuid } from "#/utils/uuid";
 
@@ -48,6 +49,8 @@ function ViewCollectionPage() {
 		}
 	};
 
+	const CollectionIcon = getCollectionIcon(collection.icon);
+
 	return (
 		<div className="p-4 max-w-xl flex flex-col gap-6">
 			{/* Back navigation */}
@@ -57,7 +60,8 @@ function ViewCollectionPage() {
 
 			{/* 1. Header: Name & ID Chip */}
 			<div className="flex items-center justify-between">
-				<h1 className="text-2xl font-bold text-stone-900 dark:text-stone-100">
+				<h1 className="flex items-center gap-2 text-2xl font-bold text-stone-900 dark:text-stone-100">
+					<CollectionIcon size={24} className="shrink-0" />
 					{collection.name}
 				</h1>
 				<Chip>{readable_uuid(collection.id)}</Chip>
