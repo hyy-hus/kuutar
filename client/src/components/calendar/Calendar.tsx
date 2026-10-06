@@ -33,6 +33,7 @@ import {
 	startOfWeek,
 	useDateFormatter,
 } from "#/utils/date";
+import { addMinutes, resolveDefaultDuration } from "#/utils/duration";
 import { getResourceColor } from "#/utils/resourceColors";
 import { ToggleChip } from "../Chip";
 import { MonthView } from "./MonthView";
@@ -219,12 +220,19 @@ export function Calendar({
 					const res = resources?.find((r) => r.id === id);
 					return !res?.blocks_only && res?.can_reserve !== false;
 				});
+		const resourceIds = slotResourceIds.length > 1 ? [] : slotResourceIds;
+		// A single resource's default duration replaces the grid's one-hour slot
+		const defaultMinutes = resolveDefaultDuration(
+			resources?.filter((r) => resourceIds.includes(r.id)) ?? [],
+		);
 		navigate({
 			to: "/reservations/create",
 			search: {
 				start_time: startTime,
-				end_time: endTime,
-				resource_ids: slotResourceIds.length > 1 ? [] : slotResourceIds,
+				end_time: defaultMinutes
+					? addMinutes(startTime, defaultMinutes)
+					: endTime,
+				resource_ids: resourceIds,
 			},
 		});
 	};

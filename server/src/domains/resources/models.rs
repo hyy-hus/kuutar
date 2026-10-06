@@ -30,6 +30,12 @@ pub struct Resource {
     pub auto_confirm: bool,
     /// Groups whose reservations are auto-confirmed; empty means every group
     pub auto_confirm_group_ids: Vec<Uuid>,
+    /// Pre-filled booking length in minutes when a slot is picked
+    pub default_duration_minutes: Option<i32>,
+    /// Shortest booking length in minutes (not enforced for admins)
+    pub min_duration_minutes: Option<i32>,
+    /// Longest booking length in minutes (not enforced for admins)
+    pub max_duration_minutes: Option<i32>,
     /// Palette key (see `RESOURCE_COLORS`) for the resource's calendar events
     pub color: Option<String>,
     /// Outlook room/equipment mailbox of the resource (admins only)
@@ -81,6 +87,15 @@ pub struct CreateResource {
 
     /// Groups auto-confirmed when `auto_confirm` is set; empty or omitted means every group
     pub auto_confirm_group_ids: Option<Vec<Uuid>>,
+
+    #[validate(range(min = 1, message = "Duration must be positive"))]
+    pub default_duration_minutes: Option<i32>,
+
+    #[validate(range(min = 1, message = "Duration must be positive"))]
+    pub min_duration_minutes: Option<i32>,
+
+    #[validate(range(min = 1, message = "Duration must be positive"))]
+    pub max_duration_minutes: Option<i32>,
 
     #[validate(custom(function = "validate_color"))]
     pub color: Option<String>,
@@ -151,6 +166,18 @@ pub struct UpdateResource {
 
     /// Replaces the set of auto-confirmed groups
     pub auto_confirm_group_ids: Option<Vec<Uuid>>,
+
+    /// Minutes; 0 clears the setting
+    #[validate(range(min = 0, message = "Duration must not be negative"))]
+    pub default_duration_minutes: Option<i32>,
+
+    /// Minutes; 0 clears the setting
+    #[validate(range(min = 0, message = "Duration must not be negative"))]
+    pub min_duration_minutes: Option<i32>,
+
+    /// Minutes; 0 clears the setting
+    #[validate(range(min = 0, message = "Duration must not be negative"))]
+    pub max_duration_minutes: Option<i32>,
 
     /// Palette key; an empty string clears the color
     #[validate(custom(function = "validate_color"))]

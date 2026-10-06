@@ -601,6 +601,64 @@ pub async fn should_auto_confirm(
     Ok(blocking == 0)
 }
 
+/// Validates each occurrence's length against the resource's min/max duration.
+/// Admins bypass this check.
+pub async fn validate_resource_durations(
+    pool: &PgPool,
+    is_admin: bool,
+    occurrences: &[CreateOccurrencePayload],
+) -> Result<(), AppError> {
+    if is_admin || occurrences.is_empty() {
+        return Ok(());
+    }
+
+    for occ in occurrences {
+        let limits = sqlx::query!(
+            r#"
+            SELECT name, min_duration_minutes, max_duration_minutes
+            FROM resources
+            WHERE id = $1 AND deleted_at IS NULL
+            "#,
+            occ.resource_id
+        )
+        .fetch_optional(pool)
+        .await?;
+
+        let Some(res) = limits else { continue };
+        let minutes = (occ.end_time - occ.start_time).num_minutes();
+
+        if let Some(min) = res.min_duration_minutes
+            && minutes < i64::from(min)
+        {
+            return Err(AppError::BadRequest(format!(
+                "Resurssin '{}' varauksen vähimmäiskesto on {}.",
+                res.name,
+                format_duration(min)
+            )));
+        }
+        if let Some(max) = res.max_duration_minutes
+            && minutes > i64::from(max)
+        {
+            return Err(AppError::BadRequest(format!(
+                "Resurssin '{}' varauksen enimmäiskesto on {}.",
+                res.name,
+                format_duration(max)
+            )));
+        }
+    }
+
+    Ok(())
+}
+
+/// Formats minutes as e.g. "1 h 30 min" for error messages
+fn format_duration(minutes: i32) -> String {
+    match (minutes / 60, minutes % 60) {
+        (0, m) => format!("{m} min"),
+        (h, 0) => format!("{h} h"),
+        (h, m) => format!("{h} h {m} min"),
+    }
+}
+
 /// Validates proposed occurrences against the resource's `reservable_until` boundary.
 /// Admins bypass this check.
 pub async fn validate_resource_reservable_until(

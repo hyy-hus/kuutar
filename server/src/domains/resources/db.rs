@@ -15,7 +15,7 @@ pub async fn list_all(
         Resource,
         r#"
         SELECT r.id, r.collection_id, r.name, r.description, r.allow_recurring, r.blocks_only, r.reservable_until, r.is_public,
-               r.reservation_restricted, r.auto_confirm, r.color,
+               r.reservation_restricted, r.auto_confirm, r.default_duration_minutes, r.min_duration_minutes, r.max_duration_minutes, r.color,
                CASE WHEN $1 THEN r.outlook_email END AS outlook_email,
                COALESCE(ARRAY(SELECT rg.group_id FROM resource_groups rg WHERE rg.resource_id = r.id ORDER BY rg.group_id), '{}') AS "reservable_group_ids!",
                COALESCE(ARRAY(SELECT ag.group_id FROM resource_auto_confirm_groups ag WHERE ag.resource_id = r.id ORDER BY ag.group_id), '{}') AS "auto_confirm_group_ids!",
@@ -48,7 +48,7 @@ pub async fn find_by_id(
         Resource,
         r#"
         SELECT r.id, r.collection_id, r.name, r.description, r.allow_recurring, r.blocks_only, r.reservable_until, r.is_public,
-               r.reservation_restricted, r.auto_confirm, r.color,
+               r.reservation_restricted, r.auto_confirm, r.default_duration_minutes, r.min_duration_minutes, r.max_duration_minutes, r.color,
                CASE WHEN $1 THEN r.outlook_email END AS outlook_email,
                COALESCE(ARRAY(SELECT rg.group_id FROM resource_groups rg WHERE rg.resource_id = r.id ORDER BY rg.group_id), '{}') AS "reservable_group_ids!",
                COALESCE(ARRAY(SELECT ag.group_id FROM resource_auto_confirm_groups ag WHERE ag.resource_id = r.id ORDER BY ag.group_id), '{}') AS "auto_confirm_group_ids!",
@@ -125,8 +125,8 @@ pub async fn create(pool: &PgPool, dto: CreateResource) -> Result<Resource, AppE
 
     let id = sqlx::query_scalar!(
         r#"
-        INSERT INTO resources (collection_id, name, description, allow_recurring, reservable_until, is_public, blocks_only, reservation_restricted, auto_confirm, color, outlook_email)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NULLIF(LOWER(TRIM($11)), ''))
+        INSERT INTO resources (collection_id, name, description, allow_recurring, reservable_until, is_public, blocks_only, reservation_restricted, auto_confirm, default_duration_minutes, min_duration_minutes, max_duration_minutes, color, outlook_email)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NULLIF(LOWER(TRIM($14)), ''))
         RETURNING id
         "#,
         dto.collection_id,
@@ -138,6 +138,9 @@ pub async fn create(pool: &PgPool, dto: CreateResource) -> Result<Resource, AppE
         dto.blocks_only,
         dto.reservation_restricted,
         dto.auto_confirm,
+        dto.default_duration_minutes,
+        dto.min_duration_minutes,
+        dto.max_duration_minutes,
         dto.color.filter(|c| !c.is_empty()),
         dto.outlook_email
     )
@@ -187,12 +190,16 @@ pub async fn update(pool: &PgPool, id: Uuid, dto: UpdateResource) -> Result<Reso
             blocks_only = COALESCE($6, blocks_only),
             reservation_restricted = COALESCE($7, reservation_restricted),
             auto_confirm = COALESCE($8, auto_confirm),
+            -- 0 clears a duration
+            default_duration_minutes = CASE WHEN $9::int IS NULL THEN default_duration_minutes ELSE NULLIF($9, 0) END,
+            min_duration_minutes = CASE WHEN $10::int IS NULL THEN min_duration_minutes ELSE NULLIF($10, 0) END,
+            max_duration_minutes = CASE WHEN $11::int IS NULL THEN max_duration_minutes ELSE NULLIF($11, 0) END,
             -- An empty string clears the color
-            color = CASE WHEN $9::text IS NULL THEN color ELSE NULLIF($9, '') END,
+            color = CASE WHEN $12::text IS NULL THEN color ELSE NULLIF($12, '') END,
             -- An empty string clears the mailbox
-            outlook_email = CASE WHEN $10::text IS NULL THEN outlook_email ELSE NULLIF(LOWER(TRIM($10)), '') END,
+            outlook_email = CASE WHEN $13::text IS NULL THEN outlook_email ELSE NULLIF(LOWER(TRIM($13)), '') END,
             updated_at = NOW()
-        WHERE id = $11 AND deleted_at IS NULL
+        WHERE id = $14 AND deleted_at IS NULL
         "#,
         dto.name,
         dto.allow_recurring,
@@ -202,6 +209,9 @@ pub async fn update(pool: &PgPool, id: Uuid, dto: UpdateResource) -> Result<Reso
         dto.blocks_only,
         dto.reservation_restricted,
         dto.auto_confirm,
+        dto.default_duration_minutes,
+        dto.min_duration_minutes,
+        dto.max_duration_minutes,
         dto.color,
         dto.outlook_email,
         id

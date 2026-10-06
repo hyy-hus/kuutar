@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        SELECT r.id, r.collection_id, r.name, r.description, r.allow_recurring, r.blocks_only, r.reservable_until, r.is_public,\n               r.reservation_restricted, r.auto_confirm, r.color,\n               CASE WHEN $1 THEN r.outlook_email END AS outlook_email,\n               COALESCE(ARRAY(SELECT rg.group_id FROM resource_groups rg WHERE rg.resource_id = r.id ORDER BY rg.group_id), '{}') AS \"reservable_group_ids!\",\n               COALESCE(ARRAY(SELECT ag.group_id FROM resource_auto_confirm_groups ag WHERE ag.resource_id = r.id ORDER BY ag.group_id), '{}') AS \"auto_confirm_group_ids!\",\n               ($1 OR NOT r.reservation_restricted OR EXISTS (\n                   SELECT 1 FROM resource_groups rg WHERE rg.resource_id = r.id AND rg.group_id = $2\n               )) AS \"can_reserve!\",\n               r.created_at, r.updated_at, r.deleted_at\n        FROM resources r\n        WHERE r.id = $3\n          AND r.deleted_at IS NULL\n          AND ($1 = TRUE OR r.is_public = TRUE)\n        ",
+  "query": "\n        SELECT r.id, r.collection_id, r.name, r.description, r.allow_recurring, r.blocks_only, r.reservable_until, r.is_public,\n               r.reservation_restricted, r.auto_confirm, r.default_duration_minutes, r.min_duration_minutes, r.max_duration_minutes, r.color,\n               CASE WHEN $1 THEN r.outlook_email END AS outlook_email,\n               COALESCE(ARRAY(SELECT rg.group_id FROM resource_groups rg WHERE rg.resource_id = r.id ORDER BY rg.group_id), '{}') AS \"reservable_group_ids!\",\n               COALESCE(ARRAY(SELECT ag.group_id FROM resource_auto_confirm_groups ag WHERE ag.resource_id = r.id ORDER BY ag.group_id), '{}') AS \"auto_confirm_group_ids!\",\n               ($1 OR NOT r.reservation_restricted OR EXISTS (\n                   SELECT 1 FROM resource_groups rg WHERE rg.resource_id = r.id AND rg.group_id = $2\n               )) AS \"can_reserve!\",\n               r.created_at, r.updated_at, r.deleted_at\n        FROM resources r\n        WHERE r.deleted_at IS NULL\n          AND ($1 = TRUE OR r.is_public = TRUE)\n        ORDER BY r.name ASC\n        ",
   "describe": {
     "columns": [
       {
@@ -115,6 +115,39 @@
       },
       {
         "ordinal": 10,
+        "name": "default_duration_minutes",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "resources",
+            "name": "default_duration_minutes"
+          }
+        }
+      },
+      {
+        "ordinal": 11,
+        "name": "min_duration_minutes",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "resources",
+            "name": "min_duration_minutes"
+          }
+        }
+      },
+      {
+        "ordinal": 12,
+        "name": "max_duration_minutes",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "resources",
+            "name": "max_duration_minutes"
+          }
+        }
+      },
+      {
+        "ordinal": 13,
         "name": "color",
         "type_info": "Text",
         "origin": {
@@ -125,31 +158,31 @@
         }
       },
       {
-        "ordinal": 11,
+        "ordinal": 14,
         "name": "outlook_email",
         "type_info": "Text",
         "origin": "Expression"
       },
       {
-        "ordinal": 12,
+        "ordinal": 15,
         "name": "reservable_group_ids!",
         "type_info": "UuidArray",
         "origin": "Expression"
       },
       {
-        "ordinal": 13,
+        "ordinal": 16,
         "name": "auto_confirm_group_ids!",
         "type_info": "UuidArray",
         "origin": "Expression"
       },
       {
-        "ordinal": 14,
+        "ordinal": 17,
         "name": "can_reserve!",
         "type_info": "Bool",
         "origin": "Expression"
       },
       {
-        "ordinal": 15,
+        "ordinal": 18,
         "name": "created_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -160,7 +193,7 @@
         }
       },
       {
-        "ordinal": 16,
+        "ordinal": 19,
         "name": "updated_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -171,7 +204,7 @@
         }
       },
       {
-        "ordinal": 17,
+        "ordinal": 20,
         "name": "deleted_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -185,7 +218,6 @@
     "parameters": {
       "Left": [
         "Bool",
-        "Uuid",
         "Uuid"
       ]
     },
@@ -201,6 +233,9 @@
       false,
       false,
       true,
+      true,
+      true,
+      true,
       null,
       null,
       null,
@@ -210,5 +245,5 @@
       true
     ]
   },
-  "hash": "706497a4d26f2da4da859be184026a65872c9a6e5ec43543ba3e1913e6312868"
+  "hash": "e074f5b88ffafed55a7ec41a04a9da1502ff670cf4aac740277875e4b0c44ed3"
 }

@@ -66,6 +66,10 @@ function EditResourcePage() {
 				is_public: values.is_public ?? false,
 				reservation_restricted: values.reservation_restricted,
 				group_ids: values.group_ids,
+				// 0 clears a duration
+				default_duration_minutes: values.default_duration_minutes ?? 0,
+				min_duration_minutes: values.min_duration_minutes ?? 0,
+				max_duration_minutes: values.max_duration_minutes ?? 0,
 				auto_confirm: values.auto_confirm,
 				auto_confirm_group_ids: values.auto_confirm_group_ids,
 				// An empty string clears the color
@@ -98,6 +102,9 @@ function EditResourcePage() {
 					is_public: resource.is_public,
 					reservation_restricted: resource.reservation_restricted,
 					group_ids: resource.reservable_group_ids,
+					default_duration_minutes: resource.default_duration_minutes,
+					min_duration_minutes: resource.min_duration_minutes,
+					max_duration_minutes: resource.max_duration_minutes,
 					auto_confirm: resource.auto_confirm,
 					auto_confirm_group_ids: resource.auto_confirm_group_ids,
 					color: resource.color,
