@@ -201,6 +201,15 @@ async fn reservation_variables(
             "reservation_url",
             format!("{base}/reservations/{}", reservation.reservation.id),
         ),
+        (
+            "cancel_reason",
+            reservation
+                .reservation
+                .cancel_reason
+                .as_deref()
+                .map(|reason| format!("{}: {reason}", reason_label(lang)))
+                .unwrap_or_default(),
+        ),
     ]))
 }
 
@@ -235,7 +244,19 @@ pub fn sample_variables(config: &Config, lang: &str) -> Variables {
             "reservation_url",
             format!("{base}/reservations/00000000-0000-0000-0000-000000000000"),
         ),
+        (
+            "cancel_reason",
+            format!("{}: Tilaisuus peruttiin", reason_label(lang)),
+        ),
     ])
+}
+
+fn reason_label(lang: &str) -> &'static str {
+    match lang {
+        "sv" => "Orsak",
+        "en" => "Reason",
+        _ => "Syy",
+    }
 }
 
 fn status_label(status: ReservationStatus, lang: &str) -> &'static str {

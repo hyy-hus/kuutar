@@ -388,10 +388,10 @@ async fn revoking_access_does_not_touch_existing_reservations(pool: PgPool) {
     // Cancelling is unaffected
     let (status, _) = request(
         &env.app,
-        "PATCH",
-        &format!("/reservations/{id}"),
+        "POST",
+        &format!("/reservations/{id}/cancel"),
         Some(&env.granted),
-        Some(json!({ "status": "cancelled" })),
+        None,
     )
     .await;
     assert_eq!(status, StatusCode::OK);

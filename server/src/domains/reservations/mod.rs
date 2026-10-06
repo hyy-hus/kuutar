@@ -26,5 +26,6 @@ pub fn router(state: AuthState) -> Router {
                 .patch(routes::update_reservation)
                 .delete(routes::delete_reservation),
         )
+        .route("/{id}/cancel", post(routes::cancel_reservation))
         .with_state(state)
 }

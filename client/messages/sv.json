@@ -433,7 +433,7 @@
 	"vahvistaRajoituksenPoisto": "Vill du verkligen ta bort den här begränsningen?",
 	"vahvistaResurssinPoisto": "Vill du verkligen ta bort den här resursen?",
 	"vahvistaRyhmanPoisto": "Vill du verkligen ta bort den här gruppen?",
-	"vahvistaVarauksenPoisto": "Vill du verkligen ta bort den här bokningen?",
+	"vahvistaVarauksenPoisto": "Vill du verkligen ta bort den här bokningen permanent? Om den bara avbokas, använd Avbryt bokning i stället.",
 	"vahvistettu": "Bekräftad",
 	"vahvistetutVaraukset": "Bekräftade bokningar",
 	"vahvistetutVarauksetLength": "Bekräftade bokningar ({{length}})",
@@ -618,5 +618,10 @@
 	"tilastot90Paivaa": "90 d",
 	"tilastot12Kuukautta": "12 mån",
 	"tilastotKaikki": "Alla",
-	"aikavli": "Tidsintervall"
+	"aikavli": "Tidsintervall",
+	"varauksenPeruutusEpaonnistui": "Det gick inte att avboka bokningen.",
+	"vahvistaVarauksenPeruutus": "Vill du verkligen avboka bokningen {{title}}? Tiden frigörs och den som bokat meddelas.",
+	"peruutuksenSyy": "Orsak till avbokningen",
+	"eiPeruta": "Avboka inte",
+	"peruutuksenSyyValinnainen": "Orsak till avbokningen (valfritt)"
 }

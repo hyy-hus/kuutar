@@ -475,6 +475,22 @@ export interface paths {
         patch: operations["update_reservation"];
         trace?: never;
     };
+    "/reservations/{id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["cancel_reservation"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/resources": {
         parameters: {
             query?: never;
@@ -653,6 +669,10 @@ export interface components {
         BatchImportReport: {
             imported_count: number;
             reservation_ids: string[];
+        };
+        CancelReservationPayload: {
+            /** @description Optional explanation, included in the cancellation email */
+            reason?: string | null;
         };
         Collection: {
             /** Format: date-time */
@@ -998,6 +1018,11 @@ export interface components {
         };
         Reservation: {
             admin_notes?: string | null;
+            cancel_reason?: string | null;
+            /** Format: date-time */
+            cancelled_at?: string | null;
+            /** Format: uuid */
+            cancelled_by?: string | null;
             contact_email?: string | null;
             contact_person?: string | null;
             contact_phone?: string | null;
@@ -2849,7 +2874,7 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description Forbidden - Only the owner or an admin can delete */
+            /** @description Forbidden - Admin access required */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -2920,6 +2945,61 @@ export interface operations {
             };
             /** @description Validation error */
             422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    cancel_reservation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Reservation UUID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CancelReservationPayload"];
+            };
+        };
+        responses: {
+            /** @description Reservation cancelled */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReservationWithOccurrences"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden - Only the owner or an admin can cancel */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Reservation not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Already cancelled, or imported from Outlook */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };

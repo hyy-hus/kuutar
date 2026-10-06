@@ -433,7 +433,7 @@
 	"vahvistaRajoituksenPoisto": "Are you sure you want to delete this restriction?",
 	"vahvistaResurssinPoisto": "Are you sure you want to delete this resource?",
 	"vahvistaRyhmanPoisto": "Are you sure you want to delete this group?",
-	"vahvistaVarauksenPoisto": "Are you sure you want to delete this reservation?",
+	"vahvistaVarauksenPoisto": "Are you sure you want to permanently delete this reservation? If it is only being cancelled, use Cancel Booking instead.",
 	"vahvistettu": "Confirmed",
 	"vahvistetutVaraukset": "Confirmed Bookings",
 	"vahvistetutVarauksetLength": "Confirmed Bookings ({{length}})",
@@ -618,5 +618,10 @@
 	"tilastot90Paivaa": "90 d",
 	"tilastot12Kuukautta": "12 mo",
 	"tilastotKaikki": "All",
-	"aikavli": "Time range"
+	"aikavli": "Time range",
+	"varauksenPeruutusEpaonnistui": "Cancelling the reservation failed.",
+	"vahvistaVarauksenPeruutus": "Are you sure you want to cancel the reservation {{title}}? The slot is freed and the booker is notified.",
+	"peruutuksenSyy": "Reason for cancelling",
+	"eiPeruta": "Don't cancel",
+	"peruutuksenSyyValinnainen": "Reason for cancelling (optional)"
 }

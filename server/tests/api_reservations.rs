@@ -211,7 +211,7 @@ async fn test_check_reservation_conflicts(pool: PgPool) {
 #[sqlx::test]
 async fn test_soft_delete_reservation(pool: PgPool) {
     let (_group_id, _user_id, resource_id, _collection_id, token) =
-        setup_test_environment(&pool, Role::User).await;
+        setup_test_environment(&pool, Role::Admin).await;
     let app = app(pool.clone(), test_config());
 
     let now = Utc::now();
@@ -454,7 +454,7 @@ async fn test_recurring_reservation_forbidden_on_non_recurring_resource(pool: Pg
 }
 
 #[sqlx::test]
-async fn test_delete_reservation_requires_owner_or_admin(pool: PgPool) {
+async fn test_delete_reservation_requires_admin(pool: PgPool) {
     let (_group_id, _owner_id, resource_id, _collection_id, owner_token) =
         setup_test_environment(&pool, Role::User).await;
     let (other_user_auth, _, _) = setup_user_token(&pool, Role::User).await;
@@ -500,7 +500,7 @@ async fn test_delete_reservation_requires_owner_or_admin(pool: PgPool) {
             .unwrap()
     };
 
-    // Another regular user must not be able to delete it
+    // A regular user who is not the owner must not be able to delete it
     let res = app
         .clone()
         .oneshot(delete_as(other_user_auth))
@@ -516,6 +516,14 @@ async fn test_delete_reservation_requires_owner_or_admin(pool: PgPool) {
     .await
     .unwrap();
     assert_eq!(still_active, Some(true));
+
+    // Even the owner cannot delete: they should cancel instead
+    let res = app
+        .clone()
+        .oneshot(delete_as(format!("Bearer {owner_token}")))
+        .await
+        .unwrap();
+    assert_eq!(res.status(), StatusCode::FORBIDDEN);
 
     // An admin can delete any reservation
     let res = app.oneshot(delete_as(admin_auth)).await.unwrap();
@@ -607,4 +615,172 @@ async fn test_admin_cannot_create_reservation_for_unknown_user(pool: PgPool) {
     .await;
 
     assert_eq!(status, StatusCode::NOT_FOUND);
+}
+
+async fn send(
+    app: &axum::Router,
+    method: &str,
+    uri: &str,
+    auth: &str,
+    body: Option<Value>,
+) -> (StatusCode, Value) {
+    let mut builder = Request::builder()
+        .method(method)
+        .uri(uri)
+        .header(header::AUTHORIZATION, auth);
+    let body = match body {
+        Some(body) => {
+            builder = builder.header(header::CONTENT_TYPE, "application/json");
+            Body::from(body.to_string())
+        }
+        None => Body::empty(),
+    };
+    let response = app
+        .clone()
+        .oneshot(builder.body(body).unwrap())
+        .await
+        .unwrap();
+    let status = response.status();
+    let bytes = to_bytes(response.into_body(), usize::MAX).await.unwrap();
+    (
+        status,
+        serde_json::from_slice(&bytes).unwrap_or(Value::Null),
+    )
+}
+
+#[sqlx::test]
+async fn test_owner_can_cancel_own_reservation(pool: PgPool) {
+    let (_group_id, owner_id, resource_id, _collection_id, owner_token) =
+        setup_test_environment(&pool, Role::User).await;
+    let app = app(pool.clone(), test_config());
+    let owner_auth = format!("Bearer {owner_token}");
+
+    let (status, created) = post_reservation(
+        app.clone(),
+        &owner_token,
+        create_payload(resource_id, json!({ "status": "confirmed" })),
+    )
+    .await;
+    assert_eq!(status, StatusCode::CREATED);
+    let id = created["id"].as_str().unwrap();
+
+    let (status, cancelled) = send(
+        &app,
+        "POST",
+        &format!("/reservations/{id}/cancel"),
+        &owner_auth,
+        Some(json!({ "reason": "  Suunnitelmat muuttuivat  " })),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(cancelled["status"], "cancelled");
+    assert_eq!(cancelled["cancel_reason"], "Suunnitelmat muuttuivat");
+    assert_eq!(cancelled["cancelled_by"], owner_id.to_string());
+    assert!(cancelled["cancelled_at"].is_string());
+
+    // Cancelling again is a conflict
+    let (status, _) = send(
+        &app,
+        "POST",
+        &format!("/reservations/{id}/cancel"),
+        &owner_auth,
+        None,
+    )
+    .await;
+    assert_eq!(status, StatusCode::CONFLICT);
+
+    // The slot is free again
+    let (status, again) = post_reservation(
+        app.clone(),
+        &owner_token,
+        create_payload(resource_id, json!({ "status": "confirmed" })),
+    )
+    .await;
+    assert_eq!(status, StatusCode::CREATED, "{again}");
+}
+
+#[sqlx::test]
+async fn test_cancel_requires_owner_or_admin(pool: PgPool) {
+    let (_group_id, _owner_id, resource_id, _collection_id, owner_token) =
+        setup_test_environment(&pool, Role::User).await;
+    let (other_auth, _, _) = setup_user_token(&pool, Role::User).await;
+    let (admin_auth, admin_id, _) = setup_user_token(&pool, Role::Admin).await;
+    let app = app(pool.clone(), test_config());
+
+    let (_, created) = post_reservation(
+        app.clone(),
+        &owner_token,
+        create_payload(resource_id, json!({})),
+    )
+    .await;
+    let id = created["id"].as_str().unwrap();
+    let uri = format!("/reservations/{id}/cancel");
+
+    let (status, _) = send(&app, "POST", &uri, &other_auth, None).await;
+    assert_eq!(status, StatusCode::FORBIDDEN);
+
+    let (status, _) = send(&app, "POST", &uri, "Bearer invalid", None).await;
+    assert_eq!(status, StatusCode::UNAUTHORIZED);
+
+    let (status, cancelled) = send(&app, "POST", &uri, &admin_auth, None).await;
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(cancelled["status"], "cancelled");
+    assert_eq!(cancelled["cancelled_by"], admin_id.to_string());
+}
+
+#[sqlx::test]
+async fn test_patch_cannot_cancel_or_restore_for_owner(pool: PgPool) {
+    let (_group_id, _owner_id, resource_id, _collection_id, owner_token) =
+        setup_test_environment(&pool, Role::User).await;
+    let (admin_auth, _, _) = setup_user_token(&pool, Role::Admin).await;
+    let app = app(pool.clone(), test_config());
+    let owner_auth = format!("Bearer {owner_token}");
+
+    let (_, created) = post_reservation(
+        app.clone(),
+        &owner_token,
+        create_payload(resource_id, json!({})),
+    )
+    .await;
+    let id = created["id"].as_str().unwrap();
+    let uri = format!("/reservations/{id}");
+
+    // PATCH is no longer a way to cancel
+    let (status, _) = send(
+        &app,
+        "PATCH",
+        &uri,
+        &owner_auth,
+        Some(json!({ "status": "cancelled" })),
+    )
+    .await;
+    assert_eq!(status, StatusCode::BAD_REQUEST);
+
+    let (status, _) = send(&app, "POST", &format!("{uri}/cancel"), &owner_auth, None).await;
+    assert_eq!(status, StatusCode::OK);
+
+    // The owner cannot reopen or edit a cancelled reservation
+    let (status, _) = send(
+        &app,
+        "PATCH",
+        &uri,
+        &owner_auth,
+        Some(json!({ "status": "pending" })),
+    )
+    .await;
+    assert_eq!(status, StatusCode::FORBIDDEN);
+
+    // An admin can restore it, which clears the cancel metadata
+    let (status, restored) = send(
+        &app,
+        "PATCH",
+        &uri,
+        &admin_auth,
+        Some(json!({ "status": "pending" })),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(restored["status"], "pending");
+    assert!(restored["cancelled_at"].is_null());
+    assert!(restored["cancel_reason"].is_null());
 }

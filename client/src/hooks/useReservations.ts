@@ -198,6 +198,36 @@ export function useUpdateReservation() {
 	});
 }
 
+export function useCancelReservation() {
+	const queryClient = useQueryClient();
+
+	return useMutation({
+		mutationFn: async ({ id, reason }: { id: string; reason?: string }) => {
+			const { data, error } = await api.POST("/reservations/{id}/cancel", {
+				params: { path: { id } },
+				body: { reason: reason?.trim() || null },
+			});
+			if (error || !data)
+				throw new Error(
+					i18next.t(
+						"varauksenPeruutusEpaonnistui",
+						"Varauksen peruminen epäonnistui.",
+					),
+				);
+			return data;
+		},
+		onSuccess: (cancelledReservation) => {
+			queryClient.setQueryData(
+				reservationKeys.detail(cancelledReservation.id),
+				cancelledReservation,
+			);
+			queryClient.invalidateQueries({ queryKey: reservationKeys.all });
+			// Cancelling frees up the reservable block
+			queryClient.invalidateQueries({ queryKey: reservableBlockKeys.all });
+		},
+	});
+}
+
 export function useDeleteReservation() {
 	const queryClient = useQueryClient();
 

@@ -549,9 +549,12 @@ export function ReservationForm({
 												{t("vahvistettu", "Vahvistettu")}
 											</option>
 											<option value="pending">{t("odottaa", "Odottaa")}</option>
-											<option value="cancelled">
-												{t("peruttu", "Peruttu")}
-											</option>
+											{/* Cancelling goes through the dedicated cancel action */}
+											{field.state.value === "cancelled" && (
+												<option value="cancelled">
+													{t("peruttu", "Peruttu")}
+												</option>
+											)}
 										</select>
 									</div>
 								)}
