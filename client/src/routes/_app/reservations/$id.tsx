@@ -8,9 +8,11 @@ import {
 	Shield,
 	Trash2,
 	User as UserIcon,
+	X,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "#/components/Button";
+import { CancelReservationDialog } from "#/components/CancelReservationDialog";
 import { Chip } from "#/components/Chip";
 import { OutlookBadge } from "#/components/OutlookBadge";
 import { useAuth, useIsAdmin } from "#/hooks/useAuth";
@@ -63,6 +65,8 @@ function ViewReservationPage() {
 	// Outlook is the source of truth for imported reservations
 	const canEdit =
 		!isOutlook && (isAdmin || (!!user && user.id === reservation.user_id));
+	const isCancelled = reservation.status === "cancelled";
+	const canCancel = canEdit && !isCancelled;
 	const occurrences = reservation.occurrences || [];
 	const resourceMap = new Map(resources?.map((r) => [r.id, r.name]));
 
@@ -71,7 +75,7 @@ function ViewReservationPage() {
 			confirm(
 				t(
 					"vahvistaVarauksenPoisto",
-					"Haluatko varmasti poistaa tämän varauksen?",
+					"Haluatko varmasti poistaa tämän varauksen pysyvästi? Jos varaus vain peruuntuu, käytä Peru varaus -toimintoa.",
 				),
 			)
 		) {
@@ -101,7 +105,23 @@ function ViewReservationPage() {
 							</Button>
 						</Link>
 					)}
-					{!isOutlook && (
+					{canCancel && (
+						<CancelReservationDialog
+							reservationId={id}
+							reservationTitle={reservation.title}
+							trigger={
+								<Button
+									variant="outline"
+									size="sm"
+									className="gap-1 text-xs text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40"
+								>
+									<X size={14} />
+									<span>{t("peruVaraus", "Peru varaus")}</span>
+								</Button>
+							}
+						/>
+					)}
+					{!isOutlook && isAdmin && (
 						<Button
 							variant="outline"
 							size="sm"
@@ -149,6 +169,27 @@ function ViewReservationPage() {
 					</div>
 					<Chip>{readable_uuid(reservation.id)}</Chip>
 				</div>
+
+				{isCancelled && (
+					<div className="p-3 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 rounded space-y-1 text-xs text-rose-900 dark:text-rose-200">
+						<p className="font-semibold">
+							{t("varausPeruttu", "Varaus on peruttu")}
+							{reservation.cancelled_at && (
+								<span className="font-normal">
+									{" · "}
+									{formatDate(reservation.cancelled_at)}
+								</span>
+							)}
+						</p>
+						{reservation.cancel_reason && (
+							<p>
+								{t("peruutuksenSyy", "Peruutuksen syy")}
+								{": "}
+								{reservation.cancel_reason}
+							</p>
+						)}
+					</div>
+				)}
 
 				{/* Contact Details Card (admin or owner) */}
 				{canSeeContact &&

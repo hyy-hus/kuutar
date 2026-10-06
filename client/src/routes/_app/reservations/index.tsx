@@ -13,9 +13,11 @@ import {
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "#/components/Button";
+import { CancelReservationDialog } from "#/components/CancelReservationDialog";
 import { Chip } from "#/components/Chip";
 import { OutlookBadge } from "#/components/OutlookBadge";
 import { PeriodNavigator } from "#/components/PeriodNavigator";
+import { useIsAdmin } from "#/hooks/useAuth";
 import {
 	type ReservationStatus,
 	type ReservationWithOccurrences,
@@ -70,6 +72,7 @@ function UserReservationCard({
 	const isPending = reservationWithOcc.status === "pending";
 	const isCancelled = reservationWithOcc.status === "cancelled";
 	const isOutlook = reservationWithOcc.source === "outlook";
+	const { isAdmin } = useIsAdmin();
 
 	return (
 		<li
@@ -130,37 +133,38 @@ function UserReservationCard({
 				</Button>
 
 				{isOutlook ? null : isCancelled ? (
-					<Button
-						variant="outline"
-						size="sm"
-						disabled={isUpdating}
-						onClick={() =>
-							onStatusToggle(
-								reservationWithOcc.id,
-								"pending" as ReservationStatus,
-							)
-						}
-						className="text-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/50 text-xs px-2.5 py-1 gap-1"
-					>
-						<RotateCcw size={14} />
-						<span>{t("palautaOdottavaksi", "Palauta odottavaksi")}</span>
-					</Button>
+					isAdmin && (
+						<Button
+							variant="outline"
+							size="sm"
+							disabled={isUpdating}
+							onClick={() =>
+								onStatusToggle(
+									reservationWithOcc.id,
+									"pending" as ReservationStatus,
+								)
+							}
+							className="text-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/50 text-xs px-2.5 py-1 gap-1"
+						>
+							<RotateCcw size={14} />
+							<span>{t("palautaOdottavaksi", "Palauta odottavaksi")}</span>
+						</Button>
+					)
 				) : (
-					<Button
-						variant="outline"
-						size="sm"
-						disabled={isUpdating}
-						onClick={() =>
-							onStatusToggle(
-								reservationWithOcc.id,
-								"cancelled" as ReservationStatus,
-							)
+					<CancelReservationDialog
+						reservationId={reservationWithOcc.id}
+						reservationTitle={reservationWithOcc.title}
+						trigger={
+							<Button
+								variant="outline"
+								size="sm"
+								className="text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/50 text-xs px-2.5 py-1 gap-1"
+							>
+								<X size={14} />
+								<span>{t("peruVaraus", "Peru varaus")}</span>
+							</Button>
 						}
-						className="text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/50 text-xs px-2.5 py-1 gap-1"
-					>
-						<X size={14} />
-						<span>{t("peruVaraus", "Peru varaus")}</span>
-					</Button>
+					/>
 				)}
 			</div>
 		</li>

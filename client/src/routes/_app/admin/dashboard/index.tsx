@@ -16,6 +16,7 @@ import {
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "#/components/Button";
+import { CancelReservationDialog } from "#/components/CancelReservationDialog";
 import { OutlookBadge } from "#/components/OutlookBadge";
 import { PeriodNavigator } from "#/components/PeriodNavigator";
 import {
@@ -261,16 +262,21 @@ function AdminReservationRow({
 
 					{isOutlook ? null : isPending ? (
 						<>
-							<Button
-								variant="secondary"
-								size="sm"
-								disabled={isUpdating}
-								onClick={() => onStatusChange("cancelled" as ReservationStatus)}
-								className="text-rose-600 hover:text-rose-700 dark:text-rose-400 text-[11px] px-2 py-0.5 h-7 gap-1 font-mono"
-							>
-								<X size={12} />
-								<span>{t("hylk", "Hylkää")}</span>
-							</Button>
+							<CancelReservationDialog
+								reservationId={reservationWithOcc.id}
+								reservationTitle={reservationWithOcc.title}
+								trigger={
+									<Button
+										variant="secondary"
+										size="sm"
+										disabled={isUpdating}
+										className="text-rose-600 hover:text-rose-700 dark:text-rose-400 text-[11px] px-2 py-0.5 h-7 gap-1 font-mono"
+									>
+										<X size={12} />
+										<span>{t("hylk", "Hylkää")}</span>
+									</Button>
+								}
+							/>
 							<Button
 								variant="secondary"
 								size="sm"
