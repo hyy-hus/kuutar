@@ -1,5 +1,12 @@
 import { useForm } from "@tanstack/react-form";
-import { Eye, FileText, Loader2, Save, Users } from "lucide-react";
+import {
+	CheckCircle2,
+	Eye,
+	FileText,
+	Loader2,
+	Save,
+	Users,
+} from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { LocalizedRichTextEditor } from "#/components/LocalizedRichTextEditor";
 import { useCollections } from "#/hooks/useCollections";
@@ -24,6 +31,8 @@ export interface ResourceFormValues
 	outlook_email?: string | null;
 	reservation_restricted?: boolean;
 	group_ids?: string[];
+	auto_confirm?: boolean;
+	auto_confirm_group_ids?: string[];
 	contract_ids?: string[];
 }
 
@@ -67,6 +76,8 @@ export function ResourceForm({
 			is_public: defaultValues?.is_public ?? true,
 			reservation_restricted: defaultValues?.reservation_restricted ?? false,
 			group_ids: defaultValues?.group_ids ?? [],
+			auto_confirm: defaultValues?.auto_confirm ?? false,
+			auto_confirm_group_ids: defaultValues?.auto_confirm_group_ids ?? [],
 			color: defaultValues?.color ?? "",
 			outlook_email: defaultValues?.outlook_email ?? "",
 			reservable_until: toDateInputValue(defaultValues?.reservable_until),
@@ -406,6 +417,85 @@ export function ResourceForm({
 
 							{field.state.value && (
 								<form.Field name="group_ids">
+									{(groupField) =>
+										loadingGroups ? (
+											<div className="text-xs text-stone-500 py-2">
+												{t("ladataanRyhmia", "Ladataan ryhmiä...")}
+											</div>
+										) : (
+											<div className="space-y-1.5 max-h-36 overflow-y-auto p-2 ml-7 bg-white dark:bg-stone-950 border border-stone-200 dark:border-stone-800 rounded-md">
+												{groups?.map((grp) => {
+													const isChecked = groupField.state.value.includes(
+														grp.id,
+													);
+													return (
+														<label
+															key={grp.id}
+															className="flex items-center gap-2 text-xs text-stone-800 dark:text-stone-200 font-medium cursor-pointer p-1 hover:bg-stone-100 dark:hover:bg-stone-800 rounded"
+														>
+															<input
+																type="checkbox"
+																checked={isChecked}
+																onChange={(e) => {
+																	const next = e.target.checked
+																		? [...groupField.state.value, grp.id]
+																		: groupField.state.value.filter(
+																				(id) => id !== grp.id,
+																			);
+																	groupField.handleChange(next);
+																}}
+																className="w-4 h-4 text-purple-600 rounded border-stone-300 focus:ring-purple-500"
+															/>
+															<span>{grp.name}</span>
+														</label>
+													);
+												})}
+											</div>
+										)
+									}
+								</form.Field>
+							)}
+						</div>
+					)}
+				</form.Field>
+
+				{/* Auto-confirm Toggle + optional group limit */}
+				<form.Field name="auto_confirm">
+					{(field) => (
+						<div className="p-3 bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-md space-y-2">
+							<div className="flex items-center gap-3">
+								<input
+									type="checkbox"
+									id={field.name}
+									checked={field.state.value ?? false}
+									onChange={(e) => field.handleChange(e.target.checked)}
+									className="w-4 h-4 text-purple-600 rounded border-stone-300 focus:ring-purple-500 dark:border-stone-700 dark:bg-stone-950"
+								/>
+								<label
+									htmlFor={field.name}
+									className="text-xs font-medium text-stone-800 dark:text-stone-200 cursor-pointer select-none flex items-center gap-1.5"
+								>
+									<CheckCircle2
+										size={14}
+										className="text-purple-600 dark:text-purple-400"
+									/>
+									<span>
+										{t(
+											"vahvistaAutomaattisesti",
+											"Vahvista varaukset automaattisesti",
+										)}
+									</span>
+								</label>
+							</div>
+							<p className="text-[11px] text-stone-500 pl-7">
+								{t(
+									"vahvistaAutomaattisestiOhje",
+									"Varaukset vahvistuvat heti ilman ylläpitäjän hyväksyntää. Jos valitset ryhmiä, vain niiden varaukset vahvistuvat automaattisesti; muut jäävät odottamaan hyväksyntää. Tyhjä valinta tarkoittaa kaikkia ryhmiä.",
+								)}
+							</p>
+
+							{field.state.value && (
+								<form.Field name="auto_confirm_group_ids">
 									{(groupField) =>
 										loadingGroups ? (
 											<div className="text-xs text-stone-500 py-2">

@@ -562,6 +562,45 @@ pub async fn validate_resource_group_access(
     Ok(())
 }
 
+/// Whether a non-admin user's reservation of `resource_ids` may be confirmed immediately:
+/// every resource must be `auto_confirm`, and where it lists auto-confirm groups the user's
+/// group must be one of them. An empty resource list never auto-confirms.
+pub async fn should_auto_confirm(
+    pool: &PgPool,
+    user_id: Uuid,
+    resource_ids: &[Uuid],
+) -> Result<bool, AppError> {
+    if resource_ids.is_empty() {
+        return Ok(false);
+    }
+
+    let blocking = sqlx::query_scalar!(
+        r#"
+        SELECT COUNT(*) AS "count!"
+        FROM resources r
+        LEFT JOIN users u ON u.id = $1 AND u.deleted_at IS NULL
+        WHERE r.id = ANY($2)
+          AND (
+              r.deleted_at IS NOT NULL
+              OR r.auto_confirm = FALSE
+              OR (
+                  EXISTS (SELECT 1 FROM resource_auto_confirm_groups ag WHERE ag.resource_id = r.id)
+                  AND NOT EXISTS (
+                      SELECT 1 FROM resource_auto_confirm_groups ag
+                      WHERE ag.resource_id = r.id AND ag.group_id = u.group_id
+                  )
+              )
+          )
+        "#,
+        user_id,
+        resource_ids
+    )
+    .fetch_one(pool)
+    .await?;
+
+    Ok(blocking == 0)
+}
+
 /// Validates proposed occurrences against the resource's `reservable_until` boundary.
 /// Admins bypass this check.
 pub async fn validate_resource_reservable_until(

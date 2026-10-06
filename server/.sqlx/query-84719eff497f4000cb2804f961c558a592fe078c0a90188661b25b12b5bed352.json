@@ -1,0 +1,24 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT COUNT(*) AS \"count!\"\n        FROM resources r\n        LEFT JOIN users u ON u.id = $1 AND u.deleted_at IS NULL\n        WHERE r.id = ANY($2)\n          AND (\n              r.deleted_at IS NOT NULL\n              OR r.auto_confirm = FALSE\n              OR (\n                  EXISTS (SELECT 1 FROM resource_auto_confirm_groups ag WHERE ag.resource_id = r.id)\n                  AND NOT EXISTS (\n                      SELECT 1 FROM resource_auto_confirm_groups ag\n                      WHERE ag.resource_id = r.id AND ag.group_id = u.group_id\n                  )\n              )\n          )\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "count!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "UuidArray"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "84719eff497f4000cb2804f961c558a592fe078c0a90188661b25b12b5bed352"
+}
