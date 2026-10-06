@@ -7,13 +7,14 @@ use serde_json::{Value, json};
 use super::models::EmailTemplateKey;
 use crate::utils::rich_text::LocalizedRichText;
 
-const RESERVATION_VARIABLES: [&str; 6] = [
+const RESERVATION_VARIABLES: [&str; 7] = [
     "user_name",
     "title",
     "status",
     "contact_person",
     "occurrences",
     "reservation_url",
+    "cancel_reason",
 ];
 
 const USER_VARIABLES: [&str; 3] = ["user_name", "email", "app_url"];
@@ -201,6 +202,13 @@ pub fn default_body(key: EmailTemplateKey) -> LocalizedRichText {
         .map(|(lang, greeting, intro, link)| {
             let mut document = doc(intro, link);
             document["content"][0] = paragraph(greeting);
+            if matches!(key, EmailTemplateKey::ReservationCancelled) {
+                // Empty when no reason was given
+                document["content"]
+                    .as_array_mut()
+                    .expect("doc content is an array")
+                    .insert(2, paragraph("{{cancel_reason}}"));
+            }
             (lang.to_string(), document)
         })
         .collect()
