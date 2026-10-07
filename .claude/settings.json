@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(process-compose process list:*)",
+      "Bash(process-compose process logs:*)",
+      "Bash(process-compose process restart:*)",
+      "Bash(process-compose process start:*)",
+      "Bash(process-compose process stop:*)",
+      "Bash(process-compose process get:*)"
+    ]
+  }
+}

@@ -1,0 +1,12 @@
+# process-compose.yml
+version: "0.5"
+processes:
+  db:
+    command: docker compose up
+  server:
+    command: bacon --headless run
+    working_dir: ./server
+    depends_on: { db: { condition: process_started } }
+  client:
+    command: pnpm run dev
+    working_dir: ./client
