@@ -23,7 +23,15 @@ export function AuthDialog() {
 	return (
 		<Dialog.Root open={isOpen} onOpenChange={setIsOpen}>
 			<Dialog.Trigger asChild>
-				<Button variant="ghost" size="icon">
+				<Button
+					variant="ghost"
+					size="icon"
+					aria-label={
+						isAuthenticated
+							? t("kayttajatili", "Käyttäjätili")
+							: t("kirjauduSisn", "Kirjaudu sisään")
+					}
+				>
 					{isAuthenticated ? (
 						<span className="font-bold text-xs uppercase text-purple-600 dark:text-purple-400">
 							{user?.email?.charAt(0)}

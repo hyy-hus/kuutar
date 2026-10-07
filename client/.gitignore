@@ -14,3 +14,8 @@ todos.json
 
 *storybook.log
 storybook-static
+
+# Playwright
+e2e/.auth
+playwright-report
+test-results
