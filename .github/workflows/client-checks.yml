@@ -42,3 +42,6 @@ jobs:
 
       - name: Type check
         run: pnpm typecheck
+
+      - name: Unit tests (vitest)
+        run: pnpm test
