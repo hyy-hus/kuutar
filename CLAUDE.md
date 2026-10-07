@@ -25,7 +25,7 @@ Run the checks CI runs and fix failures first:
 - Server (`server/`): `cargo test --locked`
 - Client (`client/`): `pnpm exec biome ci .`, `pnpm typecheck` and `pnpm test` (vitest unit tests)
 
-New or changed logic in `client/src/utils/` gets a `*.test.ts` next to it. Verifying UI changes is manual for now; Storybook is unused, so don't add stories. Playwright e2e is planned (see issue #113).
+New or changed logic in `client/src/utils/` gets a `*.test.ts` next to it. Verifying UI changes is manual for now; Storybook is unused, so don't add stories. Playwright e2e lives in `client/e2e/` (`pnpm e2e`, issue #113). It runs its own API (:3100) and client (:5174) against a throwaway `kuutar_e2e` database, so it never touches dev data or the running dev servers. It needs `E2E_ADMIN_DATABASE_URL` set to a Postgres superuser URL (e.g. `DATABASE_URL` from `server/.env` ending in `/postgres`). Prefer role/label locators and English text (tests run in the `en-US` locale). Run `pnpm e2e` when a change touches user flows; it is not in CI yet.
 
 ## Server
 
