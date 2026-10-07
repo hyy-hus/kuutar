@@ -16,6 +16,8 @@
         "check": "biome check",
         "typecheck": "tsc --noEmit",
         "test": "vitest run --project unit",
+    "e2e": "playwright test",
+    "e2e:ui": "playwright test --ui",
         "storybook": "storybook dev -p 6006",
         "build-storybook": "storybook build",
         "generate:api": "openapi-typescript http://127.0.0.1:3000/api-docs/openapi.json -o src/api/schema.d.ts"
@@ -60,6 +62,7 @@
     "devDependencies": {
         "@biomejs/biome": "2.4.5",
         "@chromatic-com/storybook": "latest",
+        "@playwright/test": "^1.63.0",
         "@rolldown/plugin-babel": "^0.2.3",
         "@storybook/addon-a11y": "^10.5.9",
         "@storybook/addon-docs": "^10.5.9",
@@ -79,7 +82,7 @@
         "eslint-plugin-i18next": "^6.1.5",
         "i18next-cli": "^1.73.2",
         "openapi-typescript": "^7.13.0",
-        "playwright": "latest",
+        "playwright": "^1.63.0",
         "storybook": "^10.5.9",
         "typescript": "^6.0.2",
         "vite": "^8.0.0",
