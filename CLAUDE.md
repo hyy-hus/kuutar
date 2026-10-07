@@ -23,9 +23,9 @@ Control the running instance with the same socket flags:
 Run the checks CI runs and fix failures first:
 
 - Server (`server/`): `cargo test --locked`
-- Client (`client/`): `pnpm exec biome ci .` and `pnpm typecheck`
+- Client (`client/`): `pnpm exec biome ci .`, `pnpm typecheck` and `pnpm test` (vitest unit tests)
 
-Verifying UI changes is manual for now. Storybook and vitest are not part of the workflow yet, so don't add stories or rely on `pnpm test`.
+New or changed logic in `client/src/utils/` gets a `*.test.ts` next to it. Verifying UI changes is manual for now; Storybook is unused, so don't add stories. Playwright e2e is planned (see issue #113).
 
 ## Server
 
