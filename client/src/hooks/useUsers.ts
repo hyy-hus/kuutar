@@ -266,3 +266,49 @@ export function useBatchUpsertUsers() {
 		},
 	});
 }
+
+/** Applies the same group and/or language change to several users; failures are collected per user. */
+export function useBulkUpdateUsers() {
+	const queryClient = useQueryClient();
+
+	return useMutation({
+		mutationFn: async ({
+			users,
+			changes,
+		}: {
+			users: Pick<User, "id" | "email">[];
+			changes: Pick<UpdateUserPayload, "group_id" | "language">;
+		}) => {
+			const results = await Promise.allSettled(
+				users.map(async (user) => {
+					const { data, error } = await api.PATCH("/users/{id}", {
+						params: { path: { id: user.id } },
+						body: changes,
+					});
+					if (error || !data)
+						throw new Error(
+							`${user.email}: ${apiErrorMessage(
+								error,
+								i18next.t(
+									"kayttajanPaivitysEpaonnistui",
+									"Käyttäjän päivitys epäonnistui.",
+								),
+							)}`,
+						);
+					return data;
+				}),
+			);
+
+			const rejected = results.filter(
+				(r): r is PromiseRejectedResult => r.status === "rejected",
+			);
+			if (rejected.length > 0) {
+				throw new Error(rejected.map((r) => r.reason.message).join("\n"));
+			}
+		},
+		onSettled: () => {
+			// Some updates may have succeeded even when others failed
+			queryClient.invalidateQueries({ queryKey: userKeys.all });
+		},
+	});
+}

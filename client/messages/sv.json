@@ -644,5 +644,13 @@
 	"istuntoAlkoi": "Startade",
 	"paataIstunto": "Avsluta session",
 	"paata": "Avsluta",
-	"kirjauduUlosMuualta": "Logga ut från andra enheter"
+	"kirjauduUlosMuualta": "Logga ut från andra enheter",
+	"valitseKayttaja": "Välj {{name}}",
+	"valitseKaikki": "Välj alla",
+	"valittuMaara": "{{count}} valda",
+	"siirraRyhmaan": "Flytta till grupp",
+	"siirraRyhmaanPlaceholder": "-- Flytta till grupp --",
+	"asetaKieli": "Ange språk",
+	"asetaKieliPlaceholder": "-- Ange språk --",
+	"toteutaMuutokset": "Genomför ändringar"
 }

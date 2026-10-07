@@ -644,5 +644,13 @@
 	"istuntoAlkoi": "Started",
 	"paataIstunto": "End session",
 	"paata": "End",
-	"kirjauduUlosMuualta": "Log out from other devices"
+	"kirjauduUlosMuualta": "Log out from other devices",
+	"valitseKayttaja": "Select {{name}}",
+	"valitseKaikki": "Select all",
+	"valittuMaara": "{{count}} selected",
+	"siirraRyhmaan": "Move to group",
+	"siirraRyhmaanPlaceholder": "-- Move to group --",
+	"asetaKieli": "Set language",
+	"asetaKieliPlaceholder": "-- Set language --",
+	"toteutaMuutokset": "Apply changes"
 }
