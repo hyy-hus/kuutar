@@ -1,8 +1,12 @@
+use std::collections::HashMap;
+
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use uuid::Uuid;
 use validator::Validate;
+
+use crate::utils::rich_text::{LocalizedRichText, validate_localized_rich_text};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, sqlx::Type, ToSchema)]
 #[sqlx(type_name = "reservation_status", rename_all = "lowercase")]
@@ -26,7 +30,14 @@ pub struct Reservation {
     pub user_email: Option<String>,
 
     pub title: String,
-    pub description: Option<String>,
+
+    /// Public, localized rich text: `{"fi": {"type": "doc", ...}}`. Visible to everyone.
+    #[schema(value_type = Option<HashMap<String, serde_json::Value>>)]
+    pub description: Option<serde_json::Value>,
+
+    /// Information from the reserver to the admins. Visible only to the owner and admins.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub message_to_admins: Option<String>,
 
     // Admin-Only Contact Details & Notes
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -89,7 +100,13 @@ pub struct CreateReservationPayload {
 
     #[validate(length(min = 1, max = 255))]
     pub title: String,
-    pub description: Option<String>,
+    /// Localized rich text. Send `{}` to clear; omitting keeps the current value.
+    #[validate(custom(function = "validate_localized_rich_text"))]
+    #[schema(value_type = Option<HashMap<String, serde_json::Value>>)]
+    pub description: Option<LocalizedRichText>,
+    /// Plain text for the admins. Send an empty string to clear.
+    #[validate(length(max = 2000))]
+    pub message_to_admins: Option<String>,
     pub admin_notes: Option<String>,
 
     // Optional Contact Info provided during creation
@@ -119,7 +136,13 @@ impl CreateReservationPayload {
 pub struct UpdateReservationPayload {
     #[validate(length(min = 1, max = 255))]
     pub title: Option<String>,
-    pub description: Option<String>,
+    /// Localized rich text. Send `{}` to clear; omitting keeps the current value.
+    #[validate(custom(function = "validate_localized_rich_text"))]
+    #[schema(value_type = Option<HashMap<String, serde_json::Value>>)]
+    pub description: Option<LocalizedRichText>,
+    /// Plain text for the admins. Send an empty string to clear.
+    #[validate(length(max = 2000))]
+    pub message_to_admins: Option<String>,
     pub admin_notes: Option<String>,
 
     pub contact_person: Option<String>,
@@ -189,11 +212,33 @@ pub struct PortableOccurrenceImport {
     pub end_time: DateTime<Utc>,
 }
 
+/// Exports made before descriptions became rich text carry a plain string.
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum PortableDescription {
+    Text(String),
+    Rich(LocalizedRichText),
+}
+
+impl PortableDescription {
+    /// The JSONB value to store, or `None` when there is nothing to store.
+    pub fn into_json(self) -> Option<serde_json::Value> {
+        let rich = match self {
+            Self::Text(text) => crate::utils::rich_text::from_plain_text(&text),
+            Self::Rich(rich) => rich,
+        };
+        (!rich.is_empty()).then(|| crate::utils::rich_text::to_json(rich))
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize, utoipa::ToSchema)]
 pub struct PortableReservationImport {
     pub user_email: Option<String>,
     pub title: String,
-    pub description: Option<String>,
+    /// Localized rich text, or a plain string from older exports
+    #[schema(value_type = Option<serde_json::Value>)]
+    pub description: Option<PortableDescription>,
+    pub message_to_admins: Option<String>,
     pub admin_notes: Option<String>,
     pub contact_person: Option<String>,
     pub contact_email: Option<String>,

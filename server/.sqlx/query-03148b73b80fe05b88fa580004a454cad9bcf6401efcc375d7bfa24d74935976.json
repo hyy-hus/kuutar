@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n                INSERT INTO reservations (\n                    user_id, title, description, contact_person, contact_email, rrule,\n                    status, source, ical_uid, ical_sequence\n                )\n                VALUES ($1, $2, $3, $4, $5, $6, 'confirmed', 'outlook', $7, $8)\n                RETURNING id\n                ",
+  "query": "\n                INSERT INTO reservations (\n                    user_id, title, description_rich, contact_person, contact_email, rrule,\n                    status, source, ical_uid, ical_sequence\n                )\n                VALUES ($1, $2, $3, $4, $5, $6, 'confirmed', 'outlook', $7, $8)\n                RETURNING id\n                ",
   "describe": {
     "columns": [
       {
@@ -19,7 +19,7 @@
       "Left": [
         "Uuid",
         "Text",
-        "Text",
+        "Jsonb",
         "Varchar",
         "Varchar",
         "Text",
@@ -31,5 +31,5 @@
       false
     ]
   },
-  "hash": "c32a3e55a383d06ed350f3b23485c9f8abfcc36525d9ba4cf9bb33b3d1194b01"
+  "hash": "03148b73b80fe05b88fa580004a454cad9bcf6401efcc375d7bfa24d74935976"
 }

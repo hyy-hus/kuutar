@@ -98,7 +98,8 @@ async fn splitting_a_reservation_moves_the_occurrence_to_a_new_reservation(pool:
         &user,
         Some(json!({
             "title": "Choir",
-            "description": "Weekly rehearsal",
+            "description": {"fi": {"type": "doc", "content": []}},
+            "message_to_admins": "Need the piano",
             "rrule": "DTSTART;TZID=Europe/Helsinki:20261013T180000\nRRULE:FREQ=WEEKLY;COUNT=3",
             "occurrences": occurrences
         })),
@@ -121,7 +122,8 @@ async fn splitting_a_reservation_moves_the_occurrence_to_a_new_reservation(pool:
     assert_eq!(status, StatusCode::CREATED, "{split}");
     assert_ne!(split["id"], original["id"]);
     assert_eq!(split["title"], "Choir");
-    assert_eq!(split["description"], "Weekly rehearsal");
+    assert_eq!(split["description"]["fi"]["type"], "doc");
+    assert_eq!(split["message_to_admins"], "Need the piano");
     assert_eq!(split["rrule"], Value::Null);
     assert_eq!(split["occurrences"].as_array().unwrap().len(), 1);
     assert_eq!(split["occurrences"][0]["id"], middle);

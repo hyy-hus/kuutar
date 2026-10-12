@@ -1,0 +1,28 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        INSERT INTO reservations (\n            user_id, title, description, description_rich, message_to_admins, admin_notes,\n            contact_person, contact_email, contact_phone,\n            rrule, status, contract_id,\n            cancelled_at, cancelled_by, cancel_reason\n        )\n        SELECT\n            user_id, title, description, description_rich, message_to_admins, admin_notes,\n            contact_person, contact_email, contact_phone,\n            NULL, status, contract_id,\n            cancelled_at, cancelled_by, cancel_reason\n        FROM reservations\n        WHERE id = $1 AND deleted_at IS NULL\n        RETURNING id\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "reservations",
+            "name": "id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "b3ba0e13d1b5668cb564c3fbe2b4f0971097277dfe43dec1530faecdc2321e84"
+}

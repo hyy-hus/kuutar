@@ -9,8 +9,11 @@ use super::models::{
     ReservationWithOccurrences, UpdateReservationPayload,
 };
 use crate::{
-    domains::reservations::models::{BatchImportReport, PortableReservationImport},
+    domains::reservations::models::{
+        BatchImportReport, PortableDescription, PortableReservationImport,
+    },
     errors::AppError,
+    utils::rich_text,
 };
 
 /// Lists reservations overlapping the window. Occurrences on non-public resources the viewer
@@ -72,7 +75,8 @@ pub async fn list_filtered(
             u.name AS "user_name?",
             u.email AS "user_email?",
             r.title, 
-            r.description, 
+            r.description_rich AS description,
+            r.message_to_admins,
             r.admin_notes,
             r.contact_person, 
             r.contact_email, 
@@ -106,6 +110,7 @@ pub async fn list_filtered(
             reservation.admin_notes = None;
             // Owners (the "my reservations" listing) may see their own contact details
             if target_user_id != Some(reservation.user_id) {
+                reservation.message_to_admins = None;
                 reservation.contact_person = None;
                 reservation.contact_email = None;
                 reservation.contact_phone = None;
@@ -146,7 +151,8 @@ pub async fn find_by_id(
             u.name AS "user_name?",
             u.email AS "user_email?",
             r.title, 
-            r.description, 
+            r.description_rich AS description,
+            r.message_to_admins,
             r.admin_notes,
             r.contact_person, 
             r.contact_email, 
@@ -174,6 +180,7 @@ pub async fn find_by_id(
     if !is_admin {
         reservation.user_email = None;
         reservation.admin_notes = None;
+        reservation.message_to_admins = None;
         reservation.contact_person = None;
         reservation.contact_email = None;
         reservation.contact_phone = None;
@@ -205,23 +212,24 @@ pub async fn create(
     let reservation_id = sqlx::query_scalar!(
         r#"
         INSERT INTO reservations (
-            user_id, title, description, admin_notes, 
+            user_id, title, description_rich, admin_notes, 
             contact_person, contact_email, contact_phone, 
-            rrule, status, contract_id
+            rrule, status, contract_id, message_to_admins
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NULLIF(btrim($11), ''))
         RETURNING id
         "#,
         user_id,
         dto.title,
-        dto.description,
+        dto.description.map(rich_text::to_json),
         dto.admin_notes,
         dto.contact_person,
         dto.contact_email,
         dto.contact_phone,
         dto.rrule,
         initial_status as ReservationStatus,
-        dto.contract_id
+        dto.contract_id,
+        dto.message_to_admins
     )
     .fetch_one(&mut *tx)
     .await?;
@@ -264,7 +272,16 @@ pub async fn update(
         UPDATE reservations
         SET 
             title = COALESCE($1, title),
-            description = COALESCE($2, description),
+            -- An empty document clears the description, null keeps it
+            description_rich = CASE
+                WHEN $2::jsonb IS NULL THEN description_rich
+                WHEN $2::jsonb = '{}'::jsonb THEN NULL
+                ELSE $2::jsonb
+            END,
+            message_to_admins = CASE
+                WHEN $13::text IS NULL THEN message_to_admins
+                ELSE NULLIF(btrim($13), '')
+            END,
             admin_notes = COALESCE($3, admin_notes),
             contact_person = COALESCE($4, contact_person),
             contact_email = COALESCE($5, contact_email),
@@ -285,7 +302,7 @@ pub async fn update(
         WHERE id = $11 AND deleted_at IS NULL
         "#,
         dto.title,
-        dto.description,
+        dto.description.map(rich_text::to_json),
         dto.admin_notes,
         dto.contact_person,
         dto.contact_email,
@@ -295,7 +312,8 @@ pub async fn update(
         dto.contract_id,
         dto.mark_printed,
         id,
-        dto.occurrences.is_some()
+        dto.occurrences.is_some(),
+        dto.message_to_admins
     )
     .execute(&mut *tx)
     .await?;
@@ -348,13 +366,13 @@ pub async fn split(
     let new_id = sqlx::query_scalar!(
         r#"
         INSERT INTO reservations (
-            user_id, title, description, admin_notes,
+            user_id, title, description, description_rich, message_to_admins, admin_notes,
             contact_person, contact_email, contact_phone,
             rrule, status, contract_id,
             cancelled_at, cancelled_by, cancel_reason
         )
         SELECT
-            user_id, title, description, admin_notes,
+            user_id, title, description, description_rich, message_to_admins, admin_notes,
             contact_person, contact_email, contact_phone,
             NULL, status, contract_id,
             cancelled_at, cancelled_by, cancel_reason
@@ -1027,22 +1045,23 @@ pub async fn batch_import(
         let res_id = sqlx::query_scalar!(
             r#"
             INSERT INTO reservations (
-                user_id, title, description, admin_notes,
+                user_id, title, description_rich, admin_notes,
                 contact_person, contact_email, contact_phone,
-                rrule, status
+                rrule, status, message_to_admins
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NULLIF(btrim($10), ''))
             RETURNING id
             "#,
             user_id,
             item.title,
-            item.description,
+            item.description.and_then(PortableDescription::into_json),
             item.admin_notes,
             item.contact_person,
             item.contact_email,
             item.contact_phone,
             item.rrule,
-            status as ReservationStatus
+            status as ReservationStatus,
+            item.message_to_admins
         )
         .fetch_one(&mut *tx)
         .await?;

@@ -84,6 +84,7 @@ fn sanitize_reservation_for_role(
         res.reservation.user_email = None;
         res.reservation.admin_notes = None;
         if viewer_id != Some(res.reservation.user_id) {
+            res.reservation.message_to_admins = None;
             res.reservation.contact_person = None;
             res.reservation.contact_email = None;
             res.reservation.contact_phone = None;
@@ -421,6 +422,7 @@ pub async fn update_reservation(
         let only_notes = payload.admin_notes.is_some()
             && payload.title.is_none()
             && payload.description.is_none()
+            && payload.message_to_admins.is_none()
             && payload.occurrences.is_none()
             && payload.rrule.is_none()
             && payload.status.is_none()

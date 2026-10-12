@@ -10,7 +10,7 @@ use sqlx::{PgPool, Postgres, Transaction};
 use uuid::Uuid;
 
 use super::ical::{Method, ParsedInvite};
-use crate::errors::AppError;
+use crate::{errors::AppError, utils::rich_text};
 
 /// How far ahead recurring invites are expanded.
 const HORIZON_DAYS: i64 = 730;
@@ -163,6 +163,14 @@ pub async fn import_invite(
         None => (None, None),
     };
 
+    // Invites carry plain text; store it as a rich text document like Kuutar's own descriptions
+    let description = invite
+        .description
+        .as_deref()
+        .map(rich_text::from_plain_text)
+        .filter(|doc| !doc.is_empty())
+        .map(rich_text::to_json);
+
     let horizon = now + Duration::days(HORIZON_DAYS);
     let occurrences = invite.occurrences(horizon);
 
@@ -171,14 +179,14 @@ pub async fn import_invite(
             sqlx::query!(
                 r#"
                 UPDATE reservations
-                SET user_id = $1, title = $2, description = $3,
+                SET user_id = $1, title = $2, description_rich = $3,
                     contact_person = $4, contact_email = $5, rrule = $6,
                     status = 'confirmed', ical_sequence = $7, updated_at = NOW()
                 WHERE id = $8
                 "#,
                 owner,
                 title,
-                invite.description,
+                description,
                 contact_person,
                 contact_email,
                 invite.rrule,
@@ -199,7 +207,7 @@ pub async fn import_invite(
             let id = sqlx::query_scalar!(
                 r#"
                 INSERT INTO reservations (
-                    user_id, title, description, contact_person, contact_email, rrule,
+                    user_id, title, description_rich, contact_person, contact_email, rrule,
                     status, source, ical_uid, ical_sequence
                 )
                 VALUES ($1, $2, $3, $4, $5, $6, 'confirmed', 'outlook', $7, $8)
@@ -207,7 +215,7 @@ pub async fn import_invite(
                 "#,
                 owner,
                 title,
-                invite.description,
+                description,
                 contact_person,
                 contact_email,
                 invite.rrule,
