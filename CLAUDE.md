@@ -42,7 +42,8 @@ UI strings live in `client/messages/` (`fi.json`, `sv.json`, `en.json`). Draft n
 
 - Commit style: `feat:`, `fix:`, `chore:`, optionally scoped (`fix(client):`).
 - Work on feature branches. You may push them. Ask before opening a PR.
-- Never push to `main` or touch the staging deploy.
+- Once the user has said they reviewed a PR and asked for it to be merged, you may merge it (`gh pr merge --merge`), delete its remote and local branch, and update local `main`. Never merge on your own initiative or before that go-ahead.
+- Never push directly to `main` or run/modify the staging deploy. Merging a PR is the only way changes reach `main`; the deploy that follows is automatic, not yours to trigger.
 
 ## Don't touch
 
