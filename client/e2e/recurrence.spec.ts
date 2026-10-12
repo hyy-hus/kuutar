@@ -13,7 +13,12 @@ test("admin creates a weekday series, excludes a date and detaches one occurrenc
 
 	await page
 		.getByLabel("Recurrence Interval")
-		.selectOption({ label: "Every weekday (Mon–Fri)" });
+		.selectOption({ label: "Weekly on selected days" });
+	// Starts on the day of the start date; one click picks Monday to Friday
+	await expect(page.getByLabel("Mon", { exact: true })).toBeChecked();
+	await page.getByRole("button", { name: "Weekdays Mon–Fri" }).click();
+	await page.getByLabel("Sat", { exact: true }).check();
+	await page.getByLabel("Sat", { exact: true }).uncheck();
 	await page
 		.getByLabel("Recurrence Ends")
 		.selectOption({ label: "After a number of times" });

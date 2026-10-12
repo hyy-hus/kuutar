@@ -1431,11 +1431,11 @@ function RecurrenceSection({
 }: RecurrenceSectionProps) {
 	const { t } = useTranslation();
 	useEffect(() => {
-		if (!canRecur && recurrence.preset !== "none") {
+		if (!canRecur && recurrence.freq !== "none") {
 			setRecurrence(NO_RECURRENCE);
 			setConflicts(null);
 		}
-	}, [canRecur, recurrence.preset, setRecurrence, setConflicts]);
+	}, [canRecur, recurrence.freq, setRecurrence, setConflicts]);
 
 	if (!canRecur) {
 		return null;

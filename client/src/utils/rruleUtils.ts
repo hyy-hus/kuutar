@@ -2,25 +2,30 @@ import { type Options, RRule, RRuleSet, rrulestr, Weekday } from "rrule";
 import type { CreateOccurrencePayload } from "#/hooks/useReservations";
 
 /**
- * Named recurrence patterns. Each one is relative to the start date of the series, so e.g.
- * `weekly` on a Monday start means "every Monday" and `monthlyNthWeekday` on the first Tuesday of
- * a month means "the first Tuesday of every month". `custom` is a rule we have no preset for
- * (imported or written by hand); it is carried along untouched.
+ * What a series repeats on. `custom` is a rule the form can't express (imported or written by
+ * hand, e.g. every second week); it is carried along untouched.
  */
-export type RecurrencePreset =
+export type RecurrenceFreq =
 	| "none"
-	| "daily"
-	| "weekdays"
 	| "weekly"
-	| "monthlyDay"
-	| "monthlyNthWeekday"
-	| "yearlyDate"
-	| "yearlyNthWeekday"
-	| "yearlyNthWeekdayOfYear"
+	| "monthly"
+	| "yearly"
 	| "custom";
 
+export type MonthlyMode = "day" | "nthWeekday";
+
 export interface RRuleConfig {
-	preset: RecurrencePreset;
+	freq: RecurrenceFreq;
+	/** weekly: the weekdays it happens on, numbered like Date#getDay (0 = Sunday). All seven is daily. */
+	weekdays: number[];
+	/** monthly: on a given day of the month, or on the nth weekday of it */
+	monthlyMode: MonthlyMode;
+	/** monthly, `day` mode: 1-31, or -1 for the last day of the month */
+	monthDay: number;
+	/** monthly, `nthWeekday` mode: 1-4, or -1 for the last one */
+	nth: number;
+	/** monthly, `nthWeekday` mode: the weekday, numbered like Date#getDay */
+	nthWeekday: number;
 	/** Last day of the series. Ignored when `count` is set. */
 	until?: Date | null;
 	/** Number of occurrences, before exceptions are removed */
@@ -36,7 +41,31 @@ export interface ParsedRRule extends RRuleConfig {
 	dtstart: Date | null;
 }
 
-export const NO_RECURRENCE: RRuleConfig = { preset: "none", exdates: [] };
+export const NO_RECURRENCE: RRuleConfig = {
+	freq: "none",
+	weekdays: [],
+	monthlyMode: "day",
+	monthDay: 1,
+	nth: 1,
+	nthWeekday: 1,
+	exdates: [],
+};
+
+/** Starting values for the pattern fields, taken from the series' first day */
+export function recurrenceDefaults(
+	start: Date,
+): Pick<
+	RRuleConfig,
+	"weekdays" | "monthlyMode" | "monthDay" | "nth" | "nthWeekday"
+> {
+	return {
+		weekdays: [start.getDay()],
+		monthlyMode: "day",
+		monthDay: start.getDate(),
+		nth: nthWeekdayOfMonth(start),
+		nthWeekday: start.getDay(),
+	};
+}
 
 /*
  * rrule.js computes in UTC, so it would keep a series at the same UTC time and shift it by an
@@ -89,56 +118,9 @@ export function nthWeekdayOfMonth(d: Date): number {
 	return n >= 5 ? -1 : n;
 }
 
-/** 1-52 for the nth such weekday of the year, -1 for the 53rd (so: the last one) */
-export function nthWeekdayOfYear(d: Date): number {
-	const dayOfYear =
-		Math.floor(
-			(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) -
-				Date.UTC(d.getFullYear(), 0, 1)) /
-				86_400_000,
-		) + 1;
-	const n = Math.ceil(dayOfYear / 7);
-	return n >= 53 ? -1 : n;
-}
+const ALL_DAYS = [0, 1, 2, 3, 4, 5, 6];
 
-const PRESET_OPTIONS: Record<
-	Exclude<RecurrencePreset, "none" | "custom">,
-	(d: Date) => Partial<Options>
-> = {
-	daily: () => ({ freq: RRule.DAILY }),
-	weekdays: () => ({
-		freq: RRule.WEEKLY,
-		byweekday: [RRule.MO, RRule.TU, RRule.WE, RRule.TH, RRule.FR],
-	}),
-	weekly: (d) => ({ freq: RRule.WEEKLY, byweekday: [WEEKDAYS[d.getDay()]] }),
-	monthlyDay: (d) => ({ freq: RRule.MONTHLY, bymonthday: [d.getDate()] }),
-	monthlyNthWeekday: (d) => ({
-		freq: RRule.MONTHLY,
-		byweekday: [WEEKDAYS[d.getDay()].nth(nthWeekdayOfMonth(d))],
-	}),
-	yearlyDate: (d) => ({
-		freq: RRule.YEARLY,
-		bymonth: [d.getMonth() + 1],
-		bymonthday: [d.getDate()],
-	}),
-	yearlyNthWeekday: (d) => ({
-		freq: RRule.YEARLY,
-		bymonth: [d.getMonth() + 1],
-		byweekday: [WEEKDAYS[d.getDay()].nth(nthWeekdayOfMonth(d))],
-	}),
-	yearlyNthWeekdayOfYear: (d) => ({
-		freq: RRule.YEARLY,
-		byweekday: [WEEKDAYS[d.getDay()].nth(nthWeekdayOfYear(d))],
-	}),
-};
-
-const PRESETS = Object.keys(PRESET_OPTIONS) as Exclude<
-	RecurrencePreset,
-	"none" | "custom"
->[];
-
-/** rrule.js options a rule may contain for us to recognise it as a preset */
-const PRESET_OPTION_KEYS = new Set([
+const PATTERN_OPTION_KEYS = new Set([
 	"freq",
 	"interval",
 	"byweekday",
@@ -154,63 +136,81 @@ const PRESET_OPTION_KEYS = new Set([
 const asArray = <T>(v: T | T[] | null | undefined): T[] =>
 	v === null || v === undefined ? [] : Array.isArray(v) ? v : [v];
 
-function weekdayCode(w: unknown): string {
-	if (w instanceof Weekday) {
-		return `${w.n ?? ""}${WEEKDAY_CODES[w.weekday]}`;
-	}
-	return typeof w === "number" ? WEEKDAY_CODES[w] : String(w);
+/** A BYDAY entry as a Date#getDay number and the optional "nth" prefix */
+function readWeekday(w: unknown): { day: number; n: number | null } {
+	if (w instanceof Weekday) return { day: (w.weekday + 1) % 7, n: w.n ?? null };
+	if (typeof w === "number") return { day: (w + 1) % 7, n: null };
+	const index = WEEKDAY_CODES.indexOf(String(w));
+	return { day: (index + 1) % 7, n: null };
 }
 
 /**
- * Canonical form of a rule's pattern, with the parts rrule.js derives from DTSTART filled in, so
- * that e.g. a legacy `FREQ=MONTHLY` equals the `monthlyDay` preset of its start date.
+ * The form fields a rule's options map to, or null when the rule says something the form can't
+ * express (so it is kept as `custom`).
  */
-function patternKey(o: Partial<Options>, start: Date): string {
-	let byweekday = asArray(o.byweekday).map(weekdayCode);
-	let bymonthday = asArray(o.bymonthday);
-	let bymonth = asArray(o.bymonth);
-	const noBy = byweekday.length === 0 && bymonthday.length === 0;
-	if (o.freq === RRule.WEEKLY && byweekday.length === 0) {
-		byweekday = [WEEKDAY_CODES[(start.getDay() + 6) % 7]];
-	} else if (o.freq === RRule.MONTHLY && noBy) {
-		bymonthday = [start.getDate()];
-	} else if (o.freq === RRule.YEARLY && noBy && bymonth.length === 0) {
-		bymonth = [start.getMonth() + 1];
-		bymonthday = [start.getDate()];
-	} else if (o.freq === RRule.YEARLY && noBy) {
-		bymonthday = [start.getDate()];
-	}
-	byweekday = [...byweekday].sort();
-	bymonthday = [...bymonthday].sort((a, b) => a - b);
-	bymonth = [...bymonth].sort((a, b) => a - b);
-	return JSON.stringify([
-		o.freq,
-		o.interval ?? 1,
-		byweekday,
-		bymonthday,
-		bymonth,
-	]);
-}
-
-function matchPreset(
-	origOptions: Partial<Options>,
+function readPattern(
+	o: Partial<Options>,
 	start: Date,
-): Exclude<RecurrencePreset, "none"> {
-	const foreign = Object.entries(origOptions).some(
+): Partial<RRuleConfig> | null {
+	const foreign = Object.entries(o).some(
 		([key, value]) =>
 			value !== undefined &&
 			value !== null &&
-			!PRESET_OPTION_KEYS.has(key) &&
+			!PATTERN_OPTION_KEYS.has(key) &&
 			!(Array.isArray(value) && value.length === 0),
 	);
-	if (!foreign) {
-		const key = patternKey(origOptions, start);
-		const match = PRESETS.find(
-			(p) => patternKey(PRESET_OPTIONS[p](start), start) === key,
-		);
-		if (match) return match;
+	if (foreign || (o.interval ?? 1) !== 1) return null;
+
+	const by = asArray(o.byweekday).map(readWeekday);
+	const monthdays = asArray(o.bymonthday);
+	const months = asArray(o.bymonth);
+
+	switch (o.freq) {
+		case RRule.DAILY:
+		case RRule.WEEKLY: {
+			if (monthdays.length > 0 || months.length > 0) return null;
+			if (by.some((w) => w.n !== null)) return null;
+			const fallback = o.freq === RRule.DAILY ? ALL_DAYS : [start.getDay()];
+			const days = by.length > 0 ? by.map((w) => w.day) : fallback;
+			return { freq: "weekly", weekdays: [...new Set(days)].sort() };
+		}
+		case RRule.MONTHLY: {
+			if (months.length > 0) return null;
+			if (by.length === 0 && monthdays.length <= 1) {
+				const monthDay = monthdays[0] ?? start.getDate();
+				if (monthDay !== -1 && (monthDay < 1 || monthDay > 31)) return null;
+				return { freq: "monthly", monthlyMode: "day", monthDay };
+			}
+			const [weekday] = by;
+			if (
+				by.length === 1 &&
+				monthdays.length === 0 &&
+				weekday.n !== null &&
+				(weekday.n === -1 || (weekday.n >= 1 && weekday.n <= 4))
+			) {
+				return {
+					freq: "monthly",
+					monthlyMode: "nthWeekday",
+					nth: weekday.n,
+					nthWeekday: weekday.day,
+				};
+			}
+			return null;
+		}
+		case RRule.YEARLY: {
+			// Only "on the start date every year": anything else would drift if the start moved
+			if (by.length > 0 || months.length > 1 || monthdays.length > 1) {
+				return null;
+			}
+			if ((months[0] ?? start.getMonth() + 1) !== start.getMonth() + 1) {
+				return null;
+			}
+			if ((monthdays[0] ?? start.getDate()) !== start.getDate()) return null;
+			return { freq: "yearly" };
+		}
+		default:
+			return null;
 	}
-	return "custom";
 }
 
 export function parseRRule(rruleStr?: string | null): ParsedRRule {
@@ -229,17 +229,19 @@ export function parseRRule(rruleStr?: string | null): ParsedRRule {
 		const dtstart = toLocal(rule.options.dtstart);
 		const orig = rule.origOptions;
 
-		const preset = matchPreset(orig, dtstart);
+		const pattern = readPattern(orig, dtstart);
 		const { dtstart: _s, tzid: _z, until: _u, count: _c, ...custom } = orig;
 
 		return {
-			preset,
+			...NO_RECURRENCE,
+			...recurrenceDefaults(dtstart),
+			...(pattern ?? { freq: "custom" as const }),
 			// Rules are written with floating times; older ones with a real UTC UNTIL at the end of
 			// the local day still read back as the same date
 			until: orig.until ? fromFloating(orig.until) : null,
 			count: orig.count ?? null,
 			exdates: set.exdates().map(toLocal),
-			custom: preset === "custom" ? custom : undefined,
+			custom: pattern ? undefined : custom,
 			dtstart,
 		};
 	} catch {
@@ -252,9 +254,31 @@ function patternOptions(
 	config: RRuleConfig,
 	start: Date,
 ): Partial<Options> | null {
-	if (config.preset === "none") return null;
-	if (config.preset === "custom") return config.custom ?? null;
-	return PRESET_OPTIONS[config.preset](start);
+	switch (config.freq) {
+		case "none":
+			return null;
+		case "custom":
+			return config.custom ?? null;
+		case "weekly": {
+			const days = [...new Set(config.weekdays)];
+			if (days.length === 0) days.push(start.getDay());
+			if (days.length === 7) return { freq: RRule.DAILY };
+			return { freq: RRule.WEEKLY, byweekday: days.map((d) => WEEKDAYS[d]) };
+		}
+		case "monthly":
+			return config.monthlyMode === "day"
+				? { freq: RRule.MONTHLY, bymonthday: [config.monthDay] }
+				: {
+						freq: RRule.MONTHLY,
+						byweekday: [WEEKDAYS[config.nthWeekday].nth(config.nth)],
+					};
+		case "yearly":
+			return {
+				freq: RRule.YEARLY,
+				bymonth: [start.getMonth() + 1],
+				bymonthday: [start.getDate()],
+			};
+	}
 }
 
 /** The end of a series: a count if one is set, otherwise the until date (default: start day) */

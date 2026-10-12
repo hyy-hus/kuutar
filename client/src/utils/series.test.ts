@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { generateOccurrences, parseRRule } from "./rruleUtils";
+import { generateOccurrences, NO_RECURRENCE, parseRRule } from "./rruleUtils";
 import { canSplitOccurrence, planSplit, seriesFirstTimes } from "./series";
 
 const series = generateOccurrences(
 	"2026-10-13T18:00",
 	"2026-10-13T20:00",
 	"res-a",
-	{ preset: "weekly", count: 3, exdates: [] },
+	{ ...NO_RECURRENCE, freq: "weekly", weekdays: [2], count: 3 },
 );
 const rows = series.occurrences.map((o, i) => ({ ...o, id: `a${i}` }));
 
@@ -52,7 +52,13 @@ describe("seriesFirstTimes", () => {
 			"2026-10-13T18:00",
 			"2026-10-13T20:00",
 			"r",
-			{ preset: "weekly", count: 3, exdates: [new Date(2026, 9, 13, 18)] },
+			{
+				...NO_RECURRENCE,
+				freq: "weekly",
+				weekdays: [2],
+				count: 3,
+				exdates: [new Date(2026, 9, 13, 18)],
+			},
 		);
 		const { start, end } = seriesFirstTimes(rruleString, occurrences[0]);
 		expect(start).toEqual(new Date(2026, 9, 13, 18));

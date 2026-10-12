@@ -3,16 +3,27 @@ import {
 	addExdate,
 	generateOccurrences,
 	listSeriesStarts,
+	NO_RECURRENCE,
 	parseRRule,
 	type RRuleConfig,
 	removeExdate,
 } from "./rruleUtils";
 
-const weekly = (until: Date): RRuleConfig => ({
-	preset: "weekly",
-	until,
-	exdates: [],
+const MON = 1;
+const TUE = 2;
+const WED = 3;
+const THU = 4;
+const FRI = 5;
+const ALL_DAYS = [0, 1, 2, 3, 4, 5, 6];
+
+const config = (overrides: Partial<RRuleConfig>): RRuleConfig => ({
+	...NO_RECURRENCE,
+	...overrides,
 });
+
+/** Weekly on Tuesdays, which is what the 2026-10-13 starts below are */
+const weekly = (until: Date): RRuleConfig =>
+	config({ freq: "weekly", weekdays: [TUE], until });
 
 /** Local wall-clock start and end of each occurrence, e.g. "2026-10-27 18:00–20:00" */
 const wallClock = (
@@ -50,7 +61,11 @@ describe("generateOccurrences", () => {
 			"2026-03-28T09:30",
 			"2026-03-28T10:00",
 			"r",
-			{ preset: "daily", until: new Date(2026, 2, 30), exdates: [] },
+			config({
+				freq: "weekly",
+				weekdays: ALL_DAYS,
+				until: new Date(2026, 2, 30),
+			}),
 		);
 		expect(wallClock(occurrences)).toEqual([
 			"2026-03-28 09:30–10:00",
@@ -64,7 +79,11 @@ describe("generateOccurrences", () => {
 			"2026-10-24T22:00",
 			"2026-10-25T02:00",
 			"r",
-			{ preset: "daily", until: new Date(2026, 9, 25), exdates: [] },
+			config({
+				freq: "weekly",
+				weekdays: ALL_DAYS,
+				until: new Date(2026, 9, 25),
+			}),
 		);
 		expect(wallClock(occurrences)).toEqual([
 			"2026-10-24 22:00–02:00",
@@ -103,8 +122,8 @@ describe("parseRRule", () => {
 			"r",
 			weekly(new Date(2026, 10, 3)),
 		);
-		const { preset, until } = parseRRule(rruleString);
-		expect(preset).toBe("weekly");
+		const { freq, until } = parseRRule(rruleString);
+		expect(freq).toBe("weekly");
 		expect(until?.toDateString()).toBe(new Date(2026, 10, 3).toDateString());
 	});
 
@@ -128,14 +147,30 @@ const dates = (start: string, config: RRuleConfig): string[] =>
 		wallClock([{ start_time, end_time: start_time }])[0].slice(0, 10),
 	);
 
-describe("presets", () => {
-	it("every weekday skips weekends", () => {
+describe("patterns", () => {
+	it("a daily series on chosen weekdays skips the others", () => {
 		expect(
-			dates("2026-10-12T18:00", {
-				preset: "weekdays",
-				until: new Date(2026, 9, 19),
-				exdates: [],
-			}),
+			dates(
+				"2026-10-12T18:00",
+				config({
+					freq: "weekly",
+					weekdays: [MON, WED, FRI],
+					until: new Date(2026, 9, 19),
+				}),
+			),
+		).toEqual(["2026-10-12", "2026-10-14", "2026-10-16", "2026-10-19"]);
+	});
+
+	it("Monday to Friday skips weekends", () => {
+		expect(
+			dates(
+				"2026-10-12T18:00",
+				config({
+					freq: "weekly",
+					weekdays: [MON, TUE, WED, THU, FRI],
+					until: new Date(2026, 9, 19),
+				}),
+			),
 		).toEqual([
 			"2026-10-12",
 			"2026-10-13",
@@ -146,62 +181,76 @@ describe("presets", () => {
 		]);
 	});
 
-	it("weekly follows the weekday of the start date", () => {
-		expect(dates("2026-10-12T18:00", weekly(new Date(2026, 9, 31)))).toEqual([
-			"2026-10-12",
-			"2026-10-19",
-			"2026-10-26",
-		]);
+	it("starts on the first matching day when the start day isn't chosen", () => {
+		expect(
+			dates(
+				"2026-10-12T18:00",
+				config({ freq: "weekly", weekdays: [WED], count: 2 }),
+			),
+		).toEqual(["2026-10-14", "2026-10-21"]);
 	});
 
-	it("monthly on a day of the month, counted", () => {
+	it("all seven weekdays is written as a daily rule", () => {
+		const { rruleString } = generateOccurrences(
+			"2026-10-12T18:00",
+			"2026-10-12T19:00",
+			"r",
+			config({ freq: "weekly", weekdays: ALL_DAYS, count: 3 }),
+		);
+		expect(rruleString).toContain("FREQ=DAILY");
+	});
+
+	it("monthly on a day of the month", () => {
 		expect(
-			dates("2026-11-01T18:00", {
-				preset: "monthlyDay",
-				count: 3,
-				exdates: [],
-			}),
+			dates(
+				"2026-11-01T18:00",
+				config({ freq: "monthly", monthDay: 1, count: 3 }),
+			),
 		).toEqual(["2026-11-01", "2026-12-01", "2027-01-01"]);
+	});
+
+	it("monthly on the last day of the month", () => {
+		expect(
+			dates(
+				"2026-11-30T18:00",
+				config({ freq: "monthly", monthDay: -1, count: 3 }),
+			),
+		).toEqual(["2026-11-30", "2026-12-31", "2027-01-31"]);
 	});
 
 	it("monthly on the first Tuesday", () => {
 		expect(
-			dates("2026-11-03T18:00", {
-				preset: "monthlyNthWeekday",
-				count: 3,
-				exdates: [],
-			}),
+			dates(
+				"2026-11-03T18:00",
+				config({
+					freq: "monthly",
+					monthlyMode: "nthWeekday",
+					nth: 1,
+					nthWeekday: TUE,
+					count: 3,
+				}),
+			),
 		).toEqual(["2026-11-03", "2026-12-01", "2027-01-05"]);
 	});
 
-	it("monthly on the last weekday of the month when the start is the fifth one", () => {
-		// 2026-11-30 is the fifth Monday of November, so it means the last Monday
+	it("monthly on the last Monday", () => {
 		expect(
-			dates("2026-11-30T18:00", {
-				preset: "monthlyNthWeekday",
-				count: 3,
-				exdates: [],
-			}),
+			dates(
+				"2026-11-30T18:00",
+				config({
+					freq: "monthly",
+					monthlyMode: "nthWeekday",
+					nth: -1,
+					nthWeekday: MON,
+					count: 3,
+				}),
+			),
 		).toEqual(["2026-11-30", "2026-12-28", "2027-01-25"]);
-	});
-
-	it("yearly on the first Tuesday of the year", () => {
-		expect(
-			dates("2026-01-06T18:00", {
-				preset: "yearlyNthWeekdayOfYear",
-				count: 3,
-				exdates: [],
-			}),
-		).toEqual(["2026-01-06", "2027-01-05", "2028-01-04"]);
 	});
 
 	it("yearly on the same date", () => {
 		expect(
-			dates("2026-12-24T18:00", {
-				preset: "yearlyDate",
-				count: 2,
-				exdates: [],
-			}),
+			dates("2026-12-24T18:00", config({ freq: "yearly", count: 2 })),
 		).toEqual(["2026-12-24", "2027-12-24"]);
 	});
 
@@ -210,7 +259,7 @@ describe("presets", () => {
 			"2026-09-15T18:00",
 			"2026-09-15T20:00",
 			"r",
-			{ preset: "monthlyDay", count: 3, exdates: [] },
+			config({ freq: "monthly", monthDay: 15, count: 3 }),
 		);
 		expect(wallClock(occurrences)).toEqual([
 			"2026-09-15 18:00–20:00",
@@ -221,14 +270,13 @@ describe("presets", () => {
 });
 
 describe("exceptions", () => {
-	const config: RRuleConfig = {
-		preset: "weekly",
-		until: new Date(2026, 10, 3),
+	const exceptional: RRuleConfig = {
+		...weekly(new Date(2026, 10, 3)),
 		exdates: [new Date(2026, 9, 20, 18, 0)],
 	};
 
 	it("leaves excluded dates out", () => {
-		expect(dates("2026-10-13T18:00", config)).toEqual([
+		expect(dates("2026-10-13T18:00", exceptional)).toEqual([
 			"2026-10-13",
 			"2026-10-27",
 			"2026-11-03",
@@ -236,7 +284,7 @@ describe("exceptions", () => {
 	});
 
 	it("still lists excluded dates as candidates", () => {
-		expect(listSeriesStarts("2026-10-13T18:00", config)).toHaveLength(4);
+		expect(listSeriesStarts("2026-10-13T18:00", exceptional)).toHaveLength(4);
 	});
 
 	it("round-trips through the stored rule", () => {
@@ -244,14 +292,14 @@ describe("exceptions", () => {
 			"2026-10-13T18:00",
 			"2026-10-13T20:00",
 			"r",
-			config,
+			exceptional,
 		);
 		expect(rruleString).toContain(
 			"EXDATE;TZID=Europe/Helsinki:20261020T180000",
 		);
 		const parsed = parseRRule(rruleString);
-		expect(parsed.preset).toBe("weekly");
-		expect(parsed.exdates).toEqual(config.exdates);
+		expect(parsed.freq).toBe("weekly");
+		expect(parsed.exdates).toEqual(exceptional.exdates);
 		expect(parsed.dtstart).toEqual(new Date(2026, 9, 13, 18, 0));
 	});
 
@@ -260,7 +308,7 @@ describe("exceptions", () => {
 			"2026-10-13T18:00",
 			"2026-10-13T20:00",
 			"r",
-			{ ...config, exdates: [new Date(2026, 9, 13, 18, 0)] },
+			{ ...exceptional, exdates: [new Date(2026, 9, 13, 18, 0)] },
 		);
 		expect(parseRRule(rruleString).dtstart).toEqual(
 			new Date(2026, 9, 13, 18, 0),
@@ -279,45 +327,78 @@ describe("exceptions", () => {
 			new Date(2026, 9, 27, 18, 0),
 		);
 		expect(parseRRule(added).exdates).toEqual([new Date(2026, 9, 27, 18, 0)]);
-		expect(parseRRule(added).preset).toBe("weekly");
+		expect(parseRRule(added).freq).toBe("weekly");
 		expect(added).toContain("DTSTART;TZID=Europe/Helsinki:20261013T180000");
 		const removed = removeExdate(added, new Date(2026, 9, 27, 18, 0));
 		expect(parseRRule(removed).exdates).toEqual([]);
 	});
 });
 
-describe("parseRRule presets", () => {
+describe("parseRRule patterns", () => {
+	const parse = (rule: string) =>
+		parseRRule(`DTSTART;TZID=Europe/Helsinki:20261103T180000\nRRULE:${rule}`);
+
 	it("recognises a legacy monthly rule without BYMONTHDAY", () => {
 		expect(
 			parseRRule(
 				"DTSTART:20261013T150000Z\nRRULE:FREQ=MONTHLY;UNTIL=20271103T215959Z",
-			).preset,
-		).toBe("monthlyDay");
+			),
+		).toMatchObject({ freq: "monthly", monthlyMode: "day", monthDay: 13 });
+	});
+
+	it("recognises a legacy daily rule as every weekday of the week", () => {
+		expect(parse("FREQ=DAILY;COUNT=3")).toMatchObject({
+			freq: "weekly",
+			weekdays: ALL_DAYS,
+		});
+	});
+
+	it("reads the chosen weekdays", () => {
+		expect(parse("FREQ=WEEKLY;BYDAY=MO,WE,SU;COUNT=3")).toMatchObject({
+			freq: "weekly",
+			weekdays: [0, MON, WED],
+		});
 	});
 
 	it("recognises the first Tuesday of the month", () => {
-		expect(
-			parseRRule(
-				"DTSTART;TZID=Europe/Helsinki:20261103T180000\nRRULE:FREQ=MONTHLY;BYDAY=+1TU;COUNT=4",
-			),
-		).toMatchObject({ preset: "monthlyNthWeekday", count: 4 });
+		expect(parse("FREQ=MONTHLY;BYDAY=+1TU;COUNT=4")).toMatchObject({
+			freq: "monthly",
+			monthlyMode: "nthWeekday",
+			nth: 1,
+			nthWeekday: TUE,
+			count: 4,
+		});
 	});
 
-	it("keeps a rule it has no preset for as custom", () => {
-		const parsed = parseRRule(
-			"DTSTART;TZID=Europe/Helsinki:20261013T180000\nRRULE:FREQ=WEEKLY;INTERVAL=2;BYDAY=TU;COUNT=3",
+	it("recognises the same date every year", () => {
+		expect(parse("FREQ=YEARLY;BYMONTH=11;BYMONTHDAY=3;COUNT=2").freq).toBe(
+			"yearly",
 		);
-		expect(parsed.preset).toBe("custom");
+	});
+
+	it("keeps rules the form can't express as custom", () => {
+		for (const rule of [
+			"FREQ=WEEKLY;INTERVAL=2;BYDAY=TU;COUNT=3",
+			"FREQ=MONTHLY;BYDAY=5TU;COUNT=3",
+			"FREQ=YEARLY;BYDAY=1TU;COUNT=3",
+			"FREQ=YEARLY;BYMONTH=12;BYMONTHDAY=24;COUNT=3",
+		]) {
+			expect(parse(rule).freq, rule).toBe("custom");
+		}
+	});
+
+	it("generates a custom rule unchanged", () => {
+		const parsed = parse("FREQ=WEEKLY;INTERVAL=2;BYDAY=TU;COUNT=3");
 		const { occurrences } = generateOccurrences(
-			"2026-10-13T18:00",
-			"2026-10-13T20:00",
+			"2026-11-03T18:00",
+			"2026-11-03T20:00",
 			"r",
 			parsed,
 		);
 		expect(wallClock(occurrences)).toEqual([
-			"2026-10-13 18:00–20:00",
-			"2026-10-27 18:00–20:00",
-			"2026-11-10 18:00–20:00",
+			"2026-11-03 18:00–20:00",
+			"2026-11-17 18:00–20:00",
+			"2026-12-01 18:00–20:00",
 		]);
 	});
 });
@@ -328,7 +409,7 @@ describe("generateOccurrences without a resource", () => {
 			"2026-10-13T18:00",
 			"2026-10-13T20:00",
 			"",
-			{ preset: "daily", count: 2, exdates: [] },
+			config({ freq: "weekly", weekdays: ALL_DAYS, count: 2 }),
 		);
 		expect(occurrences).toHaveLength(2);
 	});

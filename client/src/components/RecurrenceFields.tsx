@@ -4,15 +4,14 @@ import { formatYYYYMMDD, parseLocalDate, useDateFormatter } from "#/utils/date";
 import {
 	listSeriesStarts,
 	NO_RECURRENCE,
-	nthWeekdayOfMonth,
-	nthWeekdayOfYear,
-	type RecurrencePreset,
+	type RecurrenceFreq,
 	type RRuleConfig,
+	recurrenceDefaults,
 } from "#/utils/rruleUtils";
 import { Input } from "./Input";
 
 interface RecurrenceFieldsProps {
-	/** Start of the first occurrence (datetime-local string). The presets are relative to it. */
+	/** Start of the first occurrence (datetime-local string). Yearly repeats and the defaults follow it. */
 	startTime: string;
 	value: RRuleConfig;
 	onChange: (value: RRuleConfig) => void;
@@ -24,9 +23,19 @@ const SELECT_CLASS =
 	"w-full px-2 py-1.5 text-xs bg-stone-50 dark:bg-stone-950 border border-stone-300 dark:border-stone-700 rounded-sm";
 const LABEL_CLASS = "text-[11px] text-stone-600 dark:text-stone-400";
 
+/** Monday first; the numbers are what Date#getDay returns */
+const WEEK_ORDER = [1, 2, 3, 4, 5, 6, 0];
+const WORKDAYS = [1, 2, 3, 4, 5];
+const ALL_DAYS = [0, 1, 2, 3, 4, 5, 6];
+const MONTH_DAYS = Array.from({ length: 31 }, (_, i) => i + 1);
+const NTH_OPTIONS = [1, 2, 3, 4, -1];
+
+/** A date that falls on the given weekday (2026-01-04 is a Sunday) */
+const dateOfWeekday = (day: number) => new Date(2026, 0, 4 + day);
+
 /**
- * Recurrence controls shared by reservations, restrictions and reservable blocks: a preset, how
- * the series ends and the dates excluded from it. State lives in the parent form.
+ * Recurrence controls shared by reservations, restrictions and reservable blocks: what the series
+ * repeats on, how it ends and the dates excluded from it. State lives in the parent form.
  */
 export function RecurrenceFields({
 	startTime,
@@ -35,7 +44,8 @@ export function RecurrenceFields({
 	maxExceptionRows = 60,
 }: RecurrenceFieldsProps) {
 	const { t, i18n } = useTranslation();
-	const { formatWeekday, formatDateOnly } = useDateFormatter();
+	const { formatWeekday, formatWeekdayShort, formatDateOnly } =
+		useDateFormatter();
 	const locale = i18n.resolvedLanguage ?? i18n.language;
 
 	const parsedStart = startTime ? new Date(startTime) : null;
@@ -54,62 +64,40 @@ export function RecurrenceFields({
 				return t("kolmas", "kolmas");
 			case 4:
 				return t("neljs", "neljäs");
-			case -1:
-				return t("viimeinen", "viimeinen");
 			default:
-				return t("n", { count: n, ordinal: true, defaultValue: "{{count}}." });
+				return t("viimeinen", "viimeinen");
 		}
 	};
 
-	// English capitalizes weekday names, Finnish and Swedish don't
-	const weekdayName = formatWeekday(anchor);
-	const weekday = locale.startsWith("en")
-		? weekdayName
-		: weekdayName.toLowerCase();
-	const month = new Intl.DateTimeFormat(locale, { month: "long" }).format(
-		anchor,
-	);
 	const dayMonth = new Intl.DateTimeFormat(locale, {
 		day: "numeric",
 		month: "long",
 	}).format(anchor);
 
-	const presetLabels: Record<Exclude<RecurrencePreset, "none">, string> = {
-		daily: t("pivittin", "Päivittäin"),
-		weekdays: t("jokaArkipivMape", "Joka arkipäivä (ma–pe)"),
-		weekly: t("jokaWeekday", "Joka {{weekday}}", { weekday }),
-		monthlyDay: t("kuukaudenDayPiv", "Kuukauden {{day}}. päivä", {
-			day: anchor.getDate(),
-		}),
-		monthlyNthWeekday: t(
-			"kuukaudenNthWeekday",
-			"Kuukauden {{nth}} {{weekday}}",
-			{ nth: ordinal(nthWeekdayOfMonth(anchor)), weekday },
-		),
-		yearlyDate: t("jokaVuosiDate", "Joka vuosi {{date}}", { date: dayMonth }),
-		yearlyNthWeekday: t(
-			"jokaVuosiNthWeekdayMonth",
-			"Joka vuosi: {{nth}} {{weekday}}, {{month}}",
-			{ nth: ordinal(nthWeekdayOfMonth(anchor)), weekday, month },
-		),
-		yearlyNthWeekdayOfYear: t(
-			"vuodenNthWeekday",
-			"Vuoden {{nth}} {{weekday}}",
-			{ nth: ordinal(nthWeekdayOfYear(anchor)), weekday },
-		),
-		custom: t("mukautettuToisto", "Mukautettu toisto"),
+	const setFreq = (freq: RecurrenceFreq) => {
+		if (freq === "none") {
+			onChange(NO_RECURRENCE);
+			return;
+		}
+		// Leaving "no recurrence" starts from the start date: its weekday, day of the month, ...
+		const defaults =
+			value.freq === "none" ? recurrenceDefaults(anchor) : undefined;
+		// Exceptions belong to the dates of one pattern, so they don't carry over
+		onChange({ ...value, ...defaults, freq, exdates: [] });
 	};
 
-	const presetOrder: Exclude<RecurrencePreset, "none" | "custom">[] = [
-		"daily",
-		"weekdays",
-		"weekly",
-		"monthlyDay",
-		"monthlyNthWeekday",
-		"yearlyDate",
-		"yearlyNthWeekday",
-		"yearlyNthWeekdayOfYear",
-	];
+	/** Changing the pattern changes which dates exist, so old exceptions no longer apply */
+	const setPattern = (patch: Partial<RRuleConfig>) =>
+		onChange({ ...value, ...patch, exdates: [] });
+
+	const toggleWeekday = (day: number, on: boolean) => {
+		const days = on
+			? [...value.weekdays, day]
+			: value.weekdays.filter((d) => d !== day);
+		// A weekly series needs at least one day
+		if (days.length === 0) return;
+		setPattern({ weekdays: [...new Set(days)].sort() });
+	};
 
 	const endMode = value.count ? "count" : "until";
 	const untilStr = value.until ? formatYYYYMMDD(value.until) : "";
@@ -129,36 +117,37 @@ export function RecurrenceFields({
 		<div className="space-y-2">
 			<div className="grid grid-cols-2 gap-2">
 				<div className="space-y-1">
-					<label htmlFor="recurrence_preset" className={LABEL_CLASS}>
+					<label htmlFor="recurrence_freq" className={LABEL_CLASS}>
 						{t("toistuvuusjakso", "Toistuvuusjakso")}
 					</label>
 					<select
-						id="recurrence_preset"
-						value={value.preset}
-						onChange={(e) => {
-							const preset = e.target.value as RecurrencePreset;
-							// Exceptions belong to the dates of one pattern, so they don't carry over
-							onChange(
-								preset === "none"
-									? NO_RECURRENCE
-									: { ...value, preset, exdates: [] },
-							);
-						}}
+						id="recurrence_freq"
+						value={value.freq}
+						onChange={(e) => setFreq(e.target.value as RecurrenceFreq)}
 						className={SELECT_CLASS}
 					>
 						<option value="none">{t("eiToistoa", "Ei toistoa")}</option>
-						{presetOrder.map((preset) => (
-							<option key={preset} value={preset}>
-								{presetLabels[preset]}
+						<option value="weekly">
+							{t(
+								"viikoittainValittuinaPivin",
+								"Viikoittain valittuina päivinä",
+							)}
+						</option>
+						<option value="monthly">
+							{t("kuukausittain", "Kuukausittain")}
+						</option>
+						<option value="yearly">
+							{t("jokaVuosiDate", "Joka vuosi {{date}}", { date: dayMonth })}
+						</option>
+						{value.freq === "custom" && (
+							<option value="custom">
+								{t("mukautettuToisto", "Mukautettu toisto")}
 							</option>
-						))}
-						{value.preset === "custom" && (
-							<option value="custom">{presetLabels.custom}</option>
 						)}
 					</select>
 				</div>
 
-				{value.preset !== "none" && (
+				{value.freq !== "none" && (
 					<div className="space-y-1">
 						<label htmlFor="recurrence_end_mode" className={LABEL_CLASS}>
 							{t("toistoPttyy", "Toisto päättyy")}
@@ -183,7 +172,140 @@ export function RecurrenceFields({
 				)}
 			</div>
 
-			{value.preset !== "none" && (
+			{value.freq === "weekly" && (
+				<fieldset className="space-y-1">
+					<legend className={LABEL_CLASS}>
+						{t("viikonpivt", "Viikonpäivät")}
+					</legend>
+					<div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
+						{WEEK_ORDER.map((day) => {
+							const id = `recurrence_weekday_${day}`;
+							return (
+								<span key={day} className="flex items-center gap-1">
+									<input
+										id={id}
+										type="checkbox"
+										checked={value.weekdays.includes(day)}
+										onChange={(e) => toggleWeekday(day, e.target.checked)}
+									/>
+									<label htmlFor={id} title={formatWeekday(dateOfWeekday(day))}>
+										{formatWeekdayShort(dateOfWeekday(day))}
+									</label>
+								</span>
+							);
+						})}
+					</div>
+					<div className="flex gap-3 text-[11px]">
+						<button
+							type="button"
+							className="underline text-stone-600 dark:text-stone-400"
+							onClick={() => setPattern({ weekdays: WORKDAYS })}
+						>
+							{t("arkipivt", "Arkipäivät")}
+						</button>
+						<button
+							type="button"
+							className="underline text-stone-600 dark:text-stone-400"
+							onClick={() => setPattern({ weekdays: ALL_DAYS })}
+						>
+							{t("jokaPiv", "Joka päivä")}
+						</button>
+					</div>
+				</fieldset>
+			)}
+
+			{value.freq === "monthly" && (
+				<div className="grid grid-cols-2 gap-2">
+					<div className="space-y-1">
+						<label htmlFor="recurrence_monthly_mode" className={LABEL_CLASS}>
+							{t("kuukaudenToistuvuus", "Kuukauden toistuvuus")}
+						</label>
+						<select
+							id="recurrence_monthly_mode"
+							value={value.monthlyMode}
+							onChange={(e) =>
+								setPattern({
+									monthlyMode: e.target.value as RRuleConfig["monthlyMode"],
+								})
+							}
+							className={SELECT_CLASS}
+						>
+							<option value="day">
+								{t("kuukaudenTiettyPiv", "Kuukauden tiettynä päivänä")}
+							</option>
+							<option value="nthWeekday">
+								{t("kuukaudenTietyViikonpiv", "Kuukauden tietty viikonpäivä")}
+							</option>
+						</select>
+					</div>
+
+					{value.monthlyMode === "day" ? (
+						<div className="space-y-1">
+							<label htmlFor="recurrence_month_day" className={LABEL_CLASS}>
+								{t("pivKuukaudessa", "Päivä")}
+							</label>
+							<select
+								id="recurrence_month_day"
+								value={value.monthDay}
+								onChange={(e) =>
+									setPattern({ monthDay: Number(e.target.value) })
+								}
+								className={SELECT_CLASS}
+							>
+								{MONTH_DAYS.map((day) => (
+									<option key={day} value={day}>
+										{`${day}.`}
+									</option>
+								))}
+								<option value={-1}>
+									{t("viimeinenPiv", "Viimeinen päivä")}
+								</option>
+							</select>
+						</div>
+					) : (
+						<div className="grid grid-cols-2 gap-2">
+							<div className="space-y-1">
+								<label htmlFor="recurrence_nth" className={LABEL_CLASS}>
+									{t("kerta", "Monesko")}
+								</label>
+								<select
+									id="recurrence_nth"
+									value={value.nth}
+									onChange={(e) => setPattern({ nth: Number(e.target.value) })}
+									className={SELECT_CLASS}
+								>
+									{NTH_OPTIONS.map((n) => (
+										<option key={n} value={n}>
+											{ordinal(n)}
+										</option>
+									))}
+								</select>
+							</div>
+							<div className="space-y-1">
+								<label htmlFor="recurrence_nth_weekday" className={LABEL_CLASS}>
+									{t("viikonpiv", "Viikonpäivä")}
+								</label>
+								<select
+									id="recurrence_nth_weekday"
+									value={value.nthWeekday}
+									onChange={(e) =>
+										setPattern({ nthWeekday: Number(e.target.value) })
+									}
+									className={SELECT_CLASS}
+								>
+									{WEEK_ORDER.map((day) => (
+										<option key={day} value={day}>
+											{formatWeekday(dateOfWeekday(day))}
+										</option>
+									))}
+								</select>
+							</div>
+						</div>
+					)}
+				</div>
+			)}
+
+			{value.freq !== "none" && (
 				<div className="space-y-1">
 					{endMode === "until" ? (
 						<>
@@ -230,7 +352,7 @@ export function RecurrenceFields({
 				</div>
 			)}
 
-			{value.preset !== "none" && candidates.length > 1 && (
+			{value.freq !== "none" && candidates.length > 1 && (
 				<details className="text-xs">
 					<summary className="cursor-pointer text-stone-700 dark:text-stone-300">
 						{value.exdates.length > 0
