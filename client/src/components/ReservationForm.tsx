@@ -576,10 +576,12 @@ export function ReservationForm({
 												"Ylläpitäjän muistiinpanot (varaaja ei näe näitä)",
 											)}
 										</label>
-										<Input
+										<textarea
 											id={field.name}
+											rows={3}
 											value={field.state.value}
 											onChange={(e) => field.handleChange(e.target.value)}
+											className={cn(inputVariants(), "h-auto min-h-20 py-2")}
 											placeholder={t(
 												"vainYllpidolleNkyvtMerkinnt",
 												"Vain ylläpidolle näkyvät merkinnät",

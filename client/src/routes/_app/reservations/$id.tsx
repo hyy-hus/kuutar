@@ -268,7 +268,7 @@ function ViewReservationPage() {
 							</div>
 
 							{isAdmin && reservation.admin_notes && (
-								<p className="italic text-stone-600 dark:text-stone-400 pt-1 border-t border-purple-200 dark:border-purple-900">
+								<p className="whitespace-pre-line italic text-stone-600 dark:text-stone-400 pt-1 border-t border-purple-200 dark:border-purple-900">
 									<strong>
 										{t("muistiinpanot", "Muistiinpanot")}
 										{":"}
