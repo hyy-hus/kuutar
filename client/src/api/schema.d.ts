@@ -887,6 +887,8 @@ export interface components {
             /** Format: date-time */
             reservable_until?: string | null;
             reservation_restricted?: boolean;
+            /** @description Groups that can see the resource when `is_public` is false */
+            visibility_group_ids?: string[] | null;
         };
         CreateRestrictionOccurrencePayload: {
             /** Format: date-time */
@@ -1176,6 +1178,10 @@ export interface components {
             } | null;
             /** Format: uuid */
             id: string;
+            /**
+             * @description When false, the resource is visible only to admins, `visible_group_ids` and groups
+             *     that may reserve it
+             */
             is_public: boolean;
             /**
              * Format: int32
@@ -1198,6 +1204,8 @@ export interface components {
             reservation_restricted: boolean;
             /** Format: date-time */
             updated_at: string;
+            /** @description Groups that can see the resource when it is not public */
+            visible_group_ids: string[];
         };
         Restriction: {
             /** Format: date-time */
@@ -1409,6 +1417,8 @@ export interface components {
             /** Format: date-time */
             reservable_until?: string | null;
             reservation_restricted?: boolean | null;
+            /** @description Replaces the set of groups that can see the resource when it is not public */
+            visibility_group_ids?: string[] | null;
         };
         UpdateRestrictionPayload: {
             description?: string | null;

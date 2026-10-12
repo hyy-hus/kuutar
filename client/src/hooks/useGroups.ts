@@ -14,7 +14,7 @@ export const groupKeys = {
 	detail: (id: string) => [...groupKeys.details(), id] as const,
 };
 
-export function useGroups() {
+export function useGroups(options?: { enabled?: boolean }) {
 	return useQuery({
 		queryKey: groupKeys.lists(),
 		queryFn: async () => {
@@ -29,6 +29,7 @@ export function useGroups() {
 			return data;
 		},
 		staleTime: 1000 * 60 * 5,
+		enabled: options?.enabled ?? true,
 	});
 }
 

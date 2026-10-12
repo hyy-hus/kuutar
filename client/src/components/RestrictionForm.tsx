@@ -12,6 +12,7 @@ import {
 } from "#/utils/date";
 import { generateOccurrences, parseRRule } from "#/utils/rruleUtils";
 import { Button } from "./Button";
+import { GroupChecklist } from "./GroupChecklist";
 import { Input } from "./Input";
 
 export interface RestrictionOccurrenceValue {
@@ -357,36 +358,14 @@ export function RestrictionForm({
 							</span>
 						</div>
 
-						{loadingGroups ? (
-							<div className="text-xs text-stone-500 py-2">
-								{t("ladataanRyhmia", "Ladataan ryhmiä...")}
-							</div>
-						) : (
-							<div className="space-y-1.5 max-h-36 overflow-y-auto p-2 bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-md">
-								{groups?.map((grp) => {
-									const isChecked = field.state.value.includes(grp.id);
-									return (
-										<label
-											key={grp.id}
-											className="flex items-center gap-2 text-xs text-stone-800 dark:text-stone-200 font-medium cursor-pointer p-1 hover:bg-stone-100 dark:hover:bg-stone-800 rounded"
-										>
-											<input
-												type="checkbox"
-												checked={isChecked}
-												onChange={(e) => {
-													const next = e.target.checked
-														? [...field.state.value, grp.id]
-														: field.state.value.filter((id) => id !== grp.id);
-													field.handleChange(next);
-												}}
-												className="w-4 h-4 text-emerald-600 rounded border-stone-300 focus:ring-emerald-500"
-											/>
-											<span>{grp.name}</span>
-										</label>
-									);
-								})}
-							</div>
-						)}
+						<GroupChecklist
+							groups={groups}
+							loading={loadingGroups}
+							value={field.state.value}
+							onChange={field.handleChange}
+							className="bg-stone-50 dark:bg-stone-900"
+							checkboxClassName="text-emerald-600 focus:ring-emerald-500"
+						/>
 					</div>
 				)}
 			</form.Field>

@@ -29,6 +29,7 @@ function CreateResourcePage() {
 			allow_recurring: values.allow_recurring ?? true,
 			blocks_only: values.blocks_only ?? false,
 			is_public: values.is_public ?? true,
+			visibility_group_ids: values.visibility_group_ids,
 			reservation_restricted: values.reservation_restricted ?? false,
 			group_ids: values.group_ids,
 			default_duration_minutes: values.default_duration_minutes || undefined,
