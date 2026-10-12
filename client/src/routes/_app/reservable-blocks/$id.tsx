@@ -3,13 +3,16 @@ import { ArrowLeft, CalendarCheck, Clock, Edit, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "#/components/Button";
 import { Chip } from "#/components/Chip";
+import { DetachOccurrenceButton } from "#/components/DetachOccurrenceButton";
 import { useIsAdmin } from "#/hooks/useAuth";
 import {
 	useDeleteReservableBlock,
 	useReservableBlock,
+	useSplitReservableBlock,
 } from "#/hooks/useReservableBlocks";
 import { useResources } from "#/hooks/useResorces";
 import { useDateFormatter } from "#/utils/date";
+import { canSplitOccurrence, planSplit } from "#/utils/series";
 import { readable_uuid } from "#/utils/uuid";
 
 export const Route = createFileRoute("/_app/reservable-blocks/$id")({
@@ -32,6 +35,7 @@ function ViewReservableBlockPage() {
 	} = useReservableBlock(isValidUuid ? id : "");
 	const { data: resources } = useResources();
 	const deleteBlock = useDeleteReservableBlock();
+	const splitBlock = useSplitReservableBlock();
 
 	if (!isValidUuid || isError || (!isLoading && !block)) {
 		return (
@@ -56,6 +60,21 @@ function ViewReservableBlockPage() {
 	}
 
 	const resourceMap = new Map(resources?.map((r) => [r.id, r.name]));
+
+	const rrule = block.rrule;
+	const handleDetach = async (
+		occurrence: (typeof block.occurrences)[number],
+	) => {
+		if (!rrule) return;
+		const created = await splitBlock.mutateAsync({
+			id,
+			...planSplit(rrule, block.occurrences, occurrence),
+		});
+		navigate({
+			to: "/reservable-blocks/edit/$id",
+			params: { id: created.id },
+		});
+	};
 
 	const handleDelete = async () => {
 		if (
@@ -146,6 +165,13 @@ function ViewReservableBlockPage() {
 									</span>
 								</div>
 								<div className="flex items-center gap-1.5">
+									{isAdmin &&
+										canSplitOccurrence(rrule, block.occurrences, occ) && (
+											<DetachOccurrenceButton
+												onDetach={() => handleDetach(occ)}
+												disabled={splitBlock.isPending}
+											/>
+										)}
 									{occ.reserved && (
 										<span className="text-[10px] font-sans font-medium px-1.5 py-0.5 rounded bg-stone-200 dark:bg-stone-700 text-stone-700 dark:text-stone-200">
 											{t("varattu", "Varattu")}

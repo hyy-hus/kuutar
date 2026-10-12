@@ -14,11 +14,17 @@ import { useTranslation } from "react-i18next";
 import { Button } from "#/components/Button";
 import { CancelReservationDialog } from "#/components/CancelReservationDialog";
 import { Chip } from "#/components/Chip";
+import { DetachOccurrenceButton } from "#/components/DetachOccurrenceButton";
 import { OutlookBadge } from "#/components/OutlookBadge";
 import { useAuth, useIsAdmin } from "#/hooks/useAuth";
-import { useDeleteReservation, useReservation } from "#/hooks/useReservations";
+import {
+	useDeleteReservation,
+	useReservation,
+	useSplitReservation,
+} from "#/hooks/useReservations";
 import { useResources } from "#/hooks/useResorces";
 import { useDateFormatter } from "#/utils/date";
+import { canSplitOccurrence, planSplit } from "#/utils/series";
 import { readable_uuid } from "#/utils/uuid";
 
 export const Route = createFileRoute("/_app/reservations/$id")({
@@ -36,6 +42,7 @@ function ViewReservationPage() {
 	const { data: reservation, isLoading, isError } = useReservation(id);
 	const { data: resources } = useResources();
 	const deleteReservation = useDeleteReservation();
+	const splitReservation = useSplitReservation();
 
 	if (isLoading) {
 		return (
@@ -69,6 +76,16 @@ function ViewReservationPage() {
 	const canCancel = canEdit && !isCancelled;
 	const occurrences = reservation.occurrences || [];
 	const resourceMap = new Map(resources?.map((r) => [r.id, r.name]));
+
+	const rrule = reservation.rrule;
+	const handleDetach = async (occurrence: (typeof occurrences)[number]) => {
+		if (!rrule) return;
+		const created = await splitReservation.mutateAsync({
+			id: reservation.id,
+			...planSplit(rrule, occurrences, occurrence),
+		});
+		navigate({ to: "/reservations/edit/$id", params: { id: created.id } });
+	};
 
 	const handleDelete = async () => {
 		if (
@@ -271,9 +288,17 @@ function ViewReservationPage() {
 										{" →"} {formatDate(occ.end_time)}
 									</span>
 								</div>
-								<span className="text-[10px] font-sans font-medium px-1.5 py-0.5 rounded bg-purple-100 dark:bg-purple-950 text-purple-800 dark:text-purple-300 border border-purple-300 dark:border-purple-800">
-									{resourceMap.get(occ.resource_id) || occ.resource_id}
-								</span>
+								<div className="flex items-center gap-1.5">
+									{canEdit && canSplitOccurrence(rrule, occurrences, occ) && (
+										<DetachOccurrenceButton
+											onDetach={() => handleDetach(occ)}
+											disabled={splitReservation.isPending}
+										/>
+									)}
+									<span className="text-[10px] font-sans font-medium px-1.5 py-0.5 rounded bg-purple-100 dark:bg-purple-950 text-purple-800 dark:text-purple-300 border border-purple-300 dark:border-purple-800">
+										{resourceMap.get(occ.resource_id) || occ.resource_id}
+									</span>
+								</div>
 							</div>
 						))}
 					</div>

@@ -10,10 +10,16 @@ import {
 import { useTranslation } from "react-i18next";
 import { Button } from "#/components/Button";
 import { Chip } from "#/components/Chip";
+import { DetachOccurrenceButton } from "#/components/DetachOccurrenceButton";
 import { useGroups } from "#/hooks/useGroups";
 import { useResources } from "#/hooks/useResorces";
-import { useDeleteRestriction, useRestriction } from "#/hooks/useRestrictions";
+import {
+	useDeleteRestriction,
+	useRestriction,
+	useSplitRestriction,
+} from "#/hooks/useRestrictions";
 import { useDateFormatter } from "#/utils/date";
+import { canSplitOccurrence, planSplit } from "#/utils/series";
 import { readable_uuid } from "#/utils/uuid";
 
 export const Route = createFileRoute("/_app/restrictions/$id")({
@@ -36,6 +42,7 @@ function ViewRestrictionPage() {
 	const { data: resources } = useResources();
 	const { data: groups } = useGroups();
 	const deleteRestriction = useDeleteRestriction();
+	const splitRestriction = useSplitRestriction();
 
 	if (!isValidUuid || isError || (!isLoading && !restrictionWithOcc)) {
 		return (
@@ -74,6 +81,16 @@ function ViewRestrictionPage() {
 					"eiPoikkeuksiaKaikkiEstetty",
 					"Ei sallittuja ryhmiä (rajoitus koskee kaikkia)",
 				);
+
+	const rrule = restrictionWithOcc.rrule;
+	const handleDetach = async (occurrence: (typeof occurrences)[number]) => {
+		if (!rrule) return;
+		const created = await splitRestriction.mutateAsync({
+			id,
+			...planSplit(rrule, occurrences, occurrence),
+		});
+		navigate({ to: "/restrictions/edit/$id", params: { id: created.id } });
+	};
 
 	const handleDelete = async () => {
 		if (
@@ -167,9 +184,17 @@ function ViewRestrictionPage() {
 											{" →"} {formatDate(occ.end_time)}
 										</span>
 									</div>
-									<span className="text-[10px] font-sans font-medium px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800">
-										{resName}
-									</span>
+									<div className="flex items-center gap-1.5">
+										{canSplitOccurrence(rrule, occurrences, occ) && (
+											<DetachOccurrenceButton
+												onDetach={() => handleDetach(occ)}
+												disabled={splitRestriction.isPending}
+											/>
+										)}
+										<span className="text-[10px] font-sans font-medium px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800">
+											{resName}
+										</span>
+									</div>
 								</div>
 							);
 						})}

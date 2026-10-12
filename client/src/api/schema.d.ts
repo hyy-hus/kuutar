@@ -446,6 +446,22 @@ export interface paths {
         patch: operations["update_reservable_block"];
         trace?: never;
     };
+    "/reservable-blocks/{id}/split": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["split_reservable_block"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/reservations": {
         parameters: {
             query?: never;
@@ -542,6 +558,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/reservations/{id}/split": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["split_reservation"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/resources": {
         parameters: {
             query?: never;
@@ -609,6 +641,22 @@ export interface paths {
         options?: never;
         head?: never;
         patch: operations["update_restriction"];
+        trace?: never;
+    };
+    "/restrictions/{id}/split": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["split_restriction"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/stats": {
@@ -1252,6 +1300,33 @@ export interface components {
             /** Format: date-time */
             started_at: string;
             user_agent?: string | null;
+        };
+        SplitReservableBlockPayload: {
+            /**
+             * @description Occurrences to move into a new, non-recurring block. One occurrence exists per resource at
+             *     each time, so pass all of that time's rows.
+             */
+            occurrence_ids: string[];
+            /** @description The rule the original keeps, e.g. with an EXDATE for the occurrence that left */
+            rrule?: string | null;
+        };
+        SplitReservationPayload: {
+            /**
+             * @description Occurrences to move into a new, non-recurring reservation. A reservation on several
+             *     resources has one occurrence per resource at each time, so pass all of that time's rows.
+             */
+            occurrence_ids: string[];
+            /** @description The rule the original reservation keeps, e.g. with an EXDATE for the occurrence that left */
+            rrule?: string | null;
+        };
+        SplitRestrictionPayload: {
+            /**
+             * @description Occurrences to move into a new, non-recurring restriction. One occurrence exists per resource at
+             *     each time, so pass all of that time's rows.
+             */
+            occurrence_ids: string[];
+            /** @description The rule the original keeps, e.g. with an EXDATE for the occurrence that left */
+            rrule?: string | null;
         };
         /**
          * @description Time window for usage statistics, counted back from now
@@ -2848,6 +2923,49 @@ export interface operations {
             };
         };
     };
+    split_reservable_block: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SplitReservableBlockPayload"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReservableBlockWithOccurrences"];
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     list_reservations: {
         parameters: {
             query?: {
@@ -3232,6 +3350,75 @@ export interface operations {
             };
         };
     };
+    split_reservation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Reservation UUID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SplitReservationPayload"];
+            };
+        };
+        responses: {
+            /** @description The new reservation holding the split-off occurrences */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReservationWithOccurrences"];
+                };
+            };
+            /** @description Occurrences don't belong to the reservation, or would leave it empty */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden - Only the owner or an admin can split */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Reservation not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Imported from Outlook */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     list_resources: {
         parameters: {
             query?: never;
@@ -3570,6 +3757,49 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["RestrictionWithOccurrences"];
                 };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    split_restriction: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SplitRestrictionPayload"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RestrictionWithOccurrences"];
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             403: {
                 headers: {

@@ -122,6 +122,40 @@ export function useUpdateRestriction() {
 	});
 }
 
+/** Moves occurrences out of a series into a new restriction; resolves to the new restriction */
+export function useSplitRestriction() {
+	const queryClient = useQueryClient();
+
+	return useMutation({
+		mutationFn: async ({
+			id,
+			occurrence_ids,
+			rrule,
+		}: {
+			id: string;
+			occurrence_ids: string[];
+			rrule: string | null;
+		}) => {
+			const { data, error } = await api.POST("/restrictions/{id}/split", {
+				params: { path: { id } },
+				body: { occurrence_ids, rrule },
+			});
+			if (error || !data)
+				throw new Error(
+					i18next.t(
+						"varauksenIrrottaminenSarjastaEpaonnistui",
+						"Ajan irrottaminen sarjasta epäonnistui.",
+					),
+				);
+			return data;
+		},
+		onSuccess: (created) => {
+			queryClient.setQueryData(restrictionKeys.detail(created.id), created);
+			queryClient.invalidateQueries({ queryKey: restrictionKeys.all });
+		},
+	});
+}
+
 export function useDeleteRestriction() {
 	const queryClient = useQueryClient();
 

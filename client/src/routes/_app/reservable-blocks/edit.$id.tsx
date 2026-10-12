@@ -11,6 +11,7 @@ import {
 } from "#/hooks/useReservableBlocks";
 import { requireAdminGuard } from "#/utils/authGuard";
 import { formatDateTimeLocal } from "#/utils/date";
+import { seriesFirstTimes } from "#/utils/series";
 
 export const Route = createFileRoute("/_app/reservable-blocks/edit/$id")({
 	beforeLoad: async ({ context }) => {
@@ -62,6 +63,9 @@ function EditReservableBlockPage() {
 	};
 
 	const firstOccurrence = block.occurrences[0];
+	const firstTimes = firstOccurrence
+		? seriesFirstTimes(block.rrule, firstOccurrence)
+		: null;
 	const resourceIds = Array.from(
 		new Set(block.occurrences.map((occ) => occ.resource_id)),
 	);
@@ -80,12 +84,8 @@ function EditReservableBlockPage() {
 					description: block.description || "",
 					rrule: block.rrule,
 					resource_ids: resourceIds,
-					start_time: firstOccurrence
-						? formatDateTimeLocal(new Date(firstOccurrence.start_time))
-						: "",
-					end_time: firstOccurrence
-						? formatDateTimeLocal(new Date(firstOccurrence.end_time))
-						: "",
+					start_time: firstTimes ? formatDateTimeLocal(firstTimes.start) : "",
+					end_time: firstTimes ? formatDateTimeLocal(firstTimes.end) : "",
 				}}
 				onSubmit={handleSubmit}
 				isSubmitting={updateBlock.isPending}
