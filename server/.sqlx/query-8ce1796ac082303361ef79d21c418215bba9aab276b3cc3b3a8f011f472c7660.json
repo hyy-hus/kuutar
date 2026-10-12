@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        UPDATE reservable_block_occurrences\n        SET block_id = $1\n        WHERE block_id = $2 AND id = ANY($3)\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "UuidArray"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "8ce1796ac082303361ef79d21c418215bba9aab276b3cc3b3a8f011f472c7660"
+}

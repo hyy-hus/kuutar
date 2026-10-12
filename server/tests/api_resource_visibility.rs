@@ -276,8 +276,7 @@ async fn calendar_hides_occurrences_on_resources_the_viewer_cannot_see(pool: PgP
         (Some(&env.other), 0),
         (None, 0),
     ] {
-        let (status, list) =
-            request(&env.app, "GET", &uri, token.map(String::as_str), None).await;
+        let (status, list) = request(&env.app, "GET", &uri, token.map(String::as_str), None).await;
         assert_eq!(status, StatusCode::OK);
         assert_eq!(list.as_array().unwrap().len(), expected);
     }

@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        UPDATE occurrences\n        SET reservation_id = $1\n        WHERE reservation_id = $2 AND id = ANY($3)\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "UuidArray"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "c6f9cb3acb323c3dfa295aac8cfd8c63edc548da8aa8a26a2d40838fead5e3e6"
+}

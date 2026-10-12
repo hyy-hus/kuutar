@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        INSERT INTO restriction_exemptions (restriction_id, group_id)\n        SELECT $1, group_id FROM restriction_exemptions WHERE restriction_id = $2\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "5d59e9bc5da9e964b0801eb802df3a0c31ad31f93daec5c552eda74c05417f9b"
+}

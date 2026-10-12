@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        UPDATE restriction_occurrences\n        SET restriction_id = $1\n        WHERE restriction_id = $2 AND id = ANY($3)\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "UuidArray"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "955ddd36a6dc211e1fdce893c63ccd9a302fb5ba553e8da53a2d33189a120c22"
+}

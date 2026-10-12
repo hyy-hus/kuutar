@@ -93,12 +93,14 @@ impl Modify for SecurityAddon {
         reservations::routes::update_reservation,
         reservations::routes::delete_reservation,
         reservations::routes::cancel_reservation,
+        reservations::routes::split_reservation,
 
         // Restrictions
         restrictions::routes::list_restrictions,
         restrictions::routes::get_restriction,
         restrictions::routes::create_restriction,
         restrictions::routes::update_restriction,
+        restrictions::routes::split_restriction,
         restrictions::routes::delete_restriction,
 
         // Reservable blocks
@@ -106,6 +108,7 @@ impl Modify for SecurityAddon {
         reservable_blocks::routes::get_reservable_block,
         reservable_blocks::routes::create_reservable_block,
         reservable_blocks::routes::update_reservable_block,
+        reservable_blocks::routes::split_reservable_block,
         reservable_blocks::routes::delete_reservable_block,
 
         // Contracts
@@ -158,6 +161,7 @@ impl Modify for SecurityAddon {
             reservations::models::Occurrence,
             reservations::models::ReservationStatus,
             reservations::models::CancelReservationPayload,
+            reservations::models::SplitReservationPayload,
             reservations::models::ReservationWithOccurrences,
             reservations::models::CreateReservationPayload,
             reservations::models::CreateOccurrencePayload,
@@ -168,12 +172,14 @@ impl Modify for SecurityAddon {
             restrictions::models::Restriction,
             restrictions::models::CreateRestrictionPayload,
             restrictions::models::UpdateRestrictionPayload,
+            restrictions::models::SplitRestrictionPayload,
             reservable_blocks::models::ReservableBlock,
             reservable_blocks::models::ReservableBlockOccurrence,
             reservable_blocks::models::ReservableBlockWithOccurrences,
             reservable_blocks::models::CreateReservableBlockPayload,
             reservable_blocks::models::CreateReservableBlockOccurrencePayload,
             reservable_blocks::models::UpdateReservableBlockPayload,
+            reservable_blocks::models::SplitReservableBlockPayload,
             contracts::models::Contract,
             contracts::models::CreateContract,
             contracts::models::UpdateContract,
