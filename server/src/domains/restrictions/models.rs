@@ -72,6 +72,17 @@ pub struct UpdateRestrictionPayload {
     pub occurrences: Option<Vec<CreateRestrictionOccurrencePayload>>,
 }
 
+#[derive(Debug, Deserialize, Validate, ToSchema)]
+pub struct SplitRestrictionPayload {
+    /// Occurrences to move into a new, non-recurring restriction. One occurrence exists per resource at
+    /// each time, so pass all of that time's rows.
+    #[validate(length(min = 1, message = "At least one occurrence must be provided"))]
+    pub occurrence_ids: Vec<Uuid>,
+
+    /// The rule the original keeps, e.g. with an EXDATE for the occurrence that left
+    pub rrule: Option<String>,
+}
+
 #[derive(Debug, Deserialize, Validate, utoipa::IntoParams)]
 pub struct ListRestrictionsQuery {
     pub start_date: Option<DateTime<Utc>>,

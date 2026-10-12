@@ -198,6 +198,40 @@ export function useUpdateReservation() {
 	});
 }
 
+/** Moves occurrences out of a series into a new reservation; resolves to the new reservation */
+export function useSplitReservation() {
+	const queryClient = useQueryClient();
+
+	return useMutation({
+		mutationFn: async ({
+			id,
+			occurrence_ids,
+			rrule,
+		}: {
+			id: string;
+			occurrence_ids: string[];
+			rrule: string | null;
+		}) => {
+			const { data, error } = await api.POST("/reservations/{id}/split", {
+				params: { path: { id } },
+				body: { occurrence_ids, rrule },
+			});
+			if (error || !data)
+				throw new Error(
+					i18next.t(
+						"varauksenIrrottaminenSarjastaEpaonnistui",
+						"Ajan irrottaminen sarjasta epäonnistui.",
+					),
+				);
+			return data;
+		},
+		onSuccess: (created) => {
+			queryClient.setQueryData(reservationKeys.detail(created.id), created);
+			queryClient.invalidateQueries({ queryKey: reservationKeys.all });
+		},
+	});
+}
+
 export function useCancelReservation() {
 	const queryClient = useQueryClient();
 

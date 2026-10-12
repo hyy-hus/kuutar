@@ -269,7 +269,8 @@ pub async fn update(
             contact_person = COALESCE($4, contact_person),
             contact_email = COALESCE($5, contact_email),
             contact_phone = COALESCE($6, contact_phone),
-            rrule = COALESCE($7, rrule),
+            -- Occurrences are replaced together with their rule, so a missing rule clears it
+            rrule = CASE WHEN $12 THEN $7 ELSE COALESCE($7, rrule) END,
             status = COALESCE($8, status),
             cancelled_at = CASE WHEN $8 IS NOT NULL AND $8 <> 'cancelled'::reservation_status THEN NULL ELSE cancelled_at END,
             cancelled_by = CASE WHEN $8 IS NOT NULL AND $8 <> 'cancelled'::reservation_status THEN NULL ELSE cancelled_by END,
@@ -293,7 +294,8 @@ pub async fn update(
         dto.status as Option<ReservationStatus>,
         dto.contract_id,
         dto.mark_printed,
-        id
+        id,
+        dto.occurrences.is_some()
     )
     .execute(&mut *tx)
     .await?;
@@ -326,6 +328,90 @@ pub async fn update(
     tx.commit().await?;
 
     find_by_id(pool, id, true).await
+}
+
+/// Moves the given occurrences of a reservation into a new reservation that has no rule, and
+/// sets the rule of the original. The new reservation is a copy of the original in every other
+/// way. Returns the new reservation.
+pub async fn split(
+    pool: &PgPool,
+    id: Uuid,
+    occurrence_ids: Vec<Uuid>,
+    rrule: Option<String>,
+) -> Result<ReservationWithOccurrences, AppError> {
+    let mut occurrence_ids = occurrence_ids;
+    occurrence_ids.sort();
+    occurrence_ids.dedup();
+
+    let mut tx = pool.begin().await?;
+
+    let new_id = sqlx::query_scalar!(
+        r#"
+        INSERT INTO reservations (
+            user_id, title, description, admin_notes,
+            contact_person, contact_email, contact_phone,
+            rrule, status, contract_id,
+            cancelled_at, cancelled_by, cancel_reason
+        )
+        SELECT
+            user_id, title, description, admin_notes,
+            contact_person, contact_email, contact_phone,
+            NULL, status, contract_id,
+            cancelled_at, cancelled_by, cancel_reason
+        FROM reservations
+        WHERE id = $1 AND deleted_at IS NULL
+        RETURNING id
+        "#,
+        id
+    )
+    .fetch_optional(&mut *tx)
+    .await?
+    .ok_or(AppError::NotFound)?;
+
+    let moved = sqlx::query!(
+        r#"
+        UPDATE occurrences
+        SET reservation_id = $1
+        WHERE reservation_id = $2 AND id = ANY($3)
+        "#,
+        new_id,
+        id,
+        &occurrence_ids
+    )
+    .execute(&mut *tx)
+    .await?
+    .rows_affected();
+
+    if moved != occurrence_ids.len() as u64 {
+        return Err(AppError::BadRequest(
+            "Occurrence does not belong to this reservation".to_string(),
+        ));
+    }
+
+    let remaining = sqlx::query_scalar!(
+        r#"SELECT COUNT(*) AS "count!" FROM occurrences WHERE reservation_id = $1"#,
+        id
+    )
+    .fetch_one(&mut *tx)
+    .await?;
+
+    if remaining == 0 {
+        return Err(AppError::BadRequest(
+            "Cannot split off every occurrence of a reservation".to_string(),
+        ));
+    }
+
+    sqlx::query!(
+        r#"UPDATE reservations SET rrule = $2, updated_at = NOW() WHERE id = $1"#,
+        id,
+        rrule
+    )
+    .execute(&mut *tx)
+    .await?;
+
+    tx.commit().await?;
+
+    find_by_id(pool, new_id, true).await
 }
 
 /// Marks a reservation as cancelled and records who did it and why.

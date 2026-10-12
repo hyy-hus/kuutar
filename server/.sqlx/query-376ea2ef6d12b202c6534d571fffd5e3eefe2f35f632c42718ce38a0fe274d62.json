@@ -1,0 +1,18 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        UPDATE restrictions\n        SET \n            title = COALESCE($1, title),\n            description = COALESCE($2, description),\n            -- Occurrences are replaced together with their rule, so a missing rule clears it\n            rrule = CASE WHEN $5 THEN $3 ELSE COALESCE($3, rrule) END,\n            updated_at = NOW()\n        WHERE id = $4 AND deleted_at IS NULL\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Varchar",
+        "Text",
+        "Text",
+        "Uuid",
+        "Bool"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "376ea2ef6d12b202c6534d571fffd5e3eefe2f35f632c42718ce38a0fe274d62"
+}

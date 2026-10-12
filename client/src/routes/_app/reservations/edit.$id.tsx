@@ -9,6 +9,7 @@ import { getDefaultContact, useAuth } from "#/hooks/useAuth";
 import { useReservation, useUpdateReservation } from "#/hooks/useReservations";
 import { requireAuthGuard } from "#/utils/authGuard";
 import { formatDateTimeLocal } from "#/utils/date";
+import { seriesFirstTimes } from "#/utils/series";
 
 export const Route = createFileRoute("/_app/reservations/edit/$id")({
 	beforeLoad: async ({ context }) => {
@@ -37,6 +38,9 @@ function EditReservationPage() {
 		);
 
 	const firstOccurrence = reservation.occurrences?.[0];
+	const firstTimes = firstOccurrence
+		? seriesFirstTimes(reservation.rrule, firstOccurrence)
+		: null;
 
 	// Extract all unique resource IDs across occurrences
 	const resourceIds = Array.from(
@@ -90,12 +94,8 @@ function EditReservationPage() {
 						reservation.contact_phone || fallbackContact.contact_phone,
 					rrule: reservation.rrule,
 					resource_ids: resourceIds,
-					start_time: firstOccurrence
-						? formatDateTimeLocal(new Date(firstOccurrence.start_time))
-						: "",
-					end_time: firstOccurrence
-						? formatDateTimeLocal(new Date(firstOccurrence.end_time))
-						: "",
+					start_time: firstTimes ? formatDateTimeLocal(firstTimes.start) : "",
+					end_time: firstTimes ? formatDateTimeLocal(firstTimes.end) : "",
 					occurrences: reservation.occurrences,
 				}}
 				onSubmit={handleSubmit}

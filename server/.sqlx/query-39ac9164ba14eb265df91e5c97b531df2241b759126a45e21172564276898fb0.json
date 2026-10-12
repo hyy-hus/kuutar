@@ -39,7 +39,7 @@
       {
         "ordinal": 3,
         "name": "rrule",
-        "type_info": "Varchar",
+        "type_info": "Text",
         "origin": {
           "Table": {
             "table": "restrictions",

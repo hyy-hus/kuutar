@@ -10,7 +10,7 @@ use super::{
     db,
     models::{
         CreateReservableBlockPayload, ListReservableBlocksQuery, ReservableBlockWithOccurrences,
-        UpdateReservableBlockPayload,
+        SplitReservableBlockPayload, UpdateReservableBlockPayload,
     },
 };
 use crate::{
@@ -110,6 +110,26 @@ pub async fn update_reservable_block(
     }
 
     Ok(Json(db::update(&auth_state.pool, id, payload).await?))
+}
+
+#[utoipa::path(
+    post,
+    path = "/reservable-blocks/{id}/split",
+    tag = "Reservable blocks",
+    security(("bearer_auth" = [])),
+    params(("id" = Uuid, Path)),
+    request_body = SplitReservableBlockPayload,
+    responses((status = 201, body = ReservableBlockWithOccurrences), (status = 400), (status = 403), (status = 404))
+)]
+pub async fn split_reservable_block(
+    State(auth_state): State<AuthState>,
+    RequireAdmin(_admin): RequireAdmin,
+    Path(id): Path<Uuid>,
+    Json(payload): Json<SplitReservableBlockPayload>,
+) -> Result<(StatusCode, Json<ReservableBlockWithOccurrences>), AppError> {
+    payload.validate()?;
+    let block = db::split(&auth_state.pool, id, payload.occurrence_ids, payload.rrule).await?;
+    Ok((StatusCode::CREATED, Json(block)))
 }
 
 #[utoipa::path(

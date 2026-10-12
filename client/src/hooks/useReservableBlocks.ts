@@ -126,6 +126,40 @@ export function useUpdateReservableBlock() {
 	});
 }
 
+/** Moves occurrences out of a series into a new block; resolves to the new block */
+export function useSplitReservableBlock() {
+	const queryClient = useQueryClient();
+
+	return useMutation({
+		mutationFn: async ({
+			id,
+			occurrence_ids,
+			rrule,
+		}: {
+			id: string;
+			occurrence_ids: string[];
+			rrule: string | null;
+		}) => {
+			const { data, error } = await api.POST("/reservable-blocks/{id}/split", {
+				params: { path: { id } },
+				body: { occurrence_ids, rrule },
+			});
+			if (error || !data)
+				throw new Error(
+					i18next.t(
+						"varauksenIrrottaminenSarjastaEpaonnistui",
+						"Ajan irrottaminen sarjasta epäonnistui.",
+					),
+				);
+			return data;
+		},
+		onSuccess: (created) => {
+			queryClient.setQueryData(reservableBlockKeys.detail(created.id), created);
+			queryClient.invalidateQueries({ queryKey: reservableBlockKeys.all });
+		},
+	});
+}
+
 export function useDeleteReservableBlock() {
 	const queryClient = useQueryClient();
 

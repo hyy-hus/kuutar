@@ -210,14 +210,16 @@ pub async fn update(
         SET
             title = COALESCE($1, title),
             description = COALESCE($2, description),
-            rrule = COALESCE($3, rrule),
+            -- Occurrences are replaced together with their rule, so a missing rule clears it
+            rrule = CASE WHEN $5 THEN $3 ELSE COALESCE($3, rrule) END,
             updated_at = NOW()
         WHERE id = $4 AND deleted_at IS NULL
         "#,
         dto.title,
         dto.description,
         dto.rrule,
-        id
+        id,
+        dto.occurrences.is_some()
     )
     .execute(&mut *tx)
     .await?;
@@ -239,6 +241,80 @@ pub async fn update(
 
     tx.commit().await?;
     find_by_id(pool, id).await
+}
+
+/// Moves the given occurrences of a block into a new block that has no rule, and sets the rule of
+/// the original. The copy keeps the title and description. Returns the new block.
+pub async fn split(
+    pool: &PgPool,
+    id: Uuid,
+    occurrence_ids: Vec<Uuid>,
+    rrule: Option<String>,
+) -> Result<ReservableBlockWithOccurrences, AppError> {
+    let mut occurrence_ids = occurrence_ids;
+    occurrence_ids.sort();
+    occurrence_ids.dedup();
+
+    let mut tx = pool.begin().await?;
+
+    let new_id = sqlx::query_scalar!(
+        r#"
+        INSERT INTO reservable_blocks (title, description, rrule)
+        SELECT title, description, NULL
+        FROM reservable_blocks
+        WHERE id = $1 AND deleted_at IS NULL
+        RETURNING id
+        "#,
+        id
+    )
+    .fetch_optional(&mut *tx)
+    .await?
+    .ok_or(AppError::NotFound)?;
+
+    let moved = sqlx::query!(
+        r#"
+        UPDATE reservable_block_occurrences
+        SET block_id = $1
+        WHERE block_id = $2 AND id = ANY($3)
+        "#,
+        new_id,
+        id,
+        &occurrence_ids
+    )
+    .execute(&mut *tx)
+    .await?
+    .rows_affected();
+
+    if moved != occurrence_ids.len() as u64 {
+        return Err(AppError::BadRequest(
+            "Occurrence does not belong to this block".to_string(),
+        ));
+    }
+
+    let remaining = sqlx::query_scalar!(
+        r#"SELECT COUNT(*) AS "count!" FROM reservable_block_occurrences WHERE block_id = $1"#,
+        id
+    )
+    .fetch_one(&mut *tx)
+    .await?;
+
+    if remaining == 0 {
+        return Err(AppError::BadRequest(
+            "Cannot split off every occurrence of a block".to_string(),
+        ));
+    }
+
+    sqlx::query!(
+        r#"UPDATE reservable_blocks SET rrule = $2, updated_at = NOW() WHERE id = $1"#,
+        id,
+        rrule
+    )
+    .execute(&mut *tx)
+    .await?;
+
+    tx.commit().await?;
+
+    find_by_id(pool, new_id).await
 }
 
 pub async fn soft_delete(pool: &PgPool, id: Uuid) -> Result<(), AppError> {

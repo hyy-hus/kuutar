@@ -12,7 +12,7 @@ use super::{
     models::{
         CancelReservationPayload, CheckConflictsQuery, CreateOccurrencePayload,
         CreateReservationPayload, ListReservationsQuery, Occurrence, ReservationStatus,
-        ReservationWithOccurrences, UpdateReservationPayload,
+        ReservationWithOccurrences, SplitReservationPayload, UpdateReservationPayload,
     },
 };
 use crate::{
@@ -34,20 +34,17 @@ const MAX_SEARCH_RANGE_DAYS: i64 = 365;
 /// on resources that explicitly allow recurrence.
 async fn validate_recurring_permission(
     pool: &PgPool,
-    payload: &CreateReservationPayload,
+    rrule: Option<&str>,
+    occurrences: &[CreateOccurrencePayload],
     user_role: Role,
 ) -> Result<(), AppError> {
     // Admins bypass recurrence checks; non-recurring requests require no check
-    if user_role == Role::Admin || payload.rrule.is_none() {
+    if user_role == Role::Admin || rrule.is_none() {
         return Ok(());
     }
 
     // Extract all unique resource IDs across the occurrences
-    let resource_ids: Vec<Uuid> = payload
-        .occurrences
-        .iter()
-        .map(|occ| occ.resource_id)
-        .collect();
+    let resource_ids: Vec<Uuid> = occurrences.iter().map(|occ| occ.resource_id).collect();
 
     if resource_ids.is_empty() {
         return Ok(());
@@ -275,7 +272,13 @@ pub async fn create_reservation(
     };
 
     // 1. Validate recurring permissions for non-admins
-    validate_recurring_permission(&auth_state.pool, &payload, auth_user.role).await?;
+    validate_recurring_permission(
+        &auth_state.pool,
+        payload.rrule.as_deref(),
+        &payload.occurrences,
+        auth_user.role,
+    )
+    .await?;
 
     // 2. Validate occurrences against resource's reservable_until date boundary
     db::validate_resource_durations(&auth_state.pool, is_admin, &payload.occurrences).await?;
@@ -473,6 +476,13 @@ pub async fn update_reservation(
 
     // Validate new occurrences against reservable_until boundary and time restrictions
     if let Some(ref new_occurrences) = payload.occurrences {
+        validate_recurring_permission(
+            &auth_state.pool,
+            payload.rrule.as_deref(),
+            new_occurrences,
+            auth_user.role,
+        )
+        .await?;
         db::validate_resource_durations(&auth_state.pool, is_admin, new_occurrences).await?;
         db::validate_resource_reservable_until(&auth_state.pool, is_admin, new_occurrences).await?;
 
@@ -580,6 +590,63 @@ pub async fn cancel_reservation(
         is_admin,
         Some(auth_user.id),
     )))
+}
+
+#[utoipa::path(
+    post,
+    path = "/reservations/{id}/split",
+    tag = "Reservations",
+    security(("bearer_auth" = [])),
+    params(
+        ("id" = Uuid, Path, description = "Reservation UUID")
+    ),
+    request_body = SplitReservationPayload,
+    responses(
+        (status = 201, description = "The new reservation holding the split-off occurrences", body = ReservationWithOccurrences),
+        (status = 400, description = "Occurrences don't belong to the reservation, or would leave it empty"),
+        (status = 401, description = "Unauthorized"),
+        (status = 403, description = "Forbidden - Only the owner or an admin can split"),
+        (status = 404, description = "Reservation not found"),
+        (status = 409, description = "Imported from Outlook"),
+        (status = 422, description = "Validation error")
+    )
+)]
+#[tracing::instrument(skip(auth_state, auth_user, payload))]
+pub async fn split_reservation(
+    State(auth_state): State<AuthState>,
+    Path(id): Path<Uuid>,
+    auth_user: AuthUser,
+    Json(payload): Json<SplitReservationPayload>,
+) -> Result<(StatusCode, Json<ReservationWithOccurrences>), AppError> {
+    payload.validate()?;
+
+    let is_admin = auth_user.role == Role::Admin;
+    let existing = db::find_by_id(&auth_state.pool, id, true).await?;
+
+    if existing.reservation.source == "outlook" {
+        return Err(AppError::Conflict(
+            "Tämä varaus tulee Outlookista. Muokkaa sitä Outlookissa.".to_string(),
+        ));
+    }
+    if !is_admin {
+        if existing.reservation.user_id != auth_user.id {
+            return Err(AppError::Forbidden(
+                "Et voi muokata toisen käyttäjän varausta.".to_string(),
+            ));
+        }
+        if existing.reservation.status == ReservationStatus::Cancelled {
+            return Err(AppError::Forbidden(
+                "Peruttua varausta voi muokata vain ylläpitäjä.".to_string(),
+            ));
+        }
+    }
+
+    let new_reservation =
+        db::split(&auth_state.pool, id, payload.occurrence_ids, payload.rrule).await?;
+
+    let sanitized = sanitize_reservation_for_role(new_reservation, is_admin, Some(auth_user.id));
+
+    Ok((StatusCode::CREATED, Json(sanitized)))
 }
 
 #[utoipa::path(

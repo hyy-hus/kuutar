@@ -19,7 +19,7 @@
       "Left": [
         "Varchar",
         "Text",
-        "Varchar"
+        "Text"
       ]
     },
     "nullable": [

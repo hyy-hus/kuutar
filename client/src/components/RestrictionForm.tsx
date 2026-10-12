@@ -2,18 +2,18 @@ import { useForm } from "@tanstack/react-form";
 import { AlertOctagon, Loader2, Save, Users } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Frequency } from "rrule";
 import { useGroups } from "#/hooks/useGroups";
 import { useResources } from "#/hooks/useResorces";
+import { formatDateTimeLocal } from "#/utils/date";
 import {
-	formatDateTimeLocal,
-	formatYYYYMMDD,
-	parseLocalDate,
-} from "#/utils/date";
-import { generateOccurrences, parseRRule } from "#/utils/rruleUtils";
+	generateOccurrences,
+	parseRRule,
+	type RRuleConfig,
+} from "#/utils/rruleUtils";
 import { Button } from "./Button";
 import { GroupChecklist } from "./GroupChecklist";
 import { Input } from "./Input";
+import { RecurrenceFields } from "./RecurrenceFields";
 
 export interface RestrictionOccurrenceValue {
 	resource_id: string | null;
@@ -49,12 +49,10 @@ export function RestrictionForm({
 	const { data: resources, isLoading: loadingResources } = useResources();
 	const { data: groups, isLoading: loadingGroups } = useGroups();
 
-	const initialRule = parseRRule(defaultValues?.rrule);
-
-	const [freq, setFreq] = useState<Frequency | null>(initialRule.freq);
-	const [untilStr, setUntilStr] = useState<string>(
-		initialRule.until ? formatYYYYMMDD(initialRule.until) : "",
-	);
+	const [recurrence, setRecurrence] = useState<RRuleConfig>(() => {
+		const { dtstart: _dtstart, ...config } = parseRRule(defaultValues?.rrule);
+		return config;
+	});
 
 	const form = useForm({
 		defaultValues: {
@@ -74,7 +72,6 @@ export function RestrictionForm({
 
 			// If start_time & end_time are set, generate recurring occurrences
 			if (value.start_time && value.end_time) {
-				const until = untilStr ? parseLocalDate(untilStr) : null;
 				const targetResources =
 					value.resource_ids && value.resource_ids.length > 0
 						? value.resource_ids
@@ -82,10 +79,12 @@ export function RestrictionForm({
 
 				for (const resId of targetResources) {
 					const { occurrences, rruleString: generatedRrule } =
-						generateOccurrences(value.start_time, value.end_time, resId ?? "", {
-							freq,
-							until,
-						});
+						generateOccurrences(
+							value.start_time,
+							value.end_time,
+							resId ?? "",
+							recurrence,
+						);
 
 					finalOccurrences = [
 						...finalOccurrences,
@@ -291,56 +290,16 @@ export function RestrictionForm({
 					)}
 				</form.Field>
 
-				{/* Recurrence Rule Controls */}
-				<div className="grid grid-cols-2 gap-2 pt-2 border-t border-stone-200 dark:border-stone-800">
-					<div className="space-y-1">
-						<label
-							htmlFor="recurrence_freq"
-							className="text-[11px] text-stone-600 dark:text-stone-400"
-						>
-							{t("toistuvuusjakso", "Toistuvuusjakso")}
-						</label>
-						<select
-							id="recurrence_freq"
-							value={freq === null ? "none" : freq}
-							onChange={(e) => {
-								const val = e.target.value;
-								setFreq(val === "none" ? null : Number(val));
-							}}
-							className="w-full px-2 py-1 text-xs bg-white dark:bg-stone-950 border border-stone-300 dark:border-stone-700 rounded"
-						>
-							<option value="none">{t("eiToistoa", "Ei toistoa")}</option>
-							<option value={Frequency.DAILY}>
-								{t("pivittin", "Päivittäin")}
-							</option>
-							<option value={Frequency.WEEKLY}>
-								{t("viikoittain", "Viikoittain")}
-							</option>
-							<option value={Frequency.MONTHLY}>
-								{t("kuukausittain", "Kuukausittain")}
-							</option>
-							<option value={Frequency.YEARLY}>
-								{t("vuosittain", "Vuosittain")}
-							</option>
-						</select>
-					</div>
-
-					{freq !== null && (
-						<div className="space-y-1">
-							<label
-								htmlFor="recurrence_until"
-								className="text-[11px] text-stone-600 dark:text-stone-400"
-							>
-								{t("toistoPttyy", "Toisto päättyy")}
-							</label>
-							<Input
-								id="recurrence_until"
-								type="date"
-								value={untilStr}
-								onChange={(e) => setUntilStr(e.target.value)}
+				<div className="pt-2 border-t border-stone-200 dark:border-stone-800">
+					<form.Subscribe selector={(state) => state.values.start_time}>
+						{(startTime) => (
+							<RecurrenceFields
+								startTime={startTime ?? ""}
+								value={recurrence}
+								onChange={setRecurrence}
 							/>
-						</div>
-					)}
+						)}
+					</form.Subscribe>
 				</div>
 			</div>
 

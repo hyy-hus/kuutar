@@ -10,7 +10,7 @@ use super::{
     db,
     models::{
         CreateRestrictionPayload, ListRestrictionsQuery, RestrictionWithOccurrences,
-        UpdateRestrictionPayload,
+        SplitRestrictionPayload, UpdateRestrictionPayload,
     },
 };
 use crate::{
@@ -96,6 +96,27 @@ pub async fn update_restriction(
     payload.validate()?;
     let restriction = db::update(&auth_state.pool, id, payload).await?;
     Ok(Json(restriction))
+}
+
+#[utoipa::path(
+    post,
+    path = "/restrictions/{id}/split",
+    tag = "Restrictions",
+    security(("bearer_auth" = [])),
+    params(("id" = Uuid, Path)),
+    request_body = SplitRestrictionPayload,
+    responses((status = 201, body = RestrictionWithOccurrences), (status = 400), (status = 403), (status = 404))
+)]
+pub async fn split_restriction(
+    State(auth_state): State<AuthState>,
+    RequireAdmin(_admin): RequireAdmin,
+    Path(id): Path<Uuid>,
+    Json(payload): Json<SplitRestrictionPayload>,
+) -> Result<(StatusCode, Json<RestrictionWithOccurrences>), AppError> {
+    payload.validate()?;
+    let restriction =
+        db::split(&auth_state.pool, id, payload.occurrence_ids, payload.rrule).await?;
+    Ok((StatusCode::CREATED, Json(restriction)))
 }
 
 #[utoipa::path(

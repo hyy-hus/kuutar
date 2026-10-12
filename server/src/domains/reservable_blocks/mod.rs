@@ -2,7 +2,10 @@ pub mod db;
 pub mod models;
 pub mod routes;
 
-use axum::{Router, routing::get};
+use axum::{
+    Router,
+    routing::{get, post},
+};
 
 use crate::domains::auth::AuthState;
 
@@ -18,5 +21,6 @@ pub fn router(state: AuthState) -> Router {
                 .patch(routes::update_reservable_block)
                 .delete(routes::delete_reservable_block),
         )
+        .route("/{id}/split", post(routes::split_reservable_block))
         .with_state(state)
 }

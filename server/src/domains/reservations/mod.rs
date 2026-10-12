@@ -27,5 +27,6 @@ pub fn router(state: AuthState) -> Router {
                 .delete(routes::delete_reservation),
         )
         .route("/{id}/cancel", post(routes::cancel_reservation))
+        .route("/{id}/split", post(routes::split_reservation))
         .with_state(state)
 }

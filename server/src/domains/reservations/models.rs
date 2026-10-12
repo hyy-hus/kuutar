@@ -136,6 +136,17 @@ pub struct UpdateReservationPayload {
     pub occurrences: Option<Vec<CreateOccurrencePayload>>,
 }
 
+#[derive(Debug, Deserialize, Validate, ToSchema)]
+pub struct SplitReservationPayload {
+    /// Occurrences to move into a new, non-recurring reservation. A reservation on several
+    /// resources has one occurrence per resource at each time, so pass all of that time's rows.
+    #[validate(length(min = 1, message = "At least one occurrence must be provided"))]
+    pub occurrence_ids: Vec<Uuid>,
+
+    /// The rule the original reservation keeps, e.g. with an EXDATE for the occurrence that left
+    pub rrule: Option<String>,
+}
+
 #[derive(Debug, Default, Deserialize, Validate, ToSchema)]
 pub struct CancelReservationPayload {
     /// Optional explanation, included in the cancellation email

@@ -8,6 +8,7 @@ import {
 import { useRestriction, useUpdateRestriction } from "#/hooks/useRestrictions";
 import { requireAdminGuard } from "#/utils/authGuard";
 import { formatDateTimeLocal } from "#/utils/date";
+import { seriesFirstTimes } from "#/utils/series";
 
 export const Route = createFileRoute("/_app/restrictions/edit/$id")({
 	beforeLoad: async ({ context }) => {
@@ -61,6 +62,9 @@ function EditRestrictionPage() {
 
 	const occurrences = restrictionWithOcc.occurrences || [];
 	const firstOccurrence = occurrences[0];
+	const firstTimes = firstOccurrence
+		? seriesFirstTimes(restrictionWithOcc.rrule, firstOccurrence)
+		: null;
 	// Global restrictions have a null resource_id and map to an empty selection
 	const resourceIds = Array.from(
 		new Set(
@@ -85,12 +89,8 @@ function EditRestrictionPage() {
 					exempt_group_ids: restrictionWithOcc.exempt_group_ids,
 					rrule: restrictionWithOcc.rrule,
 					resource_ids: resourceIds,
-					start_time: firstOccurrence
-						? formatDateTimeLocal(new Date(firstOccurrence.start_time))
-						: "",
-					end_time: firstOccurrence
-						? formatDateTimeLocal(new Date(firstOccurrence.end_time))
-						: "",
+					start_time: firstTimes ? formatDateTimeLocal(firstTimes.start) : "",
+					end_time: firstTimes ? formatDateTimeLocal(firstTimes.end) : "",
 					occurrences: occurrences.map((occ) => ({
 						resource_id: occ.resource_id || null,
 						start_time: formatDateTimeLocal(new Date(occ.start_time)),
