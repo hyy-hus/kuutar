@@ -1,15 +1,18 @@
 // src/routes/resources/$id.tsx
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { Edit, Trash2 } from "lucide-react";
+import { Edit, Lock, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { AccessSummary } from "#/components/AccessSummary";
 import { BackLink } from "#/components/BackLink";
 import { Button } from "#/components/Button";
 import { Chip } from "#/components/Chip";
 import { RichTextContent } from "#/components/RichTextContent";
 import { useIsAdmin } from "#/hooks/useAuth";
 import { useCollection } from "#/hooks/useCollections";
+import { useGroups } from "#/hooks/useGroups";
 import { useDeleteResource, useResource } from "#/hooks/useResorces";
 import { useDateFormatter } from "#/utils/date";
+import { summarizeResourceAccess } from "#/utils/resourceAccess";
 import { readable_uuid } from "#/utils/uuid";
 
 export const Route = createFileRoute("/_app/resources/$id")({
@@ -25,6 +28,7 @@ function ViewResourcePage() {
 	const { data: resource, isLoading, isError } = useResource(id);
 	const { data: collection } = useCollection(resource?.collection_id ?? "");
 	const deleteResource = useDeleteResource();
+	const { data: groups } = useGroups({ enabled: isAdmin });
 
 	if (isLoading)
 		return (
@@ -73,6 +77,33 @@ function ViewResourcePage() {
 				value={resource.description}
 				className="p-3 rounded-md border border-stone-200 dark:border-stone-800 bg-stone-50 dark:bg-stone-900"
 			/>
+
+			{/* Who can see, reserve and get confirmed */}
+			{isAdmin ? (
+				<AccessSummary
+					groups={groups}
+					summary={summarizeResourceAccess({
+						is_public: resource.is_public,
+						visibility_group_ids: resource.visible_group_ids,
+						reservation_restricted: resource.reservation_restricted,
+						reserve_group_ids: resource.reservable_group_ids,
+						auto_confirm: resource.auto_confirm,
+						auto_confirm_group_ids: resource.auto_confirm_group_ids,
+					})}
+				/>
+			) : (
+				!resource.can_reserve && (
+					<p className="flex items-center gap-2 p-3 text-xs rounded-md border border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/20 text-amber-800 dark:text-amber-300">
+						<Lock size={14} className="shrink-0" />
+						<span>
+							{t(
+								"eiVarausoikeutta",
+								"Ryhmälläsi ei ole oikeutta varata tätä resurssia.",
+							)}
+						</span>
+					</p>
+				)
+			)}
 
 			<div className="space-y-2">
 				<div className="text-md">

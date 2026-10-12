@@ -13,6 +13,9 @@ use crate::{
     errors::AppError,
 };
 
+/// Lists reservations overlapping the window. Occurrences on non-public resources the viewer
+/// cannot see (`viewer_group_id`) are left out, except in the owner's own listing
+/// (`target_user_id`) and for admins.
 pub async fn list_filtered(
     pool: &PgPool,
     start_date: DateTime<Utc>,
@@ -21,7 +24,9 @@ pub async fn list_filtered(
     status: Option<ReservationStatus>,
     is_admin: bool,
     target_user_id: Option<Uuid>,
+    viewer_group_id: Option<Uuid>,
 ) -> Result<Vec<ReservationWithOccurrences>, AppError> {
+    let sees_all = is_admin || target_user_id.is_some();
     let reservation_ids = sqlx::query_scalar!(
         r#"
         SELECT DISTINCT r.id
@@ -33,12 +38,23 @@ pub async fn list_filtered(
           AND ($3::uuid IS NULL OR o.resource_id = $3)
           AND ($4::reservation_status IS NULL OR r.status = $4)
           AND ($5::uuid IS NULL OR r.user_id = $5)
+          AND ($6 OR EXISTS (
+              SELECT 1 FROM resources rs
+              WHERE rs.id = o.resource_id
+                AND (rs.is_public
+                     OR EXISTS (SELECT 1 FROM resource_visibility_groups vg WHERE vg.resource_id = rs.id AND vg.group_id = $7)
+                     OR (rs.reservation_restricted AND EXISTS (
+                         SELECT 1 FROM resource_groups rg WHERE rg.resource_id = rs.id AND rg.group_id = $7
+                     )))
+          ))
         "#,
         start_date,
         end_date,
         resource_id,
         status as Option<ReservationStatus>,
-        target_user_id
+        target_user_id,
+        sees_all,
+        viewer_group_id
     )
     .fetch_all(pool)
     .await?;
@@ -102,6 +118,8 @@ pub async fn list_filtered(
             start_date,
             end_date,
             resource_id,
+            sees_all,
+            viewer_group_id,
         )
         .await?;
 
@@ -391,22 +409,35 @@ async fn fetch_occurrences_for_reservation_filtered(
     start_date: DateTime<Utc>,
     end_date: DateTime<Utc>,
     resource_id: Option<Uuid>,
+    sees_all: bool,
+    viewer_group_id: Option<Uuid>,
 ) -> Result<Vec<Occurrence>, AppError> {
     let occurrences = sqlx::query_as!(
         Occurrence,
         r#"
-        SELECT id, reservation_id, resource_id, start_time, end_time, created_at
-        FROM occurrences
-        WHERE reservation_id = $1
-          AND start_time < $3
-          AND end_time > $2
-          AND ($4::uuid IS NULL OR resource_id = $4)
-        ORDER BY start_time ASC
+        SELECT o.id, o.reservation_id, o.resource_id, o.start_time, o.end_time, o.created_at
+        FROM occurrences o
+        WHERE o.reservation_id = $1
+          AND o.start_time < $3
+          AND o.end_time > $2
+          AND ($4::uuid IS NULL OR o.resource_id = $4)
+          AND ($5 OR EXISTS (
+              SELECT 1 FROM resources rs
+              WHERE rs.id = o.resource_id
+                AND (rs.is_public
+                     OR EXISTS (SELECT 1 FROM resource_visibility_groups vg WHERE vg.resource_id = rs.id AND vg.group_id = $6)
+                     OR (rs.reservation_restricted AND EXISTS (
+                         SELECT 1 FROM resource_groups rg WHERE rg.resource_id = rs.id AND rg.group_id = $6
+                     )))
+          ))
+        ORDER BY o.start_time ASC
         "#,
         reservation_id,
         start_date,
         end_date,
-        resource_id
+        resource_id,
+        sees_all,
+        viewer_group_id
     )
     .fetch_all(pool)
     .await?;
@@ -557,6 +588,60 @@ pub async fn validate_resource_group_access(
         return Err(AppError::Forbidden(format!(
             "Ryhmälläsi ei ole oikeutta varata resurssia '{name}'."
         )));
+    }
+
+    Ok(())
+}
+
+/// Rejects non-admins reserving non-public resources they cannot see (not in the resource's
+/// visibility groups nor its reserving groups). Resources in `existing_resource_ids` are
+/// skipped, as in `validate_resource_group_access`. Admins bypass this check.
+pub async fn validate_resource_visibility(
+    pool: &PgPool,
+    user_id: Uuid,
+    is_admin: bool,
+    existing_resource_ids: &[Uuid],
+    occurrences: &[CreateOccurrencePayload],
+) -> Result<(), AppError> {
+    if is_admin || occurrences.is_empty() {
+        return Ok(());
+    }
+
+    let resource_ids: Vec<Uuid> = occurrences
+        .iter()
+        .map(|o| o.resource_id)
+        .filter(|id| !existing_resource_ids.contains(id))
+        .collect();
+    if resource_ids.is_empty() {
+        return Ok(());
+    }
+
+    let hidden = sqlx::query_scalar!(
+        r#"
+        SELECT r.id
+        FROM resources r
+        JOIN users u ON u.id = $1 AND u.deleted_at IS NULL
+        WHERE r.id = ANY($2)
+          AND r.deleted_at IS NULL
+          AND r.is_public = FALSE
+          AND NOT EXISTS (
+              SELECT 1 FROM resource_visibility_groups vg
+              WHERE vg.resource_id = r.id AND vg.group_id = u.group_id
+          )
+          AND NOT (r.reservation_restricted AND EXISTS (
+              SELECT 1 FROM resource_groups rg
+              WHERE rg.resource_id = r.id AND rg.group_id = u.group_id
+          ))
+        LIMIT 1
+        "#,
+        user_id,
+        &resource_ids
+    )
+    .fetch_optional(pool)
+    .await?;
+
+    if hidden.is_some() {
+        return Err(AppError::NotFound);
     }
 
     Ok(())

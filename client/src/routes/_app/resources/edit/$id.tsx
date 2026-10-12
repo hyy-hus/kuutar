@@ -64,6 +64,7 @@ function EditResourcePage() {
 				allow_recurring: values.allow_recurring,
 				blocks_only: values.blocks_only,
 				is_public: values.is_public ?? false,
+				visibility_group_ids: values.visibility_group_ids,
 				reservation_restricted: values.reservation_restricted,
 				group_ids: values.group_ids,
 				// 0 clears a duration
@@ -100,6 +101,7 @@ function EditResourcePage() {
 					allow_recurring: resource.allow_recurring,
 					blocks_only: resource.blocks_only,
 					is_public: resource.is_public,
+					visibility_group_ids: resource.visible_group_ids,
 					reservation_restricted: resource.reservation_restricted,
 					group_ids: resource.reservable_group_ids,
 					default_duration_minutes: resource.default_duration_minutes,

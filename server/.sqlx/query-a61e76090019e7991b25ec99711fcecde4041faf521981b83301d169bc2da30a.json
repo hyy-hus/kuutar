@@ -1,0 +1,45 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT DISTINCT r.id\n        FROM reservations r\n        LEFT JOIN occurrences o ON o.reservation_id = r.id\n        WHERE r.deleted_at IS NULL\n          AND o.start_time < $2\n          AND o.end_time > $1\n          AND ($3::uuid IS NULL OR o.resource_id = $3)\n          AND ($4::reservation_status IS NULL OR r.status = $4)\n          AND ($5::uuid IS NULL OR r.user_id = $5)\n          AND ($6 OR EXISTS (\n              SELECT 1 FROM resources rs\n              WHERE rs.id = o.resource_id\n                AND (rs.is_public\n                     OR EXISTS (SELECT 1 FROM resource_visibility_groups vg WHERE vg.resource_id = rs.id AND vg.group_id = $7)\n                     OR (rs.reservation_restricted AND EXISTS (\n                         SELECT 1 FROM resource_groups rg WHERE rg.resource_id = rs.id AND rg.group_id = $7\n                     )))\n          ))\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "reservations",
+            "name": "id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Timestamptz",
+        "Timestamptz",
+        "Uuid",
+        {
+          "Custom": {
+            "name": "reservation_status",
+            "kind": {
+              "Enum": [
+                "pending",
+                "confirmed",
+                "cancelled"
+              ]
+            }
+          }
+        },
+        "Uuid",
+        "Bool",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "a61e76090019e7991b25ec99711fcecde4041faf521981b83301d169bc2da30a"
+}

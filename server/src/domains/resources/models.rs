@@ -19,7 +19,11 @@ pub struct Resource {
     /// When true, non-admin users can only reserve whole reservable blocks
     pub blocks_only: bool,
     pub reservable_until: Option<DateTime<Utc>>,
+    /// When false, the resource is visible only to admins, `visible_group_ids` and groups
+    /// that may reserve it
     pub is_public: bool,
+    /// Groups that can see the resource when it is not public
+    pub visible_group_ids: Vec<Uuid>,
     /// When true, non-admins can only reserve if their group is in `reservable_group_ids`
     pub reservation_restricted: bool,
     /// Groups allowed to reserve this resource when `reservation_restricted` is set
@@ -75,6 +79,9 @@ pub struct CreateResource {
 
     #[serde(default = "default_true")]
     pub is_public: bool,
+
+    /// Groups that can see the resource when `is_public` is false
+    pub visibility_group_ids: Option<Vec<Uuid>>,
 
     #[serde(default)]
     pub reservation_restricted: bool,
@@ -156,6 +163,9 @@ pub struct UpdateResource {
     pub reservable_until: Option<DateTime<Utc>>,
 
     pub is_public: Option<bool>,
+
+    /// Replaces the set of groups that can see the resource when it is not public
+    pub visibility_group_ids: Option<Vec<Uuid>>,
 
     pub reservation_restricted: Option<bool>,
 

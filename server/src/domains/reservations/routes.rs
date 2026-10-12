@@ -124,7 +124,12 @@ pub async fn list_reservations(
     let end_date = query
         .end_date
         .unwrap_or_else(|| start_date + chrono::TimeDelta::days(30));
-    let is_admin = opt_user.0.map(|u| u.role == Role::Admin).unwrap_or(false);
+    let is_admin = opt_user
+        .0
+        .as_ref()
+        .map(|u| u.role == Role::Admin)
+        .unwrap_or(false);
+    let viewer_group_id = opt_user.0.as_ref().map(|u| u.group_id);
 
     // Filter Logic:
     // 1. If a specific status query param was passed (e.g., ?status=pending), respect it.
@@ -146,6 +151,7 @@ pub async fn list_reservations(
         effective_status,
         is_admin,
         None,
+        viewer_group_id,
     )
     .await?;
 
@@ -191,6 +197,7 @@ pub async fn list_my_reservations(
         query.status,
         is_admin,
         Some(auth_user.id),
+        Some(auth_user.group_id),
     )
     .await?;
 
@@ -275,7 +282,15 @@ pub async fn create_reservation(
     db::validate_resource_reservable_until(&auth_state.pool, is_admin, &payload.occurrences)
         .await?;
 
-    // 3. Validate that the owner's group may reserve the chosen resources
+    // 3. Validate that the owner's group may see and reserve the chosen resources
+    db::validate_resource_visibility(
+        &auth_state.pool,
+        owner_id,
+        is_admin,
+        &[],
+        &payload.occurrences,
+    )
+    .await?;
     db::validate_resource_group_access(
         &auth_state.pool,
         owner_id,
@@ -461,9 +476,17 @@ pub async fn update_reservation(
         db::validate_resource_durations(&auth_state.pool, is_admin, new_occurrences).await?;
         db::validate_resource_reservable_until(&auth_state.pool, is_admin, new_occurrences).await?;
 
-        // Only resources newly added to the reservation need group access
+        // Only resources newly added to the reservation need visibility and group access
         let existing_resource_ids: Vec<Uuid> =
             existing.occurrences.iter().map(|o| o.resource_id).collect();
+        db::validate_resource_visibility(
+            &auth_state.pool,
+            auth_user.id,
+            is_admin,
+            &existing_resource_ids,
+            new_occurrences,
+        )
+        .await?;
         db::validate_resource_group_access(
             &auth_state.pool,
             auth_user.id,
