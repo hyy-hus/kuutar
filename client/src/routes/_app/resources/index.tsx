@@ -4,10 +4,10 @@ import { Eye, Folder, Loader2, Plus, RefreshCw, Users } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "#/components/Button";
 import { Chip } from "#/components/Chip";
+import { RichTextContent } from "#/components/RichTextContent";
 import { useIsAdmin } from "#/hooks/useAuth";
 import { type Collection, useCollections } from "#/hooks/useCollections";
 import { type Resource, useResources } from "#/hooks/useResorces";
-import { getLocalizedPlainText } from "#/utils/richText";
 import { readable_uuid } from "#/utils/uuid";
 
 export const Route = createFileRoute("/_app/resources/")({
@@ -21,7 +21,7 @@ function ResourceCard({
 	resource: Resource;
 	collection?: Collection;
 }) {
-	const { t, i18n } = useTranslation();
+	const { t } = useTranslation();
 	return (
 		<li className="p-3 border-2 border-stone-800 dark:border-stone-700 flex flex-col justify-between gap-3 rounded-md bg-stone-50 dark:bg-stone-900 shadow-xs hover:border-purple-600 dark:hover:border-purple-500 transition-colors min-w-0">
 			<div className="space-y-2 min-w-0">
@@ -48,10 +48,15 @@ function ResourceCard({
 				)}
 
 				{/* Description */}
-				<p className="text-xs text-stone-600 dark:text-stone-400 line-clamp-2 min-h-8">
-					{getLocalizedPlainText(resource.description, i18n.language) ||
-						t("eiKuvaustaSaatavilla", "Ei kuvausta saatavilla.")}
-				</p>
+				<RichTextContent
+					value={resource.description}
+					className="text-xs text-stone-600 dark:text-stone-400"
+					fallback={
+						<p className="text-xs text-stone-600 dark:text-stone-400">
+							{t("eiKuvaustaSaatavilla", "Ei kuvausta saatavilla.")}
+						</p>
+					}
+				/>
 			</div>
 
 			{/* Bottom Controls */}

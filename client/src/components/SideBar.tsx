@@ -86,7 +86,7 @@ export function SideBar({ theme, toggleTheme }: SideBarProps) {
 			to: "/resources",
 			label: t("resurssit", "Resurssit"),
 			icon: Box,
-			adminOnly: true,
+			authOnly: true,
 		},
 		{
 			to: "/collections",

@@ -652,5 +652,8 @@
 	"siirraRyhmaanPlaceholder": "-- Move to group --",
 	"asetaKieli": "Set language",
 	"asetaKieliPlaceholder": "-- Set language --",
-	"toteutaMuutokset": "Apply changes"
+	"toteutaMuutokset": "Apply changes",
+	"resurssienTiedot": "Resource details",
+	"valitsemiesiResurssienKuvaukset": "Descriptions of the resources you selected.",
+	"sulje": "Close"
 }

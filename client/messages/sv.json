@@ -652,5 +652,8 @@
 	"siirraRyhmaanPlaceholder": "-- Flytta till grupp --",
 	"asetaKieli": "Ange språk",
 	"asetaKieliPlaceholder": "-- Ange språk --",
-	"toteutaMuutokset": "Genomför ändringar"
+	"toteutaMuutokset": "Genomför ändringar",
+	"resurssienTiedot": "Resursinformation",
+	"valitsemiesiResurssienKuvaukset": "Beskrivningar för de valda resurserna.",
+	"sulje": "Stäng"
 }

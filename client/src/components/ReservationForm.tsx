@@ -15,6 +15,7 @@ import { useTranslation } from "react-i18next";
 import { Frequency } from "rrule";
 import { Button } from "#/components/Button";
 import { Input } from "#/components/Input";
+import { ResourceInfoDialog } from "#/components/ResourceInfoDialog";
 import { useAuth, useIsAdmin } from "#/hooks/useAuth";
 import {
 	type Contract,
@@ -671,6 +672,13 @@ export function ReservationForm({
 											);
 										})}
 									</div>
+								)}
+								{field.state.value.length > 0 && (
+									<ResourceInfoDialog
+										resources={(resources ?? []).filter((r) =>
+											field.state.value.includes(r.id),
+										)}
+									/>
 								)}
 								{hasError && (
 									<p className="text-[11px] text-red-500">

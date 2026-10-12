@@ -652,5 +652,8 @@
 	"siirraRyhmaanPlaceholder": "-- Siirrä ryhmään --",
 	"asetaKieli": "Aseta kieli",
 	"asetaKieliPlaceholder": "-- Aseta kieli --",
-	"toteutaMuutokset": "Toteuta muutokset"
+	"toteutaMuutokset": "Toteuta muutokset",
+	"resurssienTiedot": "Resurssien tiedot",
+	"valitsemiesiResurssienKuvaukset": "Valitsemiesi resurssien kuvaukset.",
+	"sulje": "Sulje"
 }
