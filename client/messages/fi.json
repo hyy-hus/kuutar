@@ -644,5 +644,13 @@
 	"istuntoAlkoi": "Alkoi",
 	"paataIstunto": "Päätä istunto",
 	"paata": "Päätä",
-	"kirjauduUlosMuualta": "Kirjaudu ulos muilta laitteilta"
+	"kirjauduUlosMuualta": "Kirjaudu ulos muilta laitteilta",
+	"valitseKayttaja": "Valitse {{name}}",
+	"valitseKaikki": "Valitse kaikki",
+	"valittuMaara": "{{count}} valittu",
+	"siirraRyhmaan": "Siirrä ryhmään",
+	"siirraRyhmaanPlaceholder": "-- Siirrä ryhmään --",
+	"asetaKieli": "Aseta kieli",
+	"asetaKieliPlaceholder": "-- Aseta kieli --",
+	"toteutaMuutokset": "Toteuta muutokset"
 }
