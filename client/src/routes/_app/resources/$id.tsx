@@ -6,6 +6,7 @@ import { BackLink } from "#/components/BackLink";
 import { Button } from "#/components/Button";
 import { Chip } from "#/components/Chip";
 import { RichTextContent } from "#/components/RichTextContent";
+import { useIsAdmin } from "#/hooks/useAuth";
 import { useCollection } from "#/hooks/useCollections";
 import { useDeleteResource, useResource } from "#/hooks/useResorces";
 import { useDateFormatter } from "#/utils/date";
@@ -17,6 +18,7 @@ export const Route = createFileRoute("/_app/resources/$id")({
 
 function ViewResourcePage() {
 	const { t } = useTranslation();
+	const { isAdmin } = useIsAdmin();
 	const { formatDate } = useDateFormatter();
 	const { id } = Route.useParams();
 	const navigate = useNavigate();
@@ -90,29 +92,31 @@ function ViewResourcePage() {
 				</div>
 			</div>
 
-			{/* 3. Vertically Stacked Action Buttons */}
-			<div className="flex flex-col gap-2 pt-2">
-				<Button
-					variant="secondary"
-					className="w-full flex items-center justify-center gap-2"
-					asChild
-				>
-					<Link to="/resources/edit/$id" params={{ id: resource.id }}>
-						<span>{t("muokkaa", "Muokkaa")}</span>
-						<Edit size={16} />
-					</Link>
-				</Button>
+			{/* 3. Vertically Stacked Action Buttons (admins only) */}
+			{isAdmin && (
+				<div className="flex flex-col gap-2 pt-2">
+					<Button
+						variant="secondary"
+						className="w-full flex items-center justify-center gap-2"
+						asChild
+					>
+						<Link to="/resources/edit/$id" params={{ id: resource.id }}>
+							<span>{t("muokkaa", "Muokkaa")}</span>
+							<Edit size={16} />
+						</Link>
+					</Button>
 
-				<Button
-					variant="danger"
-					className="w-full flex items-center justify-center gap-2"
-					onClick={handleDelete}
-					disabled={deleteResource.isPending}
-				>
-					<span>{t("poistaResurssi", "Poista resurssi")}</span>
-					<Trash2 size={16} />
-				</Button>
-			</div>
+					<Button
+						variant="danger"
+						className="w-full flex items-center justify-center gap-2"
+						onClick={handleDelete}
+						disabled={deleteResource.isPending}
+					>
+						<span>{t("poistaResurssi", "Poista resurssi")}</span>
+						<Trash2 size={16} />
+					</Button>
+				</div>
+			)}
 		</div>
 	);
 }
