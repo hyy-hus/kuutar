@@ -2,16 +2,16 @@ import { useForm } from "@tanstack/react-form";
 import { CalendarCheck, Loader2, Save } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Frequency } from "rrule";
 import { useResources } from "#/hooks/useResorces";
+import { formatDateTimeLocal } from "#/utils/date";
 import {
-	formatDateTimeLocal,
-	formatYYYYMMDD,
-	parseLocalDate,
-} from "#/utils/date";
-import { generateOccurrences, parseRRule } from "#/utils/rruleUtils";
+	generateOccurrences,
+	parseRRule,
+	type RRuleConfig,
+} from "#/utils/rruleUtils";
 import { Button } from "./Button";
 import { Input } from "./Input";
+import { RecurrenceFields } from "./RecurrenceFields";
 
 export interface ReservableBlockOccurrenceValue {
 	resource_id: string;
@@ -47,11 +47,10 @@ export function ReservableBlockForm({
 	// Blocks only make sense for resources that are reservable by blocks alone
 	const blockResources = resources?.filter((r) => r.blocks_only);
 
-	const initialRule = parseRRule(defaultValues?.rrule);
-	const [freq, setFreq] = useState<Frequency | null>(initialRule.freq);
-	const [untilStr, setUntilStr] = useState<string>(
-		initialRule.until ? formatYYYYMMDD(initialRule.until) : "",
-	);
+	const [recurrence, setRecurrence] = useState<RRuleConfig>(() => {
+		const { dtstart: _dtstart, ...config } = parseRRule(defaultValues?.rrule);
+		return config;
+	});
 
 	const form = useForm({
 		defaultValues: {
@@ -62,7 +61,6 @@ export function ReservableBlockForm({
 			end_time: defaultValues?.end_time ?? "",
 		},
 		onSubmit: async ({ value }) => {
-			const until = untilStr ? parseLocalDate(untilStr) : null;
 			let occurrences: ReservableBlockOccurrenceValue[] = [];
 			let rruleString: string | null = null;
 
@@ -71,7 +69,7 @@ export function ReservableBlockForm({
 					value.start_time,
 					value.end_time,
 					resourceId,
-					{ freq, until },
+					recurrence,
 				);
 				occurrences = [
 					...occurrences,
@@ -321,55 +319,16 @@ export function ReservableBlockForm({
 					)}
 				</form.Field>
 
-				<div className="grid grid-cols-2 gap-2 pt-2 border-t border-stone-200 dark:border-stone-800">
-					<div className="space-y-1">
-						<label
-							htmlFor="recurrence_freq"
-							className="text-[11px] text-stone-600 dark:text-stone-400"
-						>
-							{t("toistuvuusjakso", "Toistuvuusjakso")}
-						</label>
-						<select
-							id="recurrence_freq"
-							value={freq === null ? "none" : freq}
-							onChange={(e) => {
-								const val = e.target.value;
-								setFreq(val === "none" ? null : Number(val));
-							}}
-							className="w-full px-2 py-1 text-xs bg-white dark:bg-stone-950 border border-stone-300 dark:border-stone-700 rounded"
-						>
-							<option value="none">{t("eiToistoa", "Ei toistoa")}</option>
-							<option value={Frequency.DAILY}>
-								{t("pivittin", "Päivittäin")}
-							</option>
-							<option value={Frequency.WEEKLY}>
-								{t("viikoittain", "Viikoittain")}
-							</option>
-							<option value={Frequency.MONTHLY}>
-								{t("kuukausittain", "Kuukausittain")}
-							</option>
-							<option value={Frequency.YEARLY}>
-								{t("vuosittain", "Vuosittain")}
-							</option>
-						</select>
-					</div>
-
-					{freq !== null && (
-						<div className="space-y-1">
-							<label
-								htmlFor="recurrence_until"
-								className="text-[11px] text-stone-600 dark:text-stone-400"
-							>
-								{t("toistoPttyy", "Toisto päättyy")}
-							</label>
-							<Input
-								id="recurrence_until"
-								type="date"
-								value={untilStr}
-								onChange={(e) => setUntilStr(e.target.value)}
+				<div className="pt-2 border-t border-stone-200 dark:border-stone-800">
+					<form.Subscribe selector={(state) => state.values.start_time}>
+						{(startTime) => (
+							<RecurrenceFields
+								startTime={startTime ?? ""}
+								value={recurrence}
+								onChange={setRecurrence}
 							/>
-						</div>
-					)}
+						)}
+					</form.Subscribe>
 				</div>
 			</div>
 

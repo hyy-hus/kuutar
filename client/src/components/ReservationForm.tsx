@@ -12,9 +12,9 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Frequency } from "rrule";
 import { Button } from "#/components/Button";
 import { Input } from "#/components/Input";
+import { RecurrenceFields } from "#/components/RecurrenceFields";
 import { ResourceInfoDialog } from "#/components/ResourceInfoDialog";
 import { useAuth, useIsAdmin } from "#/hooks/useAuth";
 import {
@@ -37,9 +37,7 @@ import { useUsers } from "#/hooks/useUsers";
 import {
 	addDays,
 	formatDateTimeLocal,
-	formatYYYYMMDD,
 	localDayRangeISO,
-	parseLocalDate,
 	useDateFormatter,
 } from "#/utils/date";
 import {
@@ -48,7 +46,13 @@ import {
 	formatMinutes,
 	resolveDefaultDuration,
 } from "#/utils/duration";
-import { generateOccurrences, parseRRule } from "#/utils/rruleUtils";
+import {
+	generateOccurrences,
+	listSeriesStarts,
+	NO_RECURRENCE,
+	parseRRule,
+	type RRuleConfig,
+} from "#/utils/rruleUtils";
 
 /** How far ahead a user can browse reservable blocks in the form */
 const BLOCK_LOOKAHEAD_DAYS = 90;
@@ -100,12 +104,10 @@ export function ReservationForm({
 	const { user: currentUser } = useAuth();
 	const { data: users } = useUsers({ enabled: isAdmin && isCreate });
 
-	const initialRule = parseRRule(defaultValues?.rrule);
-
-	const [freq, setFreq] = useState<Frequency | null>(initialRule.freq);
-	const [untilStr, setUntilStr] = useState<string>(
-		initialRule.until ? formatYYYYMMDD(initialRule.until) : "",
-	);
+	const [recurrence, setRecurrence] = useState<RRuleConfig>(() => {
+		const { dtstart: _dtstart, ...config } = parseRRule(defaultValues?.rrule);
+		return config;
+	});
 	const [conflicts, setConflicts] = useState<Occurrence[] | null>(null);
 	const [restrictionConflicts, setRestrictionConflicts] = useState<
 		{ title: string; start_time: string; end_time: string }[] | null
@@ -143,16 +145,17 @@ export function ReservationForm({
 			end_time: defaultValues?.end_time ?? "",
 		},
 		onSubmit: async ({ value }) => {
-			const until = untilStr ? parseLocalDate(untilStr) : null;
 			let allOccurrences: CreateOccurrencePayload[] = [];
 			let rruleString: string | null = null;
 
 			for (const resourceId of value.resource_ids) {
 				const { occurrences, rruleString: generatedRrule } =
-					generateOccurrences(value.start_time, value.end_time, resourceId, {
-						freq,
-						until,
-					});
+					generateOccurrences(
+						value.start_time,
+						value.end_time,
+						resourceId,
+						recurrence,
+					);
 				allOccurrences = [...allOccurrences, ...occurrences];
 				if (generatedRrule) rruleString = generatedRrule;
 			}
@@ -908,10 +911,9 @@ export function ReservationForm({
 						return (
 							<RecurrenceSection
 								canRecur={canRecur}
-								freq={freq}
-								setFreq={setFreq}
-								untilStr={untilStr}
-								setUntilStr={setUntilStr}
+								startTime={startTime}
+								recurrence={recurrence}
+								setRecurrence={setRecurrence}
 								setConflicts={setConflicts}
 							/>
 						);
@@ -933,8 +935,7 @@ export function ReservationForm({
 							resourceIds={resourceIds}
 							startTime={startTime}
 							endTime={endTime}
-							freq={freq}
-							untilStr={untilStr}
+							recurrence={recurrence}
 							checkConflicts={checkConflicts}
 							conflicts={conflicts}
 							setConflicts={setConflicts}
@@ -1180,8 +1181,7 @@ interface AutomaticConflictCheckerProps {
 	resourceIds: string[];
 	startTime: string;
 	endTime: string;
-	freq: Frequency | null;
-	untilStr: string;
+	recurrence: RRuleConfig;
 	checkConflicts: ReturnType<typeof useCheckConflicts>;
 	conflicts: Occurrence[] | null;
 	setConflicts: (conflicts: Occurrence[] | null) => void;
@@ -1199,8 +1199,7 @@ function AutomaticConflictChecker({
 	resourceIds,
 	startTime,
 	endTime,
-	freq,
-	untilStr,
+	recurrence,
 	checkConflicts,
 	conflicts,
 	setConflicts,
@@ -1213,12 +1212,16 @@ function AutomaticConflictChecker({
 	const { formatDate } = useDateFormatter();
 	const mutateAsync = checkConflicts.mutateAsync;
 
+	// Last day of the series, which bounds the restrictions worth fetching
+	const seriesEnd = recurrence.count
+		? (listSeriesStarts(startTime, recurrence).at(-1) ?? null)
+		: (recurrence.until ?? null);
+
 	const { data: activeRestrictions } = useRestrictions({
 		start_date: startTime ? new Date(startTime).toISOString() : undefined,
 		// Through the end of the last day of the series
-		end_date: untilStr
-			? localDayRangeISO(parseLocalDate(untilStr), parseLocalDate(untilStr))
-					.endISO
+		end_date: seriesEnd
+			? localDayRangeISO(seriesEnd, seriesEnd).endISO
 			: endTime
 				? new Date(endTime).toISOString()
 				: undefined,
@@ -1231,14 +1234,13 @@ function AutomaticConflictChecker({
 			return;
 		}
 
-		const until = untilStr ? parseLocalDate(untilStr) : null;
 		let allOccurrences: CreateOccurrencePayload[] = [];
 		for (const resourceId of resourceIds) {
 			const { occurrences } = generateOccurrences(
 				startTime,
 				endTime,
 				resourceId,
-				{ freq, until },
+				recurrence,
 			);
 			allOccurrences = [...allOccurrences, ...occurrences];
 		}
@@ -1316,8 +1318,7 @@ function AutomaticConflictChecker({
 		resourceIds,
 		startTime,
 		endTime,
-		freq,
-		untilStr,
+		recurrence,
 		activeRestrictions,
 		isAdmin,
 		reservationId,
@@ -1415,28 +1416,26 @@ function AutomaticConflictChecker({
 
 interface RecurrenceSectionProps {
 	canRecur: boolean;
-	freq: Frequency | null;
-	setFreq: (freq: Frequency | null) => void;
-	untilStr: string;
-	setUntilStr: (str: string) => void;
+	startTime: string;
+	recurrence: RRuleConfig;
+	setRecurrence: (recurrence: RRuleConfig) => void;
 	setConflicts: (conflicts: Occurrence[] | null) => void;
 }
 
 function RecurrenceSection({
 	canRecur,
-	freq,
-	setFreq,
-	untilStr,
-	setUntilStr,
+	startTime,
+	recurrence,
+	setRecurrence,
 	setConflicts,
 }: RecurrenceSectionProps) {
 	const { t } = useTranslation();
 	useEffect(() => {
-		if (!canRecur && freq !== null) {
-			setFreq(null);
+		if (!canRecur && recurrence.preset !== "none") {
+			setRecurrence(NO_RECURRENCE);
 			setConflicts(null);
 		}
-	}, [canRecur, freq, setFreq, setConflicts]);
+	}, [canRecur, recurrence.preset, setRecurrence, setConflicts]);
 
 	if (!canRecur) {
 		return null;
@@ -1451,58 +1450,11 @@ function RecurrenceSection({
 				</div>
 			</div>
 
-			<div className="grid grid-cols-2 gap-2">
-				<div className="space-y-1">
-					<label
-						htmlFor="recurrence_freq"
-						className="text-[11px] text-stone-600 dark:text-stone-400"
-					>
-						{t("toistuvuusjakso", "Toistuvuusjakso")}
-					</label>
-					<select
-						id="recurrence_freq"
-						value={freq === null ? "none" : freq}
-						onChange={(e) => {
-							const val = e.target.value;
-							setFreq(val === "none" ? null : Number(val));
-						}}
-						className="w-full px-2 py-1.5 text-xs bg-stone-50 dark:bg-stone-950 border border-stone-300 dark:border-stone-700 rounded-sm"
-					>
-						<option value="none">{t("eiToistoa", "Ei toistoa")}</option>
-						<option value={Frequency.DAILY}>
-							{t("pivittin", "Päivittäin")}
-						</option>
-						<option value={Frequency.WEEKLY}>
-							{t("viikoittain", "Viikoittain")}
-						</option>
-						<option value={Frequency.MONTHLY}>
-							{t("kuukausittain", "Kuukausittain")}
-						</option>
-						<option value={Frequency.YEARLY}>
-							{t("vuosittain", "Vuosittain")}
-						</option>
-					</select>
-				</div>
-
-				{freq !== null && (
-					<div className="space-y-1">
-						<label
-							htmlFor="recurrence_until"
-							className="text-[11px] text-stone-600 dark:text-stone-400"
-						>
-							{t("toistoPttyy", "Toisto päättyy")}
-						</label>
-						<Input
-							id="recurrence_until"
-							type="date"
-							value={untilStr}
-							onChange={(e) => {
-								setUntilStr(e.target.value);
-							}}
-						/>
-					</div>
-				)}
-			</div>
+			<RecurrenceFields
+				startTime={startTime}
+				value={recurrence}
+				onChange={setRecurrence}
+			/>
 		</div>
 	);
 }
