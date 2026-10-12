@@ -440,7 +440,23 @@ export function ResourceForm({
 											groups={groups}
 											loading={loadingGroups}
 											value={groupField.state.value}
-											onChange={groupField.handleChange}
+											onChange={(next) => {
+												const previous = groupField.state.value;
+												groupField.handleChange(next);
+												// A newly checked group must also be able to see the resource
+												const visible = form.getFieldValue(
+													"visibility_group_ids",
+												);
+												const added = next.filter(
+													(id) =>
+														!previous.includes(id) && !visible.includes(id),
+												);
+												if (added.length > 0)
+													form.setFieldValue("visibility_group_ids", [
+														...visible,
+														...added,
+													]);
+											}}
 											className="ml-7"
 										/>
 									)}
