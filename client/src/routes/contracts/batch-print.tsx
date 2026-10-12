@@ -17,6 +17,7 @@ import { useResources } from "#/hooks/useResorces";
 import { SUPPORTED_LANGUAGES } from "#/i18n";
 import { requireAdminGuard } from "#/utils/authGuard";
 import { type DateFormatter, getDateFormatter } from "#/utils/date";
+import { getLocalizedPlainText } from "#/utils/richText";
 
 export interface BatchPrintSearch {
 	reservation_ids: string[];
@@ -43,6 +44,7 @@ async function drawCoverPage(
 	resourceMap: Map<string, string>,
 	t: (key: string, fallback: string) => string,
 	formatDate: DateFormatter["formatDate"],
+	language: string,
 ) {
 	const page = pdfDoc.addPage([595.28, 841.89]); // A4 size in points
 	const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
@@ -108,7 +110,7 @@ async function drawCoverPage(
 			size: 10,
 			font: fontBold,
 		});
-		page.drawText(reservation.description, {
+		page.drawText(getLocalizedPlainText(reservation.description, language), {
 			x: 180,
 			y,
 			size: 10,
@@ -366,6 +368,7 @@ function BatchPrintPage() {
 						resourceMap,
 						printT,
 						formatDate,
+						printLanguage,
 					);
 
 					// 2. Collect unique resource IDs involved in this reservation

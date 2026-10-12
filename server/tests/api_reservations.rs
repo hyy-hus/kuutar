@@ -52,7 +52,8 @@ async fn test_create_and_get_reservation(pool: PgPool) {
 
     let payload = json!({
         "title": "Team Sync",
-        "description": "Weekly alignment meeting",
+        "description": {"fi": {"type": "doc", "content": []}},
+        "message_to_admins": "Please set up the projector",
         "rrule": "FREQ=WEEKLY;COUNT=1",
         "status": "confirmed",
         "occurrences": [
@@ -110,6 +111,67 @@ async fn test_create_and_get_reservation(pool: PgPool) {
         .unwrap();
 
     assert_eq!(get_response.status(), StatusCode::OK);
+    let body = to_bytes(get_response.into_body(), usize::MAX)
+        .await
+        .unwrap();
+    let fetched: Value = serde_json::from_slice(&body).unwrap();
+    assert_eq!(fetched["description"]["fi"]["type"], "doc");
+    // The owner sees their own message to the admins
+    assert_eq!(fetched["message_to_admins"], "Please set up the projector");
+}
+
+#[sqlx::test]
+async fn test_message_to_admins_hidden_from_public_calendar(pool: PgPool) {
+    let (_group_id, _user_id, resource_id, _collection_id, token) =
+        setup_test_environment(&pool, Role::Admin).await;
+    let app = app(pool, test_config());
+
+    let start_time = Utc::now() + Duration::hours(1);
+    let payload = json!({
+        "title": "Public Event",
+        "description": {"fi": {"type": "doc", "content": []}},
+        "message_to_admins": "Door code is 1234",
+        "status": "confirmed",
+        "occurrences": [{
+            "resource_id": resource_id,
+            "start_time": start_time,
+            "end_time": start_time + Duration::hours(1)
+        }]
+    });
+
+    let response = app
+        .clone()
+        .oneshot(
+            Request::builder()
+                .method("POST")
+                .uri("/reservations")
+                .header(header::AUTHORIZATION, format!("Bearer {token}"))
+                .header(header::CONTENT_TYPE, "application/json")
+                .body(Body::from(payload.to_string()))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(response.status(), StatusCode::CREATED);
+
+    // Anonymous visitors see the confirmed reservation and its public description only
+    let response = app
+        .oneshot(
+            Request::builder()
+                .method("GET")
+                .uri("/reservations")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(response.status(), StatusCode::OK);
+    let body = to_bytes(response.into_body(), usize::MAX).await.unwrap();
+    let list: Value = serde_json::from_slice(&body).unwrap();
+    let reservation = &list.as_array().unwrap()[0];
+    assert_eq!(reservation["title"], "Public Event");
+    assert_eq!(reservation["description"]["fi"]["type"], "doc");
+    assert!(reservation.get("message_to_admins").is_none());
 }
 
 #[sqlx::test]

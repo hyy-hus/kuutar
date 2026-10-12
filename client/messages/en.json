@@ -704,5 +704,9 @@
 	"kuukaudenTietyViikonpiv": "On a weekday of the month",
 	"pivKuukaudessa": "Day",
 	"kerta": "Which",
-	"viikonpiv": "Weekday"
+	"viikonpiv": "Weekday",
+	"kuvausOnJulkinen": "The description is public and visible to everyone. Don't include private or personal information.",
+	"viestiYllapidolle": "Message to administrators",
+	"viestiYllapidolleOhje": "Only you and the administrators can see this. Use it for details that don't belong in the public description.",
+	"yllpitjnMuistiinpanotEiOmistajalle": "Administrator notes (not visible to the reserver)"
 }

@@ -354,6 +354,7 @@ export function exportReservationsToPortableJson(
 		user_email: res.user_email ?? undefined,
 		title: res.title,
 		description: res.description ?? undefined,
+		message_to_admins: res.message_to_admins ?? undefined,
 		admin_notes: res.admin_notes ?? undefined,
 		contact_person: res.contact_person ?? undefined,
 		contact_email: res.contact_email ?? undefined,

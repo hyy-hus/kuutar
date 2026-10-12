@@ -9,13 +9,14 @@ import { Button } from "#/components/Button";
 import { Input } from "#/components/Input";
 import { useSearch } from "#/hooks/useSearch";
 import { cn } from "#/utils/cn";
+import { getLocalizedPlainText } from "#/utils/richText";
 
 export interface SearchBarProps {
 	onSearch?: (query: string) => void;
 }
 
 export function SearchBar({ onSearch }: SearchBarProps) {
-	const { t } = useTranslation();
+	const { t, i18n } = useTranslation();
 	const [query, setQuery] = useState("");
 	const [isOpen, setIsOpen] = useState(false);
 	const inputRef = useRef<HTMLInputElement>(null);
@@ -213,7 +214,10 @@ export function SearchBar({ onSearch }: SearchBarProps) {
 													</div>
 													{res.description && (
 														<div className="text-[11px] text-stone-500 dark:text-stone-400 truncate font-mono">
-															{res.description}
+															{getLocalizedPlainText(
+																res.description,
+																i18n.language,
+															)}
 														</div>
 													)}
 												</div>

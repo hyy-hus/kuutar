@@ -10,6 +10,7 @@ import { getDefaultContact, useAuth } from "#/hooks/useAuth";
 import { useCreateReservation } from "#/hooks/useReservations";
 import { requireAuthGuard } from "#/utils/authGuard";
 import { formatDateTimeLocal } from "#/utils/date";
+import { compactLocalizedRichText } from "#/utils/richText";
 
 export interface CreateReservationSearch {
 	start_time?: string;
@@ -64,7 +65,8 @@ function CreateReservationPage() {
 		const created = await createReservation.mutateAsync({
 			user_id: values.user_id || null,
 			title: values.title,
-			description: values.description || null,
+			description: compactLocalizedRichText(values.description ?? {}),
+			message_to_admins: values.message_to_admins || null,
 			status: values.status,
 			admin_notes: values.admin_notes || null,
 			contact_person: values.contact_person || null,

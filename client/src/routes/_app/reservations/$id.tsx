@@ -16,6 +16,7 @@ import { CancelReservationDialog } from "#/components/CancelReservationDialog";
 import { Chip } from "#/components/Chip";
 import { DetachOccurrenceButton } from "#/components/DetachOccurrenceButton";
 import { OutlookBadge } from "#/components/OutlookBadge";
+import { RichTextContent } from "#/components/RichTextContent";
 import { useAuth, useIsAdmin } from "#/hooks/useAuth";
 import {
 	useDeleteReservation,
@@ -178,11 +179,10 @@ function ViewReservationPage() {
 								)}
 							</p>
 						)}
-						{reservation.description && (
-							<p className="text-xs text-stone-600 dark:text-stone-400 mt-2">
-								{reservation.description}
-							</p>
-						)}
+						<RichTextContent
+							value={reservation.description}
+							className="text-xs text-stone-600 dark:text-stone-400 mt-2"
+						/>
 					</div>
 					<Chip>{readable_uuid(reservation.id)}</Chip>
 				</div>
@@ -205,6 +205,18 @@ function ViewReservationPage() {
 								{reservation.cancel_reason}
 							</p>
 						)}
+					</div>
+				)}
+
+				{/* Private message from the reserver (admin or owner) */}
+				{canSeeContact && reservation.message_to_admins && (
+					<div className="p-3 bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded space-y-1 text-xs">
+						<p className="font-semibold text-stone-800 dark:text-stone-200">
+							{t("viestiYllapidolle", "Viesti ylläpidolle")}
+						</p>
+						<p className="whitespace-pre-line text-stone-700 dark:text-stone-300">
+							{reservation.message_to_admins}
+						</p>
 					</div>
 				)}
 
@@ -256,7 +268,7 @@ function ViewReservationPage() {
 							</div>
 
 							{isAdmin && reservation.admin_notes && (
-								<p className="italic text-stone-600 dark:text-stone-400 pt-1 border-t border-purple-200 dark:border-purple-900">
+								<p className="whitespace-pre-line italic text-stone-600 dark:text-stone-400 pt-1 border-t border-purple-200 dark:border-purple-900">
 									<strong>
 										{t("muistiinpanot", "Muistiinpanot")}
 										{":"}

@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n            INSERT INTO reservations (\n                user_id, title, description, admin_notes,\n                contact_person, contact_email, contact_phone,\n                rrule, status\n            )\n            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)\n            RETURNING id\n            ",
+  "query": "\n            INSERT INTO reservations (\n                user_id, title, description_rich, admin_notes,\n                contact_person, contact_email, contact_phone,\n                rrule, status, message_to_admins\n            )\n            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NULLIF(btrim($10), ''))\n            RETURNING id\n            ",
   "describe": {
     "columns": [
       {
@@ -19,7 +19,7 @@
       "Left": [
         "Uuid",
         "Text",
-        "Text",
+        "Jsonb",
         "Text",
         "Varchar",
         "Varchar",
@@ -36,12 +36,13 @@
               ]
             }
           }
-        }
+        },
+        "Text"
       ]
     },
     "nullable": [
       false
     ]
   },
-  "hash": "6aff6805d34a7acc734d7ffddebc2904b7bc7831f066e6ef91e7bcc04483c7d3"
+  "hash": "ff352284a8e23a26b59cfa08e278008932e2b249a94720520a61306d65f5b46d"
 }
