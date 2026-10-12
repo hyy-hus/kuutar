@@ -1,0 +1,29 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT r.id\n        FROM resources r\n        JOIN users u ON u.id = $1 AND u.deleted_at IS NULL\n        WHERE r.id = ANY($2)\n          AND r.deleted_at IS NULL\n          AND r.is_public = FALSE\n          AND NOT EXISTS (\n              SELECT 1 FROM resource_visibility_groups vg\n              WHERE vg.resource_id = r.id AND vg.group_id = u.group_id\n          )\n          AND NOT (r.reservation_restricted AND EXISTS (\n              SELECT 1 FROM resource_groups rg\n              WHERE rg.resource_id = r.id AND rg.group_id = u.group_id\n          ))\n        LIMIT 1\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "resources",
+            "name": "id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "UuidArray"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "64ec6fdac1cb0d8cab06b6d6ee3a58c711138e13efc9a1e354ff402ca08440ad"
+}

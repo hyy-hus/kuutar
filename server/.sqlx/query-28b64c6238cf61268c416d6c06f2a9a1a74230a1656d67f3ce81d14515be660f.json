@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "DELETE FROM resource_visibility_groups WHERE resource_id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "28b64c6238cf61268c416d6c06f2a9a1a74230a1656d67f3ce81d14515be660f"
+}

@@ -4,7 +4,8 @@ use uuid::Uuid;
 use super::models::{CreateResource, Resource, UpdateResource};
 use crate::{errors::AppError, utils::rich_text};
 
-/// Fetches resources. If `is_admin` is false, only public resources (`is_public = TRUE`) are returned.
+/// Fetches resources. Non-admins get public resources, plus non-public ones their group can
+/// see (visibility groups) or reserve.
 /// `group_id` is the requesting user's group, used to compute `can_reserve`.
 pub async fn list_all(
     pool: &PgPool,
@@ -17,6 +18,7 @@ pub async fn list_all(
         SELECT r.id, r.collection_id, r.name, r.description, r.allow_recurring, r.blocks_only, r.reservable_until, r.is_public,
                r.reservation_restricted, r.auto_confirm, r.default_duration_minutes, r.min_duration_minutes, r.max_duration_minutes, r.color,
                CASE WHEN $1 THEN r.outlook_email END AS outlook_email,
+               COALESCE(ARRAY(SELECT vg.group_id FROM resource_visibility_groups vg WHERE vg.resource_id = r.id ORDER BY vg.group_id), '{}') AS "visible_group_ids!",
                COALESCE(ARRAY(SELECT rg.group_id FROM resource_groups rg WHERE rg.resource_id = r.id ORDER BY rg.group_id), '{}') AS "reservable_group_ids!",
                COALESCE(ARRAY(SELECT ag.group_id FROM resource_auto_confirm_groups ag WHERE ag.resource_id = r.id ORDER BY ag.group_id), '{}') AS "auto_confirm_group_ids!",
                ($1 OR NOT r.reservation_restricted OR EXISTS (
@@ -25,7 +27,11 @@ pub async fn list_all(
                r.created_at, r.updated_at, r.deleted_at
         FROM resources r
         WHERE r.deleted_at IS NULL
-          AND ($1 = TRUE OR r.is_public = TRUE)
+          AND ($1 = TRUE OR r.is_public = TRUE
+               OR EXISTS (SELECT 1 FROM resource_visibility_groups vg WHERE vg.resource_id = r.id AND vg.group_id = $2)
+               OR (r.reservation_restricted AND EXISTS (
+                   SELECT 1 FROM resource_groups rg WHERE rg.resource_id = r.id AND rg.group_id = $2
+               )))
         ORDER BY r.name ASC
         "#,
         is_admin,
@@ -37,7 +43,7 @@ pub async fn list_all(
     Ok(resources)
 }
 
-/// Fetches an active resource by ID. Fails with NotFound if non-admin requests a non-public resource.
+/// Fetches an active resource by ID. Fails with NotFound if the requester cannot see it.
 pub async fn find_by_id(
     pool: &PgPool,
     id: Uuid,
@@ -50,6 +56,7 @@ pub async fn find_by_id(
         SELECT r.id, r.collection_id, r.name, r.description, r.allow_recurring, r.blocks_only, r.reservable_until, r.is_public,
                r.reservation_restricted, r.auto_confirm, r.default_duration_minutes, r.min_duration_minutes, r.max_duration_minutes, r.color,
                CASE WHEN $1 THEN r.outlook_email END AS outlook_email,
+               COALESCE(ARRAY(SELECT vg.group_id FROM resource_visibility_groups vg WHERE vg.resource_id = r.id ORDER BY vg.group_id), '{}') AS "visible_group_ids!",
                COALESCE(ARRAY(SELECT rg.group_id FROM resource_groups rg WHERE rg.resource_id = r.id ORDER BY rg.group_id), '{}') AS "reservable_group_ids!",
                COALESCE(ARRAY(SELECT ag.group_id FROM resource_auto_confirm_groups ag WHERE ag.resource_id = r.id ORDER BY ag.group_id), '{}') AS "auto_confirm_group_ids!",
                ($1 OR NOT r.reservation_restricted OR EXISTS (
@@ -59,7 +66,11 @@ pub async fn find_by_id(
         FROM resources r
         WHERE r.id = $3
           AND r.deleted_at IS NULL
-          AND ($1 = TRUE OR r.is_public = TRUE)
+          AND ($1 = TRUE OR r.is_public = TRUE
+               OR EXISTS (SELECT 1 FROM resource_visibility_groups vg WHERE vg.resource_id = r.id AND vg.group_id = $2)
+               OR (r.reservation_restricted AND EXISTS (
+                   SELECT 1 FROM resource_groups rg WHERE rg.resource_id = r.id AND rg.group_id = $2
+               )))
         "#,
         is_admin,
         group_id,
@@ -85,6 +96,31 @@ async fn replace_auto_confirm_groups(
     for group_id in group_ids {
         sqlx::query!(
             "INSERT INTO resource_auto_confirm_groups (resource_id, group_id) VALUES ($1, $2) ON CONFLICT DO NOTHING",
+            resource_id,
+            group_id
+        )
+        .execute(&mut *tx)
+        .await?;
+    }
+
+    Ok(())
+}
+
+async fn replace_visibility_groups(
+    tx: &mut sqlx::PgConnection,
+    resource_id: Uuid,
+    group_ids: &[Uuid],
+) -> Result<(), AppError> {
+    sqlx::query!(
+        "DELETE FROM resource_visibility_groups WHERE resource_id = $1",
+        resource_id
+    )
+    .execute(&mut *tx)
+    .await?;
+
+    for group_id in group_ids {
+        sqlx::query!(
+            "INSERT INTO resource_visibility_groups (resource_id, group_id) VALUES ($1, $2) ON CONFLICT DO NOTHING",
             resource_id,
             group_id
         )
@@ -146,6 +182,10 @@ pub async fn create(pool: &PgPool, dto: CreateResource) -> Result<Resource, AppE
     )
     .fetch_one(&mut *tx)
     .await?;
+
+    if let Some(group_ids) = &dto.visibility_group_ids {
+        replace_visibility_groups(&mut tx, id, group_ids).await?;
+    }
 
     if let Some(group_ids) = &dto.group_ids {
         replace_groups(&mut tx, id, group_ids).await?;
@@ -221,6 +261,10 @@ pub async fn update(pool: &PgPool, id: Uuid, dto: UpdateResource) -> Result<Reso
     .rows_affected();
     if updated == 0 {
         return Err(AppError::NotFound);
+    }
+
+    if let Some(group_ids) = &dto.visibility_group_ids {
+        replace_visibility_groups(&mut tx, id, group_ids).await?;
     }
 
     if let Some(group_ids) = &dto.group_ids {
