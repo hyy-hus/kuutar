@@ -248,10 +248,22 @@ describe("patterns", () => {
 		).toEqual(["2026-11-30", "2026-12-28", "2027-01-25"]);
 	});
 
-	it("yearly on the same date", () => {
+	it("yearly on a chosen date", () => {
 		expect(
-			dates("2026-12-24T18:00", config({ freq: "yearly", count: 2 })),
+			dates(
+				"2026-12-24T18:00",
+				config({ freq: "yearly", yearMonth: 12, yearDay: 24, count: 2 }),
+			),
 		).toEqual(["2026-12-24", "2027-12-24"]);
+	});
+
+	it("yearly on a date other than the start date begins at its next turn", () => {
+		expect(
+			dates(
+				"2026-10-12T18:00",
+				config({ freq: "yearly", yearMonth: 5, yearDay: 1, count: 2 }),
+			),
+		).toEqual(["2027-05-01", "2028-05-01"]);
 	});
 
 	it("keeps the times of a monthly series across the clock change", () => {
@@ -370,10 +382,20 @@ describe("parseRRule patterns", () => {
 		});
 	});
 
-	it("recognises the same date every year", () => {
-		expect(parse("FREQ=YEARLY;BYMONTH=11;BYMONTHDAY=3;COUNT=2").freq).toBe(
-			"yearly",
-		);
+	it("reads the month and day of a yearly rule", () => {
+		expect(parse("FREQ=YEARLY;BYMONTH=5;BYMONTHDAY=1;COUNT=2")).toMatchObject({
+			freq: "yearly",
+			yearMonth: 5,
+			yearDay: 1,
+		});
+	});
+
+	it("fills in a yearly rule's missing month and day from its start", () => {
+		expect(parse("FREQ=YEARLY;COUNT=2")).toMatchObject({
+			freq: "yearly",
+			yearMonth: 11,
+			yearDay: 3,
+		});
 	});
 
 	it("keeps rules the form can't express as custom", () => {
@@ -381,7 +403,7 @@ describe("parseRRule patterns", () => {
 			"FREQ=WEEKLY;INTERVAL=2;BYDAY=TU;COUNT=3",
 			"FREQ=MONTHLY;BYDAY=5TU;COUNT=3",
 			"FREQ=YEARLY;BYDAY=1TU;COUNT=3",
-			"FREQ=YEARLY;BYMONTH=12;BYMONTHDAY=24;COUNT=3",
+			"FREQ=YEARLY;BYMONTHDAY=-1;COUNT=3",
 		]) {
 			expect(parse(rule).freq, rule).toBe("custom");
 		}

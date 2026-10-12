@@ -26,6 +26,10 @@ export interface RRuleConfig {
 	nth: number;
 	/** monthly, `nthWeekday` mode: the weekday, numbered like Date#getDay */
 	nthWeekday: number;
+	/** yearly: the month, 1-12 */
+	yearMonth: number;
+	/** yearly: the day of that month, 1-31 */
+	yearDay: number;
 	/** Last day of the series. Ignored when `count` is set. */
 	until?: Date | null;
 	/** Number of occurrences, before exceptions are removed */
@@ -48,6 +52,8 @@ export const NO_RECURRENCE: RRuleConfig = {
 	monthDay: 1,
 	nth: 1,
 	nthWeekday: 1,
+	yearMonth: 1,
+	yearDay: 1,
 	exdates: [],
 };
 
@@ -56,7 +62,13 @@ export function recurrenceDefaults(
 	start: Date,
 ): Pick<
 	RRuleConfig,
-	"weekdays" | "monthlyMode" | "monthDay" | "nth" | "nthWeekday"
+	| "weekdays"
+	| "monthlyMode"
+	| "monthDay"
+	| "nth"
+	| "nthWeekday"
+	| "yearMonth"
+	| "yearDay"
 > {
 	return {
 		weekdays: [start.getDay()],
@@ -64,6 +76,8 @@ export function recurrenceDefaults(
 		monthDay: start.getDate(),
 		nth: nthWeekdayOfMonth(start),
 		nthWeekday: start.getDay(),
+		yearMonth: start.getMonth() + 1,
+		yearDay: start.getDate(),
 	};
 }
 
@@ -198,15 +212,13 @@ function readPattern(
 			return null;
 		}
 		case RRule.YEARLY: {
-			// Only "on the start date every year": anything else would drift if the start moved
 			if (by.length > 0 || months.length > 1 || monthdays.length > 1) {
 				return null;
 			}
-			if ((months[0] ?? start.getMonth() + 1) !== start.getMonth() + 1) {
-				return null;
-			}
-			if ((monthdays[0] ?? start.getDate()) !== start.getDate()) return null;
-			return { freq: "yearly" };
+			const yearMonth = months[0] ?? start.getMonth() + 1;
+			const yearDay = monthdays[0] ?? start.getDate();
+			if (yearDay < 1 || yearDay > 31) return null;
+			return { freq: "yearly", yearMonth, yearDay };
 		}
 		default:
 			return null;
@@ -275,8 +287,8 @@ function patternOptions(
 		case "yearly":
 			return {
 				freq: RRule.YEARLY,
-				bymonth: [start.getMonth() + 1],
-				bymonthday: [start.getDate()],
+				bymonth: [config.yearMonth],
+				bymonthday: [config.yearDay],
 			};
 	}
 }

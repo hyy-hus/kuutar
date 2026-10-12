@@ -27,6 +27,7 @@ const LABEL_CLASS = "text-[11px] text-stone-600 dark:text-stone-400";
 const WEEK_ORDER = [1, 2, 3, 4, 5, 6, 0];
 const WORKDAYS = [1, 2, 3, 4, 5];
 const ALL_DAYS = [0, 1, 2, 3, 4, 5, 6];
+const MONTHS = Array.from({ length: 12 }, (_, i) => i + 1);
 const MONTH_DAYS = Array.from({ length: 31 }, (_, i) => i + 1);
 const NTH_OPTIONS = [1, 2, 3, 4, -1];
 
@@ -69,10 +70,10 @@ export function RecurrenceFields({
 		}
 	};
 
-	const dayMonth = new Intl.DateTimeFormat(locale, {
-		day: "numeric",
-		month: "long",
-	}).format(anchor);
+	const monthName = (month: number) =>
+		new Intl.DateTimeFormat(locale, { month: "long" }).format(
+			new Date(2026, month - 1, 1),
+		);
 
 	const setFreq = (freq: RecurrenceFreq) => {
 		if (freq === "none") {
@@ -136,9 +137,7 @@ export function RecurrenceFields({
 						<option value="monthly">
 							{t("kuukausittain", "Kuukausittain")}
 						</option>
-						<option value="yearly">
-							{t("jokaVuosiDate", "Joka vuosi {{date}}", { date: dayMonth })}
-						</option>
+						<option value="yearly">{t("vuosittain", "Vuosittain")}</option>
 						{value.freq === "custom" && (
 							<option value="custom">
 								{t("mukautettuToisto", "Mukautettu toisto")}
@@ -302,6 +301,47 @@ export function RecurrenceFields({
 							</div>
 						</div>
 					)}
+				</div>
+			)}
+
+			{value.freq === "yearly" && (
+				<div className="grid grid-cols-2 gap-2">
+					<div className="space-y-1">
+						<label htmlFor="recurrence_year_month" className={LABEL_CLASS}>
+							{t("kuukausi", "Kuukausi")}
+						</label>
+						<select
+							id="recurrence_year_month"
+							value={value.yearMonth}
+							onChange={(e) =>
+								setPattern({ yearMonth: Number(e.target.value) })
+							}
+							className={SELECT_CLASS}
+						>
+							{MONTHS.map((month) => (
+								<option key={month} value={month}>
+									{monthName(month)}
+								</option>
+							))}
+						</select>
+					</div>
+					<div className="space-y-1">
+						<label htmlFor="recurrence_year_day" className={LABEL_CLASS}>
+							{t("pivKuukaudessa", "Päivä")}
+						</label>
+						<select
+							id="recurrence_year_day"
+							value={value.yearDay}
+							onChange={(e) => setPattern({ yearDay: Number(e.target.value) })}
+							className={SELECT_CLASS}
+						>
+							{MONTH_DAYS.map((day) => (
+								<option key={day} value={day}>
+									{`${day}.`}
+								</option>
+							))}
+						</select>
+					</div>
 				</div>
 			)}
 
