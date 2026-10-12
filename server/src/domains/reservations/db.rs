@@ -221,7 +221,9 @@ pub async fn create(
         "#,
         user_id,
         dto.title,
-        dto.description.map(rich_text::to_json),
+        dto.description
+            .filter(|doc| !doc.is_empty())
+            .map(rich_text::to_json),
         dto.admin_notes,
         dto.contact_person,
         dto.contact_email,

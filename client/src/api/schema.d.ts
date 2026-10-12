@@ -895,7 +895,12 @@ export interface components {
             contact_phone?: string | null;
             /** Format: uuid */
             contract_id?: string | null;
-            description?: string | null;
+            /** @description Localized rich text. Send `{}` to clear; omitting keeps the current value. */
+            description?: {
+                [key: string]: unknown;
+            } | null;
+            /** @description Plain text for the admins. Send an empty string to clear. */
+            message_to_admins?: string | null;
             occurrences: components["schemas"]["CreateOccurrencePayload"][];
             rrule?: string | null;
             status?: null | components["schemas"]["ReservationStatus"];
@@ -1081,7 +1086,9 @@ export interface components {
             contact_email?: string | null;
             contact_person?: string | null;
             contact_phone?: string | null;
-            description?: string | null;
+            /** @description Localized rich text, or a plain string from older exports */
+            description?: unknown;
+            message_to_admins?: string | null;
             occurrences: components["schemas"]["PortableOccurrenceImport"][];
             rrule?: string | null;
             status?: null | components["schemas"]["ReservationStatus"];
@@ -1177,9 +1184,14 @@ export interface components {
             contract_printed_at?: string | null;
             /** Format: date-time */
             created_at: string;
-            description?: string | null;
+            /** @description Public, localized rich text: `{"fi": {"type": "doc", ...}}`. Visible to everyone. */
+            description?: {
+                [key: string]: unknown;
+            } | null;
             /** Format: uuid */
             id: string;
+            /** @description Information from the reserver to the admins. Visible only to the owner and admins. */
+            message_to_admins?: string | null;
             rrule?: string | null;
             /** @description `kuutar`, or `outlook` for events imported from Outlook (edited there, read-only here) */
             source: string;
@@ -1448,8 +1460,13 @@ export interface components {
             contact_phone?: string | null;
             /** Format: uuid */
             contract_id?: string | null;
-            description?: string | null;
+            /** @description Localized rich text. Send `{}` to clear; omitting keeps the current value. */
+            description?: {
+                [key: string]: unknown;
+            } | null;
             mark_printed?: boolean | null;
+            /** @description Plain text for the admins. Send an empty string to clear. */
+            message_to_admins?: string | null;
             occurrences?: components["schemas"]["CreateOccurrencePayload"][] | null;
             rrule?: string | null;
             status?: null | components["schemas"]["ReservationStatus"];

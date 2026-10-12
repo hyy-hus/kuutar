@@ -704,5 +704,9 @@
 	"kuukaudenTietyViikonpiv": "En viss veckodag i månaden",
 	"pivKuukaudessa": "Dag",
 	"kerta": "Vilken",
-	"viikonpiv": "Veckodag"
+	"viikonpiv": "Veckodag",
+	"kuvausOnJulkinen": "Beskrivningen är offentlig och syns för alla. Skriv inte privata eller personliga uppgifter här.",
+	"viestiYllapidolle": "Meddelande till administratörer",
+	"viestiYllapidolleOhje": "Bara du och administratörerna ser detta. Använd det för information som inte hör hemma i den offentliga beskrivningen.",
+	"yllpitjnMuistiinpanotEiOmistajalle": "Administratörens anteckningar (syns inte för bokaren)"
 }

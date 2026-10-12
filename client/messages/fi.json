@@ -704,5 +704,9 @@
 	"kuukaudenTietyViikonpiv": "Kuukauden tietty viikonpäivä",
 	"pivKuukaudessa": "Päivä",
 	"kerta": "Monesko",
-	"viikonpiv": "Viikonpäivä"
+	"viikonpiv": "Viikonpäivä",
+	"kuvausOnJulkinen": "Kuvaus on julkinen ja näkyy kaikille. Älä kirjoita siihen yksityisiä tai henkilökohtaisia tietoja.",
+	"viestiYllapidolle": "Viesti ylläpidolle",
+	"viestiYllapidolleOhje": "Vain sinä ja ylläpito näette tämän. Käytä tätä lisätiedoille, jotka eivät kuulu julkiseen kuvaukseen.",
+	"yllpitjnMuistiinpanotEiOmistajalle": "Ylläpitäjän muistiinpanot (varaaja ei näe näitä)"
 }

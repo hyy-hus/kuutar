@@ -40,8 +40,24 @@ const isDoc = (value: unknown): value is JSONContent =>
 	value !== null &&
 	(value as JSONContent).type === "doc";
 
-/** Narrows an API description (`{ [lang]: unknown }`) to localized Tiptap documents */
+/**
+ * Narrows an API description (`{ [lang]: unknown }`) to localized Tiptap documents. A bare
+ * string, which is how descriptions used to be stored, becomes a Finnish document.
+ */
 export function toLocalizedRichText(value: unknown): LocalizedRichText {
+	if (typeof value === "string") {
+		const paragraphs = value
+			.split(/\r?\n/)
+			.map((line) => line.trim())
+			.filter((line) => line !== "")
+			.map((text) => ({
+				type: "paragraph",
+				content: [{ type: "text", text }],
+			}));
+		return paragraphs.length > 0
+			? { fi: { type: "doc", content: paragraphs } }
+			: {};
+	}
 	if (typeof value !== "object" || value === null) return {};
 	return Object.fromEntries(
 		Object.entries(value).filter((entry): entry is [string, JSONContent] =>

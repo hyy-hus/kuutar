@@ -4,6 +4,7 @@ import {
 	CalendarCheck,
 	CheckCircle2,
 	FileText,
+	Globe,
 	Loader2,
 	RefreshCw,
 	Save,
@@ -13,7 +14,8 @@ import {
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "#/components/Button";
-import { Input } from "#/components/Input";
+import { Input, inputVariants } from "#/components/Input";
+import { LocalizedRichTextEditor } from "#/components/LocalizedRichTextEditor";
 import { RecurrenceFields } from "#/components/RecurrenceFields";
 import { ResourceInfoDialog } from "#/components/ResourceInfoDialog";
 import { useAuth, useIsAdmin } from "#/hooks/useAuth";
@@ -34,6 +36,7 @@ import {
 import { useResources } from "#/hooks/useResorces";
 import { useRestrictions } from "#/hooks/useRestrictions";
 import { useUsers } from "#/hooks/useUsers";
+import { cn } from "#/utils/cn";
 import {
 	addDays,
 	formatDateTimeLocal,
@@ -46,6 +49,10 @@ import {
 	formatMinutes,
 	resolveDefaultDuration,
 } from "#/utils/duration";
+import {
+	compactLocalizedRichText,
+	type LocalizedRichText,
+} from "#/utils/richText";
 import {
 	generateOccurrences,
 	listSeriesStarts,
@@ -61,7 +68,10 @@ export interface ReservationFormValues {
 	/** Admins only: the user the reservation is made for; empty means the admin themselves */
 	user_id?: string;
 	title: string;
-	description?: string;
+	/** Public, localized rich text */
+	description?: LocalizedRichText;
+	/** Private note from the reserver to the admins */
+	message_to_admins?: string;
 	status?: ReservationStatus;
 	admin_notes?: string;
 	contact_person?: string;
@@ -134,7 +144,8 @@ export function ReservationForm({
 		defaultValues: {
 			user_id: defaultValues?.user_id ?? "",
 			title: defaultValues?.title ?? "",
-			description: defaultValues?.description ?? "",
+			description: defaultValues?.description ?? ({} as LocalizedRichText),
+			message_to_admins: defaultValues?.message_to_admins ?? "",
 			status: defaultValues?.status ?? ("confirmed" as ReservationStatus),
 			admin_notes: defaultValues?.admin_notes ?? "",
 			contact_person: defaultValues?.contact_person ?? "",
@@ -163,7 +174,8 @@ export function ReservationForm({
 			await onSubmit({
 				user_id: value.user_id || undefined,
 				title: value.title,
-				description: value.description,
+				description: compactLocalizedRichText(value.description) ?? {},
+				message_to_admins: value.message_to_admins.trim(),
 				status: value.status,
 				admin_notes: value.admin_notes || undefined,
 				contact_person: value.contact_person || undefined,
@@ -362,18 +374,54 @@ export function ReservationForm({
 			<form.Field name="description">
 				{(field) => (
 					<div className="space-y-1">
+						<span className="block text-xs font-medium text-stone-700 dark:text-stone-300">
+							{t("kuvaus", "Kuvaus")}
+						</span>
+						<p
+							role="note"
+							className="flex items-start gap-1.5 text-[11px] text-stone-600 dark:text-stone-400"
+						>
+							<Globe size={12} className="mt-0.5 shrink-0" />
+							<span>
+								{t(
+									"kuvausOnJulkinen",
+									"Kuvaus on julkinen ja näkyy kaikille. Älä kirjoita siihen yksityisiä tai henkilökohtaisia tietoja.",
+								)}
+							</span>
+						</p>
+						<LocalizedRichTextEditor
+							value={field.state.value}
+							onChange={field.handleChange}
+							label={t("kuvaus", "Kuvaus")}
+						/>
+					</div>
+				)}
+			</form.Field>
+
+			{/* Private message to admins */}
+			<form.Field name="message_to_admins">
+				{(field) => (
+					<div className="space-y-1">
 						<label
 							htmlFor={field.name}
 							className="text-xs font-medium text-stone-700 dark:text-stone-300"
 						>
-							{t("kuvaus", "Kuvaus")}
+							{t("viestiYllapidolle", "Viesti ylläpidolle")}
 						</label>
-						<Input
+						<p className="text-[11px] text-stone-600 dark:text-stone-400">
+							{t(
+								"viestiYllapidolleOhje",
+								"Vain sinä ja ylläpito näette tämän. Käytä tätä lisätiedoille, jotka eivät kuulu julkiseen kuvaukseen.",
+							)}
+						</p>
+						<textarea
 							id={field.name}
+							rows={3}
+							maxLength={2000}
 							value={field.state.value}
 							onChange={(e) => field.handleChange(e.target.value)}
 							onBlur={field.handleBlur}
-							placeholder={t("lisatiedot", "Lisätiedot...")}
+							className={cn(inputVariants(), "h-auto min-h-20 py-2")}
 						/>
 					</div>
 				)}
@@ -523,7 +571,10 @@ export function ReservationForm({
 											htmlFor={field.name}
 											className="text-[11px] text-stone-600 dark:text-stone-400"
 										>
-											{t("yllpitjnMuistiinpanot", "Ylläpitäjän muistiinpanot")}
+											{t(
+												"yllpitjnMuistiinpanotEiOmistajalle",
+												"Ylläpitäjän muistiinpanot (varaaja ei näe näitä)",
+											)}
 										</label>
 										<Input
 											id={field.name}

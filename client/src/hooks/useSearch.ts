@@ -1,13 +1,16 @@
 // src/hooks/useSearch.ts
 import { useQuery } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import { api } from "#/api/client";
 import type { components } from "#/api/schema";
 import { currentYearRange } from "#/utils/calendarUtils";
+import { getLocalizedPlainText } from "#/utils/richText";
 import { useResources } from "./useResorces";
 
 export type Reservation = components["schemas"]["Reservation"];
 
 export function useSearch(query: string) {
+	const { i18n } = useTranslation();
 	const { data: resources = [] } = useResources();
 
 	const reservationsQuery = useQuery({
@@ -40,7 +43,9 @@ export function useSearch(query: string) {
 		? (reservationsQuery.data ?? []).filter(
 				(res) =>
 					res.title.toLowerCase().includes(cleanQuery) ||
-					res.description?.toLowerCase().includes(cleanQuery),
+					getLocalizedPlainText(res.description, i18n.language)
+						.toLowerCase()
+						.includes(cleanQuery),
 			)
 		: [];
 

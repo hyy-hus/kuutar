@@ -9,6 +9,10 @@ import { getDefaultContact, useAuth } from "#/hooks/useAuth";
 import { useReservation, useUpdateReservation } from "#/hooks/useReservations";
 import { requireAuthGuard } from "#/utils/authGuard";
 import { formatDateTimeLocal } from "#/utils/date";
+import {
+	compactLocalizedRichText,
+	toLocalizedRichText,
+} from "#/utils/richText";
 import { seriesFirstTimes } from "#/utils/series";
 
 export const Route = createFileRoute("/_app/reservations/edit/$id")({
@@ -58,7 +62,9 @@ function EditReservationPage() {
 			id: reservation.id,
 			payload: {
 				title: values.title,
-				description: values.description || null,
+				// An empty document clears the description; omitting it would keep the old one
+				description: compactLocalizedRichText(values.description ?? {}) ?? {},
+				message_to_admins: values.message_to_admins ?? "",
 				status: values.status,
 				admin_notes: values.admin_notes || null,
 				contact_person: values.contact_person || null,
@@ -83,7 +89,8 @@ function EditReservationPage() {
 				reservationId={reservation.id}
 				defaultValues={{
 					title: reservation.title,
-					description: reservation.description ?? "",
+					description: toLocalizedRichText(reservation.description),
+					message_to_admins: reservation.message_to_admins ?? "",
 					status: reservation.status,
 					admin_notes: reservation.admin_notes ?? "",
 					contact_person:
