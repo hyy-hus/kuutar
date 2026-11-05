@@ -104,10 +104,7 @@ export function ReservationForm({
 }: ReservationFormProps) {
 	const { t } = useTranslation();
 	const { formatDate } = useDateFormatter();
-	// Poll so access granted while the form is open shows up without a reload
-	const { data: resources, isLoading: loadingResources } = useResources({
-		refetchInterval: 1000 * 60,
-	});
+	const { data: resources, isLoading: loadingResources } = useResources();
 	const { data: activeContracts, isLoading: loadingContracts } = useContracts({
 		active_only: true,
 	});

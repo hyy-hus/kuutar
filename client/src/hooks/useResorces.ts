@@ -19,7 +19,7 @@ export const resourceKeys = {
 /**
  * Fetch all active resources
  */
-export function useResources(options?: { refetchInterval?: number }) {
+export function useResources() {
 	return useQuery({
 		queryKey: resourceKeys.all,
 		queryFn: async () => {
@@ -36,7 +36,6 @@ export function useResources(options?: { refetchInterval?: number }) {
 		// An admin can change who may see or reserve a resource at any time, and
 		// nothing tells other browsers, so revalidate on every mount and tab focus
 		staleTime: 0,
-		refetchInterval: options?.refetchInterval,
 	});
 }
 

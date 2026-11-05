@@ -121,26 +121,6 @@ test.describe("resource permission changes reach an open session", () => {
 		await expect(roomButton(page, roomName)).toBeVisible();
 	});
 
-	test("a granted resource appears on a form left open", async ({
-		page,
-		request,
-	}) => {
-		const { email, publicRoomName, roomName, grantAccess } =
-			await setUp(request);
-
-		await page.clock.install();
-		await page.goto("/");
-		await signIn(page, email);
-		await openFormInApp(page);
-		await expect(roomButton(page, publicRoomName)).toBeVisible();
-		await expect(roomButton(page, roomName)).toBeHidden();
-
-		await grantAccess();
-
-		await page.clock.fastForward(61_000);
-		await expect(roomButton(page, roomName)).toBeVisible();
-	});
-
 	test("a selected resource is deselected when access is revoked", async ({
 		page,
 		request,
@@ -148,7 +128,6 @@ test.describe("resource permission changes reach an open session", () => {
 		const { email, roomName, grantAccess, revokeAccess } = await setUp(request);
 		await grantAccess();
 
-		await page.clock.install();
 		await page.goto("/");
 		await signIn(page, email);
 		await openFormInApp(page);
@@ -162,7 +141,7 @@ test.describe("resource permission changes reach an open session", () => {
 
 		await revokeAccess();
 
-		await page.clock.fastForward(61_000);
+		await page.evaluate(() => window.dispatchEvent(new Event("visibilitychange")));
 		await expect(roomButton(page, roomName)).toBeHidden();
 		await expect(selectionInfo).toBeHidden();
 	});
