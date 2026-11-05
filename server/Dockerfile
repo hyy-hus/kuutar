@@ -3,7 +3,7 @@ FROM rust:1-slim-bookworm AS builder
 WORKDIR /app
 
 # Install native dependencies
-RUN apt-get update && apt-get install -y pkg-config libssl-dev curl && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y pkg-config libssl-dev && rm -rf /var/lib/apt/lists/*
 
 # Copy manifests, source code, migrations, and SQLx metadata
 COPY Cargo.toml Cargo.lock ./
@@ -17,7 +17,7 @@ ENV SQLX_OFFLINE=true
 # Build release binary using BuildKit cache mounts for Cargo registry & build cache
 RUN --mount=type=cache,target=/usr/local/cargo/registry \
     --mount=type=cache,target=/app/target \
-    cargo build --release && \
+    cargo build --release --locked && \
     cp /app/target/release/kuutar /app/kuutar-bin
 
 # Runtime stage (matching bookworm base)
