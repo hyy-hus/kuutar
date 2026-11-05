@@ -154,7 +154,8 @@ export function useAuth() {
 			const expiresAt = Date.now() + (tokens.expires_in ?? 900) * 1000;
 			localStorage.setItem("token_expires_at", String(expiresAt));
 		}
-		queryClient.invalidateQueries({ queryKey: authKeys.me() });
+		// Logging in changes what the API returns (e.g. resources cached as a guest)
+		queryClient.invalidateQueries();
 	};
 
 	const loginMutation = useMutation({

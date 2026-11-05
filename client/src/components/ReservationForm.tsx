@@ -104,7 +104,10 @@ export function ReservationForm({
 }: ReservationFormProps) {
 	const { t } = useTranslation();
 	const { formatDate } = useDateFormatter();
-	const { data: resources, isLoading: loadingResources } = useResources();
+	// Poll so access granted while the form is open shows up without a reload
+	const { data: resources, isLoading: loadingResources } = useResources({
+		refetchInterval: 1000 * 60,
+	});
 	const { data: activeContracts, isLoading: loadingContracts } = useContracts({
 		active_only: true,
 	});
@@ -210,12 +213,13 @@ export function ReservationForm({
 		);
 
 	// A new reservation must not start with resources the user can't reserve
-	// (e.g. prefilled from the URL or a calendar link)
+	// (e.g. prefilled from the URL or a calendar link) or keep ones they lost access to.
+	// Resources missing from the list count too: they could no longer be unticked
 	useEffect(() => {
 		if (!isCreate || !resources) return;
 		const current = form.getFieldValue("resource_ids");
 		const allowed = current.filter(
-			(id) => resources.find((r) => r.id === id)?.can_reserve !== false,
+			(id) => resources.find((r) => r.id === id)?.can_reserve === true,
 		);
 		if (allowed.length !== current.length) {
 			form.setFieldValue("resource_ids", allowed);
