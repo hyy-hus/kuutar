@@ -33,7 +33,9 @@ export function useResources() {
 				);
 			return data;
 		},
-		staleTime: 1000 * 60 * 15, // Cache resources for 15 mins
+		// An admin can change who may see or reserve a resource at any time, and
+		// nothing tells other browsers, so revalidate on every mount and tab focus
+		staleTime: 0,
 	});
 }
 
