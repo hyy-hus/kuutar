@@ -74,7 +74,10 @@ export function useReservations(params: ReservationFilterParams) {
 }
 
 /** Strictly fetches ONLY the authenticated user's own reservations */
-export function useMyReservations(params: ReservationFilterParams) {
+export function useMyReservations(
+	params: ReservationFilterParams,
+	options?: { enabled?: boolean },
+) {
 	const hasValidDates = Boolean(
 		params?.startDate &&
 			params?.endDate &&
@@ -104,7 +107,7 @@ export function useMyReservations(params: ReservationFilterParams) {
 				);
 			return data;
 		},
-		enabled: hasValidDates,
+		enabled: hasValidDates && (options?.enabled ?? true),
 		staleTime: 1000 * 60 * 5,
 	});
 }
