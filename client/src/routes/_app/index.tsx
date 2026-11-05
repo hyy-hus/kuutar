@@ -17,11 +17,12 @@ import { Button } from "#/components/Button";
 import { Chip } from "#/components/Chip";
 import { Footer } from "#/components/Footer";
 import { useAuth, useIsAdmin } from "#/hooks/useAuth";
-import { useReservations } from "#/hooks/useReservations";
+import { useMyReservations, useReservations } from "#/hooks/useReservations";
 import { useResources } from "#/hooks/useResorces";
 import { currentYearRange } from "#/utils/calendarUtils";
 import { addDays, startOfWeek, useDateFormatter } from "#/utils/date";
 import { getLocalizedPlainText } from "#/utils/richText";
+import { upcomingReservations } from "#/utils/upcomingReservations";
 import { readable_uuid } from "#/utils/uuid";
 
 export const Route = createFileRoute("/_app/")({
@@ -50,9 +51,25 @@ function HomePage() {
 			endDate: yearRange.end.toISOString(),
 		});
 
-	const userReservations = useMemo(
-		() => reservations?.filter((r) => r.user_id === user?.id) || [],
-		[reservations, user?.id],
+	// Starts at today's midnight to keep the query key stable through the day;
+	// upcomingReservations does the exact cutoff. The API allows a span of 365 days at most.
+	const upcomingRange = useMemo(() => {
+		const today = addDays(new Date(), 0);
+		return { start: today, end: addDays(today, 364) };
+	}, []);
+
+	const { data: myReservations, isLoading: loadingMyReservations } =
+		useMyReservations(
+			{
+				startDate: upcomingRange.start.toISOString(),
+				endDate: upcomingRange.end.toISOString(),
+			},
+			{ enabled: Boolean(user) },
+		);
+
+	const userUpcoming = useMemo(
+		() => upcomingReservations(myReservations ?? [], new Date()),
+		[myReservations],
 	);
 	const pendingReservations = useMemo(
 		() => reservations?.filter((r) => r.status === "pending") || [],
@@ -203,81 +220,83 @@ function HomePage() {
 									)}
 								</p>
 							</div>
-						) : loadingReservations ? (
+						) : loadingMyReservations ? (
 							<div className="p-8 flex items-center justify-center gap-2 text-stone-500">
 								<Loader2 className="animate-spin" size={18} />
 								<span>{t("ladataanVarauksia", "Ladataan varauksia...")}</span>
 							</div>
-						) : userReservations.length > 0 ? (
+						) : userUpcoming.length > 0 ? (
 							<ul className="space-y-2.5">
-								{userReservations.slice(0, 4).map((res) => {
-									const firstOcc = res.occurrences?.[0];
-									const isPending = res.status === "pending";
-									const isConfirmed = res.status === "confirmed";
+								{userUpcoming
+									.slice(0, 4)
+									.map(({ reservation: res, nextOccurrence }) => {
+										const isPending = res.status === "pending";
+										const isConfirmed = res.status === "confirmed";
 
-									return (
-										<li
-											key={res.id}
-											className="p-3 border-2 border-stone-800 dark:border-stone-700 rounded-md bg-stone-50 dark:bg-stone-900 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:border-purple-600 transition-colors"
-										>
-											<div className="space-y-1 min-w-0 flex-1">
-												<div className="flex items-center gap-2 min-w-0">
-													<Link
-														to="/reservations/$id"
-														params={{ id: res.id }}
-														className="font-bold text-sm hover:underline text-stone-900 dark:text-stone-100 truncate"
-													>
-														{res.title}
-													</Link>
-													<Chip>{readable_uuid(res.id)}</Chip>
+										return (
+											<li
+												key={res.id}
+												className="p-3 border-2 border-stone-800 dark:border-stone-700 rounded-md bg-stone-50 dark:bg-stone-900 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:border-purple-600 transition-colors"
+											>
+												<div className="space-y-1 min-w-0 flex-1">
+													<div className="flex items-center gap-2 min-w-0">
+														<Link
+															to="/reservations/$id"
+															params={{ id: res.id }}
+															className="font-bold text-sm hover:underline text-stone-900 dark:text-stone-100 truncate"
+														>
+															{res.title}
+														</Link>
+														<Chip>{readable_uuid(res.id)}</Chip>
+													</div>
+
+													{res.user_name && (
+														<p className="text-[11px] text-stone-500 dark:text-stone-400 flex items-center gap-1 font-medium">
+															<UserIcon
+																size={11}
+																className="text-purple-600 shrink-0"
+															/>
+															<span className="truncate">{res.user_name}</span>
+														</p>
+													)}
+
+													<p className="text-xs text-stone-500 font-mono">
+														{formatDate(nextOccurrence.start_time)}
+													</p>
 												</div>
 
-												{res.user_name && (
-													<p className="text-[11px] text-stone-500 dark:text-stone-400 flex items-center gap-1 font-medium">
-														<UserIcon
-															size={11}
-															className="text-purple-600 shrink-0"
-														/>
-														<span className="truncate">{res.user_name}</span>
-													</p>
-												)}
+												<div className="flex items-center justify-between sm:justify-end gap-3 shrink-0">
+													{isPending && (
+														<span className="inline-flex items-center gap-1 text-[10px] font-mono text-amber-800 dark:text-amber-300 bg-amber-100 dark:bg-amber-950/60 px-2 py-0.5 rounded border border-amber-300 dark:border-amber-800">
+															<Clock size={11} />
+															<span>{t("odottaa", "Odottaa")}</span>
+														</span>
+													)}
+													{isConfirmed && (
+														<span className="inline-flex items-center gap-1 text-[10px] font-mono text-emerald-800 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-300 dark:border-emerald-800">
+															<CheckCircle2 size={11} />
+															<span>{t("vahvistettu", "Vahvistettu")}</span>
+														</span>
+													)}
 
-												{firstOcc && (
-													<p className="text-xs text-stone-500 font-mono">
-														{formatDate(firstOcc.start_time)}
-													</p>
-												)}
-											</div>
-
-											<div className="flex items-center justify-between sm:justify-end gap-3 shrink-0">
-												{isPending && (
-													<span className="inline-flex items-center gap-1 text-[10px] font-mono text-amber-800 dark:text-amber-300 bg-amber-100 dark:bg-amber-950/60 px-2 py-0.5 rounded border border-amber-300 dark:border-amber-800">
-														<Clock size={11} />
-														<span>{t("odottaa", "Odottaa")}</span>
-													</span>
-												)}
-												{isConfirmed && (
-													<span className="inline-flex items-center gap-1 text-[10px] font-mono text-emerald-800 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-300 dark:border-emerald-800">
-														<CheckCircle2 size={11} />
-														<span>{t("vahvistettu", "Vahvistettu")}</span>
-													</span>
-												)}
-
-												<Button
-													variant="secondary"
-													size="sm"
-													asChild
-													className="text-xs gap-1"
-												>
-													<Link to="/reservations/$id" params={{ id: res.id }}>
-														<span>{t("tiedot", "Tiedot")}</span>
-														<ArrowUpRight size={14} />
-													</Link>
-												</Button>
-											</div>
-										</li>
-									);
-								})}
+													<Button
+														variant="secondary"
+														size="sm"
+														asChild
+														className="text-xs gap-1"
+													>
+														<Link
+															to="/reservations/$id"
+															params={{ id: res.id }}
+														>
+															<span>{t("tiedot", "Tiedot")}</span>
+															<ArrowUpRight size={14} />
+														</Link>
+													</Button>
+												</div>
+											</li>
+										);
+									})}
 							</ul>
 						) : (
 							<div className="p-6 text-center border-2 border-stone-200 dark:border-stone-800 rounded-md bg-stone-50 dark:bg-stone-900/40">
