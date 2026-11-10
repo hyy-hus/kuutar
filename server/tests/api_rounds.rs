@@ -262,6 +262,31 @@ async fn applications_respect_group_limit_and_block_normal_booking(pool: PgPool)
         assert_eq!(body["status"], "pending");
         assert_eq!(body["round_priority"], i as i64 + 1);
     }
+    // Applied-for blocks stay free for others to apply for
+    let (_, blocks) = request(
+        &env.app,
+        "GET",
+        &format!(
+            "/reservable-blocks?resource_id={}&start_date={}&end_date={}",
+            env.resource_id,
+            Utc::now().to_rfc3339().replace('+', "%2B"),
+            (Utc::now() + Duration::days(30))
+                .to_rfc3339()
+                .replace('+', "%2B")
+        ),
+        None,
+        None,
+    )
+    .await;
+    assert!(
+        blocks.as_array().unwrap().iter().all(|b| b["occurrences"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .all(|o| o["reserved"] == false)),
+        "{blocks}"
+    );
+
     // Maximum is 2 per resource
     let (status, _) = request(
         &env.app,

@@ -10,7 +10,7 @@ import { getDefaultContact, useAuth } from "#/hooks/useAuth";
 import { useCreateReservation } from "#/hooks/useReservations";
 import { useOpenRounds } from "#/hooks/useRounds";
 import { requireAuthGuard } from "#/utils/authGuard";
-import { formatDateTimeLocal } from "#/utils/date";
+import { formatDateTimeLocal, useDateFormatter } from "#/utils/date";
 import { compactLocalizedRichText } from "#/utils/richText";
 import { roundPhase } from "#/utils/rounds";
 
@@ -62,6 +62,13 @@ function CreateReservationPage() {
 	const { data: openRounds } = useOpenRounds();
 	const activeRounds =
 		openRounds?.filter((round) => roundPhase(round) === "open") ?? [];
+	const { formatDate } = useDateFormatter();
+	// Rounds that cover the preselected resources; with none preselected, all of them
+	const shownRounds = (openRounds ?? []).filter(
+		(round) =>
+			!resource_ids?.length ||
+			round.resource_ids.some((id) => resource_ids.includes(id)),
+	);
 
 	// Calculate fallback times for current hour if query params aren't provided
 	const { defaultStart, defaultEnd } = getDefaultSlot();
@@ -108,16 +115,29 @@ function CreateReservationPage() {
 			<h1 className="text-xl font-bold text-stone-900 dark:text-stone-100">
 				{t("uusiVaraus", "Uusi varaus")}
 			</h1>
-			{activeRounds.map((round) => (
+			{shownRounds.map((round) => (
 				<p
 					key={round.id}
 					className="text-sm p-3 rounded-md border border-amber-300 bg-amber-50 dark:bg-amber-950/40 dark:border-amber-800"
 				>
-					{t(
-						"kierrosIlmoitus",
-						'Varauskierros "{{name}}" on käynnissä. Varaus resurssille tehdään hakemuksena, ja se vahvistetaan vasta kierroksen päätyttyä.',
-						{ name: round.name },
-					)}{" "}
+					{roundPhase(round) === "open"
+						? t(
+								"kierrosIlmoitusPaattyy",
+								'Varauskierros "{{name}}" on käynnissä ja haku päättyy {{end}}. Varaus resurssille tehdään hakemuksena, ja se vahvistetaan vasta kierroksen päätyttyä.',
+								{
+									name: round.name,
+									end: formatDate(round.applications_close_at),
+								},
+							)
+						: t(
+								"kierrosIlmoitusAlkaa",
+								'Varauskierros "{{name}}" alkaa {{start}} ja haku päättyy {{end}}. Resurssia voi varata vain kierroksen kautta.',
+								{
+									name: round.name,
+									start: formatDate(round.applications_open_at),
+									end: formatDate(round.applications_close_at),
+								},
+							)}{" "}
 					<Link
 						to="/reservations/rounds/$id"
 						params={{ id: round.id }}
