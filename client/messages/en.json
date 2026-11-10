@@ -725,6 +725,7 @@
 	"jaossaPaallekkaisyyksia": "The allocation has {{count}} conflicts. Resolve them before saving.",
 	"jokaPiv": "Every day",
 	"kaikkiKierrokset": "All rounds",
+	"kasitteleKierroksella": "Handle in round",
 	"kuukaudenToistuvuus": "Monthly repeat",
 	"kuukaudenTiettyPiv": "On a day of the month",
 	"kuukaudenTietyViikonpiv": "On a weekday of the month",
