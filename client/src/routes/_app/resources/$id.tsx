@@ -11,6 +11,7 @@ import { useIsAdmin } from "#/hooks/useAuth";
 import { useCollection } from "#/hooks/useCollections";
 import { useGroups } from "#/hooks/useGroups";
 import { useDeleteResource, useResource } from "#/hooks/useResorces";
+import { getCollectionIcon } from "#/utils/collectionIcons";
 import { useDateFormatter } from "#/utils/date";
 import { summarizeResourceAccess } from "#/utils/resourceAccess";
 import { readable_uuid } from "#/utils/uuid";
@@ -27,6 +28,7 @@ function ViewResourcePage() {
 	const navigate = useNavigate();
 	const { data: resource, isLoading, isError } = useResource(id);
 	const { data: collection } = useCollection(resource?.collection_id ?? "");
+	const CollectionIcon = getCollectionIcon(resource?.collection_icon);
 	const deleteResource = useDeleteResource();
 	const { data: groups } = useGroups({ enabled: isAdmin });
 
@@ -109,6 +111,7 @@ function ViewResourcePage() {
 				<div className="text-md">
 					<p>
 						<strong>{t("kokoelma2", "Kokoelma:")}</strong>{" "}
+						<CollectionIcon size={14} className="inline -mt-0.5 mr-1" />
 						{collection?.name ?? "—"}
 					</p>
 					<hr className="my-2 border-stone-300" />

@@ -4,7 +4,6 @@ import {
 	CheckCircle2,
 	Eye,
 	EyeOff,
-	Folder,
 	Loader2,
 	Plus,
 	RefreshCw,
@@ -17,6 +16,7 @@ import { RichTextContent } from "#/components/RichTextContent";
 import { useIsAdmin } from "#/hooks/useAuth";
 import { type Collection, useCollections } from "#/hooks/useCollections";
 import { type Resource, useResources } from "#/hooks/useResorces";
+import { getCollectionIcon } from "#/utils/collectionIcons";
 import { readable_uuid } from "#/utils/uuid";
 
 export const Route = createFileRoute("/_app/resources/")({
@@ -31,6 +31,7 @@ function ResourceCard({
 	collection?: Collection;
 }) {
 	const { t } = useTranslation();
+	const CollectionIcon = getCollectionIcon(resource.collection_icon);
 	return (
 		<li className="p-3 border-2 border-stone-800 dark:border-stone-700 flex flex-col justify-between gap-3 rounded-md bg-stone-50 dark:bg-stone-900 shadow-xs hover:border-purple-600 dark:hover:border-purple-500 transition-colors min-w-0">
 			<div className="space-y-2 min-w-0">
@@ -45,7 +46,7 @@ function ResourceCard({
 				{/* Collection Link */}
 				{collection && (
 					<div className="flex items-center gap-1.5 text-xs text-stone-500 dark:text-stone-400">
-						<Folder size={14} className="shrink-0" />
+						<CollectionIcon size={14} className="shrink-0" />
 						<Link
 							to="/collections/$id"
 							params={{ id: collection.id }}

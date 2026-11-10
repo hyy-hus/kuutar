@@ -6,6 +6,7 @@ import {
 	ChevronLeft,
 	ChevronRight,
 	Columns3,
+	ListChecks,
 	Loader2,
 	Plus,
 	Rows2,
@@ -23,6 +24,7 @@ import { useRestrictions } from "#/hooks/useRestrictions";
 import type { CalendarSearch, CalendarViewMode } from "#/routes/_app/calendar";
 import type { CalendarEvent } from "#/utils/calendarUtils";
 import { cn } from "#/utils/cn";
+import { getCollectionIcon } from "#/utils/collectionIcons";
 import {
 	addDays,
 	formatYYYYMMDD,
@@ -34,7 +36,7 @@ import {
 	useDateFormatter,
 } from "#/utils/date";
 import { addMinutes, resolveDefaultDuration } from "#/utils/duration";
-import { getResourceColor } from "#/utils/resourceColors";
+import { getResourceHex } from "#/utils/resourceColors";
 import { ToggleChip } from "../Chip";
 import { MonthView } from "./MonthView";
 import { WeekView } from "./WeekView";
@@ -206,6 +208,14 @@ export function Calendar({
 
 		onSearchChange({ resources: nextResources });
 	};
+
+	const allResourceIds = resources?.map((r) => r.id) ?? [];
+	const allSelected =
+		allResourceIds.length > 0 &&
+		allResourceIds.every((id) => activeResourceIds.includes(id));
+
+	/** Shows only this resource; the "All" chip brings the rest back */
+	const soloResource = (id: string) => onSearchChange({ resources: [id] });
 
 	const handleDayClick = (date: Date) => {
 		onSearchChange({ view: "days", days: 1, start: formatYYYYMMDD(date) });
@@ -529,24 +539,46 @@ export function Calendar({
 
 			{/* Scrollable Resource Chips */}
 			<div className="flex gap-1.5 shrink-0 overflow-x-auto pb-1.5 no-scrollbar border-b border-stone-200 dark:border-stone-800">
+				<div className="shrink-0">
+					<ToggleChip
+						selected={allSelected}
+						onClick={() => onSearchChange({ resources: allResourceIds })}
+					>
+						<span className="inline-flex items-center gap-1.5">
+							<ListChecks size={12} aria-hidden="true" />
+							{t("kaikki", "Kaikki")}
+						</span>
+					</ToggleChip>
+				</div>
 				{resources?.map((res) => {
 					const isSelected = activeResourceIds.includes(res.id);
+					const ResourceIcon = getCollectionIcon(res.collection_icon);
 					return (
 						<div key={res.id} className="shrink-0">
 							<ToggleChip
 								selected={isSelected}
-								onClick={() => toggleResource(res.id)}
+								title={t(
+									"vainTamaOhje",
+									"Kaksoisnapsauta tai Ctrl-napsauta näyttääksesi vain tämän",
+								)}
+								onClick={(e) =>
+									e.ctrlKey || e.metaKey || e.shiftKey
+										? soloResource(res.id)
+										: toggleResource(res.id)
+								}
+								onDoubleClick={() => soloResource(res.id)}
 							>
 								<span className="inline-flex items-center gap-1.5">
-									{getResourceColor(res.color) && (
-										<span
-											aria-hidden="true"
-											className={cn(
-												"size-2 rounded-full shrink-0",
-												getResourceColor(res.color)?.swatch,
-											)}
-										/>
-									)}
+									<ResourceIcon
+										size={12}
+										aria-hidden="true"
+										className="shrink-0"
+										style={
+											res.color
+												? { color: getResourceHex(res.color) }
+												: undefined
+										}
+									/>
 									{res.name}
 								</span>
 							</ToggleChip>

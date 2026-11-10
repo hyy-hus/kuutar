@@ -22,7 +22,11 @@ import type { CreateResource } from "#/hooks/useResorces";
 import { cn } from "#/utils/cn";
 import { formatYYYYMMDD } from "#/utils/date";
 import { summarizeResourceAccess } from "#/utils/resourceAccess";
-import { getResourceColor, RESOURCE_COLORS } from "#/utils/resourceColors";
+import {
+	getResourceColor,
+	isHexColor,
+	RESOURCE_COLORS,
+} from "#/utils/resourceColors";
 import {
 	compactLocalizedRichText,
 	toLocalizedRichText,
@@ -264,6 +268,36 @@ export function ResourceForm({
 										)}
 									/>
 								))}
+								{/* Any color: the native picker sits invisibly over the swatch */}
+								<label
+									title={t("omaVari", "Oma väri")}
+									className={cn(
+										"relative size-6 rounded-full cursor-pointer ring-offset-2 ring-offset-stone-50 dark:ring-offset-stone-950 focus-within:outline-2 focus-within:outline-purple-500",
+										!isHexColor(field.state.value) &&
+											"bg-[conic-gradient(red,yellow,lime,cyan,blue,magenta,red)]",
+										isHexColor(field.state.value) &&
+											"ring-2 ring-stone-900 dark:ring-stone-100",
+									)}
+									style={
+										isHexColor(field.state.value)
+											? { backgroundColor: field.state.value }
+											: undefined
+									}
+								>
+									<input
+										type="color"
+										aria-label={t("omaVari", "Oma väri")}
+										value={
+											isHexColor(field.state.value)
+												? field.state.value
+												: "#8b5cf6"
+										}
+										onChange={(e) =>
+											field.handleChange(e.target.value.toLowerCase())
+										}
+										className="absolute inset-0 size-full cursor-pointer opacity-0"
+									/>
+								</label>
 							</div>
 						</fieldset>
 					)}

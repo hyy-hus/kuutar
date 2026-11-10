@@ -89,6 +89,7 @@ function MonthEventItem({ event }: { event: DaySegment }) {
 			to="/reservations/$id"
 			params={{ id: event.reservationId || "" }}
 			className={className}
+			style={color?.style}
 			title={tooltipText}
 		>
 			{isPending && (

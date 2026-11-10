@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        SELECT r.id, r.collection_id, r.name, r.description, r.allow_recurring, r.blocks_only, r.reservable_until, r.is_public,\n               r.reservation_restricted, r.auto_confirm, r.default_duration_minutes, r.min_duration_minutes, r.max_duration_minutes, r.color,\n               CASE WHEN $1 THEN r.outlook_email END AS outlook_email,\n               COALESCE(ARRAY(SELECT vg.group_id FROM resource_visibility_groups vg WHERE vg.resource_id = r.id ORDER BY vg.group_id), '{}') AS \"visible_group_ids!\",\n               COALESCE(ARRAY(SELECT rg.group_id FROM resource_groups rg WHERE rg.resource_id = r.id ORDER BY rg.group_id), '{}') AS \"reservable_group_ids!\",\n               COALESCE(ARRAY(SELECT ag.group_id FROM resource_auto_confirm_groups ag WHERE ag.resource_id = r.id ORDER BY ag.group_id), '{}') AS \"auto_confirm_group_ids!\",\n               ($1 OR NOT r.reservation_restricted OR EXISTS (\n                   SELECT 1 FROM resource_groups rg WHERE rg.resource_id = r.id AND rg.group_id = $2\n               )) AS \"can_reserve!\",\n               r.created_at, r.updated_at, r.deleted_at\n        FROM resources r\n        WHERE r.id = $3\n          AND r.deleted_at IS NULL\n          AND ($1 = TRUE OR r.is_public = TRUE\n               OR EXISTS (SELECT 1 FROM resource_visibility_groups vg WHERE vg.resource_id = r.id AND vg.group_id = $2)\n               OR (r.reservation_restricted AND EXISTS (\n                   SELECT 1 FROM resource_groups rg WHERE rg.resource_id = r.id AND rg.group_id = $2\n               )))\n        ",
+  "query": "\n        SELECT r.id, r.collection_id, r.name, r.description, r.allow_recurring, r.blocks_only, r.reservable_until, r.is_public,\n               r.reservation_restricted, r.auto_confirm, r.default_duration_minutes, r.min_duration_minutes, r.max_duration_minutes, r.color, c.icon AS collection_icon,\n               CASE WHEN $1 THEN r.outlook_email END AS outlook_email,\n               COALESCE(ARRAY(SELECT vg.group_id FROM resource_visibility_groups vg WHERE vg.resource_id = r.id ORDER BY vg.group_id), '{}') AS \"visible_group_ids!\",\n               COALESCE(ARRAY(SELECT rg.group_id FROM resource_groups rg WHERE rg.resource_id = r.id ORDER BY rg.group_id), '{}') AS \"reservable_group_ids!\",\n               COALESCE(ARRAY(SELECT ag.group_id FROM resource_auto_confirm_groups ag WHERE ag.resource_id = r.id ORDER BY ag.group_id), '{}') AS \"auto_confirm_group_ids!\",\n               ($1 OR NOT r.reservation_restricted OR EXISTS (\n                   SELECT 1 FROM resource_groups rg WHERE rg.resource_id = r.id AND rg.group_id = $2\n               )) AS \"can_reserve!\",\n               r.created_at, r.updated_at, r.deleted_at\n        FROM resources r\n        JOIN collections c ON c.id = r.collection_id\n        WHERE r.id = $3\n          AND r.deleted_at IS NULL\n          AND ($1 = TRUE OR r.is_public = TRUE\n               OR EXISTS (SELECT 1 FROM resource_visibility_groups vg WHERE vg.resource_id = r.id AND vg.group_id = $2)\n               OR (r.reservation_restricted AND EXISTS (\n                   SELECT 1 FROM resource_groups rg WHERE rg.resource_id = r.id AND rg.group_id = $2\n               )))\n        ",
   "describe": {
     "columns": [
       {
@@ -159,36 +159,47 @@
       },
       {
         "ordinal": 14,
+        "name": "collection_icon",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "collections",
+            "name": "icon"
+          }
+        }
+      },
+      {
+        "ordinal": 15,
         "name": "outlook_email",
         "type_info": "Text",
         "origin": "Expression"
       },
       {
-        "ordinal": 15,
+        "ordinal": 16,
         "name": "visible_group_ids!",
         "type_info": "UuidArray",
         "origin": "Expression"
       },
       {
-        "ordinal": 16,
+        "ordinal": 17,
         "name": "reservable_group_ids!",
         "type_info": "UuidArray",
         "origin": "Expression"
       },
       {
-        "ordinal": 17,
+        "ordinal": 18,
         "name": "auto_confirm_group_ids!",
         "type_info": "UuidArray",
         "origin": "Expression"
       },
       {
-        "ordinal": 18,
+        "ordinal": 19,
         "name": "can_reserve!",
         "type_info": "Bool",
         "origin": "Expression"
       },
       {
-        "ordinal": 19,
+        "ordinal": 20,
         "name": "created_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -199,7 +210,7 @@
         }
       },
       {
-        "ordinal": 20,
+        "ordinal": 21,
         "name": "updated_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -210,7 +221,7 @@
         }
       },
       {
-        "ordinal": 21,
+        "ordinal": 22,
         "name": "deleted_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -243,6 +254,7 @@
       true,
       true,
       true,
+      true,
       null,
       null,
       null,
@@ -253,5 +265,5 @@
       true
     ]
   },
-  "hash": "a235504e8fafaee16f6004646d570416b9269189f4dc1ff8f1435fcddad9151e"
+  "hash": "b045b979df8b4eb174b8534a996eb18f89ec137c428262aa2f62d09e3bcc9a4f"
 }
