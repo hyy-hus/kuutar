@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
 	DEFAULT_CHART_COLOR,
+	getContrastColor,
 	getResourceColor,
 	getResourceHex,
 	isHexColor,
@@ -54,5 +55,16 @@ describe("custom colors", () => {
 
 	it("uses a custom color as is in charts", () => {
 		expect(getResourceHex("#1a2b3c")).toBe("#1a2b3c");
+	});
+});
+
+describe("getContrastColor", () => {
+	it("picks black on light and white on dark backgrounds", () => {
+		expect(getContrastColor("#ffffff")).toBe("#000000");
+		expect(getContrastColor("#fde047")).toBe("#000000");
+		expect(getContrastColor("#84cc16")).toBe("#000000");
+		expect(getContrastColor("#000000")).toBe("#ffffff");
+		expect(getContrastColor("#1e3a8a")).toBe("#ffffff");
+		expect(getContrastColor("#9333ea")).toBe("#ffffff");
 	});
 });

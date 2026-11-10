@@ -36,7 +36,7 @@ import {
 	useDateFormatter,
 } from "#/utils/date";
 import { addMinutes, resolveDefaultDuration } from "#/utils/duration";
-import { getResourceHex } from "#/utils/resourceColors";
+import { getContrastColor, getResourceHex } from "#/utils/resourceColors";
 import { ToggleChip } from "../Chip";
 import { MonthView } from "./MonthView";
 import { WeekView } from "./WeekView";
@@ -569,16 +569,16 @@ export function Calendar({
 								onDoubleClick={() => soloResource(res.id)}
 							>
 								<span className="inline-flex items-center gap-1.5">
-									<ResourceIcon
-										size={12}
+									<span
 										aria-hidden="true"
-										className="shrink-0"
-										style={
-											res.color
-												? { color: getResourceHex(res.color) }
-												: undefined
-										}
-									/>
+										className="size-4 rounded-full inline-flex items-center justify-center shrink-0"
+										style={{
+											backgroundColor: getResourceHex(res.color),
+											color: getContrastColor(getResourceHex(res.color)),
+										}}
+									>
+										<ResourceIcon size={10} />
+									</span>
 									{res.name}
 								</span>
 							</ToggleChip>

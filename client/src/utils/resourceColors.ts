@@ -130,3 +130,14 @@ export function getResourceHex(key?: string | null): string {
 		? HEX[key as ResourceColor]
 		: DEFAULT_CHART_COLOR;
 }
+
+/** Black or white, whichever reads better on the given `#rrggbb` background (WCAG luminance) */
+export function getContrastColor(hex: string): "#000000" | "#ffffff" {
+	const [r, g, b] = [1, 3, 5].map((i) => {
+		const c = Number.parseInt(hex.slice(i, i + 2), 16) / 255;
+		return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+	});
+	const luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+	// 0.179 is where black and white contrast equally
+	return luminance > 0.179 ? "#000000" : "#ffffff";
+}
