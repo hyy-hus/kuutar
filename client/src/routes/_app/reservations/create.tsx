@@ -1,5 +1,5 @@
 // src/routes/_app/reservations/create.tsx
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { BackLink } from "#/components/BackLink";
 import {
@@ -8,9 +8,11 @@ import {
 } from "#/components/ReservationForm";
 import { getDefaultContact, useAuth } from "#/hooks/useAuth";
 import { useCreateReservation } from "#/hooks/useReservations";
+import { useOpenRounds } from "#/hooks/useRounds";
 import { requireAuthGuard } from "#/utils/authGuard";
 import { formatDateTimeLocal } from "#/utils/date";
 import { compactLocalizedRichText } from "#/utils/richText";
+import { roundPhase } from "#/utils/rounds";
 
 export interface CreateReservationSearch {
 	start_time?: string;
@@ -57,11 +59,25 @@ function CreateReservationPage() {
 	const createReservation = useCreateReservation();
 	const { user } = useAuth();
 	const { start_time, end_time, resource_ids } = Route.useSearch();
+	const { data: openRounds } = useOpenRounds();
+	const activeRounds =
+		openRounds?.filter((round) => roundPhase(round) === "open") ?? [];
 
 	// Calculate fallback times for current hour if query params aren't provided
 	const { defaultStart, defaultEnd } = getDefaultSlot();
 
 	const handleSubmit = async (values: ReservationFormValues) => {
+		// A block on a resource in an open round is an application in that round
+		const occurrence = values.occurrences?.[0];
+		const round = occurrence
+			? activeRounds.find(
+					(r) =>
+						r.resource_ids.includes(occurrence.resource_id) &&
+						new Date(occurrence.start_time) >= new Date(r.period_start) &&
+						new Date(occurrence.end_time) <= new Date(r.period_end),
+				)
+			: undefined;
+
 		const created = await createReservation.mutateAsync({
 			user_id: values.user_id || null,
 			title: values.title,
@@ -74,8 +90,13 @@ function CreateReservationPage() {
 			contact_phone: values.contact_phone || null,
 			rrule: values.rrule || null,
 			occurrences: values.occurrences ?? [],
+			round_id: round?.id ?? null,
 		});
 
+		if (round) {
+			navigate({ to: "/reservations/rounds/$id", params: { id: round.id } });
+			return;
+		}
 		navigate({ to: "/reservations/$id", params: { id: created.id } });
 	};
 
@@ -87,6 +108,25 @@ function CreateReservationPage() {
 			<h1 className="text-xl font-bold text-stone-900 dark:text-stone-100">
 				{t("uusiVaraus", "Uusi varaus")}
 			</h1>
+			{activeRounds.map((round) => (
+				<p
+					key={round.id}
+					className="text-sm p-3 rounded-md border border-amber-300 bg-amber-50 dark:bg-amber-950/40 dark:border-amber-800"
+				>
+					{t(
+						"kierrosIlmoitus",
+						'Varauskierros "{{name}}" on käynnissä. Varaus resurssille tehdään hakemuksena, ja se vahvistetaan vasta kierroksen päätyttyä.',
+						{ name: round.name },
+					)}{" "}
+					<Link
+						to="/reservations/rounds/$id"
+						params={{ id: round.id }}
+						className="underline font-medium"
+					>
+						{t("omatHakemukset", "Omat hakemukset")}
+					</Link>
+				</p>
+			))}
 			<ReservationForm
 				defaultValues={{
 					...getDefaultContact(user),

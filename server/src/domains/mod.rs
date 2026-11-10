@@ -8,5 +8,6 @@ pub mod reservable_blocks;
 pub mod reservations;
 pub mod resources;
 pub mod restrictions;
+pub mod rounds;
 pub mod stats;
 pub mod users;

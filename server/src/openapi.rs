@@ -11,6 +11,7 @@ use crate::domains::reservable_blocks;
 use crate::domains::reservations;
 use crate::domains::resources;
 use crate::domains::restrictions;
+use crate::domains::rounds;
 use crate::domains::stats;
 use crate::domains::users;
 
@@ -110,6 +111,18 @@ impl Modify for SecurityAddon {
         reservable_blocks::routes::update_reservable_block,
         reservable_blocks::routes::split_reservable_block,
         reservable_blocks::routes::delete_reservable_block,
+        rounds::routes::list_rounds,
+        rounds::routes::list_open_rounds,
+        rounds::routes::get_round,
+        rounds::routes::create_round,
+        rounds::routes::update_round,
+        rounds::routes::delete_round,
+        rounds::routes::set_priorities,
+        rounds::routes::list_applications,
+        rounds::routes::allocate_round,
+        rounds::routes::get_allocation,
+        rounds::routes::save_allocation,
+        rounds::routes::complete_round,
 
         // Contracts
         contracts::routes::list_contracts,
@@ -180,6 +193,18 @@ impl Modify for SecurityAddon {
             reservable_blocks::models::CreateReservableBlockOccurrencePayload,
             reservable_blocks::models::UpdateReservableBlockPayload,
             reservable_blocks::models::SplitReservableBlockPayload,
+            rounds::models::Round,
+            rounds::models::RoundStatus,
+            rounds::models::RoundPhase,
+            rounds::models::CreateRoundPayload,
+            rounds::models::UpdateRoundPayload,
+            rounds::models::RoundApplication,
+            rounds::models::SetPrioritiesPayload,
+            rounds::models::AllocatePayload,
+            rounds::models::AllocationProposal,
+            rounds::models::Allocation,
+            rounds::models::SaveAllocationPayload,
+            rounds::models::CompleteRoundReport,
             contracts::models::Contract,
             contracts::models::CreateContract,
             contracts::models::UpdateContract,
@@ -221,6 +246,7 @@ impl Modify for SecurityAddon {
         (name = "Reservations", description = "Reservation and occurrence management endpoints"),
         (name = "Restrictions", description = "Time restriction and group exemption management endpoints"),
         (name = "Reservable blocks", description = "Reservable time block management for blocks-only resources"),
+        (name = "Rounds", description = "Reservation rounds: applications, randomized allocation and completion"),
         (name = "Contracts", description = "Contract document management endpoints"),
         (name = "Email templates", description = "Editable notification email templates"),
         (name = "Stats", description = "System statistics and usage analytics endpoints")

@@ -1,0 +1,40 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT o.resource_id, o.start_time\n        FROM occurrences o\n        JOIN reservations r ON r.id = o.reservation_id\n        WHERE r.deleted_at IS NULL\n          AND r.status IN ('confirmed', 'pending')\n          AND r.round_id IS DISTINCT FROM $1\n          AND o.resource_id IN (SELECT resource_id FROM reservation_round_resources WHERE round_id = $1)\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "resource_id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "occurrences",
+            "name": "resource_id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "start_time",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "occurrences",
+            "name": "start_time"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "99eaab17fb4cf42128d8572b947cf3ebf20307ed430eeca5953b6e6342fb55e7"
+}

@@ -41,6 +41,9 @@ import { Route as AppAdminDashboardIndexRouteImport } from './routes/_app/admin/
 import { Route as AppAdminGroupsIndexRouteImport } from './routes/_app/admin/groups/index'
 import { Route as AppAdminGroupsIdRouteImport } from './routes/_app/admin/groups/$id'
 import { Route as AppAdminGroupsCreateRouteImport } from './routes/_app/admin/groups/create'
+import { Route as AppAdminRoundsIndexRouteImport } from './routes/_app/admin/rounds/index'
+import { Route as AppAdminRoundsIdRouteImport } from './routes/_app/admin/rounds/$id'
+import { Route as AppAdminRoundsCreateRouteImport } from './routes/_app/admin/rounds/create'
 import { Route as AppAdminUsersIndexRouteImport } from './routes/_app/admin/users/index'
 import { Route as AppAdminUsersIdRouteImport } from './routes/_app/admin/users/$id'
 import { Route as AppAdminUsersBatchRegisterRouteImport } from './routes/_app/admin/users/batch-register'
@@ -48,6 +51,7 @@ import { Route as AppAdminUsersCreateRouteImport } from './routes/_app/admin/use
 import { Route as AppCollectionsEditIdRouteImport } from './routes/_app/collections/edit.$id'
 import { Route as AppReservableBlocksEditIdRouteImport } from './routes/_app/reservable-blocks/edit.$id'
 import { Route as AppReservationsEditIdRouteImport } from './routes/_app/reservations/edit.$id'
+import { Route as AppReservationsRoundsIdRouteImport } from './routes/_app/reservations/rounds/$id'
 import { Route as AppResourcesEditIdRouteImport } from './routes/_app/resources/edit/$id'
 import { Route as AppRestrictionsEditIdRouteImport } from './routes/_app/restrictions/edit.$id'
 import { Route as AppAdminGroupsEditIdRouteImport } from './routes/_app/admin/groups/edit.$id'
@@ -214,6 +218,21 @@ const AppAdminGroupsCreateRoute = AppAdminGroupsCreateRouteImport.update({
   path: '/groups/create',
   getParentRoute: () => AppAdminRoute,
 } as any)
+const AppAdminRoundsIndexRoute = AppAdminRoundsIndexRouteImport.update({
+  id: '/rounds/',
+  path: '/rounds/',
+  getParentRoute: () => AppAdminRoute,
+} as any)
+const AppAdminRoundsIdRoute = AppAdminRoundsIdRouteImport.update({
+  id: '/rounds/$id',
+  path: '/rounds/$id',
+  getParentRoute: () => AppAdminRoute,
+} as any)
+const AppAdminRoundsCreateRoute = AppAdminRoundsCreateRouteImport.update({
+  id: '/rounds/create',
+  path: '/rounds/create',
+  getParentRoute: () => AppAdminRoute,
+} as any)
 const AppAdminUsersIndexRoute = AppAdminUsersIndexRouteImport.update({
   id: '/users/',
   path: '/users/',
@@ -249,6 +268,11 @@ const AppReservableBlocksEditIdRoute =
 const AppReservationsEditIdRoute = AppReservationsEditIdRouteImport.update({
   id: '/reservations/edit/$id',
   path: '/reservations/edit/$id',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppReservationsRoundsIdRoute = AppReservationsRoundsIdRouteImport.update({
+  id: '/reservations/rounds/$id',
+  path: '/reservations/rounds/$id',
   getParentRoute: () => AppRoute,
 } as any)
 const AppResourcesEditIdRoute = AppResourcesEditIdRouteImport.update({
@@ -302,16 +326,20 @@ export interface FileRoutesByFullPath {
   '/stats/': typeof AppStatsIndexRoute
   '/admin/groups/$id': typeof AppAdminGroupsIdRoute
   '/admin/groups/create': typeof AppAdminGroupsCreateRoute
+  '/admin/rounds/$id': typeof AppAdminRoundsIdRoute
+  '/admin/rounds/create': typeof AppAdminRoundsCreateRoute
   '/admin/users/$id': typeof AppAdminUsersIdRoute
   '/admin/users/batch-register': typeof AppAdminUsersBatchRegisterRoute
   '/admin/users/create': typeof AppAdminUsersCreateRoute
   '/collections/edit/$id': typeof AppCollectionsEditIdRoute
   '/reservable-blocks/edit/$id': typeof AppReservableBlocksEditIdRoute
   '/reservations/edit/$id': typeof AppReservationsEditIdRoute
+  '/reservations/rounds/$id': typeof AppReservationsRoundsIdRoute
   '/resources/edit/$id': typeof AppResourcesEditIdRoute
   '/restrictions/edit/$id': typeof AppRestrictionsEditIdRoute
   '/admin/dashboard/': typeof AppAdminDashboardIndexRoute
   '/admin/groups/': typeof AppAdminGroupsIndexRoute
+  '/admin/rounds/': typeof AppAdminRoundsIndexRoute
   '/admin/users/': typeof AppAdminUsersIndexRoute
   '/admin/groups/edit/$id': typeof AppAdminGroupsEditIdRoute
   '/admin/users/edit/$id': typeof AppAdminUsersEditIdRoute
@@ -345,16 +373,20 @@ export interface FileRoutesByTo {
   '/stats': typeof AppStatsIndexRoute
   '/admin/groups/$id': typeof AppAdminGroupsIdRoute
   '/admin/groups/create': typeof AppAdminGroupsCreateRoute
+  '/admin/rounds/$id': typeof AppAdminRoundsIdRoute
+  '/admin/rounds/create': typeof AppAdminRoundsCreateRoute
   '/admin/users/$id': typeof AppAdminUsersIdRoute
   '/admin/users/batch-register': typeof AppAdminUsersBatchRegisterRoute
   '/admin/users/create': typeof AppAdminUsersCreateRoute
   '/collections/edit/$id': typeof AppCollectionsEditIdRoute
   '/reservable-blocks/edit/$id': typeof AppReservableBlocksEditIdRoute
   '/reservations/edit/$id': typeof AppReservationsEditIdRoute
+  '/reservations/rounds/$id': typeof AppReservationsRoundsIdRoute
   '/resources/edit/$id': typeof AppResourcesEditIdRoute
   '/restrictions/edit/$id': typeof AppRestrictionsEditIdRoute
   '/admin/dashboard': typeof AppAdminDashboardIndexRoute
   '/admin/groups': typeof AppAdminGroupsIndexRoute
+  '/admin/rounds': typeof AppAdminRoundsIndexRoute
   '/admin/users': typeof AppAdminUsersIndexRoute
   '/admin/groups/edit/$id': typeof AppAdminGroupsEditIdRoute
   '/admin/users/edit/$id': typeof AppAdminUsersEditIdRoute
@@ -391,16 +423,20 @@ export interface FileRoutesById {
   '/_app/stats/': typeof AppStatsIndexRoute
   '/_app/admin/groups/$id': typeof AppAdminGroupsIdRoute
   '/_app/admin/groups/create': typeof AppAdminGroupsCreateRoute
+  '/_app/admin/rounds/$id': typeof AppAdminRoundsIdRoute
+  '/_app/admin/rounds/create': typeof AppAdminRoundsCreateRoute
   '/_app/admin/users/$id': typeof AppAdminUsersIdRoute
   '/_app/admin/users/batch-register': typeof AppAdminUsersBatchRegisterRoute
   '/_app/admin/users/create': typeof AppAdminUsersCreateRoute
   '/_app/collections/edit/$id': typeof AppCollectionsEditIdRoute
   '/_app/reservable-blocks/edit/$id': typeof AppReservableBlocksEditIdRoute
   '/_app/reservations/edit/$id': typeof AppReservationsEditIdRoute
+  '/_app/reservations/rounds/$id': typeof AppReservationsRoundsIdRoute
   '/_app/resources/edit/$id': typeof AppResourcesEditIdRoute
   '/_app/restrictions/edit/$id': typeof AppRestrictionsEditIdRoute
   '/_app/admin/dashboard/': typeof AppAdminDashboardIndexRoute
   '/_app/admin/groups/': typeof AppAdminGroupsIndexRoute
+  '/_app/admin/rounds/': typeof AppAdminRoundsIndexRoute
   '/_app/admin/users/': typeof AppAdminUsersIndexRoute
   '/_app/admin/groups/edit/$id': typeof AppAdminGroupsEditIdRoute
   '/_app/admin/users/edit/$id': typeof AppAdminUsersEditIdRoute
@@ -437,16 +473,20 @@ export interface FileRouteTypes {
     | '/stats/'
     | '/admin/groups/$id'
     | '/admin/groups/create'
+    | '/admin/rounds/$id'
+    | '/admin/rounds/create'
     | '/admin/users/$id'
     | '/admin/users/batch-register'
     | '/admin/users/create'
     | '/collections/edit/$id'
     | '/reservable-blocks/edit/$id'
     | '/reservations/edit/$id'
+    | '/reservations/rounds/$id'
     | '/resources/edit/$id'
     | '/restrictions/edit/$id'
     | '/admin/dashboard/'
     | '/admin/groups/'
+    | '/admin/rounds/'
     | '/admin/users/'
     | '/admin/groups/edit/$id'
     | '/admin/users/edit/$id'
@@ -480,16 +520,20 @@ export interface FileRouteTypes {
     | '/stats'
     | '/admin/groups/$id'
     | '/admin/groups/create'
+    | '/admin/rounds/$id'
+    | '/admin/rounds/create'
     | '/admin/users/$id'
     | '/admin/users/batch-register'
     | '/admin/users/create'
     | '/collections/edit/$id'
     | '/reservable-blocks/edit/$id'
     | '/reservations/edit/$id'
+    | '/reservations/rounds/$id'
     | '/resources/edit/$id'
     | '/restrictions/edit/$id'
     | '/admin/dashboard'
     | '/admin/groups'
+    | '/admin/rounds'
     | '/admin/users'
     | '/admin/groups/edit/$id'
     | '/admin/users/edit/$id'
@@ -525,16 +569,20 @@ export interface FileRouteTypes {
     | '/_app/stats/'
     | '/_app/admin/groups/$id'
     | '/_app/admin/groups/create'
+    | '/_app/admin/rounds/$id'
+    | '/_app/admin/rounds/create'
     | '/_app/admin/users/$id'
     | '/_app/admin/users/batch-register'
     | '/_app/admin/users/create'
     | '/_app/collections/edit/$id'
     | '/_app/reservable-blocks/edit/$id'
     | '/_app/reservations/edit/$id'
+    | '/_app/reservations/rounds/$id'
     | '/_app/resources/edit/$id'
     | '/_app/restrictions/edit/$id'
     | '/_app/admin/dashboard/'
     | '/_app/admin/groups/'
+    | '/_app/admin/rounds/'
     | '/_app/admin/users/'
     | '/_app/admin/groups/edit/$id'
     | '/_app/admin/users/edit/$id'
@@ -771,6 +819,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAdminGroupsCreateRouteImport
       parentRoute: typeof AppAdminRoute
     }
+    '/_app/admin/rounds/': {
+      id: '/_app/admin/rounds/'
+      path: '/rounds'
+      fullPath: '/admin/rounds/'
+      preLoaderRoute: typeof AppAdminRoundsIndexRouteImport
+      parentRoute: typeof AppAdminRoute
+    }
+    '/_app/admin/rounds/$id': {
+      id: '/_app/admin/rounds/$id'
+      path: '/rounds/$id'
+      fullPath: '/admin/rounds/$id'
+      preLoaderRoute: typeof AppAdminRoundsIdRouteImport
+      parentRoute: typeof AppAdminRoute
+    }
+    '/_app/admin/rounds/create': {
+      id: '/_app/admin/rounds/create'
+      path: '/rounds/create'
+      fullPath: '/admin/rounds/create'
+      preLoaderRoute: typeof AppAdminRoundsCreateRouteImport
+      parentRoute: typeof AppAdminRoute
+    }
     '/_app/admin/users/': {
       id: '/_app/admin/users/'
       path: '/users'
@@ -820,6 +889,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppReservationsEditIdRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/reservations/rounds/$id': {
+      id: '/_app/reservations/rounds/$id'
+      path: '/reservations/rounds/$id'
+      fullPath: '/reservations/rounds/$id'
+      preLoaderRoute: typeof AppReservationsRoundsIdRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/resources/edit/$id': {
       id: '/_app/resources/edit/$id'
       path: '/resources/edit/$id'
@@ -858,11 +934,14 @@ interface AppAdminRouteChildren {
   AppAdminIndexRoute: typeof AppAdminIndexRoute
   AppAdminGroupsIdRoute: typeof AppAdminGroupsIdRoute
   AppAdminGroupsCreateRoute: typeof AppAdminGroupsCreateRoute
+  AppAdminRoundsIdRoute: typeof AppAdminRoundsIdRoute
+  AppAdminRoundsCreateRoute: typeof AppAdminRoundsCreateRoute
   AppAdminUsersIdRoute: typeof AppAdminUsersIdRoute
   AppAdminUsersBatchRegisterRoute: typeof AppAdminUsersBatchRegisterRoute
   AppAdminUsersCreateRoute: typeof AppAdminUsersCreateRoute
   AppAdminDashboardIndexRoute: typeof AppAdminDashboardIndexRoute
   AppAdminGroupsIndexRoute: typeof AppAdminGroupsIndexRoute
+  AppAdminRoundsIndexRoute: typeof AppAdminRoundsIndexRoute
   AppAdminUsersIndexRoute: typeof AppAdminUsersIndexRoute
   AppAdminGroupsEditIdRoute: typeof AppAdminGroupsEditIdRoute
   AppAdminUsersEditIdRoute: typeof AppAdminUsersEditIdRoute
@@ -875,11 +954,14 @@ const AppAdminRouteChildren: AppAdminRouteChildren = {
   AppAdminIndexRoute: AppAdminIndexRoute,
   AppAdminGroupsIdRoute: AppAdminGroupsIdRoute,
   AppAdminGroupsCreateRoute: AppAdminGroupsCreateRoute,
+  AppAdminRoundsIdRoute: AppAdminRoundsIdRoute,
+  AppAdminRoundsCreateRoute: AppAdminRoundsCreateRoute,
   AppAdminUsersIdRoute: AppAdminUsersIdRoute,
   AppAdminUsersBatchRegisterRoute: AppAdminUsersBatchRegisterRoute,
   AppAdminUsersCreateRoute: AppAdminUsersCreateRoute,
   AppAdminDashboardIndexRoute: AppAdminDashboardIndexRoute,
   AppAdminGroupsIndexRoute: AppAdminGroupsIndexRoute,
+  AppAdminRoundsIndexRoute: AppAdminRoundsIndexRoute,
   AppAdminUsersIndexRoute: AppAdminUsersIndexRoute,
   AppAdminGroupsEditIdRoute: AppAdminGroupsEditIdRoute,
   AppAdminUsersEditIdRoute: AppAdminUsersEditIdRoute,
@@ -915,6 +997,7 @@ interface AppRouteChildren {
   AppCollectionsEditIdRoute: typeof AppCollectionsEditIdRoute
   AppReservableBlocksEditIdRoute: typeof AppReservableBlocksEditIdRoute
   AppReservationsEditIdRoute: typeof AppReservationsEditIdRoute
+  AppReservationsRoundsIdRoute: typeof AppReservationsRoundsIdRoute
   AppResourcesEditIdRoute: typeof AppResourcesEditIdRoute
   AppRestrictionsEditIdRoute: typeof AppRestrictionsEditIdRoute
 }
@@ -945,6 +1028,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppCollectionsEditIdRoute: AppCollectionsEditIdRoute,
   AppReservableBlocksEditIdRoute: AppReservableBlocksEditIdRoute,
   AppReservationsEditIdRoute: AppReservationsEditIdRoute,
+  AppReservationsRoundsIdRoute: AppReservationsRoundsIdRoute,
   AppResourcesEditIdRoute: AppResourcesEditIdRoute,
   AppRestrictionsEditIdRoute: AppRestrictionsEditIdRoute,
 }

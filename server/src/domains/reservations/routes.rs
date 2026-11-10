@@ -147,6 +147,7 @@ pub async fn list_reservations(
         end_date,
         query.resource_id,
         effective_status,
+        query.round_id,
         is_admin,
         None,
         viewer_group_id,
@@ -193,6 +194,7 @@ pub async fn list_my_reservations(
         end_date,
         query.resource_id,
         query.status,
+        query.round_id,
         is_admin,
         Some(auth_user.id),
         Some(auth_user.group_id),
@@ -315,7 +317,13 @@ pub async fn create_reservation(
 
     // 5. Non-admin users get Pending unless every resource auto-confirms for them;
     // clear admin-only fields if supplied
-    if !is_admin {
+    if payload.round_id.is_some() {
+        // Round applications wait for the allocation, whoever creates them
+        payload.status = Some(ReservationStatus::Pending);
+        if !is_admin {
+            payload.admin_notes = None;
+        }
+    } else if !is_admin {
         let resource_ids: Vec<Uuid> = payload.occurrences.iter().map(|o| o.resource_id).collect();
         payload.status = Some(
             if db::should_auto_confirm(&auth_state.pool, owner_id, &resource_ids).await? {
@@ -458,19 +466,43 @@ pub async fn update_reservation(
             ));
         }
 
-        // An edit needs re-approval unless every resource auto-confirms for the owner
-        let resource_ids: Vec<Uuid> = match &payload.occurrences {
-            Some(occurrences) => occurrences.iter().map(|o| o.resource_id).collect(),
-            None => existing.occurrences.iter().map(|o| o.resource_id).collect(),
+        // Applications in an unfinished round stay pending; only the text can change, and only
+        // while applications are open. Withdrawing is done by cancelling.
+        let round_locked = match existing.reservation.round_id {
+            Some(round_id) => {
+                let round = crate::domains::rounds::db::find(&auth_state.pool, round_id).await?;
+                round.status == crate::domains::rounds::models::RoundStatus::Active
+            }
+            None => false,
         };
-        payload.status = Some(
-            if db::should_auto_confirm(&auth_state.pool, auth_user.id, &resource_ids).await? {
-                ReservationStatus::Confirmed
-            } else {
-                ReservationStatus::Pending
-            },
-        );
-        payload.mark_printed = Some(false);
+        if round_locked {
+            if payload.occurrences.is_some() || payload.rrule.is_some() {
+                return Err(AppError::Forbidden(
+                    "Kierroshakemuksen ajankohtaa ei voi muuttaa. Peru hakemus ja hae uudelleen."
+                        .to_string(),
+                ));
+            }
+            crate::domains::rounds::db::ensure_window_open(
+                &auth_state.pool,
+                existing.reservation.round_id.unwrap_or_default(),
+            )
+            .await?;
+            payload.status = None;
+        } else {
+            // An edit needs re-approval unless every resource auto-confirms for the owner
+            let resource_ids: Vec<Uuid> = match &payload.occurrences {
+                Some(occurrences) => occurrences.iter().map(|o| o.resource_id).collect(),
+                None => existing.occurrences.iter().map(|o| o.resource_id).collect(),
+            };
+            payload.status = Some(
+                if db::should_auto_confirm(&auth_state.pool, auth_user.id, &resource_ids).await? {
+                    ReservationStatus::Confirmed
+                } else {
+                    ReservationStatus::Pending
+                },
+            );
+            payload.mark_printed = Some(false);
+        }
 
         // Non-admins cannot update admin notes (contact fields are theirs to edit)
         payload.admin_notes = None;
@@ -576,6 +608,14 @@ pub async fn cancel_reservation(
         return Err(AppError::Forbidden(
             "Et voi perua toisen käyttäjän varausta.".to_string(),
         ));
+    }
+
+    // Owners withdraw round applications only while the application window is open
+    if !is_admin && let Some(round_id) = existing.reservation.round_id {
+        let round = crate::domains::rounds::db::find(&auth_state.pool, round_id).await?;
+        if round.status == crate::domains::rounds::models::RoundStatus::Active {
+            crate::domains::rounds::db::ensure_window_open(&auth_state.pool, round_id).await?;
+        }
     }
 
     let reservation = db::cancel(&auth_state.pool, id, auth_user.id, payload.reason).await?;

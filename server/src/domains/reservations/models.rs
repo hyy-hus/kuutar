@@ -63,6 +63,12 @@ pub struct Reservation {
     pub cancelled_by: Option<Uuid>,
     pub cancel_reason: Option<String>,
 
+    /// Set when the reservation is an application in a reservation round
+    pub round_id: Option<Uuid>,
+    pub round_name: Option<String>,
+    /// The applicant's own ranking among their applications for the same resource (1 = best)
+    pub round_priority: Option<i32>,
+
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -116,6 +122,10 @@ pub struct CreateReservationPayload {
     pub status: Option<ReservationStatus>,
 
     pub contract_id: Option<Uuid>,
+
+    /// Apply for a block in an open reservation round. The reservation stays pending until
+    /// the round is completed. Requires exactly one occurrence.
+    pub round_id: Option<Uuid>,
 
     #[validate(length(min = 1, message = "At least one occurrence must be provided"))]
     #[validate(nested)]
@@ -187,6 +197,8 @@ pub struct ListReservationsQuery {
     pub end_date: Option<DateTime<Utc>>,
     pub resource_id: Option<uuid::Uuid>,
     pub status: Option<super::models::ReservationStatus>,
+    /// Only reservations that are applications in this round
+    pub round_id: Option<uuid::Uuid>,
 }
 
 impl ListReservationsQuery {

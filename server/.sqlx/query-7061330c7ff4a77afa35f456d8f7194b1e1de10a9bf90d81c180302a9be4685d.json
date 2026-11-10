@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE reservation_rounds SET status = 'completed', completed_at = NOW(), completed_by = $2, updated_at = NOW() WHERE id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "7061330c7ff4a77afa35f456d8f7194b1e1de10a9bf90d81c180302a9be4685d"
+}

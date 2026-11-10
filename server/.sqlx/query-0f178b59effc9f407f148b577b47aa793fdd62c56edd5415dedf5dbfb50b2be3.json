@@ -1,0 +1,184 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT r.id, r.name, r.description, r.applications_open_at, r.applications_close_at,\n               r.period_start, r.period_end, r.max_pending_per_resource,\n               r.status AS \"status: RoundStatus\", r.completed_at, r.allocation_saved_at,\n               ARRAY(SELECT resource_id FROM reservation_round_resources WHERE round_id = r.id ORDER BY resource_id) AS \"resource_ids!\",\n               ARRAY(SELECT group_id FROM reservation_round_groups WHERE round_id = r.id ORDER BY group_id) AS \"group_ids!\",\n               r.created_at\n        FROM reservation_rounds r\n        WHERE r.deleted_at IS NULL AND r.id = $1\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "reservation_rounds",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "name",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "reservation_rounds",
+            "name": "name"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "description",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "reservation_rounds",
+            "name": "description"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "applications_open_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "reservation_rounds",
+            "name": "applications_open_at"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "applications_close_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "reservation_rounds",
+            "name": "applications_close_at"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "period_start",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "reservation_rounds",
+            "name": "period_start"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "period_end",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "reservation_rounds",
+            "name": "period_end"
+          }
+        }
+      },
+      {
+        "ordinal": 7,
+        "name": "max_pending_per_resource",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "reservation_rounds",
+            "name": "max_pending_per_resource"
+          }
+        }
+      },
+      {
+        "ordinal": 8,
+        "name": "status: RoundStatus",
+        "type_info": {
+          "Custom": {
+            "name": "round_status",
+            "kind": {
+              "Enum": [
+                "active",
+                "completed"
+              ]
+            }
+          }
+        },
+        "origin": {
+          "Table": {
+            "table": "reservation_rounds",
+            "name": "status"
+          }
+        }
+      },
+      {
+        "ordinal": 9,
+        "name": "completed_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "reservation_rounds",
+            "name": "completed_at"
+          }
+        }
+      },
+      {
+        "ordinal": 10,
+        "name": "allocation_saved_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "reservation_rounds",
+            "name": "allocation_saved_at"
+          }
+        }
+      },
+      {
+        "ordinal": 11,
+        "name": "resource_ids!",
+        "type_info": "UuidArray",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 12,
+        "name": "group_ids!",
+        "type_info": "UuidArray",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 13,
+        "name": "created_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "reservation_rounds",
+            "name": "created_at"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      true,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+      null,
+      null,
+      false
+    ]
+  },
+  "hash": "0f178b59effc9f407f148b577b47aa793fdd62c56edd5415dedf5dbfb50b2be3"
+}

@@ -25,6 +25,7 @@ pub async fn list_filtered(
     end_date: DateTime<Utc>,
     resource_id: Option<Uuid>,
     status: Option<ReservationStatus>,
+    round_id: Option<Uuid>,
     is_admin: bool,
     target_user_id: Option<Uuid>,
     viewer_group_id: Option<Uuid>,
@@ -41,6 +42,7 @@ pub async fn list_filtered(
           AND ($3::uuid IS NULL OR o.resource_id = $3)
           AND ($4::reservation_status IS NULL OR r.status = $4)
           AND ($5::uuid IS NULL OR r.user_id = $5)
+          AND ($8::uuid IS NULL OR r.round_id = $8)
           AND ($6 OR EXISTS (
               SELECT 1 FROM resources rs
               WHERE rs.id = o.resource_id
@@ -57,7 +59,8 @@ pub async fn list_filtered(
         status as Option<ReservationStatus>,
         target_user_id,
         sees_all,
-        viewer_group_id
+        viewer_group_id,
+        round_id
     )
     .fetch_all(pool)
     .await?;
@@ -89,10 +92,14 @@ pub async fn list_filtered(
             r.cancelled_at,
             r.cancelled_by,
             r.cancel_reason,
+            r.round_id,
+            rr.name AS "round_name?",
+            r.round_priority,
             r.created_at, 
             r.updated_at
         FROM reservations r
         LEFT JOIN users u ON u.id = r.user_id
+        LEFT JOIN reservation_rounds rr ON rr.id = r.round_id
         WHERE r.id = ANY($1) AND r.deleted_at IS NULL
         ORDER BY r.created_at DESC
         "#,
@@ -165,10 +172,14 @@ pub async fn find_by_id(
             r.cancelled_at,
             r.cancelled_by,
             r.cancel_reason,
+            r.round_id,
+            rr.name AS "round_name?",
+            r.round_priority,
             r.created_at, 
             r.updated_at
         FROM reservations r
         LEFT JOIN users u ON u.id = r.user_id
+        LEFT JOIN reservation_rounds rr ON rr.id = r.round_id
         WHERE r.id = $1 AND r.deleted_at IS NULL
         "#,
         id
@@ -203,9 +214,30 @@ pub async fn create(
     let mut tx = pool.begin().await?;
 
     if enforce_blocks {
-        validate_block_only_occurrences(&mut tx, None, dto.rrule.as_deref(), &dto.occurrences)
-            .await?;
+        validate_block_only_occurrences(
+            &mut tx,
+            None,
+            dto.rrule.as_deref(),
+            &dto.occurrences,
+            dto.round_id,
+        )
+        .await?;
     }
+
+    // Applications in a round get a priority and are validated against the round's rules
+    let round_priority = match dto.round_id {
+        Some(round_id) => Some(
+            crate::domains::rounds::db::prepare_application(
+                &mut tx,
+                round_id,
+                user_id,
+                !enforce_blocks,
+                &dto.occurrences,
+            )
+            .await?,
+        ),
+        None => None,
+    };
 
     let initial_status = dto.status.unwrap_or(ReservationStatus::Pending);
 
@@ -214,9 +246,9 @@ pub async fn create(
         INSERT INTO reservations (
             user_id, title, description_rich, admin_notes, 
             contact_person, contact_email, contact_phone, 
-            rrule, status, contract_id, message_to_admins
+            rrule, status, contract_id, message_to_admins, round_id, round_priority
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NULLIF(btrim($11), ''))
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NULLIF(btrim($11), ''), $12, $13)
         RETURNING id
         "#,
         user_id,
@@ -231,7 +263,9 @@ pub async fn create(
         dto.rrule,
         initial_status as ReservationStatus,
         dto.contract_id,
-        dto.message_to_admins
+        dto.message_to_admins,
+        dto.round_id,
+        round_priority
     )
     .fetch_one(&mut *tx)
     .await?;
@@ -265,8 +299,14 @@ pub async fn update(
     let mut tx = pool.begin().await?;
 
     if enforce_blocks && let Some(new_occurrences) = &dto.occurrences {
-        validate_block_only_occurrences(&mut tx, Some(id), dto.rrule.as_deref(), new_occurrences)
-            .await?;
+        validate_block_only_occurrences(
+            &mut tx,
+            Some(id),
+            dto.rrule.as_deref(),
+            new_occurrences,
+            None,
+        )
+        .await?;
     }
 
     let result = sqlx::query!(
@@ -900,6 +940,7 @@ pub async fn validate_block_only_occurrences(
     exclude_reservation_id: Option<Uuid>,
     rrule: Option<&str>,
     occurrences: &[CreateOccurrencePayload],
+    round_id: Option<Uuid>,
 ) -> Result<(), AppError> {
     if occurrences.is_empty() {
         return Ok(());
@@ -920,6 +961,16 @@ pub async fn validate_block_only_occurrences(
 
     if blocks_only_ids.is_empty() {
         return Ok(());
+    }
+
+    // A resource under an unfinished round can only be applied for through that round
+    if round_id.is_none() {
+        let on_blocks_only: Vec<CreateOccurrencePayload> = occurrences
+            .iter()
+            .filter(|o| blocks_only_ids.contains(&o.resource_id))
+            .cloned()
+            .collect();
+        crate::domains::rounds::db::ensure_not_under_round(&mut *conn, &on_blocks_only).await?;
     }
 
     if rrule.is_some() {
@@ -981,6 +1032,8 @@ pub async fn validate_block_only_occurrences(
                   AND r.deleted_at IS NULL
                   AND r.status IN ('confirmed', 'pending')
                   AND ($4::uuid IS NULL OR r.id <> $4)
+                  -- Several applications for one slot are fine within the same round
+                  AND NOT ($5::uuid IS NOT NULL AND r.round_id = $5 AND r.status = 'pending')
                   AND o.start_time < $3
                   AND o.end_time > $2
             ) AS "exists!"
@@ -988,7 +1041,8 @@ pub async fn validate_block_only_occurrences(
             occ.resource_id,
             occ.start_time,
             occ.end_time,
-            exclude_reservation_id
+            exclude_reservation_id,
+            round_id
         )
         .fetch_one(&mut *conn)
         .await?;
