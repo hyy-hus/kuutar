@@ -25,6 +25,7 @@ import {
 	useUpdateReservation,
 } from "#/hooks/useReservations";
 import { useResources } from "#/hooks/useResorces";
+import { useOpenRounds } from "#/hooks/useRounds";
 import { requireAuthGuard } from "#/utils/authGuard";
 import { cn } from "#/utils/cn";
 import { useDateFormatter } from "#/utils/date";
@@ -235,6 +236,9 @@ function UserDashboardPage() {
 		});
 	};
 
+	const { data: openRounds } = useOpenRounds();
+	const { formatDate } = useDateFormatter();
+
 	return (
 		<div className="flex flex-col gap-6 p-4 flex-1 min-h-0">
 			<div className="flex items-center justify-between gap-4 shrink-0">
@@ -242,6 +246,28 @@ function UserDashboardPage() {
 					{t("omatVaraukset", "Omat varaukset")}
 				</h1>
 			</div>
+
+			{openRounds && openRounds.length > 0 && (
+				<ul className="shrink-0 space-y-1">
+					{openRounds.map((round) => (
+						<li
+							key={round.id}
+							className="text-sm p-2 rounded-md border border-amber-300 bg-amber-50 dark:bg-amber-950/40 dark:border-amber-800"
+						>
+							<Link
+								to="/reservations/rounds/$id"
+								params={{ id: round.id }}
+								className="underline font-medium"
+							>
+								{round.name}
+							</Link>
+							{" – "}
+							{t("hakuaikaPttyy", "Haku päättyy")}{" "}
+							{formatDate(round.applications_close_at)}
+						</li>
+					))}
+				</ul>
+			)}
 
 			<div className="flex flex-wrap items-center gap-2 shrink-0 p-2 bg-stone-100 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-md">
 				<PeriodNavigator

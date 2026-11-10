@@ -1,0 +1,21 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        UPDATE reservation_rounds\n        SET name = COALESCE($2, name),\n            description = COALESCE($3, description),\n            applications_open_at = $4,\n            applications_close_at = $5,\n            period_start = COALESCE($6, period_start),\n            period_end = COALESCE($7, period_end),\n            max_pending_per_resource = COALESCE($8, max_pending_per_resource),\n            updated_at = NOW()\n        WHERE id = $1\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Text",
+        "Text",
+        "Timestamptz",
+        "Timestamptz",
+        "Timestamptz",
+        "Timestamptz",
+        "Int4"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "cadb9b61e07ad569f67f0d097aba0ebb5931737f78c14753b26af42b83c1d3d2"
+}

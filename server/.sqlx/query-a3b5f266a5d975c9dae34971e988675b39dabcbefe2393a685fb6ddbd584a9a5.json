@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        SELECT \n            r.id, \n            r.user_id,\n            u.name AS \"user_name?\",\n            u.email AS \"user_email?\",\n            r.title, \n            r.description_rich AS description,\n            r.message_to_admins,\n            r.admin_notes,\n            r.contact_person, \n            r.contact_email, \n            r.contact_phone,\n            r.rrule, \n            r.status AS \"status: ReservationStatus\",\n            r.source,\n            r.contract_id, \n            r.contract_printed_at,\n            r.cancelled_at,\n            r.cancelled_by,\n            r.cancel_reason,\n            r.created_at, \n            r.updated_at\n        FROM reservations r\n        LEFT JOIN users u ON u.id = r.user_id\n        WHERE r.id = $1 AND r.deleted_at IS NULL\n        ",
+  "query": "\n        SELECT \n            r.id, \n            r.user_id,\n            u.name AS \"user_name?\",\n            u.email AS \"user_email?\",\n            r.title, \n            r.description_rich AS description,\n            r.message_to_admins,\n            r.admin_notes,\n            r.contact_person, \n            r.contact_email, \n            r.contact_phone,\n            r.rrule, \n            r.status AS \"status: ReservationStatus\",\n            r.source,\n            r.contract_id, \n            r.contract_printed_at,\n            r.cancelled_at,\n            r.cancelled_by,\n            r.cancel_reason,\n            r.round_id,\n            rr.name AS \"round_name?\",\n            r.round_priority,\n            r.created_at, \n            r.updated_at\n        FROM reservations r\n        LEFT JOIN users u ON u.id = r.user_id\n        LEFT JOIN reservation_rounds rr ON rr.id = r.round_id\n        WHERE r.id = ANY($1) AND r.deleted_at IS NULL\n        ORDER BY r.created_at DESC\n        ",
   "describe": {
     "columns": [
       {
@@ -225,6 +225,39 @@
       },
       {
         "ordinal": 19,
+        "name": "round_id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "reservations",
+            "name": "round_id"
+          }
+        }
+      },
+      {
+        "ordinal": 20,
+        "name": "round_name?",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "reservation_rounds",
+            "name": "name"
+          }
+        }
+      },
+      {
+        "ordinal": 21,
+        "name": "round_priority",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "reservations",
+            "name": "round_priority"
+          }
+        }
+      },
+      {
+        "ordinal": 22,
         "name": "created_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -235,7 +268,7 @@
         }
       },
       {
-        "ordinal": 20,
+        "ordinal": 23,
         "name": "updated_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -248,14 +281,14 @@
     ],
     "parameters": {
       "Left": [
-        "Uuid"
+        "UuidArray"
       ]
     },
     "nullable": [
       false,
       false,
-      true,
-      true,
+      false,
+      false,
       false,
       true,
       true,
@@ -270,10 +303,13 @@
       true,
       true,
       true,
+      true,
+      true,
+      false,
       true,
       false,
       false
     ]
   },
-  "hash": "5b68a5affeefa87eff4186d581db4c7e5f827c982e8f6fc35e460f502d77f94d"
+  "hash": "a3b5f266a5d975c9dae34971e988675b39dabcbefe2393a685fb6ddbd584a9a5"
 }

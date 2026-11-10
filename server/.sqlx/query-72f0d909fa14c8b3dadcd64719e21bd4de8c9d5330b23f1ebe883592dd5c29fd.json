@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        INSERT INTO reservation_round_allocations (round_id, reservation_id)\n        SELECT $1, UNNEST($2::uuid[])\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "UuidArray"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "72f0d909fa14c8b3dadcd64719e21bd4de8c9d5330b23f1ebe883592dd5c29fd"
+}

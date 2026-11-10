@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE reservation_rounds SET applications_close_at = NOW() - INTERVAL '1 minute' WHERE id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "1467f0ce5a70a8d852c7961fba8ff8345ba7d8bf20f1a991a84083e6fdcbee26"
+}

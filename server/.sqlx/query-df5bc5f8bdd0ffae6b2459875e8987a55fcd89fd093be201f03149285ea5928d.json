@@ -1,0 +1,62 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT status AS \"status: RoundStatus\", applications_open_at, applications_close_at\n           FROM reservation_rounds WHERE id = $1 AND deleted_at IS NULL FOR UPDATE",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "status: RoundStatus",
+        "type_info": {
+          "Custom": {
+            "name": "round_status",
+            "kind": {
+              "Enum": [
+                "active",
+                "completed"
+              ]
+            }
+          }
+        },
+        "origin": {
+          "Table": {
+            "table": "reservation_rounds",
+            "name": "status"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "applications_open_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "reservation_rounds",
+            "name": "applications_open_at"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "applications_close_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "reservation_rounds",
+            "name": "applications_close_at"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "df5bc5f8bdd0ffae6b2459875e8987a55fcd89fd093be201f03149285ea5928d"
+}

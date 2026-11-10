@@ -26,6 +26,7 @@ import {
 	useUpdateReservation,
 } from "#/hooks/useReservations";
 import { useResources } from "#/hooks/useResorces";
+import { useRounds } from "#/hooks/useRounds";
 import { cn } from "#/utils/cn";
 import { useDateFormatter } from "#/utils/date";
 import {
@@ -38,6 +39,7 @@ export interface AdminDashboardSearch {
 	start_date?: string;
 	months?: PeriodMonths;
 	resource_id?: string;
+	round_id?: string;
 }
 
 /** Orders reservations by their first occurrence; ones without times go last */
@@ -62,6 +64,8 @@ export const Route = createFileRoute("/_app/admin/dashboard/")({
 			months: parsePeriodMonths(search.months),
 			resource_id:
 				typeof search.resource_id === "string" ? search.resource_id : undefined,
+			round_id:
+				typeof search.round_id === "string" ? search.round_id : undefined,
 		};
 	},
 	component: AdminDashboardPage,
@@ -162,6 +166,20 @@ function AdminReservationRow({
 					</Link>
 
 					{isOutlook && <OutlookBadge />}
+
+					{reservationWithOcc.round_id && (
+						<Link
+							to="/admin/rounds/$id"
+							params={{ id: reservationWithOcc.round_id }}
+							title={t("varauskierros", "Varauskierros")}
+							className="shrink-0 text-[11px] font-semibold text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/50 border border-amber-300/60 dark:border-amber-800/60 px-1.5 py-0.5 rounded"
+						>
+							{reservationWithOcc.round_name}
+							{reservationWithOcc.round_priority
+								? ` · #${reservationWithOcc.round_priority}`
+								: ""}
+						</Link>
+					)}
 
 					{reservationWithOcc.user_name && (
 						<span
@@ -324,6 +342,8 @@ function AdminDashboardPage() {
 	// Admins review the whole current year by default
 	const months = search.months ?? 12;
 	const resourceId = search.resource_id;
+	const roundId = search.round_id;
+	const { data: rounds } = useRounds();
 
 	const { start, startDateISO, endDateISO } = useMemo(
 		() => getPeriodRange(search.start_date, months),
@@ -338,6 +358,7 @@ function AdminDashboardPage() {
 		startDate: startDateISO,
 		endDate: endDateISO,
 		resourceId,
+		roundId,
 	});
 
 	// Chronological sorter helper (earliest start_time first)
@@ -460,6 +481,22 @@ function AdminDashboardPage() {
 					{resources?.map((res) => (
 						<option key={res.id} value={res.id}>
 							{res.name}
+						</option>
+					))}
+				</select>
+
+				<select
+					value={roundId || ""}
+					onChange={(e) =>
+						updateSearch({ round_id: e.target.value || undefined })
+					}
+					aria-label={t("varauskierros", "Varauskierros")}
+					className="px-2.5 py-1 text-xs bg-stone-50 dark:bg-stone-950 border border-stone-200 dark:border-stone-800 rounded-md font-medium max-w-full truncate"
+				>
+					<option value="">{t("kaikkiKierrokset", "Kaikki kierrokset")}</option>
+					{rounds?.map((round) => (
+						<option key={round.id} value={round.id}>
+							{round.name}
 						</option>
 					))}
 				</select>

@@ -30,6 +30,7 @@ export interface ReservationFilterParams {
 	endDate: string;
 	resourceId?: string;
 	status?: ReservationStatus;
+	roundId?: string;
 }
 
 export const reservationKeys = {
@@ -56,6 +57,7 @@ export function useReservations(params: ReservationFilterParams) {
 						end_date: params.endDate,
 						resource_id: params.resourceId,
 						status: params.status,
+						round_id: params.roundId,
 					},
 				},
 			});
@@ -95,6 +97,7 @@ export function useMyReservations(
 						end_date: params.endDate,
 						resource_id: params.resourceId || undefined,
 						status: params.status || undefined,
+						round_id: params.roundId || undefined,
 					},
 				},
 			});

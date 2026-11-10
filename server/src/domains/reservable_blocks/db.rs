@@ -127,6 +127,8 @@ async fn fetch_occurrences(
                 WHERE o.resource_id = bo.resource_id
                   AND r.deleted_at IS NULL
                   AND r.status IN ('confirmed', 'pending')
+                  -- Applications in a round only compete for the block; they don't hold it
+                  AND NOT (r.status = 'pending' AND r.round_id IS NOT NULL)
                   AND o.start_time < bo.end_time
                   AND o.end_time > bo.start_time
             ) AS "reserved!"

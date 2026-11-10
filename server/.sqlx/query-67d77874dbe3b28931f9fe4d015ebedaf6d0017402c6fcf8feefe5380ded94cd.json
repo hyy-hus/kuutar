@@ -1,0 +1,28 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT reservation_id FROM reservation_round_allocations WHERE round_id = $1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "reservation_id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "reservation_round_allocations",
+            "name": "reservation_id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "67d77874dbe3b28931f9fe4d015ebedaf6d0017402c6fcf8feefe5380ded94cd"
+}

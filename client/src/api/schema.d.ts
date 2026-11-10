@@ -659,6 +659,134 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/rounds": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_rounds"];
+        put?: never;
+        post: operations["create_round"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/rounds/open": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_open_rounds"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/rounds/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_round"];
+        put?: never;
+        post?: never;
+        delete: operations["delete_round"];
+        options?: never;
+        head?: never;
+        patch: operations["update_round"];
+        trace?: never;
+    };
+    "/rounds/{id}/allocate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["allocate_round"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/rounds/{id}/allocation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_allocation"];
+        put: operations["save_allocation"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/rounds/{id}/applications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_applications"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/rounds/{id}/complete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["complete_round"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/rounds/{id}/priorities": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["set_priorities"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/stats": {
         parameters: {
             query?: never;
@@ -790,6 +918,23 @@ export interface components {
             totals: components["schemas"]["UsageTotals"];
             unused_resources: components["schemas"]["UnusedResource"][];
         };
+        AllocatePayload: {
+            /**
+             * Format: int64
+             * @description Seed for the shuffle; omit for a random one. The same seed gives the same result.
+             */
+            seed?: number | null;
+        };
+        Allocation: {
+            reservation_ids: string[];
+            saved: boolean;
+        };
+        AllocationProposal: {
+            /** @description Reservations to grant. Every other application in the round is denied. */
+            reservation_ids: string[];
+            /** Format: int64 */
+            seed: number;
+        };
         AuthTokens: {
             access_token: string;
             /** Format: int64 */
@@ -821,6 +966,10 @@ export interface components {
             name: string;
             /** Format: date-time */
             updated_at: string;
+        };
+        CompleteRoundReport: {
+            cancelled_count: number;
+            confirmed_count: number;
         };
         Contract: {
             /** Format: date-time */
@@ -902,6 +1051,12 @@ export interface components {
             /** @description Plain text for the admins. Send an empty string to clear. */
             message_to_admins?: string | null;
             occurrences: components["schemas"]["CreateOccurrencePayload"][];
+            /**
+             * Format: uuid
+             * @description Apply for a block in an open reservation round. The reservation stays pending until
+             *     the round is completed. Requires exactly one occurrence.
+             */
+            round_id?: string | null;
             rrule?: string | null;
             status?: null | components["schemas"]["ReservationStatus"];
             title: string;
@@ -957,6 +1112,25 @@ export interface components {
             occurrences: components["schemas"]["CreateRestrictionOccurrencePayload"][];
             rrule?: string | null;
             title: string;
+        };
+        CreateRoundPayload: {
+            /** Format: date-time */
+            applications_close_at: string;
+            /** Format: date-time */
+            applications_open_at: string;
+            description?: string | null;
+            group_ids: string[];
+            /** Format: int32 */
+            max_pending_per_resource: number;
+            name: string;
+            /** Format: date-time */
+            period_end: string;
+            /**
+             * Format: date-time
+             * @description The blocks that can be applied for must fall inside this period
+             */
+            period_start: string;
+            resource_ids: string[];
         };
         CreateUser: {
             email: string;
@@ -1192,6 +1366,17 @@ export interface components {
             id: string;
             /** @description Information from the reserver to the admins. Visible only to the owner and admins. */
             message_to_admins?: string | null;
+            /**
+             * Format: uuid
+             * @description Set when the reservation is an application in a reservation round
+             */
+            round_id?: string | null;
+            round_name?: string | null;
+            /**
+             * Format: int32
+             * @description The applicant's own ranking among their applications for the same resource (1 = best)
+             */
+            round_priority?: number | null;
             rrule?: string | null;
             /** @description `kuutar`, or `outlook` for events imported from Outlook (edited there, read-only here) */
             source: string;
@@ -1298,6 +1483,74 @@ export interface components {
         };
         /** @enum {string} */
         Role: "admin" | "user";
+        Round: {
+            /** Format: date-time */
+            allocation_saved_at?: string | null;
+            /** Format: date-time */
+            applications_close_at: string;
+            /** Format: date-time */
+            applications_open_at: string;
+            /** Format: date-time */
+            completed_at?: string | null;
+            /** Format: date-time */
+            created_at: string;
+            description?: string | null;
+            group_ids: string[];
+            /** Format: uuid */
+            id: string;
+            /** Format: int32 */
+            max_pending_per_resource: number;
+            name: string;
+            /** Format: date-time */
+            period_end: string;
+            /** Format: date-time */
+            period_start: string;
+            phase: components["schemas"]["RoundPhase"];
+            resource_ids: string[];
+            status: components["schemas"]["RoundStatus"];
+        };
+        /** @description One application (a pending reservation) in a round, with what the allocation needs. */
+        RoundApplication: {
+            /** @description Internal notes, admin-only */
+            admin_notes?: string | null;
+            contact_email?: string | null;
+            contact_person?: string | null;
+            contact_phone?: string | null;
+            /** @description Localized rich text, as on the reservation */
+            description?: {
+                [key: string]: unknown;
+            } | null;
+            /** Format: date-time */
+            end_time: string;
+            /** @description The block is already held by a reservation outside this round, so it cannot be granted */
+            externally_taken: boolean;
+            message_to_admins?: string | null;
+            /** Format: int32 */
+            priority: number;
+            /** Format: uuid */
+            reservation_id: string;
+            /** Format: uuid */
+            resource_id: string;
+            /** Format: date-time */
+            start_time: string;
+            /** @description `pending` until the round is completed, then `confirmed` (granted) or `cancelled` */
+            status: components["schemas"]["ReservationStatus"];
+            title: string;
+            user_email?: string | null;
+            /** Format: uuid */
+            user_id: string;
+            user_name?: string | null;
+        };
+        /**
+         * @description Where a round is in its lifecycle, derived from its status and times.
+         * @enum {string}
+         */
+        RoundPhase: "upcoming" | "open" | "allocating" | "completed";
+        /** @enum {string} */
+        RoundStatus: "active" | "completed";
+        SaveAllocationPayload: {
+            reservation_ids: string[];
+        };
         /** @description An active login session (one per device/browser) */
         SessionInfo: {
             /** @description True for the session making this request (only known for the user's own list) */
@@ -1312,6 +1565,12 @@ export interface components {
             /** Format: date-time */
             started_at: string;
             user_agent?: string | null;
+        };
+        SetPrioritiesPayload: {
+            /** @description All of the caller's applications for the resource in this round, best first */
+            reservation_ids: string[];
+            /** Format: uuid */
+            resource_id: string;
         };
         SplitReservableBlockPayload: {
             /**
@@ -1518,6 +1777,22 @@ export interface components {
             occurrences?: components["schemas"]["CreateRestrictionOccurrencePayload"][] | null;
             rrule?: string | null;
             title?: string | null;
+        };
+        UpdateRoundPayload: {
+            /** Format: date-time */
+            applications_close_at?: string | null;
+            /** Format: date-time */
+            applications_open_at?: string | null;
+            description?: string | null;
+            group_ids?: string[] | null;
+            /** Format: int32 */
+            max_pending_per_resource?: number | null;
+            name?: string | null;
+            /** Format: date-time */
+            period_end?: string | null;
+            /** Format: date-time */
+            period_start?: string | null;
+            resource_ids?: string[] | null;
         };
         UpdateUser: {
             /** @description Empty string clears the value; omitted leaves it unchanged. */
@@ -2990,6 +3265,8 @@ export interface operations {
                 end_date?: string | null;
                 resource_id?: string | null;
                 status?: null | components["schemas"]["ReservationStatus"];
+                /** @description Only reservations that are applications in this round */
+                round_id?: string | null;
             };
             header?: never;
             path?: never;
@@ -3153,6 +3430,8 @@ export interface operations {
                 end_date?: string | null;
                 resource_id?: string | null;
                 status?: null | components["schemas"]["ReservationStatus"];
+                /** @description Only reservations that are applications in this round */
+                round_id?: string | null;
             };
             header?: never;
             path?: never;
@@ -3825,6 +4104,363 @@ export interface operations {
                 content?: never;
             };
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    list_rounds: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Round"][];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    create_round: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateRoundPayload"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Round"];
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    list_open_rounds: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Upcoming and open rounds the caller's group can apply to */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Round"][];
+                };
+            };
+        };
+    };
+    get_round: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Round"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    delete_round: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description The round has applications */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    update_round: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateRoundPayload"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Round"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    allocate_round: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": null | components["schemas"]["AllocatePayload"];
+            };
+        };
+        responses: {
+            /** @description A randomized proposal; nothing is saved */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AllocationProposal"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_allocation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Allocation"];
+                };
+            };
+        };
+    };
+    save_allocation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveAllocationPayload"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Allocation"];
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    list_applications: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description All applications of the round, whatever their status */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoundApplication"][];
+                };
+            };
+        };
+    };
+    complete_round: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Confirmations and cancellations were applied and emailed */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompleteRoundReport"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    set_priorities: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetPrioritiesPayload"];
+            };
+        };
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };

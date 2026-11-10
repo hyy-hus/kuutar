@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE reservation_rounds SET allocation_saved_at = NOW() WHERE id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "576028edd8a6b565f07c0b4b362fffab80cf2e8a760d7fd878062cc6bd1e14ed"
+}

@@ -223,10 +223,17 @@ export function ReservationForm({
 		}
 	}, [isCreate, resources, form]);
 
+	// Reaches past the default lookahead when a block further ahead was preselected
+	// (e.g. from the calendar), so it can still be found and shown as selected
 	const blockRange = useMemo(() => {
 		const today = new Date();
-		return localDayRangeISO(today, addDays(today, BLOCK_LOOKAHEAD_DAYS));
-	}, []);
+		const lookaheadEnd = addDays(today, BLOCK_LOOKAHEAD_DAYS);
+		const selectedEnd = endTime ? addDays(new Date(endTime), 1) : lookaheadEnd;
+		return localDayRangeISO(
+			today,
+			selectedEnd > lookaheadEnd ? selectedEnd : lookaheadEnd,
+		);
+	}, [endTime]);
 	const { data: blocks, isLoading: loadingBlocks } = useReservableBlocks(
 		{
 			start_date: blockRange.startISO,

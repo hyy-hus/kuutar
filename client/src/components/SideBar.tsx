@@ -14,6 +14,7 @@ import {
 	Home,
 	Mail,
 	Moon,
+	Repeat,
 	Shield,
 	ShieldAlert,
 	Sun,
@@ -80,6 +81,12 @@ export function SideBar({ theme, toggleTheme }: SideBarProps) {
 			to: "/reservable-blocks",
 			label: t("varausjaksot", "Varausjaksot"),
 			icon: CalendarCheck,
+			adminOnly: true,
+		},
+		{
+			to: "/admin/rounds",
+			label: t("varauskierrokset", "Varauskierrokset"),
+			icon: Repeat,
 			adminOnly: true,
 		},
 		{

@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "DELETE FROM reservation_round_groups WHERE round_id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "33d6123738b1e4d35bd51dec1e0122baff0b7d78ea6892d2a6aa3c92472b29f7"
+}

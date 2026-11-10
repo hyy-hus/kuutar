@@ -1,0 +1,30 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT r.name\n            FROM reservation_rounds r\n            JOIN reservation_round_resources x ON x.round_id = r.id\n            WHERE r.deleted_at IS NULL\n              AND r.status = 'active'\n              AND x.resource_id = $1\n              AND r.period_start < $3\n              AND r.period_end > $2\n            LIMIT 1\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "name",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "reservation_rounds",
+            "name": "name"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Timestamptz",
+        "Timestamptz"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "46ce70a0ba647e432f9926f96e9d54f0071ccf679d2babea267268d918b41509"
+}

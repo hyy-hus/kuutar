@@ -1,0 +1,30 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT r.id\n        FROM reservations r\n        JOIN occurrences o ON o.reservation_id = r.id\n        WHERE r.round_id = $1 AND r.user_id = $2 AND o.resource_id = $3\n          AND r.deleted_at IS NULL AND r.status = 'pending'\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "reservations",
+            "name": "id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "1ec168111c1ef3e7c8a1c14497e6691a01bc0cc2458596ea381375182a1b84b5"
+}

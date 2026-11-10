@@ -1,0 +1,24 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT EXISTS (\n            SELECT 1 FROM users u\n            JOIN reservation_round_groups g ON g.group_id = u.group_id\n            WHERE u.id = $1 AND g.round_id = $2\n        ) AS \"ok!\"\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "ok!",
+        "type_info": "Bool",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "2befda54546e5cd20d31cc91ad65ee2601260c0f0a84f8b15db707f6dbf235b9"
+}
