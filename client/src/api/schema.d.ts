@@ -1511,8 +1511,16 @@ export interface components {
         };
         /** @description One application (a pending reservation) in a round, with what the allocation needs. */
         RoundApplication: {
+            contact_email?: string | null;
+            contact_person?: string | null;
+            contact_phone?: string | null;
+            /** @description Localized rich text, as on the reservation */
+            description?: {
+                [key: string]: unknown;
+            } | null;
             /** Format: date-time */
             end_time: string;
+            message_to_admins?: string | null;
             /** Format: int32 */
             priority: number;
             /** Format: uuid */
@@ -1521,7 +1529,10 @@ export interface components {
             resource_id: string;
             /** Format: date-time */
             start_time: string;
+            /** @description `pending` until the round is completed, then `confirmed` (granted) or `cancelled` */
+            status: components["schemas"]["ReservationStatus"];
             title: string;
+            user_email?: string | null;
             /** Format: uuid */
             user_id: string;
             user_name?: string | null;
@@ -4379,7 +4390,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Pending applications of the round */
+            /** @description All applications of the round, whatever their status */
             200: {
                 headers: {
                     [name: string]: unknown;

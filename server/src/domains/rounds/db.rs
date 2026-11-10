@@ -11,7 +11,10 @@ use super::{
         RoundApplication, RoundPhase, RoundStatus, UpdateRoundPayload,
     },
 };
-use crate::{domains::reservations::models::CreateOccurrencePayload, errors::AppError};
+use crate::{
+    domains::reservations::models::{CreateOccurrencePayload, ReservationStatus},
+    errors::AppError,
+};
 
 struct RoundRow {
     id: Uuid,
@@ -642,6 +645,7 @@ pub async fn set_priorities(
 pub async fn list_applications(
     conn: &mut PgConnection,
     round_id: Uuid,
+    pending_only: bool,
 ) -> Result<Vec<RoundApplication>, AppError> {
     Ok(sqlx::query_as!(
         RoundApplication,
@@ -649,7 +653,14 @@ pub async fn list_applications(
         SELECT r.id AS reservation_id,
                r.user_id,
                u.name AS "user_name?",
+               u.email AS "user_email?",
                r.title,
+               r.description_rich AS description,
+               r.message_to_admins,
+               r.contact_person,
+               r.contact_email,
+               r.contact_phone,
+               r.status AS "status: ReservationStatus",
                o.resource_id,
                o.start_time,
                o.end_time,
@@ -657,10 +668,12 @@ pub async fn list_applications(
         FROM reservations r
         JOIN occurrences o ON o.reservation_id = r.id
         LEFT JOIN users u ON u.id = r.user_id
-        WHERE r.round_id = $1 AND r.deleted_at IS NULL AND r.status = 'pending'
+        WHERE r.round_id = $1 AND r.deleted_at IS NULL
+          AND ($2 = FALSE OR r.status = 'pending')
         ORDER BY o.resource_id, o.start_time, r.created_at
         "#,
-        round_id
+        round_id,
+        pending_only
     )
     .fetch_all(&mut *conn)
     .await?)
@@ -710,7 +723,7 @@ pub async fn propose_allocation(
     let round = find(pool, round_id).await?;
     ensure_allocating(&round)?;
     let mut conn = pool.acquire().await?;
-    let applications = list_applications(&mut conn, round_id).await?;
+    let applications = list_applications(&mut conn, round_id, true).await?;
     let unavailable = unavailable_slots(&mut conn, round_id).await?;
     let seed = seed.unwrap_or_else(|| Uuid::new_v4().as_u128() as u64);
     Ok(AllocationProposal {
@@ -740,7 +753,7 @@ async fn validate_grants(
     round: &Round,
     grants: &[Uuid],
 ) -> Result<(), AppError> {
-    let applications = list_applications(&mut *conn, round.id).await?;
+    let applications = list_applications(&mut *conn, round.id, true).await?;
     let by_id: HashMap<Uuid, &RoundApplication> =
         applications.iter().map(|a| (a.reservation_id, a)).collect();
     let unavailable = unavailable_slots(conn, round.id).await?;

@@ -4,6 +4,8 @@ use utoipa::ToSchema;
 use uuid::Uuid;
 use validator::Validate;
 
+use crate::domains::reservations::models::ReservationStatus;
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, sqlx::Type, ToSchema)]
 #[sqlx(type_name = "round_status", rename_all = "lowercase")]
 #[serde(rename_all = "lowercase")]
@@ -104,7 +106,17 @@ pub struct RoundApplication {
     pub reservation_id: Uuid,
     pub user_id: Uuid,
     pub user_name: Option<String>,
+    pub user_email: Option<String>,
     pub title: String,
+    /// Localized rich text, as on the reservation
+    #[schema(value_type = Option<HashMap<String, serde_json::Value>>)]
+    pub description: Option<serde_json::Value>,
+    pub message_to_admins: Option<String>,
+    pub contact_person: Option<String>,
+    pub contact_email: Option<String>,
+    pub contact_phone: Option<String>,
+    /// `pending` until the round is completed, then `confirmed` (granted) or `cancelled`
+    pub status: ReservationStatus,
     pub resource_id: Uuid,
     pub start_time: DateTime<Utc>,
     pub end_time: DateTime<Utc>,

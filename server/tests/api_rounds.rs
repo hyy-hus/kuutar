@@ -458,6 +458,28 @@ async fn full_round_flow(pool: PgPool) {
     .await;
     assert_eq!(status, StatusCode::CREATED, "{body}");
 
+    // The admin overview keeps all applications with their outcome
+    let (status, apps) = request(
+        &env.app,
+        "GET",
+        &format!("/rounds/{}/applications", env.round_id),
+        Some(&env.admin),
+        None,
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK);
+    let apps = apps.as_array().unwrap();
+    assert_eq!(apps.len(), 3);
+    assert_eq!(
+        apps.iter().filter(|a| a["status"] == "confirmed").count(),
+        2
+    );
+    assert_eq!(
+        apps.iter().filter(|a| a["status"] == "cancelled").count(),
+        1
+    );
+    assert!(apps.iter().all(|a| a["user_email"].is_string()));
+
     // A completed round cannot be completed twice
     let (status, _) = request(
         &env.app,

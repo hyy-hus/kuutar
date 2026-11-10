@@ -161,7 +161,7 @@ pub async fn set_priorities(
     tag = "Rounds",
     security(("bearer_auth" = [])),
     params(("id" = Uuid, Path)),
-    responses((status = 200, description = "Pending applications of the round", body = [RoundApplication]))
+    responses((status = 200, description = "All applications of the round, whatever their status", body = [RoundApplication]))
 )]
 pub async fn list_applications(
     State(auth_state): State<AuthState>,
@@ -170,7 +170,7 @@ pub async fn list_applications(
 ) -> Result<Json<Vec<RoundApplication>>, AppError> {
     db::find(&auth_state.pool, id).await?;
     let mut conn = auth_state.pool.acquire().await?;
-    Ok(Json(db::list_applications(&mut conn, id).await?))
+    Ok(Json(db::list_applications(&mut conn, id, false).await?))
 }
 
 #[utoipa::path(
