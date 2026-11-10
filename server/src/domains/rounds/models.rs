@@ -112,6 +112,8 @@ pub struct RoundApplication {
     #[schema(value_type = Option<HashMap<String, serde_json::Value>>)]
     pub description: Option<serde_json::Value>,
     pub message_to_admins: Option<String>,
+    /// Internal notes, admin-only
+    pub admin_notes: Option<String>,
     pub contact_person: Option<String>,
     pub contact_email: Option<String>,
     pub contact_phone: Option<String>,

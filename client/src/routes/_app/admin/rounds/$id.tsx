@@ -1,5 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Dices, Loader2, Save } from "lucide-react";
+import { HoverCard } from "radix-ui";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { BackLink } from "#/components/BackLink";
@@ -426,9 +427,7 @@ function ApplicantList({
 														<span className="font-medium">
 															{`${a.priority}. ${formatDateRange(a.start_time, a.end_time)}`}
 														</span>
-														<span className="text-xs text-stone-600 dark:text-stone-400">
-															{a.title}
-														</span>
+														<ApplicationHoverCard application={a} />
 														{isChosen && completed && (
 															<span className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-300">
 																{t("myonnetty", "Myönnetty")}
@@ -476,12 +475,6 @@ function ApplicantList({
 															)}
 														</p>
 													)}
-													<RichTextContent value={a.description} />
-													{a.message_to_admins && (
-														<p className="text-xs text-stone-600 dark:text-stone-400 whitespace-pre-line">
-															{a.message_to_admins}
-														</p>
-													)}
 												</div>
 											);
 										})}
@@ -506,5 +499,66 @@ function ApplicantList({
 				})}
 			</ul>
 		</section>
+	);
+}
+
+/** The reservation's title; hovering or focusing it shows everything the applicant wrote */
+function ApplicationHoverCard({
+	application,
+}: {
+	application: RoundApplication;
+}) {
+	const { t } = useTranslation();
+	return (
+		<HoverCard.Root openDelay={150} closeDelay={100}>
+			<HoverCard.Trigger asChild>
+				<button
+					type="button"
+					className="text-xs text-stone-600 dark:text-stone-400 underline decoration-dotted cursor-help"
+				>
+					{application.title}
+				</button>
+			</HoverCard.Trigger>
+			<HoverCard.Portal>
+				<HoverCard.Content
+					side="bottom"
+					align="start"
+					sideOffset={6}
+					className="z-50 w-80 max-w-[90vw] p-3 space-y-2 text-sm rounded-md border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-950 shadow-lg"
+				>
+					<div className="font-bold">{application.title}</div>
+					<section>
+						<h3 className="text-[11px] font-bold uppercase tracking-wide text-stone-500">
+							{t("kuvaus", "Kuvaus")}
+						</h3>
+						<RichTextContent
+							value={application.description}
+							fallback={
+								<p className="text-xs text-stone-500">
+									{t("eiKuvaustaSaatavilla", "Ei kuvausta saatavilla.")}
+								</p>
+							}
+						/>
+					</section>
+					<section>
+						<h3 className="text-[11px] font-bold uppercase tracking-wide text-stone-500">
+							{t("viestiYllapitajille", "Viesti ylläpitäjille")}
+						</h3>
+						<p className="text-xs whitespace-pre-line">
+							{application.message_to_admins || "—"}
+						</p>
+					</section>
+					<section>
+						<h3 className="text-[11px] font-bold uppercase tracking-wide text-stone-500">
+							{t("yllpitjnMuistiinpanot", "Ylläpitäjän muistiinpanot")}
+						</h3>
+						<p className="text-xs whitespace-pre-line">
+							{application.admin_notes || "—"}
+						</p>
+					</section>
+					<HoverCard.Arrow className="fill-white dark:fill-stone-950" />
+				</HoverCard.Content>
+			</HoverCard.Portal>
+		</HoverCard.Root>
 	);
 }

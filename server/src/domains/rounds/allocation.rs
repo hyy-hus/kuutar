@@ -85,6 +85,7 @@ mod tests {
             title: String::new(),
             description: None,
             message_to_admins: None,
+            admin_notes: None,
             contact_person: None,
             contact_email: None,
             contact_phone: None,

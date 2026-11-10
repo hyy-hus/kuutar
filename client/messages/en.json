@@ -771,5 +771,6 @@
 	"varauskierros": "Reservation round",
 	"viestiYllapidolle": "Message to administrators",
 	"viestiYllapidolleOhje": "Only you and the administrators can see this. Use it for details that don't belong in the public description.",
+	"viestiYllapitajille": "Message to admins",
 	"yllpitjnMuistiinpanotEiOmistajalle": "Administrator notes (not visible to the reserver)"
 }

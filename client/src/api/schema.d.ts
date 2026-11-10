@@ -1511,6 +1511,8 @@ export interface components {
         };
         /** @description One application (a pending reservation) in a round, with what the allocation needs. */
         RoundApplication: {
+            /** @description Internal notes, admin-only */
+            admin_notes?: string | null;
             contact_email?: string | null;
             contact_person?: string | null;
             contact_phone?: string | null;

@@ -657,6 +657,7 @@ pub async fn list_applications(
                r.title,
                r.description_rich AS description,
                r.message_to_admins,
+               r.admin_notes,
                r.contact_person,
                r.contact_email,
                r.contact_phone,
