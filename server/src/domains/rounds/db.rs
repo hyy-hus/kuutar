@@ -664,7 +664,17 @@ pub async fn list_applications(
                o.resource_id,
                o.start_time,
                o.end_time,
-               COALESCE(r.round_priority, 1) AS "priority!"
+               COALESCE(r.round_priority, 1) AS "priority!",
+               EXISTS (
+                   SELECT 1
+                   FROM occurrences o2
+                   JOIN reservations r2 ON r2.id = o2.reservation_id
+                   WHERE o2.resource_id = o.resource_id
+                     AND o2.start_time = o.start_time
+                     AND r2.deleted_at IS NULL
+                     AND r2.status IN ('confirmed', 'pending')
+                     AND r2.round_id IS DISTINCT FROM r.round_id
+               ) AS "externally_taken!"
         FROM reservations r
         JOIN occurrences o ON o.reservation_id = r.id
         LEFT JOIN users u ON u.id = r.user_id

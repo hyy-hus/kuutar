@@ -93,6 +93,7 @@ mod tests {
             start_time: start,
             end_time: start + chrono::TimeDelta::hours(1),
             priority,
+            externally_taken: false,
         }
     }
 

@@ -19,7 +19,13 @@ import {
 } from "#/hooks/useRounds";
 import { requireAdminGuard } from "#/utils/authGuard";
 import { useDateFormatter } from "#/utils/date";
-import { assignSlot, roundPhase } from "#/utils/rounds";
+import {
+	competingApplications,
+	findConflicts,
+	roundPhase,
+	type SlotConflict,
+	selectApplication,
+} from "#/utils/rounds";
 import { RoundPhaseChip } from "./index";
 
 const DASH = " – ";
@@ -31,40 +37,11 @@ export const Route = createFileRoute("/_app/admin/rounds/$id")({
 	component: RoundPage,
 });
 
-type Slot = {
-	key: string;
-	resource_id: string;
-	start_time: string;
-	end_time: string;
-	applications: RoundApplication[];
-};
-
-function groupBySlot(applications: RoundApplication[]): Slot[] {
-	const slots = new Map<string, Slot>();
-	for (const app of applications) {
-		const key = `${app.resource_id}|${new Date(app.start_time).getTime()}`;
-		const slot = slots.get(key) ?? {
-			key,
-			resource_id: app.resource_id,
-			start_time: app.start_time,
-			end_time: app.end_time,
-			applications: [],
-		};
-		slot.applications.push(app);
-		slots.set(key, slot);
-	}
-	return [...slots.values()].sort(
-		(a, b) =>
-			a.resource_id.localeCompare(b.resource_id) ||
-			new Date(a.start_time).getTime() - new Date(b.start_time).getTime(),
-	);
-}
-
 function RoundPage() {
 	const { id } = Route.useParams();
 	const { t } = useTranslation();
 	const navigate = useNavigate();
-	const { formatDate, formatDateOnly, formatDateRange } = useDateFormatter();
+	const { formatDate, formatDateOnly } = useDateFormatter();
 
 	const { data: round } = useRound(id);
 	const { data: applications } = useRoundApplications(id);
@@ -84,16 +61,6 @@ function RoundPage() {
 	const all = applications ?? [];
 	const pendingApps = all.filter((a) => a.status === "pending");
 	const isCompleted = round?.status === "completed";
-	// Slots to allocate: the pending applications, or after completion the granted ones
-	const slots = useMemo(
-		() =>
-			groupBySlot(
-				(applications ?? []).filter(
-					(a) => a.status === (isCompleted ? "confirmed" : "pending"),
-				),
-			),
-		[applications, isCompleted],
-	);
 	const allocatedIds = isCompleted
 		? all.filter((a) => a.status === "confirmed").map((a) => a.reservation_id)
 		: granted;
@@ -104,6 +71,7 @@ function RoundPage() {
 	const canAllocate = phase === "allocating";
 	const resourceName = (rid: string) =>
 		resources?.find((r) => r.id === rid)?.name ?? rid;
+	const conflicts = findConflicts(granted, pendingApps);
 	const grantedCount = granted.length;
 	const deniedCount = pendingApps.length - grantedCount;
 
@@ -201,9 +169,21 @@ function RoundPage() {
 			<h2 className="font-bold">
 				{`${t("kierroksenHakemukset", "Hakemukset")} (${all.length})`}
 			</h2>
-			{slots.length === 0 && (
+			{all.length === 0 && (
 				<p className="text-sm text-stone-500">
 					{t("eiHakemuksia", "Ei hakemuksia.")}
+				</p>
+			)}
+			{conflicts.size > 0 && canAllocate && (
+				<p
+					role="alert"
+					className="text-sm font-medium p-2 rounded-md border border-red-500 bg-red-50 dark:bg-red-950/40 text-red-800 dark:text-red-200"
+				>
+					{t(
+						"jaossaPaallekkaisyyksia",
+						"Jaossa on {{count}} päällekkäisyyttä. Korjaa ne ennen tallennusta.",
+						{ count: conflicts.size },
+					)}
 				</p>
 			)}
 
@@ -223,7 +203,7 @@ function RoundPage() {
 						size="sm"
 						className="gap-1.5"
 						onClick={() => save.mutate(granted)}
-						disabled={save.isPending}
+						disabled={save.isPending || conflicts.size > 0}
 					>
 						<Save size={14} />
 						{t("tallennaJako", "Tallenna jako")}
@@ -241,65 +221,34 @@ function RoundPage() {
 				</div>
 			)}
 
-			<ul className="space-y-2">
-				{slots.map((slot) => {
-					const holder = slot.applications.find((a) =>
-						allocatedIds.includes(a.reservation_id),
-					);
-					return (
-						<li
-							key={slot.key}
-							className="p-3 border-2 border-stone-800 dark:border-stone-700 rounded-md bg-stone-50 dark:bg-stone-900 flex flex-wrap items-center justify-between gap-2"
-						>
-							<div>
-								<div className="font-medium text-sm">
-									{resourceName(slot.resource_id)}
-								</div>
-								<div className="text-xs text-stone-600 dark:text-stone-400">
-									{formatDateRange(slot.start_time, slot.end_time)}
-								</div>
-							</div>
-							<select
-								aria-label={t("jaonSaaja", "Varausjakson saaja")}
-								disabled={!canAllocate}
-								value={holder?.reservation_id ?? ""}
-								onChange={(e) =>
-									setEdited(
-										assignSlot(
-											granted,
-											applications ?? [],
-											slot,
-											e.target.value || null,
-										),
-									)
-								}
-								className="h-8 text-xs rounded-md border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-950 px-2"
-							>
-								<option value="">
-									{t("eiKenellekaan", "— Ei kenellekään —")}
-								</option>
-								{slot.applications.map((a) => (
-									<option key={a.reservation_id} value={a.reservation_id}>
-										{`${a.user_name ?? a.user_id} (${t("prioriteetti", "prioriteetti")} ${a.priority})`}
-									</option>
-								))}
-							</select>
-						</li>
-					);
-				})}
-			</ul>
-
 			<ApplicantList
 				applications={all}
 				allocatedIds={allocatedIds}
 				completed={isCompleted}
+				editable={canAllocate}
+				conflicts={conflicts}
 				resourceName={resourceName}
+				onSelect={(userId, resourceId, reservationId) =>
+					setEdited(
+						selectApplication(
+							granted,
+							pendingApps,
+							userId,
+							resourceId,
+							reservationId,
+						),
+					)
+				}
 			/>
 
 			{canAllocate && (
 				<Button
 					onClick={finish}
-					disabled={complete.isPending || (!saved?.saved && !edited)}
+					disabled={
+						complete.isPending ||
+						conflicts.size > 0 ||
+						(!saved?.saved && !edited)
+					}
 				>
 					{t("paataKierros", "Päätä kierros ja lähetä päätökset")}
 				</Button>
@@ -342,19 +291,36 @@ function ApplicantList({
 	applications,
 	allocatedIds,
 	completed,
+	editable,
+	conflicts,
 	resourceName,
+	onSelect,
 }: {
 	applications: RoundApplication[];
 	allocatedIds: string[];
 	completed: boolean;
+	editable: boolean;
+	conflicts: Map<string, SlotConflict>;
 	resourceName: (resourceId: string) => string;
+	onSelect: (
+		userId: string,
+		resourceId: string,
+		reservationId: string | null,
+	) => void;
 }) {
 	const { t } = useTranslation();
 	const { formatDateRange } = useDateFormatter();
 
+	// Withdrawn applications can't be granted; after completion everything stays visible
+	const shown = applications.filter((a) => completed || a.status === "pending");
+	const nameOf = (reservationId: string) => {
+		const app = applications.find((a) => a.reservation_id === reservationId);
+		return app?.user_name ?? app?.user_id ?? "";
+	};
+
 	const applicants = useMemo(() => {
 		const byUser = new Map<string, RoundApplication[]>();
-		for (const app of applications) {
+		for (const app of shown) {
 			byUser.set(app.user_id, [...(byUser.get(app.user_id) ?? []), app]);
 		}
 		return [...byUser.values()]
@@ -368,7 +334,7 @@ function ApplicantList({
 			.sort((a, b) =>
 				(a[0].user_name ?? "").localeCompare(b[0].user_name ?? ""),
 			);
-	}, [applications]);
+	}, [shown]);
 
 	if (applicants.length === 0) return null;
 
@@ -378,83 +344,163 @@ function ApplicantList({
 			<ul className="space-y-3">
 				{applicants.map((apps) => {
 					const first = apps[0];
-					const got = apps.filter((a) =>
-						allocatedIds.includes(a.reservation_id),
-					);
+					const resourceIds = [...new Set(apps.map((a) => a.resource_id))];
+					const hasConflict = apps.some((a) => conflicts.has(a.reservation_id));
 					return (
 						<li
 							key={first.user_id}
-							className="p-3 border-2 border-stone-800 dark:border-stone-700 rounded-md bg-stone-50 dark:bg-stone-900 space-y-2"
+							className={`p-3 border-2 rounded-md bg-stone-50 dark:bg-stone-900 space-y-3 ${
+								hasConflict
+									? "border-red-500"
+									: "border-stone-800 dark:border-stone-700"
+							}`}
 						>
-							<div className="flex flex-wrap items-baseline justify-between gap-2">
-								<div>
-									<div className="font-bold text-sm">
-										{first.user_name ?? first.user_id}
-									</div>
-									<div className="text-xs text-stone-600 dark:text-stone-400">
-										{[
-											first.user_email,
-											first.contact_person,
-											first.contact_email,
-											first.contact_phone,
-										]
-											.filter(Boolean)
-											.join(" · ")}
-									</div>
+							<div>
+								<div className="font-bold text-sm">
+									{first.user_name ?? first.user_id}
 								</div>
-								<div className="text-xs font-medium">
-									{got.length > 0
-										? `${t("myonnetty", "Myönnetty")}: ${got
-												.map(
-													(a) =>
-														`${resourceName(a.resource_id)} ${formatDateRange(a.start_time, a.end_time)}`,
-												)
-												.join(", ")}`
-										: completed
-											? t("eiMyonnetty", "Ei myönnetty")
-											: t("eiVielaMyonnetty", "Ei vielä myönnetty")}
+								<div className="text-xs text-stone-600 dark:text-stone-400">
+									{[
+										first.user_email,
+										first.contact_person,
+										first.contact_email,
+										first.contact_phone,
+									]
+										.filter(Boolean)
+										.join(" · ")}
 								</div>
 							</div>
-							<ol className="space-y-2">
-								{apps.map((a) => {
-									const granted = allocatedIds.includes(a.reservation_id);
-									return (
-										<li
-											key={a.reservation_id}
-											className={`pl-3 border-l-4 text-sm space-y-0.5 ${
-												granted
-													? "border-emerald-600"
-													: a.status === "cancelled"
-														? "border-stone-300 dark:border-stone-700 opacity-60"
-														: "border-stone-400 dark:border-stone-600"
-											}`}
-										>
-											<div className="flex flex-wrap items-center gap-2">
-												<span className="font-medium">{`${a.priority}. ${a.title}`}</span>
-												<span className="text-xs text-stone-600 dark:text-stone-400">
-													{`${resourceName(a.resource_id)}, ${formatDateRange(a.start_time, a.end_time)}`}
-												</span>
-												{granted && (
-													<span className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-300">
-														{t("myonnetty", "Myönnetty")}
-													</span>
-												)}
-												{!granted && a.status === "cancelled" && (
-													<span className="text-[11px] text-stone-500">
-														{t("peruttuTaiHylatty", "Peruttu tai ei myönnetty")}
-													</span>
-												)}
-											</div>
-											<RichTextContent value={a.description} />
-											{a.message_to_admins && (
-												<p className="text-xs text-stone-600 dark:text-stone-400 whitespace-pre-line">
-													{a.message_to_admins}
-												</p>
-											)}
-										</li>
-									);
-								})}
-							</ol>
+
+							{resourceIds.map((resourceId) => {
+								const options = apps.filter(
+									(a) => a.resource_id === resourceId,
+								);
+								const chosen = options.find((a) =>
+									allocatedIds.includes(a.reservation_id),
+								);
+								const groupName = `alloc-${first.user_id}-${resourceId}`;
+								return (
+									<fieldset
+										key={resourceId}
+										disabled={!editable}
+										className="space-y-1.5"
+									>
+										<legend className="text-xs font-bold uppercase tracking-wide text-stone-600 dark:text-stone-400">
+											{resourceName(resourceId)}
+										</legend>
+										{options.map((a) => {
+											const conflict = conflicts.get(a.reservation_id);
+											const rivals = competingApplications(
+												a,
+												applications,
+											).filter((o) => completed || o.status === "pending");
+											const heldByOther = rivals.filter((o) =>
+												allocatedIds.includes(o.reservation_id),
+											);
+											const isChosen =
+												chosen?.reservation_id === a.reservation_id;
+											return (
+												<div
+													key={a.reservation_id}
+													className={`p-2 rounded-md border text-sm space-y-1 ${
+														conflict
+															? "border-red-500 bg-red-50 dark:bg-red-950/40"
+															: isChosen
+																? "border-emerald-600 bg-emerald-50 dark:bg-emerald-950/30"
+																: "border-stone-300 dark:border-stone-700"
+													} ${a.status === "cancelled" && !isChosen ? "opacity-60" : ""}`}
+												>
+													<label className="flex flex-wrap items-center gap-2 cursor-pointer">
+														<input
+															type="radio"
+															name={groupName}
+															checked={isChosen}
+															onChange={() =>
+																onSelect(
+																	a.user_id,
+																	a.resource_id,
+																	a.reservation_id,
+																)
+															}
+														/>
+														<span className="font-medium">
+															{`${a.priority}. ${formatDateRange(a.start_time, a.end_time)}`}
+														</span>
+														<span className="text-xs text-stone-600 dark:text-stone-400">
+															{a.title}
+														</span>
+														{isChosen && completed && (
+															<span className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-300">
+																{t("myonnetty", "Myönnetty")}
+															</span>
+														)}
+														{rivals.length > 0 && (
+															<span className="text-[11px] px-1.5 rounded bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300">
+																{t("kilpailtuJakso", "Haettu myös: {{names}}", {
+																	names: rivals
+																		.map((o) => nameOf(o.reservation_id))
+																		.join(", "),
+																})}
+															</span>
+														)}
+														{!completed &&
+															!isChosen &&
+															heldByOther.length > 0 && (
+																<span className="text-[11px] px-1.5 rounded bg-stone-200 dark:bg-stone-800">
+																	{t("jaettuToiselle", "Jaettu: {{names}}", {
+																		names: heldByOther
+																			.map((o) => nameOf(o.reservation_id))
+																			.join(", "),
+																	})}
+																</span>
+															)}
+														{!completed && a.externally_taken && (
+															<span className="text-[11px] px-1.5 rounded bg-red-100 dark:bg-red-950 text-red-800 dark:text-red-300">
+																{t(
+																	"jaksoJoVarattu",
+																	"Jakso on jo varattu muulla varauksella",
+																)}
+															</span>
+														)}
+													</label>
+													{conflict && conflict.sharedWith.length > 0 && (
+														<p className="text-xs font-semibold text-red-700 dark:text-red-300">
+															{t(
+																"paallekkaisyys",
+																"Päällekkäisyys: sama jakso on myönnetty myös: {{names}}",
+																{
+																	names: conflict.sharedWith
+																		.map(nameOf)
+																		.join(", "),
+																},
+															)}
+														</p>
+													)}
+													<RichTextContent value={a.description} />
+													{a.message_to_admins && (
+														<p className="text-xs text-stone-600 dark:text-stone-400 whitespace-pre-line">
+															{a.message_to_admins}
+														</p>
+													)}
+												</div>
+											);
+										})}
+										<label className="flex items-center gap-2 text-xs cursor-pointer px-2">
+											<input
+												type="radio"
+												name={groupName}
+												checked={!chosen}
+												onChange={() =>
+													onSelect(first.user_id, resourceId, null)
+												}
+											/>
+											{completed
+												? t("eiMyonnetty", "Ei myönnetty")
+												: t("eiMyonnetaMitaan", "Ei myönnetä mitään")}
+										</label>
+									</fieldset>
+								);
+							})}
 						</li>
 					);
 				})}

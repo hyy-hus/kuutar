@@ -121,6 +121,8 @@ pub struct RoundApplication {
     pub start_time: DateTime<Utc>,
     pub end_time: DateTime<Utc>,
     pub priority: i32,
+    /// The block is already held by a reservation outside this round, so it cannot be granted
+    pub externally_taken: bool,
 }
 
 #[derive(Debug, Deserialize, Validate, ToSchema)]

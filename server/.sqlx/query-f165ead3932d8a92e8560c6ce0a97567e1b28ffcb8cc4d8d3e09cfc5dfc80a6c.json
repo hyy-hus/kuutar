@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        SELECT r.id AS reservation_id,\n               r.user_id,\n               u.name AS \"user_name?\",\n               u.email AS \"user_email?\",\n               r.title,\n               r.description_rich AS description,\n               r.message_to_admins,\n               r.contact_person,\n               r.contact_email,\n               r.contact_phone,\n               r.status AS \"status: ReservationStatus\",\n               o.resource_id,\n               o.start_time,\n               o.end_time,\n               COALESCE(r.round_priority, 1) AS \"priority!\"\n        FROM reservations r\n        JOIN occurrences o ON o.reservation_id = r.id\n        LEFT JOIN users u ON u.id = r.user_id\n        WHERE r.round_id = $1 AND r.deleted_at IS NULL\n          AND ($2 = FALSE OR r.status = 'pending')\n        ORDER BY o.resource_id, o.start_time, r.created_at\n        ",
+  "query": "\n        SELECT r.id AS reservation_id,\n               r.user_id,\n               u.name AS \"user_name?\",\n               u.email AS \"user_email?\",\n               r.title,\n               r.description_rich AS description,\n               r.message_to_admins,\n               r.contact_person,\n               r.contact_email,\n               r.contact_phone,\n               r.status AS \"status: ReservationStatus\",\n               o.resource_id,\n               o.start_time,\n               o.end_time,\n               COALESCE(r.round_priority, 1) AS \"priority!\",\n               EXISTS (\n                   SELECT 1\n                   FROM occurrences o2\n                   JOIN reservations r2 ON r2.id = o2.reservation_id\n                   WHERE o2.resource_id = o.resource_id\n                     AND o2.start_time = o.start_time\n                     AND r2.deleted_at IS NULL\n                     AND r2.status IN ('confirmed', 'pending')\n                     AND r2.round_id IS DISTINCT FROM r.round_id\n               ) AS \"externally_taken!\"\n        FROM reservations r\n        JOIN occurrences o ON o.reservation_id = r.id\n        LEFT JOIN users u ON u.id = r.user_id\n        WHERE r.round_id = $1 AND r.deleted_at IS NULL\n          AND ($2 = FALSE OR r.status = 'pending')\n        ORDER BY o.resource_id, o.start_time, r.created_at\n        ",
   "describe": {
     "columns": [
       {
@@ -173,6 +173,12 @@
         "name": "priority!",
         "type_info": "Int4",
         "origin": "Expression"
+      },
+      {
+        "ordinal": 15,
+        "name": "externally_taken!",
+        "type_info": "Bool",
+        "origin": "Expression"
       }
     ],
     "parameters": {
@@ -196,8 +202,9 @@
       false,
       false,
       false,
+      null,
       null
     ]
   },
-  "hash": "03c004f85a7ec0965431d3b6fa3d94470ff2c51cc59826cfcc4e49780fdf6a38"
+  "hash": "f165ead3932d8a92e8560c6ce0a97567e1b28ffcb8cc4d8d3e09cfc5dfc80a6c"
 }

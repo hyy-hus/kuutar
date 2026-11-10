@@ -1520,6 +1520,8 @@ export interface components {
             } | null;
             /** Format: date-time */
             end_time: string;
+            /** @description The block is already held by a reservation outside this round, so it cannot be granted */
+            externally_taken: boolean;
             message_to_admins?: string | null;
             /** Format: int32 */
             priority: number;

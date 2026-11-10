@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
-	assignSlot,
+	competingApplications,
+	findConflicts,
 	moveItem,
 	remainingApplications,
 	roundPhase,
+	selectApplication,
 } from "./rounds";
 
 const round = {
@@ -48,7 +50,7 @@ describe("moveItem", () => {
 	});
 });
 
-describe("assignSlot", () => {
+describe("allocation helpers", () => {
 	const apps = [
 		{
 			reservation_id: "r1",
@@ -64,18 +66,47 @@ describe("assignSlot", () => {
 		},
 		{
 			reservation_id: "r3",
-			user_id: "u2",
+			user_id: "u1",
 			resource_id: "x",
 			start_time: "2026-12-02T10:00:00Z",
 		},
+		{
+			reservation_id: "r4",
+			user_id: "u1",
+			resource_id: "y",
+			start_time: "2026-12-01T10:00:00Z",
+			externally_taken: true,
+		},
 	];
-	const slot = { resource_id: "x", start_time: "2026-12-01T10:00:00Z" };
 
-	it("replaces the holder of a slot", () => {
-		expect(assignSlot(["r1", "r3"], apps, slot, "r2")).toEqual(["r3", "r2"]);
+	it("selects one application per user and resource", () => {
+		expect(selectApplication(["r1", "r2"], apps, "u1", "x", "r3")).toEqual([
+			"r2",
+			"r3",
+		]);
+		expect(selectApplication(["r1", "r2"], apps, "u1", "x", null)).toEqual([
+			"r2",
+		]);
 	});
 
-	it("clears a slot", () => {
-		expect(assignSlot(["r1", "r3"], apps, slot, null)).toEqual(["r3"]);
+	it("finds shared and externally taken blocks", () => {
+		const conflicts = findConflicts(["r1", "r2", "r4"], apps);
+		expect(conflicts.get("r1")).toEqual({
+			sharedWith: ["r2"],
+			externallyTaken: false,
+		});
+		expect(conflicts.get("r2")?.sharedWith).toEqual(["r1"]);
+		expect(conflicts.get("r4")).toEqual({
+			sharedWith: [],
+			externallyTaken: true,
+		});
+		expect(findConflicts(["r1", "r3"], apps).size).toBe(0);
+	});
+
+	it("lists competing applications for a block", () => {
+		expect(
+			competingApplications(apps[0], apps).map((a) => a.reservation_id),
+		).toEqual(["r2"]);
+		expect(competingApplications(apps[2], apps)).toEqual([]);
 	});
 });

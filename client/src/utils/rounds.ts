@@ -50,28 +50,73 @@ export type SlotApplication = {
 	user_id: string;
 	resource_id: string;
 	start_time: string;
+	externally_taken?: boolean;
 };
 
+const sameSlot = (
+	a: { resource_id: string; start_time: string },
+	b: { resource_id: string; start_time: string },
+) =>
+	a.resource_id === b.resource_id &&
+	new Date(a.start_time).getTime() === new Date(b.start_time).getTime();
+
 /**
- * Sets who holds a slot in an allocation draft: removes any other grant for the same
- * (resource, start) and adds `reservationId` (or just clears the slot when null).
+ * Picks which of a user's applications for a resource is granted in an allocation draft
+ * (or none, with null). A user gets at most one block per resource, so the others for
+ * that user and resource are dropped.
  */
-export function assignSlot(
+export function selectApplication(
 	granted: readonly string[],
 	applications: readonly SlotApplication[],
-	slot: { resource_id: string; start_time: string },
+	userId: string,
+	resourceId: string,
 	reservationId: string | null,
 ): string[] {
-	const sameSlot = new Set(
+	const theirs = new Set(
 		applications
-			.filter(
-				(a) =>
-					a.resource_id === slot.resource_id &&
-					new Date(a.start_time).getTime() ===
-						new Date(slot.start_time).getTime(),
-			)
+			.filter((a) => a.user_id === userId && a.resource_id === resourceId)
 			.map((a) => a.reservation_id),
 	);
-	const kept = granted.filter((id) => !sameSlot.has(id));
+	const kept = granted.filter((id) => !theirs.has(id));
 	return reservationId ? [...kept, reservationId] : kept;
+}
+
+export type SlotConflict = {
+	/** Other granted applications holding the very same block */
+	sharedWith: string[];
+	/** The block is held by a reservation outside the round */
+	externallyTaken: boolean;
+};
+
+/** Granted applications that cannot all stand: shared blocks and externally taken blocks. */
+export function findConflicts(
+	granted: readonly string[],
+	applications: readonly SlotApplication[],
+): Map<string, SlotConflict> {
+	const grantedApps = applications.filter((a) =>
+		granted.includes(a.reservation_id),
+	);
+	const conflicts = new Map<string, SlotConflict>();
+	for (const app of grantedApps) {
+		const sharedWith = grantedApps
+			.filter(
+				(o) => o.reservation_id !== app.reservation_id && sameSlot(o, app),
+			)
+			.map((o) => o.reservation_id);
+		const externallyTaken = app.externally_taken === true;
+		if (sharedWith.length > 0 || externallyTaken) {
+			conflicts.set(app.reservation_id, { sharedWith, externallyTaken });
+		}
+	}
+	return conflicts;
+}
+
+/** Other applications for the same block. */
+export function competingApplications<T extends SlotApplication>(
+	app: T,
+	applications: readonly T[],
+): T[] {
+	return applications.filter(
+		(o) => o.reservation_id !== app.reservation_id && sameSlot(o, app),
+	);
 }

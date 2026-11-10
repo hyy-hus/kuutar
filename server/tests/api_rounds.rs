@@ -479,6 +479,7 @@ async fn full_round_flow(pool: PgPool) {
         1
     );
     assert!(apps.iter().all(|a| a["user_email"].is_string()));
+    assert!(apps.iter().all(|a| a["externally_taken"] == false));
 
     // A completed round cannot be completed twice
     let (status, _) = request(
