@@ -55,6 +55,7 @@ import { Route as AppReservationsRoundsIdRouteImport } from './routes/_app/reser
 import { Route as AppResourcesEditIdRouteImport } from './routes/_app/resources/edit/$id'
 import { Route as AppRestrictionsEditIdRouteImport } from './routes/_app/restrictions/edit.$id'
 import { Route as AppAdminGroupsEditIdRouteImport } from './routes/_app/admin/groups/edit.$id'
+import { Route as AppAdminRoundsEditIdRouteImport } from './routes/_app/admin/rounds/edit.$id'
 import { Route as AppAdminUsersEditIdRouteImport } from './routes/_app/admin/users/edit.$id'
 
 const AppRoute = AppRouteImport.update({
@@ -290,6 +291,11 @@ const AppAdminGroupsEditIdRoute = AppAdminGroupsEditIdRouteImport.update({
   path: '/groups/edit/$id',
   getParentRoute: () => AppAdminRoute,
 } as any)
+const AppAdminRoundsEditIdRoute = AppAdminRoundsEditIdRouteImport.update({
+  id: '/rounds/edit/$id',
+  path: '/rounds/edit/$id',
+  getParentRoute: () => AppAdminRoute,
+} as any)
 const AppAdminUsersEditIdRoute = AppAdminUsersEditIdRouteImport.update({
   id: '/users/edit/$id',
   path: '/users/edit/$id',
@@ -342,6 +348,7 @@ export interface FileRoutesByFullPath {
   '/admin/rounds/': typeof AppAdminRoundsIndexRoute
   '/admin/users/': typeof AppAdminUsersIndexRoute
   '/admin/groups/edit/$id': typeof AppAdminGroupsEditIdRoute
+  '/admin/rounds/edit/$id': typeof AppAdminRoundsEditIdRoute
   '/admin/users/edit/$id': typeof AppAdminUsersEditIdRoute
 }
 export interface FileRoutesByTo {
@@ -389,6 +396,7 @@ export interface FileRoutesByTo {
   '/admin/rounds': typeof AppAdminRoundsIndexRoute
   '/admin/users': typeof AppAdminUsersIndexRoute
   '/admin/groups/edit/$id': typeof AppAdminGroupsEditIdRoute
+  '/admin/rounds/edit/$id': typeof AppAdminRoundsEditIdRoute
   '/admin/users/edit/$id': typeof AppAdminUsersEditIdRoute
 }
 export interface FileRoutesById {
@@ -439,6 +447,7 @@ export interface FileRoutesById {
   '/_app/admin/rounds/': typeof AppAdminRoundsIndexRoute
   '/_app/admin/users/': typeof AppAdminUsersIndexRoute
   '/_app/admin/groups/edit/$id': typeof AppAdminGroupsEditIdRoute
+  '/_app/admin/rounds/edit/$id': typeof AppAdminRoundsEditIdRoute
   '/_app/admin/users/edit/$id': typeof AppAdminUsersEditIdRoute
 }
 export interface FileRouteTypes {
@@ -489,6 +498,7 @@ export interface FileRouteTypes {
     | '/admin/rounds/'
     | '/admin/users/'
     | '/admin/groups/edit/$id'
+    | '/admin/rounds/edit/$id'
     | '/admin/users/edit/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -536,6 +546,7 @@ export interface FileRouteTypes {
     | '/admin/rounds'
     | '/admin/users'
     | '/admin/groups/edit/$id'
+    | '/admin/rounds/edit/$id'
     | '/admin/users/edit/$id'
   id:
     | '__root__'
@@ -585,6 +596,7 @@ export interface FileRouteTypes {
     | '/_app/admin/rounds/'
     | '/_app/admin/users/'
     | '/_app/admin/groups/edit/$id'
+    | '/_app/admin/rounds/edit/$id'
     | '/_app/admin/users/edit/$id'
   fileRoutesById: FileRoutesById
 }
@@ -917,6 +929,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAdminGroupsEditIdRouteImport
       parentRoute: typeof AppAdminRoute
     }
+    '/_app/admin/rounds/edit/$id': {
+      id: '/_app/admin/rounds/edit/$id'
+      path: '/rounds/edit/$id'
+      fullPath: '/admin/rounds/edit/$id'
+      preLoaderRoute: typeof AppAdminRoundsEditIdRouteImport
+      parentRoute: typeof AppAdminRoute
+    }
     '/_app/admin/users/edit/$id': {
       id: '/_app/admin/users/edit/$id'
       path: '/users/edit/$id'
@@ -944,6 +963,7 @@ interface AppAdminRouteChildren {
   AppAdminRoundsIndexRoute: typeof AppAdminRoundsIndexRoute
   AppAdminUsersIndexRoute: typeof AppAdminUsersIndexRoute
   AppAdminGroupsEditIdRoute: typeof AppAdminGroupsEditIdRoute
+  AppAdminRoundsEditIdRoute: typeof AppAdminRoundsEditIdRoute
   AppAdminUsersEditIdRoute: typeof AppAdminUsersEditIdRoute
 }
 
@@ -964,6 +984,7 @@ const AppAdminRouteChildren: AppAdminRouteChildren = {
   AppAdminRoundsIndexRoute: AppAdminRoundsIndexRoute,
   AppAdminUsersIndexRoute: AppAdminUsersIndexRoute,
   AppAdminGroupsEditIdRoute: AppAdminGroupsEditIdRoute,
+  AppAdminRoundsEditIdRoute: AppAdminRoundsEditIdRoute,
   AppAdminUsersEditIdRoute: AppAdminUsersEditIdRoute,
 }
 

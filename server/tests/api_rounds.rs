@@ -469,3 +469,32 @@ async fn full_round_flow(pool: PgPool) {
     .await;
     assert_eq!(status, StatusCode::CONFLICT);
 }
+
+#[sqlx::test]
+async fn admin_can_close_applications_early_but_not_change_locked_fields(pool: PgPool) {
+    let env = setup(pool).await;
+    let uri = format!("/rounds/{}", env.round_id);
+
+    // The window has opened, so the period is locked
+    let (status, _) = request(
+        &env.app,
+        "PATCH",
+        &uri,
+        Some(&env.admin),
+        Some(json!({ "period_end": Utc::now() + Duration::days(60) })),
+    )
+    .await;
+    assert_eq!(status, StatusCode::CONFLICT);
+
+    let (status, round) = request(
+        &env.app,
+        "PATCH",
+        &uri,
+        Some(&env.admin),
+        Some(json!({ "name": "Renamed", "applications_close_at": Utc::now() })),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{round}");
+    assert_eq!(round["name"], "Renamed");
+    assert_eq!(round["phase"], "allocating");
+}

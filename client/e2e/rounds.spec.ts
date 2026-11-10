@@ -49,8 +49,16 @@ test("admin creates a reservation round for a block-based resource", async ({
 	await expect(page.getByText("Upcoming")).toBeVisible();
 	await expect(page.getByText("No applications.")).toBeVisible();
 
+	// Rounds that have not started can be edited
+	await page.getByRole("link", { name: "Edit round" }).click();
+	await page.getByLabel("Name", { exact: true }).fill(`Renamed ${suffix}`);
+	await page.getByRole("button", { name: "Save" }).click();
+	await expect(
+		page.getByRole("heading", { name: `Renamed ${suffix}` }),
+	).toBeVisible();
+
 	await page.goto("/admin/rounds");
 	await expect(
-		page.getByRole("heading", { name: `Round ${suffix}` }),
+		page.getByRole("heading", { name: `Renamed ${suffix}` }),
 	).toBeVisible();
 });

@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Dices, Loader2, Save } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -14,6 +14,7 @@ import {
 	useRoundApplications,
 	useSaveAllocation,
 	useSavedAllocation,
+	useUpdateRound,
 } from "#/hooks/useRounds";
 import { requireAdminGuard } from "#/utils/authGuard";
 import { useDateFormatter } from "#/utils/date";
@@ -72,6 +73,7 @@ function RoundPage() {
 	const save = useSaveAllocation(id);
 	const complete = useCompleteRound(id);
 	const deleteRound = useDeleteRound();
+	const updateRound = useUpdateRound();
 
 	// null until the admin edits; then it overrides the saved draft
 	const [edited, setEdited] = useState<string[] | null>(null);
@@ -115,7 +117,50 @@ function RoundPage() {
 				<h1 className="text-xl font-bold">{round.name}</h1>
 				<RoundPhaseChip round={round} />
 			</div>
+			{phase !== "completed" && (
+				<div className="flex flex-wrap gap-2">
+					<Button variant="secondary" size="sm" asChild>
+						<Link to="/admin/rounds/edit/$id" params={{ id }}>
+							{t("muokkaaKierrosta", "Muokkaa kierrosta")}
+						</Link>
+					</Button>
+					{phase === "open" && (
+						<Button
+							variant="secondary"
+							size="sm"
+							disabled={updateRound.isPending}
+							onClick={() => {
+								if (
+									window.confirm(
+										t(
+											"vahvistaHakuaikaPaattyy",
+											"Päätetäänkö haku nyt? Uusia hakemuksia ei voi enää jättää, ja jako voidaan tehdä.",
+										),
+									)
+								) {
+									updateRound.mutate({
+										id,
+										payload: {
+											applications_close_at: new Date().toISOString(),
+										},
+									});
+								}
+							}}
+						>
+							{t("paataHakuNyt", "Päätä haku nyt")}
+						</Button>
+					)}
+				</div>
+			)}
 			{round.description && <p className="text-sm">{round.description}</p>}
+			{phase !== "allocating" && phase !== "completed" && (
+				<p className="text-xs text-stone-500">
+					{t(
+						"jakoVasta",
+						"Jako voidaan tehdä, kun haku on päättynyt. Voit päättää haun etukäteen painikkeella.",
+					)}
+				</p>
+			)}
 			<dl className="text-sm grid grid-cols-[max-content_1fr] gap-x-4 gap-y-1">
 				<dt className="font-medium">{t("hakuaika", "Hakuaika")}</dt>
 				<dd>
