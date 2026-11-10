@@ -725,6 +725,7 @@
 	"jaossaPaallekkaisyyksia": "Jaossa on {{count}} päällekkäisyyttä. Korjaa ne ennen tallennusta.",
 	"jokaPiv": "Joka päivä",
 	"kaikkiKierrokset": "Kaikki kierrokset",
+	"kasitteleKierroksella": "Käsittele kierroksella",
 	"kuukaudenToistuvuus": "Kuukauden toistuvuus",
 	"kuukaudenTiettyPiv": "Kuukauden tiettynä päivänä",
 	"kuukaudenTietyViikonpiv": "Kuukauden tietty viikonpäivä",

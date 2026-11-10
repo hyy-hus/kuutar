@@ -521,3 +521,39 @@ async fn admin_can_close_applications_early_but_not_change_locked_fields(pool: P
     assert_eq!(round["name"], "Renamed");
     assert_eq!(round["phase"], "allocating");
 }
+
+#[sqlx::test]
+async fn round_applications_cannot_be_approved_by_hand(pool: PgPool) {
+    let env = setup(pool).await;
+    let (alice, _) = setup_user_in_group(&env.pool, Role::User, env.group_id).await;
+    let (_, body) = request(
+        &env.app,
+        "POST",
+        "/reservations",
+        Some(&alice),
+        Some(application(env.round_id, env.resource_id, env.slots[0])),
+    )
+    .await;
+    let id = body["id"].as_str().unwrap();
+
+    let (status, _) = request(
+        &env.app,
+        "PATCH",
+        &format!("/reservations/{id}"),
+        Some(&env.admin),
+        Some(json!({ "status": "confirmed" })),
+    )
+    .await;
+    assert_eq!(status, StatusCode::CONFLICT);
+
+    // Other admin edits still work
+    let (status, _) = request(
+        &env.app,
+        "PATCH",
+        &format!("/reservations/{id}"),
+        Some(&env.admin),
+        Some(json!({ "admin_notes": "note" })),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK);
+}

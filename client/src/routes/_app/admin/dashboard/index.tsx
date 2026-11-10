@@ -94,6 +94,8 @@ function AdminReservationRow({
 	const isPending = reservationWithOcc.status === "pending";
 	const isCancelled = reservationWithOcc.status === "cancelled";
 	const isOutlook = reservationWithOcc.source === "outlook";
+	// Decided by the round's allocation, never approved one by one
+	const isRoundApplication = isPending && Boolean(reservationWithOcc.round_id);
 
 	const isHoveredSource = hoveredReservation?.id === reservationWithOcc.id;
 
@@ -278,7 +280,21 @@ function AdminReservationRow({
 						<span className="hidden xl:inline">{t("tulosta", "Tulosta")}</span>
 					</Button>
 
-					{isOutlook ? null : isPending ? (
+					{isOutlook ? null : isRoundApplication ? (
+						<Button
+							variant="secondary"
+							size="sm"
+							asChild
+							className="text-[11px] px-2 py-0.5 h-7 gap-1 font-mono"
+						>
+							<Link
+								to="/admin/rounds/$id"
+								params={{ id: reservationWithOcc.round_id ?? "" }}
+							>
+								{t("kasitteleKierroksella", "Käsittele kierroksella")}
+							</Link>
+						</Button>
+					) : isPending ? (
 						<>
 							<CancelReservationDialog
 								reservationId={reservationWithOcc.id}
@@ -373,8 +389,11 @@ function AdminDashboardPage() {
 			}
 
 			return {
+				// Round applications are handled on the round page; they only show here
+				// when filtering by a round, and then without approve/reject actions
 				pendingReservations: reservations
 					.filter((r) => r.status === "pending")
+					.filter((r) => !r.round_id || roundId !== undefined)
 					.sort(sortByDateAsc),
 				confirmedReservations: reservations
 					.filter((r) => r.status === "confirmed")
@@ -383,7 +402,7 @@ function AdminDashboardPage() {
 					.filter((r) => r.status === "cancelled")
 					.sort(sortByDateAsc),
 			};
-		}, [reservations]);
+		}, [reservations, roundId]);
 
 	const updateSearch = (next: AdminDashboardSearch) => {
 		navigate({

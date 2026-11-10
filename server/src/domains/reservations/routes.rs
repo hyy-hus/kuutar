@@ -444,6 +444,22 @@ pub async fn update_reservation(
         }
     }
 
+    // Applications in an unfinished round are decided by the round's allocation, so nobody
+    // approves or reopens one by hand (cancelling is still possible via /cancel)
+    if let Some(round_id) = existing.reservation.round_id
+        && payload
+            .status
+            .is_some_and(|s| s != existing.reservation.status)
+        && payload.status != Some(ReservationStatus::Cancelled)
+    {
+        let round = crate::domains::rounds::db::find(&auth_state.pool, round_id).await?;
+        if round.status == crate::domains::rounds::models::RoundStatus::Active {
+            return Err(AppError::Conflict(
+                "Varauskierroksen hakemukset ratkaistaan kierroksen jaossa. Päätä kierros hyväksyäksesi varaukset.".to_string(),
+            ));
+        }
+    }
+
     if payload.status == Some(ReservationStatus::Cancelled)
         && existing.reservation.status != ReservationStatus::Cancelled
     {
