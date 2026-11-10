@@ -773,5 +773,8 @@
 	"viestiYllapidolle": "Viesti ylläpidolle",
 	"viestiYllapidolleOhje": "Vain sinä ja ylläpito näette tämän. Käytä tätä lisätiedoille, jotka eivät kuulu julkiseen kuvaukseen.",
 	"viestiYllapitajille": "Viesti ylläpitäjille",
-	"yllpitjnMuistiinpanotEiOmistajalle": "Ylläpitäjän muistiinpanot (varaaja ei näe näitä)"
+	"yllpitjnMuistiinpanotEiOmistajalle": "Ylläpitäjän muistiinpanot (varaaja ei näe näitä)",
+	"omaVari": "Oma väri",
+	"kaikki": "Kaikki",
+	"vainTamaOhje": "Kaksoisnapsauta tai Ctrl-napsauta näyttääksesi vain tämän"
 }

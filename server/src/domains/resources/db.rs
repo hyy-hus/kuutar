@@ -16,7 +16,7 @@ pub async fn list_all(
         Resource,
         r#"
         SELECT r.id, r.collection_id, r.name, r.description, r.allow_recurring, r.blocks_only, r.reservable_until, r.is_public,
-               r.reservation_restricted, r.auto_confirm, r.default_duration_minutes, r.min_duration_minutes, r.max_duration_minutes, r.color,
+               r.reservation_restricted, r.auto_confirm, r.default_duration_minutes, r.min_duration_minutes, r.max_duration_minutes, r.color, c.icon AS collection_icon,
                CASE WHEN $1 THEN r.outlook_email END AS outlook_email,
                COALESCE(ARRAY(SELECT vg.group_id FROM resource_visibility_groups vg WHERE vg.resource_id = r.id ORDER BY vg.group_id), '{}') AS "visible_group_ids!",
                COALESCE(ARRAY(SELECT rg.group_id FROM resource_groups rg WHERE rg.resource_id = r.id ORDER BY rg.group_id), '{}') AS "reservable_group_ids!",
@@ -26,6 +26,7 @@ pub async fn list_all(
                )) AS "can_reserve!",
                r.created_at, r.updated_at, r.deleted_at
         FROM resources r
+        JOIN collections c ON c.id = r.collection_id
         WHERE r.deleted_at IS NULL
           AND ($1 = TRUE OR r.is_public = TRUE
                OR EXISTS (SELECT 1 FROM resource_visibility_groups vg WHERE vg.resource_id = r.id AND vg.group_id = $2)
@@ -54,7 +55,7 @@ pub async fn find_by_id(
         Resource,
         r#"
         SELECT r.id, r.collection_id, r.name, r.description, r.allow_recurring, r.blocks_only, r.reservable_until, r.is_public,
-               r.reservation_restricted, r.auto_confirm, r.default_duration_minutes, r.min_duration_minutes, r.max_duration_minutes, r.color,
+               r.reservation_restricted, r.auto_confirm, r.default_duration_minutes, r.min_duration_minutes, r.max_duration_minutes, r.color, c.icon AS collection_icon,
                CASE WHEN $1 THEN r.outlook_email END AS outlook_email,
                COALESCE(ARRAY(SELECT vg.group_id FROM resource_visibility_groups vg WHERE vg.resource_id = r.id ORDER BY vg.group_id), '{}') AS "visible_group_ids!",
                COALESCE(ARRAY(SELECT rg.group_id FROM resource_groups rg WHERE rg.resource_id = r.id ORDER BY rg.group_id), '{}') AS "reservable_group_ids!",
@@ -64,6 +65,7 @@ pub async fn find_by_id(
                )) AS "can_reserve!",
                r.created_at, r.updated_at, r.deleted_at
         FROM resources r
+        JOIN collections c ON c.id = r.collection_id
         WHERE r.id = $3
           AND r.deleted_at IS NULL
           AND ($1 = TRUE OR r.is_public = TRUE
@@ -177,7 +179,7 @@ pub async fn create(pool: &PgPool, dto: CreateResource) -> Result<Resource, AppE
         dto.default_duration_minutes,
         dto.min_duration_minutes,
         dto.max_duration_minutes,
-        dto.color.filter(|c| !c.is_empty()),
+        dto.color.filter(|c| !c.is_empty()).map(|c| c.to_lowercase()),
         dto.outlook_email
     )
     .fetch_one(&mut *tx)
@@ -235,7 +237,7 @@ pub async fn update(pool: &PgPool, id: Uuid, dto: UpdateResource) -> Result<Reso
             min_duration_minutes = CASE WHEN $10::int IS NULL THEN min_duration_minutes ELSE NULLIF($10, 0) END,
             max_duration_minutes = CASE WHEN $11::int IS NULL THEN max_duration_minutes ELSE NULLIF($11, 0) END,
             -- An empty string clears the color
-            color = CASE WHEN $12::text IS NULL THEN color ELSE NULLIF($12, '') END,
+            color = CASE WHEN $12::text IS NULL THEN color ELSE NULLIF(LOWER($12), '') END,
             -- An empty string clears the mailbox
             outlook_email = CASE WHEN $13::text IS NULL THEN outlook_email ELSE NULLIF(LOWER(TRIM($13)), '') END,
             updated_at = NOW()

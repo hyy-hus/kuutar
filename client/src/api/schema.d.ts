@@ -1404,9 +1404,11 @@ export interface components {
             blocks_only: boolean;
             /** @description Whether the requesting user may reserve this resource (always true for admins) */
             can_reserve: boolean;
+            /** @description Icon key of the resource's collection, which the resource inherits */
+            collection_icon?: string | null;
             /** Format: uuid */
             collection_id: string;
-            /** @description Palette key (see `RESOURCE_COLORS`) for the resource's calendar events */
+            /** @description Palette key (see `RESOURCE_COLORS`) or custom `#rrggbb` color for the resource's calendar events */
             color?: string | null;
             /** Format: date-time */
             created_at: string;

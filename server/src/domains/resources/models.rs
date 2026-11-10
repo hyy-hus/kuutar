@@ -40,8 +40,10 @@ pub struct Resource {
     pub min_duration_minutes: Option<i32>,
     /// Longest booking length in minutes (not enforced for admins)
     pub max_duration_minutes: Option<i32>,
-    /// Palette key (see `RESOURCE_COLORS`) for the resource's calendar events
+    /// Palette key (see `RESOURCE_COLORS`) or custom `#rrggbb` color for the resource's calendar events
     pub color: Option<String>,
+    /// Icon key of the resource's collection, which the resource inherits
+    pub collection_icon: Option<String>,
     /// Outlook room/equipment mailbox of the resource (admins only)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub outlook_email: Option<String>,
@@ -114,17 +116,25 @@ pub struct CreateResource {
     pub outlook_email: Option<String>,
 }
 
-/// Calendar color keys; must match the CHECK constraint on `resources.color`
+/// Calendar color keys; together with `#rrggbb` they must match the CHECK constraint on
+/// `resources.color`
 pub const RESOURCE_COLORS: &[&str] = &[
     "red", "orange", "amber", "lime", "emerald", "teal", "sky", "blue", "violet", "pink",
 ];
 
 fn validate_color(color: &str) -> Result<(), validator::ValidationError> {
-    if color.is_empty() || RESOURCE_COLORS.contains(&color) {
+    if color.is_empty() || RESOURCE_COLORS.contains(&color) || is_hex_color(color) {
         Ok(())
     } else {
         Err(validator::ValidationError::new("invalid_color"))
     }
+}
+
+/// `#rrggbb`, either case (stored lowercase)
+fn is_hex_color(color: &str) -> bool {
+    color.len() == 7
+        && color.starts_with('#')
+        && color[1..].chars().all(|c| c.is_ascii_hexdigit())
 }
 
 fn validate_outlook_email(email: &str) -> Result<(), validator::ValidationError> {
@@ -203,6 +213,18 @@ pub struct UpdateResource {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_color_validation() {
+        assert!(validate_color("teal").is_ok());
+        assert!(validate_color("").is_ok());
+        assert!(validate_color("#1a2B3c").is_ok());
+        assert!(validate_color("#12345").is_err());
+        assert!(validate_color("#12345g").is_err());
+        assert!(validate_color("123456").is_err());
+        assert!(validate_color("#ééé").is_err());
+        assert!(validate_color("chartreuse").is_err());
+    }
 
     #[test]
     fn test_update_resource_allows_omitted_name() {

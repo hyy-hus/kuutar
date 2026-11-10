@@ -89,6 +89,20 @@ pub const COLLECTION_ICONS: &[&str] = &[
     "laptop",
     "printer",
     "shirt",
+    "party",
+    "disco",
+    "cinema",
+    "theater",
+    "reading",
+    "library",
+    "computer",
+    "office",
+    "building",
+    "lecture",
+    "classroom",
+    "meeting",
+    "lab",
+    "coffee",
 ];
 
 fn validate_icon(icon: &str) -> Result<(), validator::ValidationError> {

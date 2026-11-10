@@ -773,5 +773,8 @@
 	"viestiYllapidolle": "Meddelande till administratörer",
 	"viestiYllapidolleOhje": "Bara du och administratörerna ser detta. Använd det för information som inte hör hemma i den offentliga beskrivningen.",
 	"viestiYllapitajille": "Meddelande till administratörer",
-	"yllpitjnMuistiinpanotEiOmistajalle": "Administratörens anteckningar (syns inte för bokaren)"
+	"yllpitjnMuistiinpanotEiOmistajalle": "Administratörens anteckningar (syns inte för bokaren)",
+	"omaVari": "Egen färg",
+	"kaikki": "Alla",
+	"vainTamaOhje": "Dubbelklicka eller Ctrl-klicka för att visa bara denna"
 }

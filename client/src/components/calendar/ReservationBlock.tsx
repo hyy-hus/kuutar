@@ -208,6 +208,7 @@ export function ReservationBlock({
 				color && ["border-l-4", color.stripe],
 			)}
 			style={{
+				...color?.style,
 				top: `${topPct}%`,
 				height: `${heightPct}%`,
 				left: `${leftPct}%`,

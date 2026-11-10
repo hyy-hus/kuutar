@@ -1,4 +1,6 @@
-/** Palette keys accepted by the server; keep in sync with `RESOURCE_COLORS` there */
+import type { CSSProperties } from "react";
+
+/** Palette keys accepted by the server (besides custom `#rrggbb` colors); keep in sync with `RESOURCE_COLORS` there */
 export const RESOURCE_COLORS = [
 	"red",
 	"orange",
@@ -21,6 +23,23 @@ interface ResourceColorClasses {
 	stripe: string;
 	/** Light background tint with hover state for calendar events */
 	tint: string;
+	/** Sets `--res-color` for custom colors; spread it onto every element that uses the classes */
+	style?: CSSProperties;
+}
+
+/** A custom color as the server stores it: lowercase `#rrggbb` */
+export function isHexColor(value?: string | null): value is string {
+	return typeof value === "string" && /^#[0-9a-f]{6}$/.test(value);
+}
+
+// Custom colors are not known to Tailwind, so the classes read a CSS variable instead
+function customColorClasses(hex: string): ResourceColorClasses {
+	return {
+		swatch: "bg-(--res-color)",
+		stripe: "border-l-(color:--res-color) dark:border-l-(color:--res-color)",
+		tint: "bg-[color-mix(in_oklab,var(--res-color)_16%,white)] hover:bg-[color-mix(in_oklab,var(--res-color)_28%,white)] dark:bg-[color-mix(in_oklab,var(--res-color)_22%,black)] dark:hover:bg-[color-mix(in_oklab,var(--res-color)_32%,black)]",
+		style: { "--res-color": hex } as CSSProperties,
+	};
 }
 
 // Full class names so Tailwind can see them
@@ -77,10 +96,11 @@ const CLASSES: Record<ResourceColor, ResourceColorClasses> = {
 	},
 };
 
-/** The classes for a palette key, or undefined for no/unknown color */
+/** The classes for a palette key or custom hex color, or undefined for no/unknown color */
 export function getResourceColor(
 	key?: string | null,
 ): ResourceColorClasses | undefined {
+	if (isHexColor(key)) return customColorClasses(key);
 	return key && Object.hasOwn(CLASSES, key)
 		? CLASSES[key as ResourceColor]
 		: undefined;
@@ -103,9 +123,21 @@ const HEX: Record<ResourceColor, string> = {
 /** Chart color for resources without a palette color */
 export const DEFAULT_CHART_COLOR = "#9333ea";
 
-/** The hex color for a palette key, or the default chart color */
+/** The hex color for a palette key or custom color, or the default chart color */
 export function getResourceHex(key?: string | null): string {
+	if (isHexColor(key)) return key;
 	return key && Object.hasOwn(HEX, key)
 		? HEX[key as ResourceColor]
 		: DEFAULT_CHART_COLOR;
+}
+
+/** Black or white, whichever reads better on the given `#rrggbb` background (WCAG luminance) */
+export function getContrastColor(hex: string): "#000000" | "#ffffff" {
+	const [r, g, b] = [1, 3, 5].map((i) => {
+		const c = Number.parseInt(hex.slice(i, i + 2), 16) / 255;
+		return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+	});
+	const luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+	// 0.179 is where black and white contrast equally
+	return luminance > 0.179 ? "#000000" : "#ffffff";
 }
