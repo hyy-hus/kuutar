@@ -47,6 +47,16 @@ const config = defineConfig({
 			},
 			{
 				extends: true,
+				test: {
+					name: "component",
+					include: ["src/**/*.test.tsx"],
+					environment: "happy-dom",
+					setupFiles: ["src/test/setup.ts"],
+					env: { TZ: "Europe/Helsinki" },
+				},
+			},
+			{
+				extends: true,
 				plugins: [
 					storybookTest({
 						configDir: path.join(import.meta.dirname, ".storybook"),

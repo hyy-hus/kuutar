@@ -8,6 +8,8 @@ const AUTH_FILE = "e2e/.auth/admin.json";
 // so a running dev setup on 3000/5173 is left alone.
 export default defineConfig({
 	testDir: "./e2e",
+	// Screenshot generation has its own config (playwright.screenshots.config.ts)
+	testIgnore: "**/screenshots/**",
 	fullyParallel: false,
 	workers: 1,
 	retries: process.env.CI ? 1 : 0,

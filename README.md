@@ -8,6 +8,10 @@ Nimi tulee muinaissuomalaisesta kuun jumalattaresta Kuuttaresta.
 - **Aja omalla koneella:** [Käyttöönotto paikallisesti](#käyttöönotto-paikallisesti)
 - **Osallistu:** [Osallistuminen](#osallistuminen)
 
+![Kalenterin kuukausinäkymä](docs/screenshots/pages/calendar-month.png)
+
+_Kuva on generoitu keksityllä testidatalla, ks. [Testidata ja kuvakaappaukset](#testidata-ja-kuvakaappaukset)._
+
 ## Ominaisuudet
 
 ### Varaukset
@@ -126,6 +130,11 @@ Kirjaudu sisään palvelimen luomilla ylläpitäjän tunnuksilla.
 |---|---|
 | `cargo test` (`server/`) | Ajaa yksikkö- ja integraatiotestit. Integraatiotestit tarvitsevat käynnissä olevan PostgreSQL:n (`DATABASE_URL`). |
 | `cargo sqlx prepare -- --all-targets` (`server/`) | Päivittää `.sqlx`-välimuistin SQL-kyselyiden muuttuessa. Tarvitaan, jotta palvelimen voi kääntää ilman tietokantaa (CI ja Docker). |
+| `cargo run --bin seed -- --size prod --reset` (`server/`) | Täyttää paikallisen tietokannan keksityllä testidatalla, ks. [Testidata ja kuvakaappaukset](#testidata-ja-kuvakaappaukset) |
+| `pnpm test` (`client/`) | Yksikkö- ja komponenttitestit (vitest) |
+| `pnpm storybook` (`client/`) | Käynnistää Storybookin komponenttien selaamiseen. `pnpm test:stories` ajaa tarinat testeinä |
+| `pnpm e2e` (`client/`) | Playwright-päästä päähän -testit omalla tietokannallaan |
+| `pnpm screenshots` (`client/`) | Päivittää `docs/screenshots`-kuvakaappaukset, ks. [Testidata ja kuvakaappaukset](#testidata-ja-kuvakaappaukset) |
 | `pnpm check` (`client/`) | Biome-lint ja -muotoilu |
 | `pnpm typecheck` (`client/`) | TypeScript-tyyppitarkistus |
 | `pnpm build` (`client/`) | Tuotantoversio hakemistoon `client/dist` |
@@ -142,6 +151,7 @@ kuutar/
 │   ├── src/domains/         # Toiminnot aiheittain: auth, reservations, resources, contracts, …
 │   ├── tests/               # Rajapinnan integraatiotestit
 │   └── .sqlx/               # SQLx:n offline-kyselyvälimuisti
+├── docs/screenshots/        # Julkaisun mukaiset kuvakaappaukset (generoidaan, ks. alla)
 ├── client/                  # React-käyttöliittymä
 │   ├── messages/            # Käännökset: fi.json, sv.json, en.json
 │   └── src/
@@ -151,6 +161,31 @@ kuutar/
 │       └── routes/          # Sivut (tiedostopohjainen reititys)
 └── .github/workflows/       # CI ja testiympäristön julkaisu
 ```
+
+### Testidata ja kuvakaappaukset
+
+**Testidata.** Tyhjässä paikallisessa tietokannassa ei ole paljon nähtävää, joten palvelimen mukana tulee generaattori, joka luo tuotantoa vastaavan, kokonaan keksityn aineiston: noin 235 käyttäjää, yli 300 varausta, toistuvia varauksia, varauskierroksia, rajoituksia ja resurssien eri asetusyhdistelmiä.
+
+```sh
+cd server
+cargo run --bin seed -- --size prod --reset   # tai --size small
+```
+
+- Kaikki käyttäjät ovat osoitteessa `@example.test` ja salasana on `dev-password` (esim. `admin@example.test`). Tuotantodataa tai oikeita nimiä ei käytetä.
+- Sama `--seed` ja `--anchor` (päivämäärä) tuottavat aina saman aineiston. `--reset` poistaa vain generaattorin luomat rivit, joten omat testitietosi säilyvät.
+- Generaattori kieltäytyy toimimasta, jos tietokanta ei ole `localhost`. Kun lisäät uuden ominaisuuden, laajenna generaattoria (`server/src/seed/mock.rs`) niin, että myös uusi tapaus on aineistossa.
+
+**Kuvakaappaukset.** `docs/screenshots/pages/` sisältää kuvakaappauksen jokaisesta sivusta nykyisestä versiosta. Kuvat generoidaan automaattisesti testidatasta, ja repositoriossa on aina vain uusimmat.
+
+```sh
+cd client
+E2E_ADMIN_DATABASE_URL='postgres://KÄYTTÄJÄ:SALASANA@localhost:5432/postgres' pnpm screenshots
+```
+
+- Komento käynnistää oman tietokannan (`kuutar_e2e`), palvelimen (portti 3100) ja käyttöliittymän (portti 5174), joten käynnissä oleva kehitysympäristö ei häiriinny. Tunnuksilla pitää olla oikeus luoda ja poistaa tietokantoja, kuten `pnpm e2e`:ssä.
+- Ensimmäisellä ajolla Playwright saattaa tarvita selaimen: `pnpm exec playwright install chromium`.
+- Ajo korvaa koko `docs/screenshots/pages/`-hakemiston. Tarkista uudet kuvat silmämääräisesti ja committaa ne kaikki yhdessä (`docs: update screenshots`).
+- **Päivitä kuvakaappaukset vähintään ennen jokaista julkaisua**, sekä silloin kun käyttöliittymämuutos tekee vanhoista kuvista harhaanjohtavia. Kun lisäät, poistat tai nimeät uudelleen sivun (`client/src/routes/`), päivitä sivulista tiedostossa `client/e2e/screenshots/pages.spec.ts`.
 
 ### Jatkuva integraatio
 
@@ -173,7 +208,8 @@ Muistilista:
 - **Käännökset**: kaikki käyttöliittymän tekstit kulkevat `t()`-funktion kautta, ja uudet avaimet lisätään kaikkiin kolmeen tiedostoon `client/messages/` (fi, sv, en).
 - **SQL-kyselyt**: kun muutat kyselyitä, aja `cargo sqlx prepare -- --all-targets` ja lisää muuttunut `.sqlx`-hakemisto committiin.
 - **Rajapinta**: kun muutat sitä, päivitä käyttöliittymän tyypit komennolla `pnpm generate:api`.
-- **Tarkistukset**: varmista ennen pull requestia, että `pnpm check`, `pnpm typecheck` ja `cargo test` menevät läpi.
+- **Tarkistukset**: varmista ennen pull requestia, että `pnpm check`, `pnpm typecheck`, `pnpm test` ja `cargo test` menevät läpi.
+- **Julkaisu**: päivitä kuvakaappaukset (`pnpm screenshots`) ennen jokaista julkaisua, ks. [Testidata ja kuvakaappaukset](#testidata-ja-kuvakaappaukset).
 
 ## Lisenssi
 

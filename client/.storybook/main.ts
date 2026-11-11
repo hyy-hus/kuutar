@@ -11,7 +11,9 @@ const config: StorybookConfig = {
         "@storybook/addon-a11y",
         "@storybook/addon-docs",
         '@storybook/addon-themes',
+        'msw-storybook-addon',
     ],
+    "staticDirs": ["../public"],
     "framework": "@storybook/tanstack-react"
 };
 export default config;

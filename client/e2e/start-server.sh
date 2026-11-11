@@ -26,4 +26,12 @@ export AWS_ACCESS_KEY_ID="e2e"
 export AWS_SECRET_ACCESS_KEY="e2e"
 
 cd "$(dirname "$0")/../../server"
-exec cargo run --quiet
+
+# E2E_SEED=1 fills the database with the synthetic mock dataset first (used for screenshots).
+# The seeder also creates the admin, so the server's own admin seeding is then skipped:
+# sign in as admin@example.test / dev-password.
+if [ "${E2E_SEED:-}" = "1" ]; then
+  cargo run --quiet --bin seed -- --size prod ${E2E_SEED_ANCHOR:+--anchor "$E2E_SEED_ANCHOR"}
+fi
+
+exec cargo run --quiet --bin kuutar
