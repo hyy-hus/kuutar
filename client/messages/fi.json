@@ -941,5 +941,10 @@
 	"eiRistiriitaisia": "Ei ristiriitaisia varauksia",
 	"eiRistiriitaisiaKuvaus": "Mikään odottava varaus ei ole päällekkäin toisen varauksen kanssa.",
 	"eiOdottaviaVarauksiaKuvaus": "Kaikki valitun aikavälin pyynnöt on käsitelty. Uudet hyväksyntää vaativat pyynnöt ilmestyvät tähän. Voit muuttaa aikaväliä tai suodattimia yllä.",
-	"hyvaksyValitutMaara": "Hyväksy valitut ({{count}})"
+	"hyvaksyValitutMaara": "Hyväksy valitut ({{count}})",
+	"tyhjenna": "Tyhjennä",
+	"kaikkiResurssitMaara": "Kaikki resurssit ({{count}})",
+	"eiValittujaResursseja": "Ei resursseja valittuna. Avaa lista ja valitse näytettävät resurssit.",
+	"naytaKaikkiValitut": "Näytä kaikki valitut resurssit (+{{count}})",
+	"poistaValinta": "Poista valinta: {{name}}"
 }

@@ -941,5 +941,10 @@
 	"eiRistiriitaisia": "No conflicting reservations",
 	"eiRistiriitaisiaKuvaus": "No pending reservation overlaps with another reservation.",
 	"eiOdottaviaVarauksiaKuvaus": "All requests in the selected period have been handled. New requests that need approval will appear here. You can change the period or filters above.",
-	"hyvaksyValitutMaara": "Approve selected ({{count}})"
+	"hyvaksyValitutMaara": "Approve selected ({{count}})",
+	"tyhjenna": "Clear",
+	"kaikkiResurssitMaara": "All resources ({{count}})",
+	"eiValittujaResursseja": "No resources selected. Open the list and choose which to show.",
+	"naytaKaikkiValitut": "Show all selected resources (+{{count}})",
+	"poistaValinta": "Deselect: {{name}}"
 }

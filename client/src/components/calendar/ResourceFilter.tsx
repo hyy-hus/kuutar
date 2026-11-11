@@ -1,4 +1,4 @@
-import { Check, ChevronDown, Layers } from "lucide-react";
+import { Check, ChevronDown, Layers, X } from "lucide-react";
 import { useId, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "#/utils/cn";
@@ -8,6 +8,7 @@ import {
 	getResourceColor,
 	getResourceHex,
 } from "#/utils/resourceColors";
+import { useIsMobile } from "./useIsMobile";
 
 export interface FilterResource {
 	id: string;
@@ -85,7 +86,15 @@ export function ResourceFilter({
 		[resources, collections],
 	);
 	const selected = new Set(selectedIds);
-	const selectedCount = resources.filter((r) => selected.has(r.id)).length;
+	const selectedResources = resources.filter((r) => selected.has(r.id));
+	const selectedCount = selectedResources.length;
+	const isMobile = useIsMobile();
+	// Few enough chips to stay within two lines; the rest collapses into a "+N" chip
+	const maxChips = isMobile ? 3 : 8;
+	const shownChips = selectedResources.slice(0, maxChips);
+	const hiddenCount = selectedCount - shownChips.length;
+	const allSelected =
+		resources.length > 0 && selectedCount === resources.length;
 
 	const setGroup = (group: Group, on: boolean) => {
 		const ids = new Set(group.resources.map((r) => r.id));
@@ -109,27 +118,90 @@ export function ResourceFilter({
 				className,
 			)}
 		>
-			<button
-				type="button"
-				aria-expanded={open}
-				aria-controls={panelId}
-				onClick={() => setOpen((o) => !o)}
-				className="focus-ring flex h-10 w-full cursor-pointer items-center gap-2 rounded-md px-3 text-sm font-medium hover:bg-stone-100 dark:hover:bg-stone-900"
+			<div className="flex items-center gap-1 pr-2">
+				<button
+					type="button"
+					aria-expanded={open}
+					aria-controls={panelId}
+					onClick={() => setOpen((o) => !o)}
+					className="focus-ring flex h-10 min-w-0 flex-1 cursor-pointer items-center gap-2 rounded-md px-3 text-sm font-medium hover:bg-stone-100 dark:hover:bg-stone-900"
+				>
+					<Layers size={16} aria-hidden="true" />
+					<span>{t("resurssit", "Resurssit")}</span>
+					<span className="text-xs font-normal text-stone-600 tabular-nums dark:text-stone-400">
+						{t("valittuYhteensa", "{{selected}} / {{total}} valittu", {
+							selected: selectedCount,
+							total: resources.length,
+						})}
+					</span>
+					<ChevronDown
+						size={16}
+						aria-hidden="true"
+						className={cn("ml-auto transition-transform", open && "rotate-180")}
+					/>
+				</button>
+				{resources.length > 0 && (
+					<button
+						type="button"
+						className={quick}
+						onClick={() =>
+							onChange(allSelected ? [] : resources.map((r) => r.id))
+						}
+					>
+						{allSelected
+							? t("tyhjenna", "Tyhjennä")
+							: t("valitseKaikki", "Valitse kaikki")}
+					</button>
+				)}
+			</div>
+
+			<div
+				data-testid="resource-summary"
+				className="flex flex-wrap items-center gap-1.5 px-3 pb-2"
 			>
-				<Layers size={16} aria-hidden="true" />
-				<span>{t("resurssit", "Resurssit")}</span>
-				<span className="text-xs font-normal text-stone-600 tabular-nums dark:text-stone-400">
-					{t("valittuYhteensa", "{{selected}} / {{total}} valittu", {
-						selected: selectedCount,
-						total: resources.length,
-					})}
-				</span>
-				<ChevronDown
-					size={16}
-					aria-hidden="true"
-					className={cn("ml-auto transition-transform", open && "rotate-180")}
-				/>
-			</button>
+				{allSelected ? (
+					<span className="text-sm font-medium">
+						{t("kaikkiResurssitMaara", "Kaikki resurssit ({{count}})", {
+							count: resources.length,
+						})}
+					</span>
+				) : selectedCount === 0 ? (
+					<span className="text-xs text-stone-600 dark:text-stone-400">
+						{t(
+							"eiValittujaResursseja",
+							"Ei resursseja valittuna. Avaa lista ja valitse näytettävät resurssit.",
+						)}
+					</span>
+				) : (
+					<>
+						{shownChips.map((res) => (
+							<SelectedChip
+								key={res.id}
+								resource={res}
+								onRemove={() =>
+									onChange(selectedIds.filter((x) => x !== res.id))
+								}
+							/>
+						))}
+						{hiddenCount > 0 && (
+							<button
+								type="button"
+								aria-expanded={open}
+								aria-controls={panelId}
+								aria-label={t(
+									"naytaKaikkiValitut",
+									"Näytä kaikki valitut resurssit (+{{count}})",
+									{ count: hiddenCount },
+								)}
+								onClick={() => setOpen(true)}
+								className="focus-ring cursor-pointer rounded-sm border border-stone-300 px-2 py-1 text-xs font-medium tabular-nums hover:bg-stone-100 dark:border-stone-700 dark:hover:bg-stone-900"
+							>
+								{`+${hiddenCount}`}
+							</button>
+						)}
+					</>
+				)}
+			</div>
 
 			{open && (
 				<div
@@ -270,5 +342,37 @@ function ResourceChip({
 			</span>
 			{resource.name}
 		</button>
+	);
+}
+
+/** Compact chip in the collapsed bar: colour dot, name and a button that deselects the resource */
+function SelectedChip({
+	resource,
+	onRemove,
+}: {
+	resource: FilterResource;
+	onRemove: () => void;
+}) {
+	const { t } = useTranslation();
+	const hex = getResourceHex(resource.color);
+	return (
+		<span className="inline-flex max-w-[calc(50%-0.25rem)] items-center gap-1.5 rounded-sm border border-stone-300 bg-stone-50 py-0.5 pr-0.5 pl-2 text-xs font-medium sm:max-w-56 dark:border-stone-700 dark:bg-stone-900">
+			<span
+				aria-hidden="true"
+				className="size-2.5 shrink-0 rounded-full"
+				style={{ backgroundColor: hex }}
+			/>
+			<span className="truncate">{resource.name}</span>
+			<button
+				type="button"
+				aria-label={t("poistaValinta", "Poista valinta: {{name}}", {
+					name: resource.name,
+				})}
+				onClick={onRemove}
+				className="focus-ring inline-flex size-6 shrink-0 cursor-pointer items-center justify-center rounded-sm hover:bg-stone-200 dark:hover:bg-stone-800"
+			>
+				<X size={12} aria-hidden="true" />
+			</button>
+		</span>
 	);
 }

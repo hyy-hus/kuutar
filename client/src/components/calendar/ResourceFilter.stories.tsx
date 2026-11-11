@@ -36,3 +36,17 @@ type Story = StoryObj<typeof meta>;
 
 export const Open: Story = {};
 export const Collapsed: Story = { args: { defaultOpen: false } };
+export const AllSelected: Story = {
+	args: { defaultOpen: false },
+	render: (args) => {
+		const [ids, setIds] = useState(resources.map((r) => r.id));
+		return <ResourceFilter {...args} selectedIds={ids} onChange={setIds} />;
+	},
+};
+export const NoneSelected: Story = {
+	args: { defaultOpen: false, selectedIds: [] },
+	render: (args) => {
+		const [ids, setIds] = useState<string[]>([]);
+		return <ResourceFilter {...args} selectedIds={ids} onChange={setIds} />;
+	},
+};
