@@ -1,0 +1,149 @@
+# Shared deploy pipeline, called by deploy-staging.yml and deploy-production.yml.
+#
+# Each GitHub environment (staging, production) must provide:
+#   secrets:   SCW_ACCESS_KEY, SCW_SECRET_KEY, SCW_PROJECT_ID, SCW_ORGANIZATION_ID,
+#              SCW_CONTAINER_ID, S3_BUCKET_NAME (frontend bucket), VITE_API_URL
+#   variables: IMAGE_REPOSITORY (e.g. rg.fr-par.scw.cloud/kuutar-staging/kuutar-backend)
+name: Deploy
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        description: GitHub environment to deploy to (staging or production)
+        required: true
+        type: string
+      image_tag:
+        description: Image tag the container is deployed with
+        required: true
+        type: string
+      extra_image_tag:
+        description: Optional second tag pushed for the same image (e.g. the release version)
+        required: false
+        type: string
+        default: ""
+
+jobs:
+  deploy-backend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: ${{ inputs.environment }}
+    env:
+      IMAGE: ${{ vars.IMAGE_REPOSITORY }}:${{ inputs.image_tag }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Scaleway Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: rg.fr-par.scw.cloud
+          username: nologin
+          password: ${{ secrets.SCW_SECRET_KEY }}
+
+      # The Dockerfile compiles dependencies in their own layer (cargo-chef). The layer cache
+      # lives in the GitHub Actions cache, shared by staging and production builds, so only the
+      # crate itself is recompiled unless Cargo.toml/Cargo.lock changed.
+      - name: Build and Push Docker Image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./server
+          file: ./server/Dockerfile
+          push: true
+          tags: |
+            ${{ env.IMAGE }}
+            ${{ inputs.extra_image_tag != '' && format('{0}:{1}', vars.IMAGE_REPOSITORY, inputs.extra_image_tag) || '' }}
+          cache-from: type=gha,scope=server-image
+          cache-to: type=gha,scope=server-image,mode=max
+
+      - name: Install Scaleway CLI
+        uses: scaleway/action-scw@v0
+        with:
+          version: v2.65.2
+          access-key: ${{ secrets.SCW_ACCESS_KEY }}
+          secret-key: ${{ secrets.SCW_SECRET_KEY }}
+          default-project-id: ${{ secrets.SCW_PROJECT_ID }}
+          default-organization-id: ${{ secrets.SCW_ORGANIZATION_ID }}
+
+      - name: Deploy Container to Scaleway
+        env:
+          SCW_ACCESS_KEY: ${{ secrets.SCW_ACCESS_KEY }}
+          SCW_SECRET_KEY: ${{ secrets.SCW_SECRET_KEY }}
+          SCW_DEFAULT_PROJECT_ID: ${{ secrets.SCW_PROJECT_ID }}
+          SCW_DEFAULT_ORGANIZATION_ID: ${{ secrets.SCW_ORGANIZATION_ID }}
+          SCW_DEFAULT_REGION: fr-par
+          CONTAINER_ID: ${{ secrets.SCW_CONTAINER_ID }}
+          API_URL: ${{ secrets.VITE_API_URL }}
+        run: |
+          # The CLI prints the whole container, environment variables included, and this
+          # repository's logs are public: never let that output reach the log.
+          scw container container update "$CONTAINER_ID" image="$IMAGE" --wait > /dev/null
+
+          # An update is accepted even when the new revision never starts (e.g. a missing
+          # required environment variable), so check that the container really came up.
+          status=$(scw container container get "$CONTAINER_ID" -o json | jq -r '.status')
+          if [ "$status" != "ready" ]; then
+            message=$(scw container container get "$CONTAINER_ID" -o json | jq -r '.error_message // "none"')
+            echo "::error::Container is '$status' after the deploy, not 'ready' (error message: $message). The server most likely exits at startup; check the container logs in Scaleway Cockpit."
+            exit 1
+          fi
+
+          # The container scales to zero, so the first request may be a cold start.
+          curl --fail --silent --show-error --max-time 60 --retry 5 --retry-delay 10 --retry-all-errors \
+            "${API_URL%/}/health"
+
+  deploy-frontend:
+    # After the backend, so a failed backend deploy never ships a client built for a newer API.
+    needs: deploy-backend
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: ${{ inputs.environment }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: client/pnpm-lock.yaml
+
+      - name: Install & Build Frontend
+        working-directory: ./client
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm build
+        env:
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}
+
+      - name: Sync SPA to Scaleway S3 Bucket
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.SCW_ACCESS_KEY }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.SCW_SECRET_KEY }}
+          AWS_DEFAULT_REGION: fr-par
+          AWS_ENDPOINT_URL: https://s3.fr-par.scw.cloud
+          # Newer AWS CLIs add checksum headers that not every S3-compatible service accepts
+          AWS_REQUEST_CHECKSUM_CALCULATION: when_required
+          AWS_RESPONSE_CHECKSUM_VALIDATION: when_required
+          BUCKET: ${{ secrets.S3_BUCKET_NAME }}
+        run: |
+          # Hashed static assets: cache for a year
+          aws s3 sync client/dist "s3://${BUCKET}" \
+            --delete \
+            --acl public-read \
+            --cache-control "public, max-age=31536000, immutable" \
+            --exclude "index.html"
+
+          # index.html: always revalidate, so users get the new version immediately
+          aws s3 cp client/dist/index.html "s3://${BUCKET}/index.html" \
+            --acl public-read \
+            --cache-control "no-cache, no-store, must-revalidate"

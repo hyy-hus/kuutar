@@ -1,0 +1,6 @@
+target
+.env*
+*.bak
+reservations_backup.json
+tests
+README.md
