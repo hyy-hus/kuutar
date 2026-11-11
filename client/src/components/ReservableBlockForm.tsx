@@ -1,5 +1,5 @@
 import { useForm } from "@tanstack/react-form";
-import { CalendarCheck, Loader2, Save } from "lucide-react";
+import { AlertCircle, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useResources } from "#/hooks/useResorces";
@@ -10,8 +10,13 @@ import {
 	type RRuleConfig,
 } from "#/utils/rruleUtils";
 import { Button } from "./Button";
+import { ChipSelect } from "./ChipSelect";
+import { DateTimeInput } from "./DateTimeInput";
+import { FormActions } from "./FormActions";
+import { FormSection } from "./FormSection";
 import { Input } from "./Input";
 import { RecurrenceFields } from "./RecurrenceFields";
+import { Textarea } from "./Textarea";
 
 export interface ReservableBlockOccurrenceValue {
 	resource_id: string;
@@ -34,13 +39,28 @@ interface ReservableBlockFormProps {
 	onSubmit: (values: ReservableBlockFormValues) => Promise<void>;
 	isSubmitting?: boolean;
 	submitLabel?: string;
+	/** Shows a ghost "Peruuta" button next to the submit button */
+	onCancel?: () => void;
 }
+
+function FieldError({ errors }: { errors: unknown[] }) {
+	if (errors.length === 0) return null;
+	return (
+		<p className="flex items-center gap-1 text-xs text-red-600 dark:text-red-400">
+			<AlertCircle size={12} aria-hidden="true" />
+			{errors.join(", ")}
+		</p>
+	);
+}
+
+const labelClass = "text-sm font-medium text-stone-900 dark:text-stone-100";
 
 export function ReservableBlockForm({
 	defaultValues,
 	onSubmit,
 	isSubmitting = false,
 	submitLabel,
+	onCancel,
 }: ReservableBlockFormProps) {
 	const { t } = useTranslation();
 	const { data: resources, isLoading: loadingResources } = useResources();
@@ -98,67 +118,59 @@ export function ReservableBlockForm({
 				e.stopPropagation();
 				form.handleSubmit();
 			}}
-			className="space-y-4 max-w-xl"
+			className="space-y-6"
 		>
-			<form.Field
-				name="title"
-				validators={{
-					onChange: ({ value }) =>
-						!value
-							? t("otsikkoOnPakollinen", "Otsikko on pakollinen")
-							: undefined,
-				}}
+			<FormSection title={t("perustiedot", "Perustiedot")}>
+				<form.Field
+					name="title"
+					validators={{
+						onChange: ({ value }) =>
+							!value
+								? t("otsikkoOnPakollinen", "Otsikko on pakollinen")
+								: undefined,
+					}}
+				>
+					{(field) => (
+						<div className="space-y-1">
+							<label htmlFor={field.name} className={labelClass}>
+								{t("otsikko", "Otsikko")} *
+							</label>
+							<Input
+								id={field.name}
+								aria-required="true"
+								value={field.state.value}
+								onChange={(e) => field.handleChange(e.target.value)}
+								onBlur={field.handleBlur}
+								isError={Boolean(field.state.meta.errors.length)}
+								placeholder={t("esimIltavuoro", "esim. Iltavuoro")}
+							/>
+							<FieldError errors={field.state.meta.errors} />
+						</div>
+					)}
+				</form.Field>
+
+				<form.Field name="description">
+					{(field) => (
+						<div className="space-y-1">
+							<label htmlFor={field.name} className={labelClass}>
+								{t("kuvausValinnainen", "Kuvaus (valinnainen)")}
+							</label>
+							<Textarea
+								id={field.name}
+								value={field.state.value}
+								onChange={(e) => field.handleChange(e.target.value)}
+								onBlur={field.handleBlur}
+								rows={2}
+							/>
+						</div>
+					)}
+				</form.Field>
+			</FormSection>
+
+			<FormSection
+				title={t("ajankohtaJaToistuvuus", "Ajankohta ja toistuvuus")}
 			>
-				{(field) => (
-					<div className="space-y-1">
-						<label
-							htmlFor={field.name}
-							className="text-xs font-medium text-stone-700 dark:text-stone-300"
-						>
-							{t("otsikko", "Otsikko")}
-						</label>
-						<Input
-							id={field.name}
-							value={field.state.value}
-							onChange={(e) => field.handleChange(e.target.value)}
-							onBlur={field.handleBlur}
-							isError={Boolean(field.state.meta.errors.length)}
-							placeholder={t("esimIltavuoro", "esim. Iltavuoro")}
-						/>
-					</div>
-				)}
-			</form.Field>
-
-			<form.Field name="description">
-				{(field) => (
-					<div className="space-y-1">
-						<label
-							htmlFor={field.name}
-							className="text-xs font-medium text-stone-700 dark:text-stone-300"
-						>
-							{t("kuvausValinnainen", "Kuvaus (valinnainen)")}
-						</label>
-						<textarea
-							id={field.name}
-							value={field.state.value}
-							onChange={(e) => field.handleChange(e.target.value)}
-							onBlur={field.handleBlur}
-							rows={2}
-							className="w-full px-3 py-2 text-sm bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 text-stone-900 dark:text-stone-100"
-						/>
-					</div>
-				)}
-			</form.Field>
-
-			<div className="p-3 bg-stone-100 dark:bg-stone-900 border-2 border-emerald-300 dark:border-emerald-800 rounded-sm space-y-3">
-				<div className="flex items-center gap-1.5 text-xs font-bold text-stone-800 dark:text-stone-200">
-					<CalendarCheck size={16} className="text-emerald-600" />
-					<span>
-						{t("varausjaksonAikaJaResurssit", "Aika, resurssit ja toistuvuus")}
-					</span>
-				</div>
-
-				<div className="grid grid-cols-2 gap-2">
+				<div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
 					<form.Field
 						name="start_time"
 						validators={{
@@ -170,15 +182,12 @@ export function ReservableBlockForm({
 					>
 						{(field) => (
 							<div className="space-y-1">
-								<label
-									htmlFor={field.name}
-									className="text-[11px] text-stone-600 dark:text-stone-400"
-								>
-									{t("alkamisaika", "Alkamisaika")}
+								<label htmlFor={field.name} className={labelClass}>
+									{t("alkamisaika", "Alkamisaika")} *
 								</label>
-								<Input
+								<DateTimeInput
 									id={field.name}
-									type="datetime-local"
+									aria-required="true"
 									value={field.state.value}
 									isError={Boolean(field.state.meta.errors.length)}
 									onChange={(e) => {
@@ -232,127 +241,89 @@ export function ReservableBlockForm({
 					>
 						{(field) => (
 							<div className="space-y-1">
-								<label
-									htmlFor={field.name}
-									className="text-[11px] text-stone-600 dark:text-stone-400"
-								>
-									{t("paattymisaika", "Päättymisaika")}
+								<label htmlFor={field.name} className={labelClass}>
+									{t("paattymisaika", "Päättymisaika")} *
 								</label>
-								<Input
+								<DateTimeInput
 									id={field.name}
-									type="datetime-local"
+									aria-required="true"
 									value={field.state.value}
 									isError={Boolean(field.state.meta.errors.length)}
 									onChange={(e) => field.handleChange(e.target.value)}
 								/>
-								{Boolean(field.state.meta.errors.length) && (
-									<p className="text-[11px] text-red-500">
-										{field.state.meta.errors.join(", ")}
-									</p>
-								)}
+								<FieldError errors={field.state.meta.errors} />
 							</div>
 						)}
 					</form.Field>
 				</div>
 
-				<form.Field
-					name="resource_ids"
-					validators={{
-						onChange: ({ value }) =>
-							value.length === 0
-								? t(
-										"valitseVhintnYksiResurssi",
-										"Valitse vähintään yksi resurssi",
-									)
-								: undefined,
-					}}
-				>
-					{(field) => (
-						<div className="space-y-1">
-							<span className="text-[11px] text-stone-600 dark:text-stone-400">
-								{t("varausjaksonResurssit", "Resurssit")}
-							</span>
-							{loadingResources ? (
-								<div className="text-xs text-stone-500 py-2">
-									{t("ladataanResursseja", "Ladataan resursseja...")}
-								</div>
-							) : blockResources && blockResources.length > 0 ? (
-								<div className="flex flex-wrap gap-1.5 p-2 bg-stone-50 dark:bg-stone-950 border border-stone-200 dark:border-stone-800 rounded max-h-32 overflow-y-auto">
-									{blockResources.map((res) => {
-										const isChecked = field.state.value.includes(res.id);
-										return (
-											<button
-												key={res.id}
-												type="button"
-												onClick={() =>
-													field.handleChange(
-														isChecked
-															? field.state.value.filter((id) => id !== res.id)
-															: [...field.state.value, res.id],
-													)
-												}
-												className={`px-2 py-1 text-xs font-medium rounded border ${
-													isChecked
-														? "bg-emerald-600 text-white border-emerald-600"
-														: "bg-white dark:bg-stone-900 border-stone-300 dark:border-stone-700"
-												}`}
-											>
-												{res.name}
-											</button>
-										);
-									})}
-								</div>
-							) : (
-								<p className="text-xs text-stone-500">
-									{t(
-										"eiVarausjaksoResursseja",
-										"Ei resursseja, joilla on käytössä vain varausjaksot. Ota asetus käyttöön resurssin muokkauksessa.",
-									)}
-								</p>
-							)}
-							{Boolean(field.state.meta.errors.length) && (
-								<p className="text-[11px] text-red-500">
-									{field.state.meta.errors.join(", ")}
-								</p>
-							)}
-						</div>
+				<form.Subscribe selector={(state) => state.values.start_time}>
+					{(startTime) => (
+						<RecurrenceFields
+							startTime={startTime ?? ""}
+							value={recurrence}
+							onChange={setRecurrence}
+						/>
 					)}
-				</form.Field>
+				</form.Subscribe>
+			</FormSection>
 
-				<div className="pt-2 border-t border-stone-200 dark:border-stone-800">
-					<form.Subscribe selector={(state) => state.values.start_time}>
-						{(startTime) => (
-							<RecurrenceFields
-								startTime={startTime ?? ""}
-								value={recurrence}
-								onChange={setRecurrence}
+			<form.Field
+				name="resource_ids"
+				validators={{
+					onChange: ({ value }) =>
+						value.length === 0
+							? t(
+									"valitseVhintnYksiResurssi",
+									"Valitse vähintään yksi resurssi",
+								)
+							: undefined,
+				}}
+			>
+				{(field) => (
+					<FormSection title={t("varausjaksonResurssit", "Resurssit")}>
+						{loadingResources ? (
+							<p className="text-sm text-stone-600 dark:text-stone-400">
+								{t("ladataanResursseja", "Ladataan resursseja...")}
+							</p>
+						) : blockResources && blockResources.length > 0 ? (
+							<ChipSelect
+								aria-label={t("varausjaksonResurssit", "Resurssit")}
+								options={blockResources.map((res) => ({
+									value: res.id,
+									label: res.name,
+								}))}
+								value={field.state.value}
+								onChange={field.handleChange}
 							/>
+						) : (
+							<p className="text-sm text-stone-600 dark:text-stone-400">
+								{t(
+									"eiVarausjaksoResursseja",
+									"Ei resursseja, joilla on käytössä vain varausjaksot. Ota asetus käyttöön resurssin muokkauksessa.",
+								)}
+							</p>
 						)}
-					</form.Subscribe>
-				</div>
-			</div>
+						<FieldError errors={field.state.meta.errors} />
+					</FormSection>
+				)}
+			</form.Field>
 
 			<form.Subscribe
 				selector={(state) => [state.canSubmit, state.isSubmitting]}
 			>
 				{([canSubmit, formSubmitting]) => (
-					<Button
-						type="submit"
-						disabled={!canSubmit || isSubmitting || formSubmitting}
-						className="w-full flex items-center justify-center gap-2 mt-4 bg-emerald-600 hover:bg-emerald-700 text-white"
-					>
-						{isSubmitting || formSubmitting ? (
-							<Loader2 className="animate-spin" size={16} />
-						) : (
-							<>
-								<Save size={16} />
-								<span>
-									{submitLabel ??
-										t("tallennaVarausjakso", "Tallenna varausjakso")}
-								</span>
-							</>
-						)}
-					</Button>
+					<FormActions onCancel={onCancel}>
+						<Button
+							type="submit"
+							disabled={!canSubmit || isSubmitting || formSubmitting}
+						>
+							{isSubmitting || formSubmitting ? (
+								<Loader2 className="animate-spin" size={16} />
+							) : null}
+							{submitLabel ?? t("tallennaVarausjakso", "Tallenna varausjakso")}
+						</Button>
+					</FormActions>
 				)}
 			</form.Subscribe>
 		</form>

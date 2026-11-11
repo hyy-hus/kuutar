@@ -1,5 +1,5 @@
 import { useForm } from "@tanstack/react-form";
-import { AlertOctagon, Loader2, Save, Users } from "lucide-react";
+import { AlertCircle, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useGroups } from "#/hooks/useGroups";
@@ -11,9 +11,14 @@ import {
 	type RRuleConfig,
 } from "#/utils/rruleUtils";
 import { Button } from "./Button";
+import { ChipSelect } from "./ChipSelect";
+import { DateTimeInput } from "./DateTimeInput";
+import { FormActions } from "./FormActions";
+import { FormSection } from "./FormSection";
 import { GroupChecklist } from "./GroupChecklist";
 import { Input } from "./Input";
 import { RecurrenceFields } from "./RecurrenceFields";
+import { Textarea } from "./Textarea";
 
 export interface RestrictionOccurrenceValue {
 	resource_id: string | null;
@@ -37,13 +42,28 @@ interface RestrictionFormProps {
 	onSubmit: (values: RestrictionFormValues) => Promise<void>;
 	isSubmitting?: boolean;
 	submitLabel?: string;
+	/** Shows a ghost "Peruuta" button next to the submit button */
+	onCancel?: () => void;
 }
+
+function FieldError({ errors }: { errors: unknown[] }) {
+	if (errors.length === 0) return null;
+	return (
+		<p className="flex items-center gap-1 text-xs text-red-600 dark:text-red-400">
+			<AlertCircle size={12} aria-hidden="true" />
+			{errors.join(", ")}
+		</p>
+	);
+}
+
+const labelClass = "text-sm font-medium text-stone-900 dark:text-stone-100";
 
 export function RestrictionForm({
 	defaultValues,
 	onSubmit,
 	isSubmitting = false,
 	submitLabel,
+	onCancel,
 }: RestrictionFormProps) {
 	const { t } = useTranslation();
 	const { data: resources, isLoading: loadingResources } = useResources();
@@ -117,86 +137,68 @@ export function RestrictionForm({
 				e.stopPropagation();
 				form.handleSubmit();
 			}}
-			className="space-y-4 max-w-xl"
+			className="space-y-6"
 		>
-			{/* Title */}
-			<form.Field
-				name="title"
-				validators={{
-					onChange: ({ value }) =>
-						!value
-							? t("otsikkoOnPakollinen", "Otsikko on pakollinen")
-							: undefined,
-				}}
+			<FormSection title={t("perustiedot", "Perustiedot")}>
+				<form.Field
+					name="title"
+					validators={{
+						onChange: ({ value }) =>
+							!value
+								? t("otsikkoOnPakollinen", "Otsikko on pakollinen")
+								: undefined,
+					}}
+				>
+					{(field) => (
+						<div className="space-y-1">
+							<label htmlFor={field.name} className={labelClass}>
+								{t("rajoituksenOtsikko", "Rajoituksen otsikko / syy")} *
+							</label>
+							<Input
+								id={field.name}
+								aria-required="true"
+								value={field.state.value}
+								onChange={(e) => field.handleChange(e.target.value)}
+								onBlur={field.handleBlur}
+								isError={Boolean(field.state.meta.errors.length)}
+								placeholder={t("esimHuoltotyo", "esim. Saunan huoltotyöt")}
+							/>
+							<FieldError errors={field.state.meta.errors} />
+						</div>
+					)}
+				</form.Field>
+
+				<form.Field name="description">
+					{(field) => (
+						<div className="space-y-1">
+							<label htmlFor={field.name} className={labelClass}>
+								{t("kuvausValinnainen", "Kuvaus (valinnainen)")}
+							</label>
+							<Textarea
+								id={field.name}
+								value={field.state.value}
+								onChange={(e) => field.handleChange(e.target.value)}
+								onBlur={field.handleBlur}
+								rows={2}
+								placeholder={t("lisatietoja", "Lisätietoja käyttäjille...")}
+							/>
+						</div>
+					)}
+				</form.Field>
+			</FormSection>
+
+			<FormSection
+				title={t("ajankohtaJaToistuvuus", "Ajankohta ja toistuvuus")}
 			>
-				{(field) => (
-					<div className="space-y-1">
-						<label
-							htmlFor={field.name}
-							className="text-xs font-medium text-stone-700 dark:text-stone-300"
-						>
-							{t("rajoituksenOtsikko", "Rajoituksen otsikko / syy")}
-						</label>
-						<Input
-							id={field.name}
-							value={field.state.value}
-							onChange={(e) => field.handleChange(e.target.value)}
-							onBlur={field.handleBlur}
-							isError={Boolean(field.state.meta.errors.length)}
-							placeholder={t("esimHuoltotyo", "esim. Saunan huoltotyöt")}
-						/>
-					</div>
-				)}
-			</form.Field>
-
-			{/* Description */}
-			<form.Field name="description">
-				{(field) => (
-					<div className="space-y-1">
-						<label
-							htmlFor={field.name}
-							className="text-xs font-medium text-stone-700 dark:text-stone-300"
-						>
-							{t("kuvausValinnainen", "Kuvaus (valinnainen)")}
-						</label>
-						<textarea
-							id={field.name}
-							value={field.state.value}
-							onChange={(e) => field.handleChange(e.target.value)}
-							onBlur={field.handleBlur}
-							rows={2}
-							className="w-full px-3 py-2 text-sm bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500 text-stone-900 dark:text-stone-100"
-							placeholder={t("lisatietoja", "Lisätietoja käyttäjille...")}
-						/>
-					</div>
-				)}
-			</form.Field>
-
-			{/* Generator Time Range & Recurrence */}
-			<div className="p-3 bg-stone-100 dark:bg-stone-900 border-2 border-amber-300 dark:border-amber-800 rounded-sm space-y-3">
-				<div className="flex items-center gap-1.5 text-xs font-bold text-stone-800 dark:text-stone-200">
-					<AlertOctagon size={16} className="text-amber-600" />
-					<span>
-						{t(
-							"aikaJaToistuvuus",
-							"Ajanvaraus, koskevat resurssit ja toistuvuus",
-						)}
-					</span>
-				</div>
-
-				<div className="grid grid-cols-2 gap-2">
+				<div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
 					<form.Field name="start_time">
 						{(field) => (
 							<div className="space-y-1">
-								<label
-									htmlFor={field.name}
-									className="text-[11px] text-stone-600 dark:text-stone-400"
-								>
+								<label htmlFor={field.name} className={labelClass}>
 									{t("alkamisaika", "Alkamisaika")}
 								</label>
-								<Input
+								<DateTimeInput
 									id={field.name}
-									type="datetime-local"
 									value={field.state.value}
 									onChange={(e) => {
 										const nextStart = e.target.value;
@@ -229,15 +231,11 @@ export function RestrictionForm({
 					<form.Field name="end_time">
 						{(field) => (
 							<div className="space-y-1">
-								<label
-									htmlFor={field.name}
-									className="text-[11px] text-stone-600 dark:text-stone-400"
-								>
+								<label htmlFor={field.name} className={labelClass}>
 									{t("paattymisaika", "Päättymisaika")}
 								</label>
-								<Input
+								<DateTimeInput
 									id={field.name}
-									type="datetime-local"
 									value={field.state.value}
 									onChange={(e) => field.handleChange(e.target.value)}
 								/>
@@ -246,110 +244,78 @@ export function RestrictionForm({
 					</form.Field>
 				</div>
 
-				{/* Multi-Resource Selector for Recurring Generator */}
-				<form.Field name="resource_ids">
-					{(field) => (
-						<div className="space-y-1">
-							<span className="text-[11px] text-stone-600 dark:text-stone-400">
-								{t(
-									"koskevatResurssitTyhjaGlobaali",
-									"Koskevat resurssit (Tyhjä = kaikkia koskeva)",
-								)}
-							</span>
-							{loadingResources ? (
-								<div className="text-xs text-stone-500 py-2">
-									{t("ladataanResursseja", "Ladataan resursseja...")}
-								</div>
-							) : (
-								<div className="flex flex-wrap gap-1.5 p-2 bg-stone-50 dark:bg-stone-950 border border-stone-200 dark:border-stone-800 rounded max-h-32 overflow-y-auto">
-									{resources?.map((res) => {
-										const isChecked = field.state.value.includes(res.id);
-										return (
-											<button
-												key={res.id}
-												type="button"
-												onClick={() => {
-													const next = isChecked
-														? field.state.value.filter((id) => id !== res.id)
-														: [...field.state.value, res.id];
-													field.handleChange(next);
-												}}
-												className={`px-2 py-1 text-xs font-medium rounded border ${
-													isChecked
-														? "bg-amber-600 text-white border-amber-600"
-														: "bg-white dark:bg-stone-900 border-stone-300 dark:border-stone-700"
-												}`}
-											>
-												{res.name}
-											</button>
-										);
-									})}
-								</div>
-							)}
-						</div>
+				<form.Subscribe selector={(state) => state.values.start_time}>
+					{(startTime) => (
+						<RecurrenceFields
+							startTime={startTime ?? ""}
+							value={recurrence}
+							onChange={setRecurrence}
+						/>
 					)}
-				</form.Field>
+				</form.Subscribe>
+			</FormSection>
 
-				<div className="pt-2 border-t border-stone-200 dark:border-stone-800">
-					<form.Subscribe selector={(state) => state.values.start_time}>
-						{(startTime) => (
-							<RecurrenceFields
-								startTime={startTime ?? ""}
-								value={recurrence}
-								onChange={setRecurrence}
+			<form.Field name="resource_ids">
+				{(field) => (
+					<FormSection
+						title={t("koskevatResurssit", "Koskevat resurssit")}
+						description={t(
+							"koskevatResurssitTyhjaKaikki",
+							"Jos mitään ei valita, rajoitus koskee kaikkia resursseja.",
+						)}
+					>
+						{loadingResources ? (
+							<p className="text-sm text-stone-600 dark:text-stone-400">
+								{t("ladataanResursseja", "Ladataan resursseja...")}
+							</p>
+						) : (
+							<ChipSelect
+								aria-label={t("koskevatResurssit", "Koskevat resurssit")}
+								options={(resources ?? []).map((res) => ({
+									value: res.id,
+									label: res.name,
+								}))}
+								value={field.state.value}
+								onChange={field.handleChange}
 							/>
 						)}
-					</form.Subscribe>
-				</div>
-			</div>
+					</FormSection>
+				)}
+			</form.Field>
 
-			{/* Group Exemptions */}
 			<form.Field name="exempt_group_ids">
 				{(field) => (
-					<div className="space-y-1.5 pt-2 border-t border-stone-200 dark:border-stone-800">
-						<div className="flex items-center gap-1.5">
-							<Users
-								size={14}
-								className="text-emerald-600 dark:text-emerald-500"
-							/>
-							<span className="text-xs font-semibold text-stone-800 dark:text-stone-200">
-								{t("vapautetutRyhmat", "Sallitut käyttäjäryhmät (poikkeukset)")}
-							</span>
-						</div>
-
+					<FormSection
+						title={t(
+							"vapautetutRyhmat",
+							"Sallitut käyttäjäryhmät (poikkeukset)",
+						)}
+					>
 						<GroupChecklist
 							groups={groups}
 							loading={loadingGroups}
 							value={field.state.value}
 							onChange={field.handleChange}
-							className="bg-stone-50 dark:bg-stone-900"
-							checkboxClassName="text-emerald-600 focus:ring-emerald-500"
 						/>
-					</div>
+					</FormSection>
 				)}
 			</form.Field>
 
-			{/* Submit Button */}
 			<form.Subscribe
 				selector={(state) => [state.canSubmit, state.isSubmitting]}
 			>
 				{([canSubmit, formSubmitting]) => (
-					<Button
-						type="submit"
-						disabled={!canSubmit || isSubmitting || formSubmitting}
-						className="w-full flex items-center justify-center gap-2 mt-4 bg-amber-600 hover:bg-amber-700 text-white"
-					>
-						{isSubmitting || formSubmitting ? (
-							<Loader2 className="animate-spin" size={16} />
-						) : (
-							<>
-								<Save size={16} />
-								<span>
-									{submitLabel ?? t("tallennaRajoitus", "Tallenna rajoitus")}
-								</span>
-							</>
-						)}
-					</Button>
+					<FormActions onCancel={onCancel}>
+						<Button
+							type="submit"
+							disabled={!canSubmit || isSubmitting || formSubmitting}
+						>
+							{isSubmitting || formSubmitting ? (
+								<Loader2 className="animate-spin" size={16} />
+							) : null}
+							{submitLabel ?? t("tallennaRajoitus", "Tallenna rajoitus")}
+						</Button>
+					</FormActions>
 				)}
 			</form.Subscribe>
 		</form>

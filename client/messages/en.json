@@ -781,5 +781,13 @@
 	"kopioitu": "Copied",
 	"hyvaksynnat": "Approvals",
 	"varaaminen": "Booking",
-	"etsiVarauksiaJaTiloja": "Search bookings and spaces"
+	"etsiVarauksiaJaTiloja": "Search bookings and spaces",
+	"naytaVahemman": "Show fewer",
+	"naytaKaikkiN": "Show all {{count}}",
+	"varausjaksonAjatMaara": "{{count}} times",
+	"sallittuRyhmaN": "Allowed groups: {{names}}",
+	"perustiedot": "Basic information",
+	"ajankohtaJaToistuvuus": "Time and recurrence",
+	"koskevatResurssit": "Affected resources",
+	"koskevatResurssitTyhjaKaikki": "If none is selected, the restriction applies to all resources."
 }

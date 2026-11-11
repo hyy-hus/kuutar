@@ -781,5 +781,13 @@
 	"kopioitu": "Kopierad",
 	"hyvaksynnat": "Godkännanden",
 	"varaaminen": "Bokning",
-	"etsiVarauksiaJaTiloja": "Sök bokningar och lokaler"
+	"etsiVarauksiaJaTiloja": "Sök bokningar och lokaler",
+	"naytaVahemman": "Visa färre",
+	"naytaKaikkiN": "Visa alla {{count}}",
+	"varausjaksonAjatMaara": "{{count}} tider",
+	"sallittuRyhmaN": "Tillåtna grupper: {{names}}",
+	"perustiedot": "Grunduppgifter",
+	"ajankohtaJaToistuvuus": "Tidpunkt och upprepning",
+	"koskevatResurssit": "Berörda resurser",
+	"koskevatResurssitTyhjaKaikki": "Om ingen väljs gäller begränsningen alla resurser."
 }

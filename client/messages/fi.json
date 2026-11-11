@@ -781,5 +781,13 @@
 	"kopioitu": "Kopioitu",
 	"hyvaksynnat": "Hyväksynnät",
 	"varaaminen": "Varaaminen",
-	"etsiVarauksiaJaTiloja": "Etsi varauksia ja tiloja"
+	"etsiVarauksiaJaTiloja": "Etsi varauksia ja tiloja",
+	"naytaVahemman": "Näytä vähemmän",
+	"naytaKaikkiN": "Näytä kaikki {{count}}",
+	"varausjaksonAjatMaara": "{{count}} aikaa",
+	"sallittuRyhmaN": "Sallitut ryhmät: {{names}}",
+	"perustiedot": "Perustiedot",
+	"ajankohtaJaToistuvuus": "Ajankohta ja toistuvuus",
+	"koskevatResurssit": "Koskevat resurssit",
+	"koskevatResurssitTyhjaKaikki": "Jos mitään ei valita, rajoitus koskee kaikkia resursseja."
 }
