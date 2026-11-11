@@ -874,5 +874,21 @@
 	"rajoitus": "Rajoitus",
 	"istunnot": "Istunnot",
 	"sahkopostipohja": "Sähköpostipohja",
-	"outlookHaeNytEiKaytettavissa": "Hae nyt -toiminto on pois käytöstä, kunnes integraatio on otettu käyttöön."
+	"outlookHaeNytEiKaytettavissa": "Hae nyt -toiminto on pois käytöstä, kunnes integraatio on otettu käyttöön.",
+	"hyvaksynnatKuvaus": "Tarkista ja vahvista odottavat varaukset. Ristiriitaiset varaukset on merkitty.",
+	"odottaaMaara": "{{count}} odottaa",
+	"ristiriitaaMaara": "{{count}} ristiriitaa",
+	"ristiriitaMaara": "Ristiriita ({{count}})",
+	"ristiriitaOtsikko": "Päällekkäin samalla resurssilla seuraavien kanssa",
+	"eiRistiriitojaYhteenveto": "ei ristiriitoja",
+	"seuraavaAika": "seuraava: {{time}}",
+	"yhteenveto": "Yhteenveto",
+	"jarjesta": "Järjestä",
+	"jarjestaAika": "Ajankohdan mukaan",
+	"jarjestaLuotu": "Luontiajan mukaan",
+	"naytaKaikki": "Näytä kaikki",
+	"eiRistiriitaisia": "Ei ristiriitaisia varauksia",
+	"eiRistiriitaisiaKuvaus": "Mikään odottava varaus ei ole päällekkäin toisen varauksen kanssa.",
+	"eiOdottaviaVarauksiaKuvaus": "Kaikki valitun aikavälin pyynnöt on käsitelty. Uudet hyväksyntää vaativat pyynnöt ilmestyvät tähän. Voit muuttaa aikaväliä tai suodattimia yllä.",
+	"hyvaksyValitutMaara": "Hyväksy valitut ({{count}})"
 }

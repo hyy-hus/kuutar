@@ -874,5 +874,21 @@
 	"rajoitus": "Restriction",
 	"istunnot": "Sessions",
 	"sahkopostipohja": "Email template",
-	"outlookHaeNytEiKaytettavissa": "The \"Check now\" action is disabled until the integration is enabled."
+	"outlookHaeNytEiKaytettavissa": "The \"Check now\" action is disabled until the integration is enabled.",
+	"hyvaksynnatKuvaus": "Review and confirm pending reservations. Conflicting reservations are marked.",
+	"odottaaMaara": "{{count}} pending",
+	"ristiriitaaMaara": "{{count}} conflicts",
+	"ristiriitaMaara": "Conflict ({{count}})",
+	"ristiriitaOtsikko": "Overlaps on the same resource with",
+	"eiRistiriitojaYhteenveto": "no conflicts",
+	"seuraavaAika": "next: {{time}}",
+	"yhteenveto": "Summary",
+	"jarjesta": "Sort",
+	"jarjestaAika": "By time",
+	"jarjestaLuotu": "By created time",
+	"naytaKaikki": "Show all",
+	"eiRistiriitaisia": "No conflicting reservations",
+	"eiRistiriitaisiaKuvaus": "No pending reservation overlaps with another reservation.",
+	"eiOdottaviaVarauksiaKuvaus": "All requests in the selected period have been handled. New requests that need approval will appear here. You can change the period or filters above.",
+	"hyvaksyValitutMaara": "Approve selected ({{count}})"
 }

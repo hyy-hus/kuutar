@@ -11,20 +11,21 @@ import {
 	X,
 } from "lucide-react";
 import { Dialog } from "radix-ui";
-import { type ReactNode, useId, useMemo, useState } from "react";
+import { Fragment, type ReactNode, useId, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "#/components/Button";
 import { Callout } from "#/components/Callout";
 import { CancelReservationDialog } from "#/components/CancelReservationDialog";
-import { Chip } from "#/components/Chip";
+import { Chip, ToggleChip } from "#/components/Chip";
+import { ConflictChip, type ConflictItem } from "#/components/ConflictChip";
 import { EmptyState } from "#/components/EmptyState";
 import { FilterBar } from "#/components/FilterBar";
 import { OutlookBadge } from "#/components/OutlookBadge";
 import { PageContainer } from "#/components/PageContainer";
 import { PageHeader } from "#/components/PageHeader";
 import { PeriodNavigator } from "#/components/PeriodNavigator";
-import { SegmentedControl } from "#/components/SegmentedControl";
 import { Select } from "#/components/Select";
+import { StatusChip } from "#/components/StatusChip";
 import { Textarea } from "#/components/Textarea";
 import {
 	type ReservationStatus,
@@ -36,12 +37,17 @@ import {
 import { useResources } from "#/hooks/useResorces";
 import { useRounds } from "#/hooks/useRounds";
 import { cn } from "#/utils/cn";
-import { useDateFormatter } from "#/utils/date";
+import { formatYYYYMMDD, useDateFormatter } from "#/utils/date";
 import {
 	getPeriodRange,
 	type PeriodMonths,
 	parsePeriodMonths,
 } from "#/utils/period";
+import {
+	findConflicts,
+	overlappingOccurrence,
+	reservationsOverlap,
+} from "#/utils/reservationConflicts";
 
 export interface AdminDashboardSearch {
 	start_date?: string;
@@ -53,6 +59,8 @@ export interface AdminDashboardSearch {
 type PendingSort = "time" | "created";
 
 const MAX_REASON_LENGTH = 500;
+/** Pending rows shown before "Show more" */
+const PAGE_SIZE = 25;
 
 const firstStart = (r: ReservationWithOccurrences) =>
 	r.occurrences?.[0]?.start_time
@@ -101,6 +109,7 @@ function AdminReservationRow({
 	selectable,
 	selected,
 	onToggleSelected,
+	conflictItems,
 }: {
 	reservationWithOcc: ReservationWithOccurrences;
 	resourceMap: Map<string, string>;
@@ -113,6 +122,8 @@ function AdminReservationRow({
 	selectable: boolean;
 	selected: boolean;
 	onToggleSelected: () => void;
+	/** What this pending reservation clashes with (empty for none) */
+	conflictItems: ConflictItem[];
 }) {
 	const { t } = useTranslation();
 	const { formatDateTime, formatRange } = useDateFormatter();
@@ -134,27 +145,11 @@ function AdminReservationRow({
 		return Array.from(new Set(names)).join(", ");
 	}, [occurrences, resourceMap]);
 
-	// Precise Time & Resource Conflict Calculation
-	const isConflict = useMemo(() => {
-		if (!hoveredReservation || isHoveredSource) {
-			return false;
-		}
-
-		const hoveredOccs = hoveredReservation.occurrences || [];
-
-		return occurrences.some((curr) => {
-			const currStart = new Date(curr.start_time).getTime();
-			const currEnd = new Date(curr.end_time).getTime();
-
-			return hoveredOccs.some((hov) => {
-				if (hov.resource_id !== curr.resource_id) return false;
-				const hovStart = new Date(hov.start_time).getTime();
-				const hovEnd = new Date(hov.end_time).getTime();
-
-				return currStart < hovEnd && currEnd > hovStart;
-			});
-		});
-	}, [hoveredReservation, occurrences, isHoveredSource]);
+	// Highlighted while another row's time or conflict chip is hovered/focused
+	const isConflict =
+		hoveredReservation !== null &&
+		!isHoveredSource &&
+		reservationsOverlap(hoveredReservation, reservationWithOcc);
 
 	const handlePrintSingle = async () => {
 		await onMarkPrinted(reservationWithOcc.id);
@@ -171,7 +166,7 @@ function AdminReservationRow({
 	return (
 		<tr
 			className={cn(
-				"relative border-b border-stone-200 text-sm transition-colors last:border-b-0 hover:bg-stone-100 dark:border-stone-800 dark:hover:bg-stone-800/60",
+				"relative flex flex-col gap-1 border-b border-stone-200 p-3 text-sm transition-colors last:border-b-0 hover:bg-stone-100 md:table-row md:p-0 dark:border-stone-800 dark:hover:bg-stone-800/60",
 				// Conflicting target rows: soft red background while hovering a time
 				isConflict &&
 					"bg-red-100 shadow-[inset_0_0_0_1px_var(--color-red-500)] dark:bg-red-950/60",
@@ -180,7 +175,7 @@ function AdminReservationRow({
 			)}
 		>
 			{selectable && (
-				<td className="w-10 px-3 py-2 align-top">
+				<td className="absolute right-3 top-3 md:static md:table-cell md:w-10 md:px-3 md:py-2 md:align-top">
 					{canSelect && (
 						<input
 							type="checkbox"
@@ -196,7 +191,7 @@ function AdminReservationRow({
 			)}
 
 			{/* Reservation title, requester and meta */}
-			<td className="min-w-[220px] max-w-xl px-3 py-2 align-top">
+			<td className="block min-w-0 pr-8 md:table-cell md:min-w-[220px] md:max-w-xl md:px-3 md:py-2 md:pr-3 md:align-top">
 				<div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
 					<Link
 						to="/reservations/$id"
@@ -245,7 +240,7 @@ function AdminReservationRow({
 			</td>
 
 			{/* Resource */}
-			<td className="min-w-[120px] px-3 py-2 align-top">
+			<td className="block md:table-cell md:min-w-[120px] md:px-3 md:py-2 md:align-top">
 				{resourceNames ? (
 					<span className="line-clamp-2">{resourceNames}</span>
 				) : (
@@ -253,17 +248,17 @@ function AdminReservationRow({
 				)}
 			</td>
 
-			{/* Time (hovering highlights overlapping reservations on the same resource) */}
+			{/* Time; hovering it highlights overlapping reservations on the same resource */}
 			<td
-				className="whitespace-nowrap px-3 py-2 align-top"
+				className="block md:table-cell md:px-3 md:py-2 md:align-top"
 				onMouseEnter={() => onHoverReservation(reservationWithOcc)}
 				onMouseLeave={() => onHoverReservation(null)}
 			>
 				{timeSpan ? (
-					<div>
+					<div className="space-y-1">
 						<span
 							className={cn(
-								"inline-flex items-center gap-1 tabular-nums",
+								"inline-flex items-center gap-1 tabular-nums md:whitespace-nowrap",
 								isConflict && "font-bold text-red-800 dark:text-red-300",
 							)}
 						>
@@ -283,6 +278,16 @@ function AdminReservationRow({
 								})}
 							</p>
 						)}
+						{conflictItems.length > 0 && (
+							<div>
+								<ConflictChip
+									conflicts={conflictItems}
+									onActiveChange={(active) =>
+										onHoverReservation(active ? reservationWithOcc : null)
+									}
+								/>
+							</div>
+						)}
 					</div>
 				) : (
 					<span className="text-xs text-stone-600 dark:text-stone-400">
@@ -292,7 +297,7 @@ function AdminReservationRow({
 			</td>
 
 			{/* Actions */}
-			<td className="whitespace-nowrap px-3 py-2 text-right align-top">
+			<td className="block md:table-cell md:whitespace-nowrap md:px-3 md:py-2 md:text-right md:align-top">
 				<div className="flex items-center justify-end gap-2">
 					<Button
 						variant="ghost"
@@ -319,16 +324,19 @@ function AdminReservationRow({
 								reservationId={reservationWithOcc.id}
 								reservationTitle={reservationWithOcc.title}
 								trigger={
-									<Button variant="outline" size="sm" disabled={isUpdating}>
+									<Button variant="ghost" size="sm" disabled={isUpdating}>
+										<X size={14} aria-hidden="true" />
 										{t("hylk", "Hylkää")}
 									</Button>
 								}
 							/>
 							<Button
+								variant="outline"
 								size="sm"
 								disabled={isUpdating}
 								onClick={() => onStatusChange("confirmed" as ReservationStatus)}
 							>
+								<Check size={14} aria-hidden="true" />
 								{t("hyvksy", "Hyväksy")}
 							</Button>
 						</>
@@ -363,9 +371,23 @@ interface ReservationTableProps {
 	onToggleSelected?: (id: string) => void;
 	/** Header checkbox for the select column */
 	selectAll?: ReactNode;
+	/** Conflict details per reservation id (pending rows only) */
+	conflicts?: Map<string, ConflictItem[]>;
+	/** Inserts a sticky day header before the first row of each day (rows must be time-sorted) */
+	groupByDay?: boolean;
 }
 
-/** Table with header row; the same layout for pending, confirmed and cancelled reservations */
+/** Local-day key and label of a reservation's first occurrence */
+const dayKey = (r: ReservationWithOccurrences) => {
+	const start = r.occurrences?.[0]?.start_time;
+	return start ? formatYYYYMMDD(new Date(start)) : "none";
+};
+
+/**
+ * Table with header row; the same layout for pending, confirmed and cancelled reservations.
+ * Below `md` the rows stack as cards. No inner scroll container: the page scrolls, so the
+ * header (and day headers) can stick to the top of the scroll area.
+ */
 function ReservationTable({
 	rows,
 	onStatusChange,
@@ -373,44 +395,67 @@ function ReservationTable({
 	onToggleSelected,
 	selectAll,
 	selectable,
+	conflicts,
+	groupByDay,
 	...rowProps
 }: ReservationTableProps) {
 	const { t } = useTranslation();
+	const { formatWeekday, formatDayMonth } = useDateFormatter();
+	const columns = selectable ? 5 : 4;
 	return (
-		<div className="overflow-x-auto">
-			<table className="w-full min-w-[720px] border-collapse text-left">
-				<thead>
-					<tr className="border-y border-stone-300 bg-stone-100 font-mono text-xs uppercase tracking-wider text-stone-600 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-400">
-						{selectable && (
-							<th className="w-10 px-3 py-2 font-normal">{selectAll}</th>
-						)}
-						<th className="px-3 py-2 font-normal">
-							{t("varausSarake", "Varaus")}
-						</th>
-						<th className="px-3 py-2 font-normal">
-							{t("resurssi", "Resurssi")}
-						</th>
-						<th className="px-3 py-2 font-normal">{t("aika", "Aika")}</th>
-						<th className="px-3 py-2 text-right font-normal">
-							{t("toiminnot", "Toiminnot")}
-						</th>
-					</tr>
-				</thead>
-				<tbody>
-					{rows.map((res) => (
-						<AdminReservationRow
-							key={res.id}
-							reservationWithOcc={res}
-							onStatusChange={(s) => onStatusChange(res.id, s)}
-							selectable={selectable}
-							selected={selectedIds?.has(res.id) ?? false}
-							onToggleSelected={() => onToggleSelected?.(res.id)}
-							{...rowProps}
-						/>
-					))}
-				</tbody>
-			</table>
-		</div>
+		<table className="block w-full border-collapse text-left md:table">
+			<thead className="hidden md:table-header-group">
+				<tr className="font-mono text-xs uppercase tracking-wider text-stone-600 dark:text-stone-400 [&>th]:sticky [&>th]:top-0 [&>th]:z-20 [&>th]:border-y [&>th]:border-stone-300 [&>th]:bg-stone-100 dark:[&>th]:border-stone-700 dark:[&>th]:bg-stone-800">
+					{selectable && (
+						<th className="h-8 w-10 px-3 py-2 font-normal">{selectAll}</th>
+					)}
+					<th className="h-8 px-3 py-2 font-normal">
+						{t("varausSarake", "Varaus")}
+					</th>
+					<th className="h-8 px-3 py-2 font-normal">
+						{t("resurssi", "Resurssi")}
+					</th>
+					<th className="h-8 px-3 py-2 font-normal">{t("aika", "Aika")}</th>
+					<th className="h-8 px-3 py-2 text-right font-normal">
+						{t("toiminnot", "Toiminnot")}
+					</th>
+				</tr>
+			</thead>
+			<tbody className="block md:table-row-group">
+				{rows.map((res, i) => {
+					const key = dayKey(res);
+					const showDay =
+						groupByDay && (i === 0 || dayKey(rows[i - 1]) !== key);
+					const start = res.occurrences?.[0]?.start_time;
+					return (
+						<Fragment key={res.id}>
+							{showDay && (
+								<tr className="block md:table-row">
+									<th
+										colSpan={columns}
+										scope="colgroup"
+										className="sticky top-0 z-10 block border-b border-stone-300 bg-stone-200 px-3 py-1 text-left text-xs font-semibold text-stone-800 first-letter:uppercase md:top-8 md:table-cell dark:border-stone-700 dark:bg-stone-800 dark:text-stone-200"
+									>
+										{start
+											? `${formatWeekday(start)} ${formatDayMonth(start)}`
+											: t("eiTiettyjAikoja", "Ei tiettyjä aikoja")}
+									</th>
+								</tr>
+							)}
+							<AdminReservationRow
+								reservationWithOcc={res}
+								onStatusChange={(s) => onStatusChange(res.id, s)}
+								selectable={selectable}
+								selected={selectedIds?.has(res.id) ?? false}
+								onToggleSelected={() => onToggleSelected?.(res.id)}
+								conflictItems={conflicts?.get(res.id) ?? []}
+								{...rowProps}
+							/>
+						</Fragment>
+					);
+				})}
+			</tbody>
+		</table>
 	);
 }
 
@@ -526,12 +571,15 @@ function BulkRejectDialog({
 
 function AdminDashboardPage() {
 	const { t } = useTranslation();
+	const { formatDayMonth, formatTime, formatRange } = useDateFormatter();
 	const search = Route.useSearch();
 	const navigate = Route.useNavigate();
 
 	const [hoveredReservation, setHoveredReservation] =
 		useState<ReservationWithOccurrences | null>(null);
 	const [pendingSort, setPendingSort] = useState<PendingSort>("time");
+	const [onlyConflicts, setOnlyConflicts] = useState(false);
+	const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 	const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 	const [bulkBusy, setBulkBusy] = useState(false);
 	const [bulkError, setBulkError] = useState<string | null>(null);
@@ -592,10 +640,55 @@ function AdminDashboardPage() {
 			};
 		}, [reservations, roundId, pendingSort]);
 
-	// Only rows that can actually be decided here are selectable
+	// Which pending reservations clash with another live one, and with what
+	const conflictsById = useMemo(
+		() => findConflicts(pendingReservations, reservations ?? []),
+		[pendingReservations, reservations],
+	);
+	const conflictItems = useMemo(() => {
+		const byId = new Map<string, ConflictItem[]>();
+		for (const r of pendingReservations) {
+			const others = conflictsById.get(r.id);
+			if (!others) continue;
+			byId.set(
+				r.id,
+				others.map((o) => {
+					const occ = overlappingOccurrence(r, o);
+					return {
+						id: o.id,
+						title: o.title,
+						resource: occ ? (resourceMap.get(occ.resource_id) ?? "") : "",
+						time: occ ? formatRange(occ.start_time, occ.end_time) : "",
+					};
+				}),
+			);
+		}
+		return byId;
+	}, [pendingReservations, conflictsById, resourceMap, formatRange]);
+
+	const filteredPending = useMemo(
+		() =>
+			onlyConflicts
+				? pendingReservations.filter((r) => conflictsById.has(r.id))
+				: pendingReservations,
+		[onlyConflicts, pendingReservations, conflictsById],
+	);
+	const visiblePending = filteredPending.slice(0, visibleCount);
+
+	// Summary strip: soonest upcoming request (falls back to the earliest overall)
+	const nextStart = useMemo(() => {
+		const starts = pendingReservations
+			.map(firstStart)
+			.filter((n) => n !== Number.MAX_SAFE_INTEGER);
+		const upcoming = starts.filter((n) => n >= Date.now());
+		const pool = upcoming.length > 0 ? upcoming : starts;
+		return pool.length > 0 ? new Date(Math.min(...pool)) : null;
+	}, [pendingReservations]);
+
+	// Only visible rows that can actually be decided here are selectable
 	const selectableIds = useMemo(
-		() => pendingReservations.filter(isDecidableHere).map((r) => r.id),
-		[pendingReservations],
+		() => visiblePending.filter(isDecidableHere).map((r) => r.id),
+		[visiblePending],
 	);
 	// Drop selections for rows that disappeared (decided, filtered away)
 	const activeSelected = useMemo(
@@ -706,9 +799,8 @@ function AdminDashboardPage() {
 			<PageHeader
 				title={t("hyvaksynnat", "Hyväksynnät")}
 				subtitle={t(
-					"odottaaHyvaksyntaaMaara",
-					"{{count}} varausta odottaa hyväksyntää",
-					{ count: pendingReservations.length },
+					"hyvaksynnatKuvaus",
+					"Tarkista ja vahvista odottavat varaukset. Ristiriitaiset varaukset on merkitty.",
 				)}
 				actions={
 					<>
@@ -796,10 +888,40 @@ function AdminDashboardPage() {
 				</Callout>
 			) : (
 				<>
-					{/* L1: the pending approvals */}
+					{pendingReservations.length > 0 && (
+						<p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-stone-700 tabular-nums dark:text-stone-300">
+							<span className="font-semibold">
+								{t("odottaaMaara", "{{count}} odottaa", {
+									count: pendingReservations.length,
+								})}
+							</span>
+							<span aria-hidden="true">{"·"}</span>
+							{conflictsById.size > 0 ? (
+								<StatusChip variant="danger" icon={AlertTriangle}>
+									{t("ristiriitaaMaara", "{{count}} ristiriitaa", {
+										count: conflictsById.size,
+									})}
+								</StatusChip>
+							) : (
+								<span>{t("eiRistiriitojaYhteenveto", "ei ristiriitoja")}</span>
+							)}
+							{nextStart && (
+								<>
+									<span aria-hidden="true">{"·"}</span>
+									<span>
+										{t("seuraavaAika", "seuraava: {{time}}", {
+											time: `${formatDayMonth(nextStart)} ${formatTime(nextStart)}`,
+										})}
+									</span>
+								</>
+							)}
+						</p>
+					)}
+
+					{/* L1: the pending approvals. No overflow clipping, so the sticky header works. */}
 					<section
 						aria-labelledby="pending-heading"
-						className="overflow-hidden rounded-md border-2 border-stone-800 bg-stone-50 shadow-l1 dark:border-stone-300 dark:bg-stone-900"
+						className="rounded-md border-2 border-stone-800 bg-stone-50 shadow-l1 dark:border-stone-300 dark:bg-stone-900"
 					>
 						<div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
 							<h2
@@ -818,42 +940,130 @@ function AdminDashboardPage() {
 								)}
 							</h2>
 							{pendingReservations.length > 1 && (
-								<div className="flex items-center gap-2 text-xs text-stone-600 dark:text-stone-400">
-									<span>{t("jarjestys", "Järjestys")}</span>
-									<SegmentedControl<PendingSort>
-										aria-label={t("jarjestys", "Järjestys")}
-										value={pendingSort}
-										onChange={setPendingSort}
-										options={[
-											{ value: "time", label: t("jarjestysAika", "Ajankohta") },
-											{
-												value: "created",
-												label: t("jarjestysLuotu", "Luontiaika"),
-											},
-										]}
-									/>
+								<div className="flex flex-wrap items-center gap-3">
+									<ToggleChip
+										selected={onlyConflicts}
+										onClick={() => setOnlyConflicts((v) => !v)}
+										disabled={conflictsById.size === 0 && !onlyConflicts}
+									>
+										<AlertTriangle size={12} aria-hidden="true" />
+										{t("vainRistiriidat", "Vain ristiriidat")}
+									</ToggleChip>
+									<div className="flex items-center gap-2 text-xs text-stone-600 dark:text-stone-400">
+										<span aria-hidden="true">{t("jarjesta", "Järjestä")}</span>
+										<Select
+											size="sm"
+											wrapperClassName="w-auto"
+											aria-label={t("jarjesta", "Järjestä")}
+											value={pendingSort}
+											onChange={(e) =>
+												setPendingSort(e.target.value as PendingSort)
+											}
+										>
+											<option value="time">
+												{t("jarjestaAika", "Ajankohdan mukaan")}
+											</option>
+											<option value="created">
+												{t("jarjestaLuotu", "Luontiajan mukaan")}
+											</option>
+										</Select>
+									</div>
 								</div>
 							)}
 						</div>
 
+						{bulkError && (
+							<div className="px-4 pb-3">
+								<Callout variant="danger">{bulkError}</Callout>
+							</div>
+						)}
+
+						{visiblePending.length > 0 ? (
+							<>
+								<ReservationTable
+									rows={visiblePending}
+									{...tableProps}
+									conflicts={conflictItems}
+									groupByDay={pendingSort === "time"}
+									selectable={selectableIds.length > 0}
+									selectedIds={selectedIds}
+									onToggleSelected={toggleSelected}
+									selectAll={
+										<input
+											type="checkbox"
+											checked={allSelected}
+											onChange={toggleAll}
+											aria-label={t("valitseKaikki", "Valitse kaikki")}
+											className="size-4 cursor-pointer accent-stone-900 dark:accent-stone-100"
+										/>
+									}
+								/>
+								<div className="flex flex-wrap items-center justify-between gap-3 border-t border-stone-300 px-4 py-3 text-sm dark:border-stone-700">
+									<p className="text-stone-600 tabular-nums dark:text-stone-400">
+										{t("naytetaanMaara", "Näytetään {{shown}} / {{total}}", {
+											shown: visiblePending.length,
+											total: filteredPending.length,
+										})}
+									</p>
+									{visiblePending.length < filteredPending.length && (
+										<Button
+											variant="outline"
+											size="sm"
+											onClick={() => setVisibleCount((c) => c + PAGE_SIZE)}
+										>
+											{t("naytaLisaa", "Näytä lisää")}
+										</Button>
+									)}
+								</div>
+							</>
+						) : (
+							<div className="px-4 pb-4">
+								{onlyConflicts ? (
+									<EmptyState
+										title={t("eiRistiriitaisia", "Ei ristiriitaisia varauksia")}
+										action={
+											<Button
+												variant="outline"
+												size="sm"
+												onClick={() => setOnlyConflicts(false)}
+											>
+												{t("naytaKaikki", "Näytä kaikki")}
+											</Button>
+										}
+									>
+										{t(
+											"eiRistiriitaisiaKuvaus",
+											"Mikään odottava varaus ei ole päällekkäin toisen varauksen kanssa.",
+										)}
+									</EmptyState>
+								) : (
+									<EmptyState
+										icon={Check}
+										title={t("eiOdottaviaVarauksia", "Ei odottavia varauksia")}
+									>
+										{t(
+											"eiOdottaviaVarauksiaKuvaus",
+											"Kaikki valitun aikavälin pyynnöt on käsitelty. Uudet pyynnöt, jotka vaativat hyväksynnän, ilmestyvät tähän. Voit muuttaa aikaväliä tai suodattimia yllä.",
+										)}
+									</EmptyState>
+								)}
+							</div>
+						)}
+
 						{activeSelected.length > 0 && (
-							<div className="flex flex-wrap items-center gap-2 border-y border-stone-300 bg-stone-100 px-4 py-2 dark:border-stone-700 dark:bg-stone-800">
+							<div className="sticky bottom-0 z-30 flex flex-wrap items-center gap-2 rounded-b-sm border-t-2 border-stone-800 bg-stone-100 px-4 py-3 dark:border-stone-300 dark:bg-stone-800">
 								<span className="mr-auto text-sm font-medium">
 									{t("valittuMaara", "{{count}} valittu", {
 										count: activeSelected.length,
 									})}
 								</span>
 								<Button
+									variant="ghost"
 									size="sm"
 									disabled={bulkBusy}
-									onClick={handleBulkApprove}
+									onClick={() => setSelectedIds(new Set())}
 								>
-									{bulkBusy ? (
-										<Loader2 size={14} className="animate-spin" />
-									) : (
-										<Check size={14} aria-hidden="true" />
-									)}
-									{t("hyvaksyValitut", "Hyväksy valitut")}
+									{t("tyhjennaValinta", "Tyhjennä valinta")}
 								</Button>
 								<BulkRejectDialog
 									count={activeSelected.length}
@@ -867,49 +1077,19 @@ function AdminDashboardPage() {
 									}
 								/>
 								<Button
-									variant="ghost"
 									size="sm"
 									disabled={bulkBusy}
-									onClick={() => setSelectedIds(new Set())}
+									onClick={handleBulkApprove}
 								>
-									{t("tyhjennaValinta", "Tyhjennä valinta")}
-								</Button>
-							</div>
-						)}
-
-						{bulkError && (
-							<div className="px-4 pb-3">
-								<Callout variant="danger">{bulkError}</Callout>
-							</div>
-						)}
-
-						{pendingReservations.length > 0 ? (
-							<ReservationTable
-								rows={pendingReservations}
-								{...tableProps}
-								selectable={selectableIds.length > 0}
-								selectedIds={selectedIds}
-								onToggleSelected={toggleSelected}
-								selectAll={
-									<input
-										type="checkbox"
-										checked={allSelected}
-										onChange={toggleAll}
-										aria-label={t("valitseKaikki", "Valitse kaikki")}
-										className="size-4 cursor-pointer accent-stone-900 dark:accent-stone-100"
-									/>
-								}
-							/>
-						) : (
-							<div className="px-4 pb-4">
-								<EmptyState
-									title={t("eiOdottaviaVarauksia", "Ei odottavia varauksia")}
-								>
-									{t(
-										"eiOdottaviaVarauksiaValitullaAikavlill",
-										"Ei odottavia varauksia valitulla aikavälillä.",
+									{bulkBusy ? (
+										<Loader2 size={14} className="animate-spin" />
+									) : (
+										<Check size={14} aria-hidden="true" />
 									)}
-								</EmptyState>
+									{t("hyvaksyValitutMaara", "Hyväksy valitut ({{count}})", {
+										count: activeSelected.length,
+									})}
+								</Button>
 							</div>
 						)}
 					</section>

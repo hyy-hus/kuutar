@@ -874,5 +874,21 @@
 	"rajoitus": "Begränsning",
 	"istunnot": "Sessioner",
 	"sahkopostipohja": "E-postmall",
-	"outlookHaeNytEiKaytettavissa": "Funktionen Kontrollera nu är avstängd tills integrationen har tagits i bruk."
+	"outlookHaeNytEiKaytettavissa": "Funktionen Kontrollera nu är avstängd tills integrationen har tagits i bruk.",
+	"hyvaksynnatKuvaus": "Granska och bekräfta väntande bokningar. Bokningar som krockar är markerade.",
+	"odottaaMaara": "{{count}} väntar",
+	"ristiriitaaMaara": "{{count}} konflikter",
+	"ristiriitaMaara": "Konflikt ({{count}})",
+	"ristiriitaOtsikko": "Överlappar på samma resurs med följande",
+	"eiRistiriitojaYhteenveto": "inga konflikter",
+	"seuraavaAika": "nästa: {{time}}",
+	"yhteenveto": "Sammanfattning",
+	"jarjesta": "Sortera",
+	"jarjestaAika": "Efter tidpunkt",
+	"jarjestaLuotu": "Efter skapandetid",
+	"naytaKaikki": "Visa alla",
+	"eiRistiriitaisia": "Inga bokningar som krockar",
+	"eiRistiriitaisiaKuvaus": "Ingen väntande bokning överlappar med en annan bokning.",
+	"eiOdottaviaVarauksiaKuvaus": "Alla förfrågningar för den valda perioden är behandlade. Nya förfrågningar som kräver godkännande visas här. Du kan ändra period eller filter ovan.",
+	"hyvaksyValitutMaara": "Godkänn valda ({{count}})"
 }
