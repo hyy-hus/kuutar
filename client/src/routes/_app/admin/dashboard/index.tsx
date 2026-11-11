@@ -24,6 +24,7 @@ import { OutlookBadge } from "#/components/OutlookBadge";
 import { PageContainer } from "#/components/PageContainer";
 import { PageHeader } from "#/components/PageHeader";
 import { PeriodNavigator } from "#/components/PeriodNavigator";
+import { ResourceFilterField } from "#/components/ResourceFilterField";
 import { Select } from "#/components/Select";
 import { StatusChip } from "#/components/StatusChip";
 import { Textarea } from "#/components/Textarea";
@@ -35,7 +36,6 @@ import {
 	useUpdateReservation,
 } from "#/hooks/useReservations";
 import { useResources } from "#/hooks/useResorces";
-import { useRounds } from "#/hooks/useRounds";
 import { cn } from "#/utils/cn";
 import { formatYYYYMMDD, useDateFormatter } from "#/utils/date";
 import {
@@ -48,12 +48,13 @@ import {
 	overlappingOccurrence,
 	reservationsOverlap,
 } from "#/utils/reservationConflicts";
+import { parseResourceList, touchesResources } from "#/utils/resourceSearch";
 
 export interface AdminDashboardSearch {
 	start_date?: string;
 	months?: PeriodMonths;
-	resource_id?: string;
-	round_id?: string;
+	/** Selected resource ids; missing means all */
+	resources?: string[];
 }
 
 type PendingSort = "time" | "created";
@@ -85,10 +86,7 @@ export const Route = createFileRoute("/_app/admin/dashboard/")({
 			start_date:
 				typeof search.start_date === "string" ? search.start_date : undefined,
 			months: parsePeriodMonths(search.months),
-			resource_id:
-				typeof search.resource_id === "string" ? search.resource_id : undefined,
-			round_id:
-				typeof search.round_id === "string" ? search.round_id : undefined,
+			resources: parseResourceList(search.resources, search.resource_id),
 		};
 	},
 	component: AdminDashboardPage,
@@ -580,7 +578,7 @@ function AdminDashboardPage() {
 	const [bulkBusy, setBulkBusy] = useState(false);
 	const [bulkError, setBulkError] = useState<string | null>(null);
 
-	const { data: resources, isLoading: loadingResources } = useResources();
+	const { data: resources } = useResources();
 	const updateReservation = useUpdateReservation();
 	const cancelReservation = useCancelReservation();
 
@@ -590,9 +588,7 @@ function AdminDashboardPage() {
 
 	// Admins review the whole current year by default
 	const months = search.months ?? 12;
-	const resourceId = search.resource_id;
-	const roundId = search.round_id;
-	const { data: rounds } = useRounds();
+	const selectedResources = search.resources;
 
 	const { start, startDateISO, endDateISO } = useMemo(
 		() => getPeriodRange(search.start_date, months),
@@ -606,8 +602,6 @@ function AdminDashboardPage() {
 	} = useReservations({
 		startDate: startDateISO,
 		endDate: endDateISO,
-		resourceId,
-		roundId,
 	});
 
 	const { pendingReservations, confirmedReservations, cancelledReservations } =
@@ -621,20 +615,22 @@ function AdminDashboardPage() {
 			}
 
 			return {
-				// Round applications are handled on the round page; they only show here
-				// when filtering by a round, and then without approve/reject actions
+				// Round applications are handled on the round page, not here
 				pendingReservations: reservations
 					.filter((r) => r.status === "pending")
-					.filter((r) => !r.round_id || roundId !== undefined)
+					.filter((r) => !r.round_id)
+					.filter((r) => touchesResources(r.occurrences, selectedResources))
 					.sort(pendingSort === "time" ? sortByDateAsc : sortByCreatedAsc),
 				confirmedReservations: reservations
 					.filter((r) => r.status === "confirmed")
+					.filter((r) => touchesResources(r.occurrences, selectedResources))
 					.sort(sortByDateAsc),
 				cancelledReservations: reservations
 					.filter((r) => r.status === "cancelled")
+					.filter((r) => touchesResources(r.occurrences, selectedResources))
 					.sort(sortByDateAsc),
 			};
-		}, [reservations, roundId, pendingSort]);
+		}, [reservations, selectedResources, pendingSort]);
 
 	// Which pending reservations clash with another live one, and with what
 	const conflictsById = useMemo(
@@ -828,42 +824,12 @@ function AdminDashboardPage() {
 					months={months}
 					onChange={updateSearch}
 				/>
-
-				<Select
-					size="sm"
-					wrapperClassName="w-auto"
-					value={resourceId || ""}
-					onChange={(e) =>
-						updateSearch({ resource_id: e.target.value || undefined })
-					}
-					disabled={loadingResources}
-					aria-label={t("resurssi", "Resurssi")}
-				>
-					<option value="">{t("kaikkiResurssit", "Kaikki resurssit")}</option>
-					{resources?.map((res) => (
-						<option key={res.id} value={res.id}>
-							{res.name}
-						</option>
-					))}
-				</Select>
-
-				<Select
-					size="sm"
-					wrapperClassName="w-auto"
-					value={roundId || ""}
-					onChange={(e) =>
-						updateSearch({ round_id: e.target.value || undefined })
-					}
-					aria-label={t("varauskierros", "Varauskierros")}
-				>
-					<option value="">{t("kaikkiKierrokset", "Kaikki kierrokset")}</option>
-					{rounds?.map((round) => (
-						<option key={round.id} value={round.id}>
-							{round.name}
-						</option>
-					))}
-				</Select>
 			</FilterBar>
+
+			<ResourceFilterField
+				value={selectedResources}
+				onChange={(resources) => updateSearch({ resources })}
+			/>
 
 			{isLoading ? (
 				<div className="flex items-center justify-center gap-2 p-8 text-stone-600 dark:text-stone-400">

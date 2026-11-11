@@ -276,17 +276,23 @@ function RoundPage() {
 							<Save size={14} />
 							{t("tallennaJako", "Tallenna jako")}
 						</Button>
-						{seed !== null && (
-							<span className="text-xs text-stone-600 dark:text-stone-400">
-								{`${t("arvonnanSiemen", "Arvonnan siemen")}: ${seed}`}
-							</span>
-						)}
 						{saved?.saved && !edited && (
 							<span className="text-xs text-stone-600 dark:text-stone-400">
 								{t("jakoTallennettu", "Jako on tallennettu.")}
 							</span>
 						)}
 					</FilterBar>
+				)}
+
+				{seed !== null && (
+					<details className="text-xs text-stone-600 dark:text-stone-400">
+						<summary className="cursor-pointer">
+							{t("teknisetTiedot", "Tekniset tiedot")}
+						</summary>
+						<p className="mt-1 tabular-nums">
+							{`${t("arvonnanSiemen", "Arvonnan siemen")}: ${seed}`}
+						</p>
+					</details>
 				)}
 
 				<ApplicantList

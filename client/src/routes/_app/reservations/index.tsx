@@ -12,7 +12,7 @@ import { PageContainer } from "#/components/PageContainer";
 import { PageHeader } from "#/components/PageHeader";
 import { PeriodNavigator } from "#/components/PeriodNavigator";
 import { ReservationStatusChip } from "#/components/ReservationStatusChip";
-import { Select } from "#/components/Select";
+import { ResourceFilterField } from "#/components/ResourceFilterField";
 import {
 	type ReservationWithOccurrences,
 	useMyReservations,
@@ -26,11 +26,13 @@ import {
 	type PeriodMonths,
 	parsePeriodMonths,
 } from "#/utils/period";
+import { parseResourceList, touchesResources } from "#/utils/resourceSearch";
 
 export interface UserDashboardSearch {
 	start_date?: string;
 	months?: PeriodMonths;
-	resource_id?: string;
+	/** Selected resource ids; missing means all */
+	resources?: string[];
 }
 
 export const Route = createFileRoute("/_app/reservations/")({
@@ -39,8 +41,7 @@ export const Route = createFileRoute("/_app/reservations/")({
 			start_date:
 				typeof search.start_date === "string" ? search.start_date : undefined,
 			months: parsePeriodMonths(search.months),
-			resource_id:
-				typeof search.resource_id === "string" ? search.resource_id : undefined,
+			resources: parseResourceList(search.resources, search.resource_id),
 		};
 	},
 	beforeLoad: async ({ context }) => {
@@ -141,11 +142,11 @@ function UserDashboardPage() {
 	const navigate = Route.useNavigate();
 	const { formatDateTime } = useDateFormatter();
 
-	const { data: resources, isLoading: loadingResources } = useResources();
+	const { data: resources } = useResources();
 	const { data: openRounds } = useOpenRounds();
 
 	const months = search.months ?? 1;
-	const resourceId = search.resource_id;
+	const selectedResources = search.resources;
 
 	const { start, startDateISO, endDateISO } = useMemo(
 		() => getPeriodRange(search.start_date, months),
@@ -159,7 +160,6 @@ function UserDashboardPage() {
 	} = useMyReservations({
 		startDate: startDateISO,
 		endDate: endDateISO,
-		resourceId,
 	});
 
 	const resourceNames = useMemo(
@@ -168,7 +168,11 @@ function UserDashboardPage() {
 	);
 
 	const byStatus = (status: ReservationWithOccurrences["status"]) =>
-		(reservations ?? []).filter((r) => r.status === status);
+		(reservations ?? []).filter(
+			(r) =>
+				r.status === status &&
+				touchesResources(r.occurrences, selectedResources),
+		);
 	const pending = byStatus("pending");
 	const confirmed = byStatus("confirmed");
 	const cancelled = byStatus("cancelled");
@@ -225,24 +229,12 @@ function UserDashboardPage() {
 					months={months}
 					onChange={updateSearch}
 				/>
-				<Select
-					size="sm"
-					wrapperClassName="w-auto max-w-full"
-					aria-label={t("resurssi", "Resurssi")}
-					value={resourceId || ""}
-					onChange={(e) =>
-						updateSearch({ resource_id: e.target.value || undefined })
-					}
-					disabled={loadingResources}
-				>
-					<option value="">{t("kaikkiResurssit", "Kaikki resurssit")}</option>
-					{resources?.map((res) => (
-						<option key={res.id} value={res.id}>
-							{res.name}
-						</option>
-					))}
-				</Select>
 			</FilterBar>
+
+			<ResourceFilterField
+				value={selectedResources}
+				onChange={(resources) => updateSearch({ resources })}
+			/>
 
 			{isLoading ? (
 				<div className="flex items-center justify-center gap-2 p-8 text-sm text-stone-600 dark:text-stone-400">
