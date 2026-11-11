@@ -15,6 +15,7 @@ import { Button } from "#/components/Button";
 import { Callout } from "#/components/Callout";
 import { EmptyState } from "#/components/EmptyState";
 import { Footer } from "#/components/Footer";
+import { HowToReserve } from "#/components/HowToReserve";
 import { OutlookBadge } from "#/components/OutlookBadge";
 import { PageContainer } from "#/components/PageContainer";
 import { PageHeader } from "#/components/PageHeader";
@@ -303,6 +304,8 @@ function HomePage() {
 							</Callout>
 						)}
 
+						<HowToReserve dismissible />
+
 						<div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
 							<div className="lg:col-span-2">{upcomingSection}</div>
 							{resourcesSection}
@@ -330,6 +333,8 @@ function HomePage() {
 								</Link>
 							</Button>
 						</section>
+
+						<HowToReserve />
 
 						<div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
 							<div className="lg:col-span-2">{upcomingSection}</div>

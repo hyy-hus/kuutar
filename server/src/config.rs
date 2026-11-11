@@ -60,6 +60,10 @@ pub struct Config {
     )]
     pub smtp_from_email: String,
 
+    /// Name of this instance, shown in the UI and in emails (production: "Varauskalenteri").
+    #[arg(long, env = "APP_NAME", default_value = "Kuutar")]
+    pub app_name: String,
+
     /// Public URL of the web app, used for links in emails.
     #[arg(long, env = "APP_BASE_URL", default_value = "http://localhost:5173")]
     pub app_base_url: String,

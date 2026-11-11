@@ -918,5 +918,14 @@
 	"teemaTumma": "Mörkt",
 	"laajennaValikko": "Expandera menyn",
 	"tiivistaValikko": "Förminska menyn",
-	"paavalikko": "Huvudmeny"
+	"paavalikko": "Huvudmeny",
+	"nainVaraat": "Så bokar du",
+	"valitseResurssi": "Välj resurs",
+	"valitseResurssiKuvaus": "Bläddra bland resurserna eller kalendern och välj en lokal eller utrustning.",
+	"valitseAika": "Välj tid",
+	"valitseAikaKuvaus": "Se lediga tider i kalendern och fyll i bokningsformuläret.",
+	"odotaVahvistus": "Vänta på bekräftelse",
+	"odotaVahvistusKuvaus": "Vissa bokningar bekräftas direkt, andra bekräftas av administratörerna. Du får besked per e-post.",
+	"omatVarauksesiLoydatKohdastaOmatVaraukset": "Du hittar dina bokningar under",
+	"piilotaOhje": "Dölj anvisningen"
 }

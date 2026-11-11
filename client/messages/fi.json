@@ -918,5 +918,14 @@
 	"teemaTumma": "Tumma",
 	"laajennaValikko": "Laajenna valikko",
 	"tiivistaValikko": "Pienennä valikko",
-	"paavalikko": "Päävalikko"
+	"paavalikko": "Päävalikko",
+	"nainVaraat": "Näin varaat",
+	"valitseResurssi": "Valitse resurssi",
+	"valitseResurssiKuvaus": "Selaa resursseja tai kalenteria ja valitse tila tai väline.",
+	"valitseAika": "Valitse aika",
+	"valitseAikaKuvaus": "Katso vapaat ajat kalenterista ja täytä varauslomake.",
+	"odotaVahvistus": "Odota vahvistus",
+	"odotaVahvistusKuvaus": "Osa varauksista vahvistuu heti, osan vahvistaa ylläpito. Saat tiedon sähköpostilla.",
+	"omatVarauksesiLoydatKohdastaOmatVaraukset": "Omat varauksesi löydät kohdasta",
+	"piilotaOhje": "Piilota ohje"
 }

@@ -13,6 +13,7 @@ import { Button } from "#/components/Button";
 import { SearchBar } from "#/components/SearchBar";
 import { SideBar } from "#/components/SideBar";
 import type { Theme } from "#/components/ThemeSwitcher";
+import { useAppConfig } from "#/hooks/useAppConfig";
 import { authKeys, fetchMe } from "#/hooks/useAuth";
 import { cn } from "#/utils/cn";
 
@@ -75,6 +76,7 @@ function AppLayout() {
 		() => readStorage(COLLAPSED_KEY) === "true",
 	);
 	const pathname = useRouterState({ select: (s) => s.location.pathname });
+	const { appName } = useAppConfig();
 
 	// biome-ignore lint/correctness/useExhaustiveDependencies: close the drawer on navigation
 	useEffect(() => {
@@ -118,7 +120,7 @@ function AppLayout() {
 				{/* Clickable Header Logo */}
 				<Link to="/" className="hover:opacity-80 transition-opacity shrink-0">
 					<span className="font-bold text-lg tracking-tight truncate">
-						{"Kuutar"}
+						{appName}
 					</span>
 				</Link>
 

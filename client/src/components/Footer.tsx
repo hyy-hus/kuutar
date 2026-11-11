@@ -4,89 +4,79 @@ import { SiGithub } from "@icons-pack/react-simple-icons";
 import { Link } from "@tanstack/react-router";
 import { Loader2, ShieldCheck } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { useAppConfig } from "#/hooks/useAppConfig";
 import { useHealth } from "#/hooks/useHealth";
+
+const linkClass =
+	"text-stone-600 hover:text-stone-900 hover:underline dark:text-stone-400 dark:hover:text-stone-100";
+const headingClass = "text-sm font-bold text-stone-900 dark:text-stone-100";
 
 export function Footer() {
 	const { t } = useTranslation();
+	const { appName } = useAppConfig();
 	const { data: health, isLoading, isError } = useHealth();
 
 	return (
-		<footer className="w-full border-t-2 border-stone-800 dark:border-stone-700 bg-stone-100 dark:bg-stone-900 text-stone-700 dark:text-stone-300 mt-auto shrink-0 text-xs">
-			<div className="max-w-7xl p-6 md:p-8 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
-				{/* Brand & Identity */}
-				<div className="space-y-3">
-					<div className="flex items-start gap-2 text-stone-900 dark:text-stone-100 font-bold text-sm">
-						<span className="w-2.5 h-2.5 rounded-full bg-purple-600 dark:bg-purple-400 shrink-0 mt-1" />
-						<span className="leading-tight">{"Kuutar"}</span>
-					</div>
-					<p className="text-xs text-stone-500 dark:text-stone-400 leading-relaxed">
+		<footer className="mt-auto w-full shrink-0 border-t-2 border-stone-800 bg-stone-100 text-sm text-stone-700 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-300">
+			<div className="grid max-w-7xl grid-cols-1 gap-6 p-6 sm:grid-cols-2 md:p-8 lg:grid-cols-4 lg:gap-8">
+				<div className="space-y-3 sm:col-span-2 lg:col-span-1">
+					<p className="flex items-center gap-2 text-base font-bold text-stone-900 dark:text-stone-100">
+						<span
+							aria-hidden="true"
+							className="h-2.5 w-2.5 shrink-0 rounded-full bg-purple-600 dark:bg-purple-400"
+						/>
+						<span className="min-w-0 break-words">{appName}</span>
+					</p>
+					<p className="text-stone-600 dark:text-stone-400">
 						{t(
 							"nykyaikainenJaSelkeResurssienJaTilojenVarausjrjestelm",
 							"Nykyaikainen ja selkeä resurssien ja tilojen varausjärjestelmä.",
 						)}
 					</p>
-					<div className="pt-1">
-						<a
-							href="https://github.com/hyy-hus/kuutar"
-							target="_blank"
-							rel="noreferrer"
-							className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-stone-200 dark:bg-stone-800 hover:bg-stone-300 dark:hover:bg-stone-700 text-stone-900 dark:text-stone-100 transition-colors font-medium text-xs border border-stone-300 dark:border-stone-700"
-						>
-							<SiGithub size={14} className="shrink-0" />
-							<span>{t("github", "GitHub")}</span>
-						</a>
-					</div>
+					<a
+						href="https://github.com/hyy-hus/kuutar"
+						target="_blank"
+						rel="noreferrer"
+						className="inline-flex items-center gap-2 text-stone-600 hover:text-stone-900 hover:underline dark:text-stone-400 dark:hover:text-stone-100"
+					>
+						<SiGithub size={16} className="shrink-0" />
+						<span>{t("github", "GitHub")}</span>
+					</a>
 				</div>
 
-				{/* Quick Navigation Links */}
-				<div className="space-y-3">
-					<h4 className="font-mono font-bold uppercase tracking-wider text-xs text-stone-900 dark:text-stone-100">
+				<nav aria-labelledby="footer-system" className="space-y-3">
+					<h2 id="footer-system" className={headingClass}>
 						{t("jrjestelm", "Järjestelmä")}
-					</h4>
-					<ul className="space-y-2 text-xs">
+					</h2>
+					<ul className="space-y-2">
 						<li>
-							<Link
-								to="/calendar"
-								className="hover:underline text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100"
-							>
+							<Link to="/calendar" className={linkClass}>
 								{t("kalenteri", "Kalenteri")}
 							</Link>
 						</li>
 						<li>
-							<Link
-								to="/resources"
-								className="hover:underline text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100"
-							>
+							<Link to="/resources" className={linkClass}>
 								{t("resurssit", "Resurssit")}
 							</Link>
 						</li>
 						<li>
-							<Link
-								to="/collections"
-								className="hover:underline text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100"
-							>
+							<Link to="/collections" className={linkClass}>
 								{t("kokoelmat", "Kokoelmat")}
 							</Link>
 						</li>
 					</ul>
-				</div>
+				</nav>
 
-				{/* Info & Legal Pages */}
 				<div className="space-y-3">
-					<h4 className="font-mono font-bold uppercase tracking-wider text-xs text-stone-900 dark:text-stone-100">
-						{t("tiedotEhdot", "Tiedot & Ehdot")}
-					</h4>
-					<ul className="space-y-2 text-xs">
+					<h2 className={headingClass}>{t("tiedotEhdot", "Tiedot & Ehdot")}</h2>
+					<ul className="space-y-2">
 						<li>
 							<a
 								href="https://hyy.fi/fi/ylioppilaskunta/helsingin-yliopiston-ylioppilaskunnan-dokumentit/tietosuojailmoitus/"
-								className="hover:underline flex items-start gap-2 text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100"
+								className={`${linkClass} flex items-start gap-2`}
 							>
-								<ShieldCheck
-									size={14}
-									className="shrink-0 text-stone-400 mt-0.5"
-								/>
-								<span className="leading-tight">
+								<ShieldCheck size={16} className="mt-0.5 shrink-0" />
+								<span>
 									{t(
 										"tietosuojaRekisteriseloste",
 										"Tietosuoja & Rekisteriseloste",
@@ -97,54 +87,44 @@ export function Footer() {
 					</ul>
 				</div>
 
-				{/* Dynamic Version & Technical Info */}
 				<div className="space-y-3">
-					<h4 className="font-mono font-bold uppercase tracking-wider text-xs text-stone-900 dark:text-stone-100">
-						{t("tilaVersio", "Tila & Versio")}
-					</h4>
-					<div className="space-y-2 text-xs text-stone-600 dark:text-stone-400">
-						<div className="flex items-center justify-between gap-2">
-							<span>{t("versio", "Versio")}</span>
-							<span className="font-mono font-bold text-stone-900 dark:text-stone-100">
-								{isLoading ? (
-									<Loader2 size={12} className="animate-spin" />
-								) : (
-									(health?.version ?? "0.1.0")
-								)}
-							</span>
-						</div>
-						<div className="flex items-center justify-between gap-2">
-							<span>{t("tila", "Tila")}</span>
+					<h2 className={headingClass}>{t("tilaVersio", "Tila & Versio")}</h2>
+					<dl className="grid grid-cols-[auto_1fr] items-center gap-x-4 gap-y-2 text-stone-600 dark:text-stone-400">
+						<dt>{t("versio", "Versio")}</dt>
+						<dd className="font-mono font-bold text-stone-900 dark:text-stone-100">
 							{isLoading ? (
-								<span className="inline-flex items-center gap-1.5 text-stone-500 text-xs">
-									<Loader2 size={12} className="animate-spin" />
-								</span>
+								<Loader2 size={14} className="animate-spin" />
+							) : (
+								(health?.version ?? "0.1.0")
+							)}
+						</dd>
+						<dt>{t("tila", "Tila")}</dt>
+						<dd>
+							{isLoading ? (
+								<Loader2 size={14} className="animate-spin" />
 							) : isError ? (
-								<span className="inline-flex items-center gap-1.5 font-bold text-rose-700 dark:text-rose-400 bg-rose-100 dark:bg-rose-950/60 px-2 py-0.5 rounded border border-rose-300 dark:border-rose-800 text-xs">
-									<span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+								<span className="inline-flex items-center gap-1.5 rounded-sm border border-status-danger-line bg-status-danger-bg px-2 py-0.5 text-xs font-medium text-status-danger-ink">
+									<span className="h-1.5 w-1.5 rounded-full bg-current" />
 									{t("hiri", "Häiriö")}
 								</span>
 							) : (
-								<span className="inline-flex items-center gap-1.5 font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-300 dark:border-emerald-800 text-xs">
-									<span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+								<span className="inline-flex items-center gap-1.5 rounded-sm border border-status-success-line bg-status-success-bg px-2 py-0.5 text-xs font-medium text-status-success-ink">
+									<span className="h-1.5 w-1.5 rounded-full bg-current" />
 									{t("normaali", "Normaali")}
 								</span>
 							)}
-						</div>
-					</div>
+						</dd>
+					</dl>
 				</div>
 			</div>
 
-			{/* Bottom Copyright Strip */}
-			<div className="border-t border-stone-200 dark:border-stone-800 py-3 px-6 text-center sm:text-left text-xs text-stone-500 dark:text-stone-400 flex flex-col sm:flex-row items-center justify-between gap-2 font-mono max-w-6xl mx-auto">
-				<span>
-					{"© "}
-					{new Date().getFullYear()}{" "}
-					{t(
-						"helsinginYliopistonYlioppilaskuntaHyy",
-						"Helsingin yliopiston ylioppilaskunta (HYY)",
-					)}
-				</span>
+			<div className="max-w-7xl border-t border-stone-200 px-6 py-3 text-xs text-stone-600 md:px-8 dark:border-stone-800 dark:text-stone-400">
+				{"© "}
+				{new Date().getFullYear()}{" "}
+				{t(
+					"helsinginYliopistonYlioppilaskuntaHyy",
+					"Helsingin yliopiston ylioppilaskunta (HYY)",
+				)}
 			</div>
 		</footer>
 	);

@@ -918,5 +918,14 @@
 	"teemaTumma": "Dark",
 	"laajennaValikko": "Expand menu",
 	"tiivistaValikko": "Collapse menu",
-	"paavalikko": "Main menu"
+	"paavalikko": "Main menu",
+	"nainVaraat": "How to book",
+	"valitseResurssi": "Choose a resource",
+	"valitseResurssiKuvaus": "Browse the resources or the calendar and pick a space or item.",
+	"valitseAika": "Pick a time",
+	"valitseAikaKuvaus": "Check the free times in the calendar and fill in the reservation form.",
+	"odotaVahvistus": "Wait for confirmation",
+	"odotaVahvistusKuvaus": "Some reservations are confirmed at once, others by the administrators. You will be notified by email.",
+	"omatVarauksesiLoydatKohdastaOmatVaraukset": "You can find your reservations under",
+	"piilotaOhje": "Hide guide"
 }
