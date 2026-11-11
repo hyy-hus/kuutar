@@ -66,7 +66,6 @@
 	"esimYleisetEhdot": "e.g. General booking terms 2026",
 	"esimYllpitjt": "e.g., Administrators",
 	"etsi": "Search...",
-	"etsiVarauksiaTilojaCtrlk": "Search bookings & spaces... [Ctrl+K]",
 	"etusivu": "Home",
 	"exportReservations": "Export reservations as JSON",
 	"foundReservationsCount": "Found {{count}} reservations",
@@ -475,8 +474,6 @@
 	"varaus": "Booking:",
 	"varausOsuuRajoitetulleAjalle": "The reservation overlaps a restricted period! ({{length}})",
 	"varausajat": "Booking Times:",
-	"varauskalenteri": "Booking Calendar",
-	"varauskalenteriKuutar": "Kuutar Booking Calendar",
 	"varaustaEiLoytynyt": "Reservation not found.",
 	"varaustaEiLytynyt": "Booking not found.",
 	"varaustenHakuEpaonnistui": "Failed to fetch reservations.",
@@ -776,5 +773,8 @@
 	"yllpitjnMuistiinpanotEiOmistajalle": "Administrator notes (not visible to the reserver)",
 	"omaVari": "Custom color",
 	"kaikki": "All",
-	"vainTamaOhje": "Double-click or Ctrl-click to show only this one"
+	"vainTamaOhje": "Double-click or Ctrl-click to show only this one",
+	"hyvaksynnat": "Approvals",
+	"varaaminen": "Booking",
+	"etsiVarauksiaJaTiloja": "Search bookings and spaces"
 }

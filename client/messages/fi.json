@@ -66,7 +66,6 @@
 	"esimYleisetEhdot": "esim. Yleiset varausehdot 2026",
 	"esimYllpitjt": "esim. Ylläpitäjät",
 	"etsi": "Etsi...",
-	"etsiVarauksiaTilojaCtrlk": "Etsi varauksia & tiloja... [Ctrl+K]",
 	"etusivu": "Etusivu",
 	"exportReservations": "Vie varaukset JSON-muodossa",
 	"foundReservationsCount": "Löytyi {{count}} varausta",
@@ -475,8 +474,6 @@
 	"varaus": "Varaus:",
 	"varausOsuuRajoitetulleAjalle": "Varaus osuu rajoitetulle ajanjaksolle! ({{length}})",
 	"varausajat": "Varausajat:",
-	"varauskalenteri": "Varauskalenteri",
-	"varauskalenteriKuutar": "Varauskalenteri Kuutar",
 	"varaustaEiLoytynyt": "Varauksen tiedot ei löytynyt.",
 	"varaustaEiLytynyt": "Varausta ei löytynyt.",
 	"varaustenHakuEpaonnistui": "Varauksien hakeminen epäonnistui.",
@@ -776,5 +773,8 @@
 	"yllpitjnMuistiinpanotEiOmistajalle": "Ylläpitäjän muistiinpanot (varaaja ei näe näitä)",
 	"omaVari": "Oma väri",
 	"kaikki": "Kaikki",
-	"vainTamaOhje": "Kaksoisnapsauta tai Ctrl-napsauta näyttääksesi vain tämän"
+	"vainTamaOhje": "Kaksoisnapsauta tai Ctrl-napsauta näyttääksesi vain tämän",
+	"hyvaksynnat": "Hyväksynnät",
+	"varaaminen": "Varaaminen",
+	"etsiVarauksiaJaTiloja": "Etsi varauksia ja tiloja"
 }

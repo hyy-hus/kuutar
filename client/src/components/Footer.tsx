@@ -17,9 +17,7 @@ export function Footer() {
 				<div className="space-y-3">
 					<div className="flex items-start gap-2 text-stone-900 dark:text-stone-100 font-bold text-sm">
 						<span className="w-2.5 h-2.5 rounded-full bg-purple-600 dark:bg-purple-400 shrink-0 mt-1" />
-						<span className="leading-tight">
-							{t("varauskalenteriKuutar", "Varauskalenteri Kuutar")}
-						</span>
+						<span className="leading-tight">{"Kuutar"}</span>
 					</div>
 					<p className="text-xs text-stone-500 dark:text-stone-400 leading-relaxed">
 						{t(
@@ -42,7 +40,7 @@ export function Footer() {
 
 				{/* Quick Navigation Links */}
 				<div className="space-y-3">
-					<h4 className="font-mono font-bold uppercase tracking-wider text-[11px] text-stone-900 dark:text-stone-100">
+					<h4 className="font-mono font-bold uppercase tracking-wider text-xs text-stone-900 dark:text-stone-100">
 						{t("jrjestelm", "Järjestelmä")}
 					</h4>
 					<ul className="space-y-2 text-xs">
@@ -75,7 +73,7 @@ export function Footer() {
 
 				{/* Info & Legal Pages */}
 				<div className="space-y-3">
-					<h4 className="font-mono font-bold uppercase tracking-wider text-[11px] text-stone-900 dark:text-stone-100">
+					<h4 className="font-mono font-bold uppercase tracking-wider text-xs text-stone-900 dark:text-stone-100">
 						{t("tiedotEhdot", "Tiedot & Ehdot")}
 					</h4>
 					<ul className="space-y-2 text-xs">
@@ -101,7 +99,7 @@ export function Footer() {
 
 				{/* Dynamic Version & Technical Info */}
 				<div className="space-y-3">
-					<h4 className="font-mono font-bold uppercase tracking-wider text-[11px] text-stone-900 dark:text-stone-100">
+					<h4 className="font-mono font-bold uppercase tracking-wider text-xs text-stone-900 dark:text-stone-100">
 						{t("tilaVersio", "Tila & Versio")}
 					</h4>
 					<div className="space-y-2 text-xs text-stone-600 dark:text-stone-400">
@@ -118,16 +116,16 @@ export function Footer() {
 						<div className="flex items-center justify-between gap-2">
 							<span>{t("tila", "Tila")}</span>
 							{isLoading ? (
-								<span className="inline-flex items-center gap-1.5 text-stone-500 text-[11px]">
+								<span className="inline-flex items-center gap-1.5 text-stone-500 text-xs">
 									<Loader2 size={12} className="animate-spin" />
 								</span>
 							) : isError ? (
-								<span className="inline-flex items-center gap-1.5 font-bold text-rose-700 dark:text-rose-400 bg-rose-100 dark:bg-rose-950/60 px-2 py-0.5 rounded border border-rose-300 dark:border-rose-800 text-[11px]">
+								<span className="inline-flex items-center gap-1.5 font-bold text-rose-700 dark:text-rose-400 bg-rose-100 dark:bg-rose-950/60 px-2 py-0.5 rounded border border-rose-300 dark:border-rose-800 text-xs">
 									<span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
 									{t("hiri", "Häiriö")}
 								</span>
 							) : (
-								<span className="inline-flex items-center gap-1.5 font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-300 dark:border-emerald-800 text-[11px]">
+								<span className="inline-flex items-center gap-1.5 font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-300 dark:border-emerald-800 text-xs">
 									<span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
 									{t("normaali", "Normaali")}
 								</span>
@@ -138,7 +136,7 @@ export function Footer() {
 			</div>
 
 			{/* Bottom Copyright Strip */}
-			<div className="border-t border-stone-200 dark:border-stone-800 py-3 px-6 text-center sm:text-left text-[11px] text-stone-500 dark:text-stone-400 flex flex-col sm:flex-row items-center justify-between gap-2 font-mono max-w-6xl mx-auto">
+			<div className="border-t border-stone-200 dark:border-stone-800 py-3 px-6 text-center sm:text-left text-xs text-stone-500 dark:text-stone-400 flex flex-col sm:flex-row items-center justify-between gap-2 font-mono max-w-6xl mx-auto">
 				<span>
 					{"© "}
 					{new Date().getFullYear()}{" "}

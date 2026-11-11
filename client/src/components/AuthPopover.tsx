@@ -23,9 +23,9 @@ export function AuthDialog() {
 	return (
 		<Dialog.Root open={isOpen} onOpenChange={setIsOpen}>
 			<Dialog.Trigger asChild>
-				<Button
-					variant="ghost"
-					size="icon"
+				<button
+					type="button"
+					className="h-9 w-9 shrink-0 rounded-full border-2 border-stone-800 dark:border-stone-300 bg-stone-50 dark:bg-stone-950 text-stone-900 dark:text-stone-100 flex items-center justify-center cursor-pointer hover:bg-stone-200 dark:hover:bg-stone-800 transition-colors focus-visible:outline-2 focus-visible:outline-purple-500 focus-visible:outline-offset-2"
 					aria-label={
 						isAuthenticated
 							? t("kayttajatili", "Käyttäjätili")
@@ -33,13 +33,13 @@ export function AuthDialog() {
 					}
 				>
 					{isAuthenticated ? (
-						<span className="font-bold text-xs uppercase text-purple-600 dark:text-purple-400">
+						<span className="font-bold text-sm uppercase" aria-hidden="true">
 							{user?.email?.charAt(0)}
 						</span>
 					) : (
-						<User size={20} />
+						<User size={18} aria-hidden="true" />
 					)}
-				</Button>
+				</button>
 			</Dialog.Trigger>
 
 			<Dialog.Portal>
@@ -56,13 +56,13 @@ export function AuthDialog() {
 							</Dialog.Title>
 
 							<div className="border-b border-stone-200 dark:border-stone-800 pb-3">
-								<p className="text-xs text-stone-500">
+								<p className="text-xs text-stone-600 dark:text-stone-400">
 									{t("kirjautunutSisn", "Kirjautunut sisään")}
 								</p>
 								<p className="text-sm font-semibold text-stone-900 dark:text-stone-100">
 									{user?.email}
 								</p>
-								<p className="text-xs font-mono capitalize text-stone-400">
+								<p className="text-xs capitalize text-stone-600 dark:text-stone-400">
 									{user?.role}
 								</p>
 							</div>

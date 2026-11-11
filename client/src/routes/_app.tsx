@@ -79,9 +79,9 @@ function AppLayout() {
 
 				{/* Clickable Header Logo */}
 				<Link to="/" className="hover:opacity-80 transition-opacity shrink-0">
-					<h1 className="font-bold text-base md:text-lg tracking-tight truncate">
-						{t("varauskalenteri", "Varauskalenteri")}
-					</h1>
+					<span className="font-bold text-lg tracking-tight truncate">
+						{"Kuutar"}
+					</span>
 				</Link>
 
 				<div className="flex-1" />
@@ -140,26 +140,10 @@ function AppLayout() {
 				</aside>
 
 				{/* Main Content Area */}
-				<main className="flex-1 p-2 md:p-4 overflow-y-auto min-h-0 min-w-0">
+				<main className="flex-1 px-4 md:px-8 py-6 overflow-y-auto min-h-0 min-w-0">
 					<Outlet />
 				</main>
 			</div>
-
-			{/* Footer */}
-			<footer className="h-8 border-t-2 border-stone-800 dark:border-stone-600 flex items-center justify-between px-3 text-[11px] font-mono bg-stone-100 dark:bg-stone-900 shrink-0 z-40 text-stone-600 dark:text-stone-400">
-				<div className="flex items-center gap-3">
-					<span className="font-bold text-stone-800 dark:text-stone-200">
-						{"kuutar"}
-					</span>
-					<span className="hidden sm:inline text-stone-400">{"|"}</span>
-					<span className="hidden sm:inline">
-						{t(
-							"helsinginYliopistonYlioppilaskunta",
-							"Helsingin yliopiston ylioppilaskunta",
-						)}
-					</span>
-				</div>
-			</footer>
 		</div>
 	);
 }
