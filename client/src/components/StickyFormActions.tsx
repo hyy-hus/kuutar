@@ -7,7 +7,7 @@ export interface StickyFormActionsProps extends FormActionsProps {
 	summary?: ReactNode;
 }
 
-/** `FormActions` pinned to the bottom of the viewport, with an optional summary line above the buttons */
+/** `FormActions` pinned to the bottom edge of the scroll area (the shell `main` has `py-6`, so the offset is `-bottom-6` and the bar pads itself by the same amount to cover the gap), with an optional summary line above the buttons */
 export function StickyFormActions({
 	summary,
 	className,
@@ -16,7 +16,7 @@ export function StickyFormActions({
 	return (
 		<div
 			className={cn(
-				"sticky bottom-0 z-10 space-y-2 border-t border-line-strong bg-surface py-3",
+				"sticky -bottom-6 z-10 space-y-2 border-t border-line-strong bg-surface pb-6 pt-3",
 				className,
 			)}
 		>

@@ -941,5 +941,11 @@
 	"eiRistiriitaisia": "No conflicting reservations",
 	"eiRistiriitaisiaKuvaus": "No pending reservation overlaps with another reservation.",
 	"eiOdottaviaVarauksiaKuvaus": "All requests in the selected period have been handled. New requests that need approval will appear here. You can change the period or filters above.",
-	"hyvaksyValitutMaara": "Approve selected ({{count}})"
+	"hyvaksyValitutMaara": "Approve selected ({{count}})",
+	"valitutResurssit": "Selected resources",
+	"eiValittujaResursseja": "No resources selected",
+	"poistaResurssiValinnasta": "Remove {{name}}",
+	"resurssiMuut": "Other",
+	"rajattuRyhmille": "Restricted to groups",
+	"vainVarausjaksotLyhyt": "Reservable blocks only"
 }
