@@ -3,7 +3,7 @@ import { forwardRef, type InputHTMLAttributes } from "react";
 import { cn } from "#/utils/cn";
 
 export const inputVariants = cva(
-	"flex w-full rounded-md border bg-white dark:bg-stone-900/50 text-stone-900 dark:text-stone-100 placeholder:text-stone-500 dark:placeholder:text-stone-400 transition-colors focus:outline-none focus-visible:outline-2 focus-visible:outline-purple-500 focus-visible:outline-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
+	"flex w-full rounded-md border bg-white dark:bg-stone-950 text-stone-900 dark:text-stone-100 placeholder:text-stone-500 dark:placeholder:text-stone-400 transition-colors focus:outline-none focus-visible:outline-2 focus-visible:outline-purple-500 focus-visible:outline-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
 	{
 		variants: {
 			variant: {

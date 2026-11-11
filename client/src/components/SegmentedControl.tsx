@@ -51,7 +51,7 @@ export function SegmentedControl<T extends string>({
 							"focus-ring inline-flex cursor-pointer items-center gap-1.5 px-3 text-xs font-medium whitespace-nowrap transition-colors focus-visible:-outline-offset-2",
 							"not-first:border-l not-first:border-stone-400 dark:not-first:border-stone-600",
 							selected
-								? "bg-stone-900 text-stone-50 dark:bg-stone-100 dark:text-stone-900"
+								? "bg-stone-900 text-stone-50 dark:bg-stone-200 dark:text-stone-900"
 								: "bg-transparent text-stone-800 hover:bg-stone-200 dark:text-stone-200 dark:hover:bg-stone-800",
 						)}
 					>

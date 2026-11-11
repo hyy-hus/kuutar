@@ -1142,7 +1142,7 @@ function BlockPicker({ options, isLoading, onSelect }: BlockPickerProps) {
 								onClick={() => onSelect(opt)}
 								className={`focus-ring w-full text-left px-3 py-2 text-sm rounded-md border transition-colors ${
 									opt.selected
-										? "bg-stone-900 text-stone-50 border-stone-900 dark:bg-stone-100 dark:text-stone-900 dark:border-stone-100"
+										? "bg-stone-900 text-stone-50 border-stone-900 dark:bg-stone-200 dark:text-stone-900 dark:border-stone-200"
 										: "bg-stone-50 dark:bg-stone-950 border-stone-300 dark:border-stone-700 hover:border-stone-800 dark:hover:border-stone-300"
 								}`}
 							>

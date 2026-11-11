@@ -15,6 +15,7 @@
   --surface: var(--color-white);
   --surface-raised: var(--color-stone-50);
   --surface-muted: var(--color-stone-100);
+  --surface-hover: var(--color-white);
   --line-subtle: var(--color-stone-300);
   --line-strong: var(--color-stone-800);
   --ink: var(--color-stone-900);
@@ -40,37 +41,50 @@
 }
 
 .dark {
+  /*
+   * Warm stone scale for dark mode. Overriding the palette steps here also
+   * fixes every raw `dark:bg-stone-*` / `dark:border-stone-*` class in one go.
+   * Steps: page 950 < card 900 < raised/hover 800; soft borders 700.
+   */
+  --color-stone-950: #1c1917;
+  --color-stone-900: #262321;
+  --color-stone-800: #34302d;
+  --color-stone-700: #4a4541;
+
   --surface: var(--color-stone-950);
   --surface-raised: var(--color-stone-900);
-  --surface-muted: var(--color-stone-900);
+  --surface-muted: #211e1c;
+  --surface-hover: var(--color-stone-800);
   --line-subtle: var(--color-stone-700);
-  --line-strong: var(--color-stone-300);
+  --line-strong: var(--color-stone-400);
   --ink: var(--color-stone-100);
   --ink-muted: var(--color-stone-400);
   --accent: var(--color-purple-400);
   --accent-focus: var(--color-purple-400);
 
+  /* Desaturated tints: muted backgrounds, soft light ink (>= 4.5:1) */
   --status-neutral-bg: var(--color-stone-800);
   --status-neutral-line: var(--color-stone-700);
   --status-neutral-ink: var(--color-stone-300);
-  --status-success-bg: var(--color-emerald-950);
-  --status-success-line: var(--color-emerald-700);
-  --status-success-ink: var(--color-emerald-200);
-  --status-warning-bg: var(--color-amber-950);
-  --status-warning-line: var(--color-amber-700);
-  --status-warning-ink: var(--color-amber-200);
-  --status-danger-bg: var(--color-red-950);
-  --status-danger-line: var(--color-red-700);
-  --status-danger-ink: var(--color-red-200);
-  --status-info-bg: var(--color-sky-950);
-  --status-info-line: var(--color-sky-700);
-  --status-info-ink: var(--color-sky-200);
+  --status-success-bg: #1c2a24;
+  --status-success-line: #2f5a49;
+  --status-success-ink: #a7e3c8;
+  --status-warning-bg: #2e2619;
+  --status-warning-line: #6b5326;
+  --status-warning-ink: #f0d08a;
+  --status-danger-bg: #301f20;
+  --status-danger-line: #7a3a3c;
+  --status-danger-ink: #f3b4b4;
+  --status-info-bg: #1b2831;
+  --status-info-line: #35607a;
+  --status-info-ink: #a9d4ec;
 }
 
 @theme inline {
   --color-surface: var(--surface);
   --color-surface-raised: var(--surface-raised);
   --color-surface-muted: var(--surface-muted);
+  --color-surface-hover: var(--surface-hover);
   --color-line-subtle: var(--line-subtle);
   --color-line-strong: var(--line-strong);
   --color-ink: var(--ink);
@@ -96,8 +110,19 @@
 
   /* One radius for controls and cards; chips use rounded-sm */
   --radius-control: 0.375rem;
-  /* L1 hard offset shadow; follows line-strong so it flips in dark mode */
-  --shadow-l1: 3px 3px 0 0 var(--line-strong);
+}
+
+/*
+ * Hover affordance for interactive cards and rows: border thickened to 2px via
+ * an inset ring (no layout shift, no drop shadow) plus a surface tint.
+ */
+@utility hover-card {
+  transition: background-color 120ms, border-color 120ms, box-shadow 120ms;
+  &:hover {
+    border-color: var(--line-strong);
+    box-shadow: inset 0 0 0 1px var(--line-strong);
+    background-color: var(--surface-hover);
+  }
 }
 
 /* Shared keyboard focus ring: `focus-ring` on any interactive element */

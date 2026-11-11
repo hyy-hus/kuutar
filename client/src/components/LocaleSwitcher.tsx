@@ -18,7 +18,7 @@ export default function LocaleSwitcher() {
 							aria-pressed={isActive}
 							className={`cursor-pointer px-3 py-1.5 rounded-full border text-xs font-medium tracking-tight transition-colors ${
 								isActive
-									? "bg-stone-900 text-stone-50 border-stone-800 dark:bg-stone-100 dark:text-stone-900 font-bold"
+									? "bg-stone-900 text-stone-50 border-stone-800 dark:bg-stone-200 dark:text-stone-900 font-bold"
 									: "bg-transparent border-stone-300 hover:bg-stone-200 dark:border-stone-700 dark:hover:bg-stone-800"
 							}`}
 						>

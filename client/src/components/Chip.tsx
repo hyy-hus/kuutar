@@ -42,7 +42,7 @@ export function ToggleChip({
 			className={cn(
 				"focus-ring px-2.5 py-1 rounded-sm text-xs font-medium inline-flex items-center justify-center gap-1.5 border transition-colors cursor-pointer select-none",
 				selected
-					? "bg-stone-900 text-stone-50 border-stone-900 dark:bg-stone-100 dark:text-stone-900 dark:border-stone-100"
+					? "bg-stone-900 text-stone-50 border-stone-900 dark:bg-stone-200 dark:text-stone-900 dark:border-stone-200"
 					: "bg-stone-100 text-stone-700 border-stone-300 hover:bg-stone-200 dark:bg-stone-900 dark:text-stone-300 dark:border-stone-700 dark:hover:bg-stone-800",
 				className,
 			)}

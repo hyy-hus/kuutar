@@ -35,8 +35,7 @@ export function EntityCard({
 		<Link
 			{...linkProps}
 			className={cn(
-				"focus-ring flex flex-col gap-2 rounded-md border border-stone-300 bg-stone-50 p-4 transition-shadow",
-				"hover:border-stone-800 hover:shadow-l1 dark:border-stone-700 dark:bg-stone-900 dark:hover:border-stone-300",
+				"focus-ring hover-card flex flex-col gap-2 rounded-md border border-line-subtle bg-surface-raised p-4",
 				className,
 			)}
 		>

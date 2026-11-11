@@ -248,7 +248,7 @@ function SandboxPage() {
 
 			<Showcase title="Weight levels (L1 / L2 / L3)">
 				<div className="grid gap-4 sm:grid-cols-3">
-					<div className="rounded-md border-2 border-line-strong bg-surface p-4 shadow-l1">
+					<div className="rounded-md border-2 border-line-strong bg-surface p-4">
 						L1 Focus
 					</div>
 					<div className="rounded-md border border-line-subtle bg-surface-raised p-4">

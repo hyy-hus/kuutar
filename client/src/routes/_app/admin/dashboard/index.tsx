@@ -799,7 +799,7 @@ function AdminDashboardPage() {
 					{/* L1: the pending approvals */}
 					<section
 						aria-labelledby="pending-heading"
-						className="overflow-hidden rounded-md border-2 border-stone-800 bg-stone-50 shadow-l1 dark:border-stone-300 dark:bg-stone-900"
+						className="overflow-hidden rounded-md border-2 border-line-strong bg-surface-raised"
 					>
 						<div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
 							<h2

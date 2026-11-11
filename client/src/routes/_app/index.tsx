@@ -168,7 +168,7 @@ function HomePage() {
 									<Link
 										to="/reservations/$id"
 										params={{ id: res.id }}
-										className="focus-ring flex flex-col gap-2 rounded-md border border-stone-300 bg-stone-50 p-3 transition-colors hover:border-stone-800 hover:shadow-l1 sm:flex-row sm:items-center sm:justify-between dark:border-stone-700 dark:bg-stone-900 dark:hover:border-stone-300"
+										className="focus-ring flex flex-col gap-2 rounded-md hover-card border border-line-subtle bg-surface-raised p-3 sm:flex-row sm:items-center sm:justify-between"
 									>
 										<div className="min-w-0 space-y-0.5">
 											<div className="flex min-w-0 items-center gap-2">
@@ -242,7 +242,7 @@ function HomePage() {
 								<Link
 									to="/resources/$id"
 									params={{ id: res.id }}
-									className="focus-ring block rounded-md border border-stone-300 bg-stone-50 p-3 transition-colors hover:border-stone-800 hover:shadow-l1 dark:border-stone-700 dark:bg-stone-900 dark:hover:border-stone-300"
+									className="focus-ring block rounded-md hover-card border border-line-subtle bg-surface-raised p-3"
 								>
 									<span className="block truncate text-sm font-bold text-stone-900 dark:text-stone-100">
 										{res.name}

@@ -9,8 +9,8 @@ export const buttonVariants = cva(
 		variants: {
 			variant: {
 				default: [
-					"bg-stone-900 text-stone-50 hover:bg-stone-800 dark:bg-stone-100 dark:text-stone-900",
-					"dark:hover:bg-stone-300 border border-transparent shadow-xs",
+					"bg-stone-900 text-stone-50 hover:bg-stone-800 dark:bg-stone-200 dark:text-stone-900",
+					"dark:hover:bg-stone-100 border border-transparent",
 				],
 				outline:
 					"border border-stone-400 dark:border-stone-600 bg-transparent hover:bg-stone-200 dark:hover:bg-stone-800 text-stone-900 dark:text-stone-100",
@@ -20,7 +20,7 @@ export const buttonVariants = cva(
 					"hover:bg-stone-200 dark:hover:bg-stone-800 text-stone-800 dark:text-stone-200",
 				/** Solid red: only for the confirm button inside a confirmation dialog */
 				danger:
-					"bg-red-600 text-white hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-800 shadow-xs",
+					"bg-red-600 text-white hover:bg-red-700 dark:bg-red-800 dark:hover:bg-red-700",
 				/** Destructive action that is not yet confirmed, e.g. "Poista" in a danger section */
 				"danger-outline":
 					"border border-red-600 text-red-700 bg-transparent hover:bg-red-50 dark:border-red-500 dark:text-red-400 dark:hover:bg-red-950",
