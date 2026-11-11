@@ -640,6 +640,8 @@
 	"tilastot90Paivaa": "90 d",
 	"tilastot12Kuukautta": "12 mån",
 	"tilastotKaikki": "Alla",
+	"tilastotVahemman": "Färre",
+	"tilastotEnemman": "Fler",
 	"aikavli": "Tidsintervall",
 	"alkanuttaKierrostaRajattu": "Ansökan har börjat, så endast namn, beskrivning och sluttid kan ändras.",
 	"varauksenPeruutusEpaonnistui": "Det gick inte att avboka bokningen.",

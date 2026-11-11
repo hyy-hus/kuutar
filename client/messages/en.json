@@ -640,6 +640,8 @@
 	"tilastot90Paivaa": "90 d",
 	"tilastot12Kuukautta": "12 mo",
 	"tilastotKaikki": "All",
+	"tilastotVahemman": "Fewer",
+	"tilastotEnemman": "More",
 	"aikavli": "Time range",
 	"alkanuttaKierrostaRajattu": "Applications have opened, so only the name, description and closing time can be edited.",
 	"varauksenPeruutusEpaonnistui": "Cancelling the reservation failed.",
