@@ -12,6 +12,8 @@
  * bg-status-warning-bg, border-status-warning-line, text-status-warning-ink, ...
  */
 :root {
+  /* Native controls (scrollbars, date pickers, checkboxes) follow the theme */
+  color-scheme: light;
   --surface: var(--color-white);
   --surface-raised: var(--color-stone-50);
   --surface-muted: var(--color-stone-100);
@@ -41,6 +43,7 @@
 }
 
 .dark {
+  color-scheme: dark;
   /*
    * Warm stone scale for dark mode. Overriding the palette steps here also
    * fixes every raw `dark:bg-stone-*` / `dark:border-stone-*` class in one go.
