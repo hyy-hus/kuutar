@@ -8,7 +8,7 @@ import { Button } from "#/components/Button";
 import { Callout } from "#/components/Callout";
 import { DetailLayout } from "#/components/DetailLayout";
 import { RichTextContent } from "#/components/RichTextContent";
-import { useIsAdmin } from "#/hooks/useAuth";
+import { useAuth, useIsAdmin } from "#/hooks/useAuth";
 import { useCollection } from "#/hooks/useCollections";
 import { useGroups } from "#/hooks/useGroups";
 import { useDeleteResource, useResource } from "#/hooks/useResorces";
@@ -22,6 +22,7 @@ export const Route = createFileRoute("/_app/resources/$id")({
 function ViewResourcePage() {
 	const { t } = useTranslation();
 	const { isAdmin } = useIsAdmin();
+	const { user } = useAuth();
 	const { id } = Route.useParams();
 	const navigate = useNavigate();
 	const { data: resource, isLoading, isError } = useResource(id);
@@ -142,10 +143,15 @@ function ViewResourcePage() {
 			) : (
 				!resource.can_reserve && (
 					<Callout variant="warning" icon={Lock}>
-						{t(
-							"eiVarausoikeutta",
-							"Ryhmälläsi ei ole oikeutta varata tätä resurssia.",
-						)}
+						{user
+							? t(
+									"eiVarausoikeutta",
+									"Sinulla ei ole oikeutta varata tätä resurssia.",
+								)
+							: t(
+									"kirjauduVarataksesi",
+									"Kirjaudu sisään, jos haluat varata tämän.",
+								)}
 					</Callout>
 				)
 			)}

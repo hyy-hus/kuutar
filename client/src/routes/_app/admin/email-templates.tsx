@@ -80,7 +80,7 @@ function EmailTemplatesPage() {
 				title={t("sahkopostipohjat", "Sähköpostipohjat")}
 				subtitle={t(
 					"sahkopostipohjatKuvaus",
-					"Muokkaa automaattisesti lähetettävien sähköpostien sisältöä. Käyttäjä saa viestin omalla kielellään.",
+					"Muokkaa automaattisesti lähetettäviä sähköposteja. Käyttäjä saa viestin omalla kielellään.",
 				)}
 			/>
 

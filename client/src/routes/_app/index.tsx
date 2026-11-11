@@ -299,7 +299,7 @@ function HomePage() {
 							>
 								{t(
 									"jrjestelmssOnUusiaVarauspyyntjJotkaOdottavatYllpidonVahvistusta",
-									"Järjestelmässä on uusia varauspyyntöjä, jotka odottavat ylläpidon vahvistusta.",
+									"Uudet varaukset odottavat hyväksyntääsi.",
 								)}
 							</Callout>
 						)}
@@ -323,7 +323,7 @@ function HomePage() {
 							<p className="max-w-2xl text-sm text-stone-600 dark:text-stone-400">
 								{t(
 									"tarkasteleReaaliaikaistaKalenterivaraustilannettaTeeUusiaVarauksiaJaHallinnoiOmiaVarauksiasiHelposti",
-									"Tarkastele reaaliaikaista kalenterivaraustilannetta, tee uusia varauksia ja hallinnoi omia varauksiasi helposti.",
+									"Katso vapaat ajat kalenterista. Kirjaudu sisään, kun haluat varata.",
 								)}
 							</p>
 							<Button asChild size="lg">

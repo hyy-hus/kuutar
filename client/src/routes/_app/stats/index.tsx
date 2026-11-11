@@ -33,10 +33,6 @@ function StatsPage() {
 		<PageContainer>
 			<PageHeader
 				title={t("tilastot", "Tilastot")}
-				subtitle={t(
-					"tilastoaVaraustenTilanteesta",
-					"Tilastoa varausten tilanteesta",
-				)}
 				actions={<RangeSelect value={range} onChange={setRange} />}
 			/>
 

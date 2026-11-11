@@ -33,21 +33,23 @@ export function HowToReserve({ dismissible = false }: HowToReserveProps) {
 			title: t("valitseResurssi", "Valitse resurssi"),
 			text: t(
 				"valitseResurssiKuvaus",
-				"Selaa resursseja tai kalenteria ja valitse tila tai väline.",
+				"Valitse tila tai väline resurssilistasta tai kalenterista.",
 			),
 		},
 		{
 			title: t("valitseAika", "Valitse aika"),
-			text: t(
-				"valitseAikaKuvaus",
-				"Katso vapaat ajat kalenterista ja täytä varauslomake.",
-			),
+			text: dismissible
+				? t("valitseAikaKuvaus", "Valitse vapaa aika ja kerro, mitä varaat.")
+				: t(
+						"valitseAikaKuvausVieras",
+						"Kirjaudu sisään, valitse vapaa aika ja kerro, mitä varaat.",
+					),
 		},
 		{
 			title: t("odotaVahvistus", "Odota vahvistus"),
 			text: t(
 				"odotaVahvistusKuvaus",
-				"Osa varauksista vahvistuu heti, osan vahvistaa ylläpito. Saat tiedon sähköpostilla.",
+				"Varaus vahvistuu heti tai ylläpito hyväksyy sen. Saat viestin sähköpostiin.",
 			),
 		},
 	];
@@ -98,19 +100,21 @@ export function HowToReserve({ dismissible = false }: HowToReserveProps) {
 					</li>
 				))}
 			</ol>
-			<p className="text-sm text-stone-600 dark:text-stone-400">
-				{t(
-					"omatVarauksesiLoydatKohdastaOmatVaraukset",
-					"Omat varauksesi löydät kohdasta",
-				)}{" "}
-				<Link
-					to="/reservations"
-					className="text-purple-700 hover:underline dark:text-purple-400"
-				>
-					{t("omatVaraukset", "Omat varaukset")}
-				</Link>
-				.
-			</p>
+			{dismissible && (
+				<p className="text-sm text-stone-600 dark:text-stone-400">
+					{t(
+						"omatVarauksesiLoydatKohdastaOmatVaraukset",
+						"Löydät varauksesi kohdasta",
+					)}{" "}
+					<Link
+						to="/reservations"
+						className="text-purple-700 hover:underline dark:text-purple-400"
+					>
+						{t("omatVaraukset", "Omat varaukset")}
+					</Link>
+					.
+				</p>
+			)}
 		</section>
 	);
 }

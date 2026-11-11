@@ -171,7 +171,7 @@ export function ResourceForm({
 					title={t("osioPerustiedot", "Perustiedot")}
 					description={t(
 						"osioPerustiedotKuvaus",
-						"Resurssin nimi ja kokoelma, johon se kuuluu. Nimi näkyy kalenterissa ja varauslomakkeella.",
+						"Nimi näkyy kalenterissa ja varauslomakkeella.",
 					)}
 				>
 					{/* Resource Name */}
@@ -269,7 +269,7 @@ export function ResourceForm({
 					title={t("osioKuvausKielittain", "Kuvaus kielittäin")}
 					description={t(
 						"osioKuvausKielittainKuvaus",
-						"Kuvaus näkyy varaajille resurssin sivulla ja varauslomakkeella. Kirjoita se vähintään suomeksi; muut kielet ovat valinnaisia.",
+						"Näkyy resurssin sivulla ja varauslomakkeella. Kirjoita ainakin suomeksi.",
 					)}
 				>
 					<form.Field name="description">
@@ -292,10 +292,7 @@ export function ResourceForm({
 					id="resource-look"
 					step={3}
 					title={t("osioUlkonako", "Ulkonäkö ja Outlook")}
-					description={t(
-						"osioUlkonakoKuvaus",
-						"Väri auttaa tunnistamaan resurssin kalenterissa.",
-					)}
+					description={t("osioUlkonakoKuvaus", "Väri näkyy kalenterissa.")}
 				>
 					{/* Calendar color */}
 					<form.Field name="color">
@@ -372,7 +369,7 @@ export function ResourceForm({
 						title={t("osioOutlookIntegraatio", "Outlook-integraatio")}
 						description={t(
 							"osioOutlookIntegraatioKuvaus",
-							"Tarvitaan vain, jos resurssi on myös Outlookissa.",
+							"Täytä vain, jos resurssi on myös Outlookissa.",
 						)}
 						defaultOpen={Boolean(defaultValues?.outlook_email)}
 					>
@@ -433,7 +430,7 @@ export function ResourceForm({
 					title={t("osioOikeudet", "Näkyvyys ja oikeudet")}
 					description={t(
 						"osioOikeudetKuvaus2",
-						"Näkyvyys ja varausoikeus ovat eri asioita: resurssi voi näkyä kaikille, vaikka vain tietyt ryhmät saavat varata sen. Ylläpitäjät näkevät ja voivat varata aina kaiken.",
+						"Näkeminen ja varaaminen asetetaan erikseen: resurssi voi näkyä kaikille, vaikka vain tietyt ryhmät voivat varata sen. Ylläpitäjät voivat aina tehdä molemmat.",
 					)}
 				>
 					<form.Subscribe selector={(state) => state.values}>
@@ -578,7 +575,7 @@ export function ResourceForm({
 					title={t("osioAikaSaannot", "Aika- ja toistosäännöt")}
 					description={t(
 						"osioAikaSaannotKuvaus",
-						"Rajaa, kuinka pitkään ja kuinka pitkälle eteenpäin resurssin voi varata ja saako varauksen toistaa. Rajat koskevat muita kuin ylläpitäjiä.",
+						"Rajat koskevat muita kuin ylläpitäjiä.",
 					)}
 				>
 					{/* Reservable Until Cutoff Date */}
@@ -763,7 +760,7 @@ export function ResourceForm({
 						<p className="text-xs text-stone-600 dark:text-stone-400">
 							{t(
 								"varauksenKestoOhje",
-								"Oletus esitäyttää päättymisajan. Vähimmäis- ja enimmäiskesto koskevat muita kuin ylläpitäjiä. Jätä tyhjäksi, jos rajaa ei ole.",
+								"Oletuskesto täyttää päättymisajan valmiiksi. Vähimmäis- ja enimmäiskesto koskevat muita kuin ylläpitäjiä.",
 							)}
 						</p>
 					</fieldset>
@@ -775,7 +772,7 @@ export function ResourceForm({
 					title={t("osioVahvistusJaSopimukset", "Vahvistaminen ja sopimukset")}
 					description={t(
 						"osioVahvistusJaSopimuksetKuvaus",
-						"Vahvistus kertoo, hyväksyykö ylläpito varaukset käsin vai vahvistuvatko ne heti. Sopimukset ovat ehtoja, jotka varaajan on hyväksyttävä.",
+						"Valitse, hyväksyykö ylläpito varaukset vai vahvistuvatko ne heti. Varaaja hyväksyy sopimukset varatessaan.",
 					)}
 				>
 					{/* Auto-confirm Toggle + optional group limit */}
@@ -805,7 +802,7 @@ export function ResourceForm({
 								<p className="text-xs text-stone-600 dark:text-stone-400 pl-7">
 									{t(
 										"vahvistaAutomaattisestiOhje",
-										"Varaukset vahvistuvat heti ilman ylläpitäjän hyväksyntää. Jos valitset ryhmiä, vain niiden varaukset vahvistuvat automaattisesti; muut jäävät odottamaan hyväksyntää. Tyhjä valinta tarkoittaa kaikkia ryhmiä.",
+										"Varaus vahvistuu heti ilman hyväksyntää. Jos valitset ryhmiä, vain niiden jäsenet saavat heti vahvistuksen ja muut odottavat hyväksyntää. Ilman valintaa kaikki ryhmät.",
 									)}
 								</p>
 

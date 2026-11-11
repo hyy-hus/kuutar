@@ -136,7 +136,7 @@ function CreateReservationPage() {
 					{roundPhase(round) === "open"
 						? t(
 								"kierrosIlmoitusPaattyy",
-								'Varauskierros "{{name}}" on käynnissä ja haku päättyy {{end}}. Varaus resurssille tehdään hakemuksena, ja se vahvistetaan vasta kierroksen päätyttyä.',
+								'Kierroksen "{{name}}" haku päättyy {{end}}. Sen resursseja haetaan hakemuksella, ja päätös tulee haun jälkeen.',
 								{
 									name: round.name,
 									end: formatDateTime(round.applications_close_at),
@@ -144,7 +144,7 @@ function CreateReservationPage() {
 							)
 						: t(
 								"kierrosIlmoitusAlkaa",
-								'Varauskierros "{{name}}" alkaa {{start}} ja haku päättyy {{end}}. Resurssia voi varata vain kierroksen kautta.',
+								'Kierroksen "{{name}}" haku alkaa {{start}}. Sen resursseja voi varata vain haun kautta.',
 								{
 									name: round.name,
 									start: formatDateTime(round.applications_open_at),

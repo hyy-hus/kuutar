@@ -2,7 +2,6 @@ import { useForm, useSelector } from "@tanstack/react-form";
 import {
 	CalendarCheck,
 	FileText,
-	Globe,
 	Loader2,
 	RefreshCw,
 	Save,
@@ -333,19 +332,22 @@ export function ReservationForm({
 		selectedResourceIds.includes(r.id),
 	);
 	// Admins choose the status themselves, so only reservers get a prediction
+	// Mirrors the server's should_auto_confirm for the current user's group
+	const confirmsImmediately =
+		selectedResources.length > 0 &&
+		selectedResources.every(
+			(r) =>
+				r.auto_confirm &&
+				(r.auto_confirm_group_ids.length === 0 ||
+					(currentUser?.group_id !== undefined &&
+						r.auto_confirm_group_ids.includes(currentUser.group_id))),
+		);
 	const outcome =
 		isAdmin || selectedResources.length === 0
 			? null
-			: selectedResources.every(
-						(r) => r.auto_confirm && r.auto_confirm_group_ids.length === 0,
-					)
+			: confirmsImmediately
 				? t("yhteenvetoVahvistuuHeti", "Vahvistuu heti")
-				: selectedResources.every((r) => r.auto_confirm)
-					? t(
-							"yhteenvetoVoiVahvistuaHeti",
-							"Vahvistuu heti, jos kuulut resurssin ryhmään. Muuten ylläpito hyväksyy.",
-						)
-					: t("yhteenvetoOdottaaHyvaksyntaa", "Ylläpito hyväksyy varauksen");
+				: t("yhteenvetoOdottaaHyvaksyntaa", "Ylläpito hyväksyy varauksen");
 	const summaryLine = [
 		selectedResourceNames.join(", "),
 		timeSummary,
@@ -420,10 +422,6 @@ export function ReservationForm({
 					id="reservation-time"
 					step={1}
 					title={t("osioMitaJaMilloin", "Mitä ja milloin")}
-					description={t(
-						"osioMitaJaMilloinKuvaus",
-						"Valitse resurssi ja ajankohta. Voit myös toistaa varauksen. Järjestelmä tarkistaa heti, onko aika vapaa.",
-					)}
 				>
 					{/* Owner (admins can reserve on behalf of another user) */}
 					{isAdmin && isCreate && (
@@ -832,7 +830,7 @@ export function ReservationForm({
 					title={t("varauksenTiedotOsio", "Varauksen tiedot")}
 					description={t(
 						"osioTiedotKuvaus",
-						"Otsikko näkyy kalenterissa ja varausten listoilla. Kuvaus on julkinen.",
+						"Otsikko ja kuvaus näkyvät kaikille kalenterissa, kun varaus on vahvistettu. Älä kirjoita henkilötietoja.",
 					)}
 				>
 					{/* Title */}
@@ -882,22 +880,6 @@ export function ReservationForm({
 								<span className="block text-sm font-medium text-stone-900 dark:text-stone-100">
 									{t("kuvaus", "Kuvaus")}
 								</span>
-								<p
-									role="note"
-									className="flex items-start gap-1.5 text-xs text-stone-600 dark:text-stone-400"
-								>
-									<Globe
-										size={12}
-										className="mt-0.5 shrink-0"
-										aria-hidden="true"
-									/>
-									<span>
-										{t(
-											"kuvausOnJulkinen",
-											"Kuvaus on julkinen ja näkyy kaikille. Älä kirjoita siihen yksityisiä tai henkilökohtaisia tietoja.",
-										)}
-									</span>
-								</p>
 								<LocalizedRichTextEditor
 									value={field.state.value}
 									onChange={field.handleChange}
@@ -1056,7 +1038,7 @@ export function ReservationForm({
 								<p className="text-xs text-stone-600 dark:text-stone-400">
 									{t(
 										"viestiYllapidolleOhje",
-										"Vain sinä ja ylläpito näette tämän. Käytä tätä lisätiedoille, jotka eivät kuulu julkiseen kuvaukseen.",
+										"Näkyy vain ylläpidolle, ei kalenterissa.",
 									)}
 								</p>
 								<Textarea
@@ -1077,10 +1059,6 @@ export function ReservationForm({
 						id="reservation-admin"
 						step={4}
 						title={t("vainYllapidolle", "Vain ylläpidolle")}
-						description={t(
-							"osioYllapitoKuvaus",
-							"Muistiinpanot ja tila. Varaaja ei näe näitä.",
-						)}
 					>
 						<div className="space-y-3">
 							<form.Field name="admin_notes">
@@ -1154,11 +1132,11 @@ export function ReservationForm({
 				)}
 
 				{/* Editing a reservation as a regular user needs a new approval */}
-				{!isAdmin && !isCreate && (
+				{!isAdmin && !isCreate && !confirmsImmediately && (
 					<Callout variant="warning">
 						{t(
 							"muokkausPalauttaaOdottaa",
-							"Muutosten tallentaminen palauttaa varauksen tilaan Odottaa. Saat vahvistuksen sähköpostiin, kun muutokset on hyväksytty.",
+							"Muokkauksen jälkeen ylläpidon pitää hyväksyä varaus uudelleen.",
 						)}
 					</Callout>
 				)}
@@ -1645,13 +1623,6 @@ function RecurrenceSection({
 				<RefreshCw size={16} aria-hidden="true" />
 				<span>{t("toistuvuus", "Toistuvuus")}</span>
 			</div>
-
-			<p className="text-xs text-stone-600 dark:text-stone-400">
-				{t(
-					"toistuvuusOhje",
-					"Valinnainen. Toista sama varaus viikoittain, kuukausittain tai vuosittain.",
-				)}
-			</p>
 
 			<RecurrenceFields
 				startTime={startTime}

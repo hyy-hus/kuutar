@@ -798,10 +798,7 @@ function AdminDashboardPage() {
 		<PageContainer>
 			<PageHeader
 				title={t("hyvaksynnat", "Hyväksynnät")}
-				subtitle={t(
-					"hyvaksynnatKuvaus",
-					"Tarkista ja vahvista odottavat varaukset. Ristiriitaiset varaukset on merkitty.",
-				)}
+				subtitle={t("hyvaksynnatKuvaus", "Päällekkäiset pyynnöt on merkitty.")}
 				actions={
 					<>
 						<Button variant="outline" asChild>
@@ -1033,7 +1030,7 @@ function AdminDashboardPage() {
 									>
 										{t(
 											"eiRistiriitaisiaKuvaus",
-											"Mikään odottava varaus ei ole päällekkäin toisen varauksen kanssa.",
+											"Päällekkäisiä pyyntöjä ei ole.",
 										)}
 									</EmptyState>
 								) : (
@@ -1043,7 +1040,7 @@ function AdminDashboardPage() {
 									>
 										{t(
 											"eiOdottaviaVarauksiaKuvaus",
-											"Kaikki valitun aikavälin pyynnöt on käsitelty. Uudet pyynnöt, jotka vaativat hyväksynnän, ilmestyvät tähän. Voit muuttaa aikaväliä tai suodattimia yllä.",
+											"Ei käsiteltäviä pyyntöjä valitulla aikavälillä. Voit vaihtaa aikaväliä tai suodattimia.",
 										)}
 									</EmptyState>
 								)}

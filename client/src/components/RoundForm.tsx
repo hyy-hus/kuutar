@@ -136,7 +136,7 @@ export function RoundForm({
 				title={t("kierroksenAjoitus", "Ajoitus")}
 				description={t(
 					"kierroksenAjoitusKuvaus",
-					"Hakuaika on aika, jolloin hakemuksia voi jättää. Varattava ajanjakso on aika, jolle haetut varaukset sijoittuvat.",
+					"Hakuaikana hakemuksia voi jättää. Varattava ajanjakso on aika, jolle haetut varaukset tehdään.",
 				)}
 			>
 				<div className="grid grid-cols-1 gap-3 sm:grid-cols-2">

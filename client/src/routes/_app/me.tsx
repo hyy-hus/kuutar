@@ -170,7 +170,7 @@ function MePage() {
 					title={t("oletusyhteystiedot", "Oletusyhteystiedot")}
 					description={t(
 						"oletusyhteystiedotKuvaus",
-						"Näillä tiedoilla täytetään uusien varausten yhteystiedot automaattisesti.",
+						"Täytetään valmiiksi uusiin varauksiin.",
 					)}
 				>
 					<form.Field name="default_contact_person">

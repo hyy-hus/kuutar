@@ -112,7 +112,7 @@ function RoundApplicationsPage() {
 				>
 					{t(
 						"kierrosOhje",
-						"Voit hakea resurssia kohden enintään {{max}} varausjaksoa. Järjestä hakemuksesi mieluisuusjärjestykseen: ylin on toivotuin. Päätökset lähetetään sähköpostilla kierroksen päätyttyä.",
+						"Voit hakea enintään {{max}} aikaa kutakin resurssia kohden. Aseta toivotuin ensimmäiseksi. Päätös tulee sähköpostiin haun päätyttyä.",
 						{ max: round.max_pending_per_resource },
 					)}
 				</Callout>
