@@ -128,12 +128,6 @@ export function ResourceFilter({
 				>
 					<Layers size={16} aria-hidden="true" />
 					<span>{t("resurssit", "Resurssit")}</span>
-					<span className="text-xs font-normal text-stone-600 tabular-nums dark:text-stone-400">
-						{t("valittuYhteensa", "{{selected}} / {{total}} valittu", {
-							selected: selectedCount,
-							total: resources.length,
-						})}
-					</span>
 					<ChevronDown
 						size={16}
 						aria-hidden="true"

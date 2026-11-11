@@ -16,7 +16,7 @@ export function StickyFormActions({
 	return (
 		<div
 			className={cn(
-				"sticky -bottom-6 z-10 space-y-2 border-t border-line-strong bg-surface pb-6 pt-3",
+				"sticky -bottom-6 z-10 space-y-2 border-t border-line-strong bg-stone-50 pb-6 dark:bg-stone-950 pt-3",
 				className,
 			)}
 		>

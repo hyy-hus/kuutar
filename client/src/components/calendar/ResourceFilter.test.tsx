@@ -35,11 +35,15 @@ describe("ResourceFilter", () => {
 		return onChange;
 	};
 
-	it("is collapsed on request and shows the selection count", () => {
+	it("is collapsed on request and shows the selection itself", () => {
 		setup(["r1"], false);
 		expect(screen.queryByRole("button", { name: "Sali 101" })).toBeNull();
 		expect(screen.getByText("Sali 101")).toBeTruthy();
-		expect(screen.getByRole("button", { name: /1 \/ 3/ })).toBeTruthy();
+		expect(
+			screen
+				.getByRole("button", { name: /Resources/ })
+				.getAttribute("aria-expanded"),
+		).toBe("false");
 	});
 
 	it("shows all-selected, chips with remove buttons, overflow and empty hint", () => {
