@@ -781,5 +781,10 @@
 	"kopioitu": "Kopioitu",
 	"hyvaksynnat": "Hyväksynnät",
 	"varaaminen": "Varaaminen",
-	"etsiVarauksiaJaTiloja": "Etsi varauksia ja tiloja"
+	"etsiVarauksiaJaTiloja": "Etsi varauksia ja tiloja",
+	"tnn": "Tänään",
+	"plusNLisaa": "+{{count}} lisää",
+	"eiVarauksiaKuussa": "Ei varauksia tässä kuussa",
+	"selite": "Selite",
+	"rajoitus": "Rajoitus"
 }

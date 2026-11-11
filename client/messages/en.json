@@ -781,5 +781,10 @@
 	"kopioitu": "Copied",
 	"hyvaksynnat": "Approvals",
 	"varaaminen": "Booking",
-	"etsiVarauksiaJaTiloja": "Search bookings and spaces"
+	"etsiVarauksiaJaTiloja": "Search bookings and spaces",
+	"tnn": "Today",
+	"plusNLisaa": "+{{count}} more",
+	"eiVarauksiaKuussa": "No reservations this month",
+	"selite": "Legend",
+	"rajoitus": "Restriction"
 }

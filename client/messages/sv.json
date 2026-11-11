@@ -781,5 +781,10 @@
 	"kopioitu": "Kopierad",
 	"hyvaksynnat": "Godkännanden",
 	"varaaminen": "Bokning",
-	"etsiVarauksiaJaTiloja": "Sök bokningar och lokaler"
+	"etsiVarauksiaJaTiloja": "Sök bokningar och lokaler",
+	"tnn": "Idag",
+	"plusNLisaa": "+{{count}} till",
+	"eiVarauksiaKuussa": "Inga bokningar den här månaden",
+	"selite": "Förklaring",
+	"rajoitus": "Begränsning"
 }
