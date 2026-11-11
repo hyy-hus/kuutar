@@ -781,5 +781,20 @@
 	"kopioitu": "Copied",
 	"hyvaksynnat": "Approvals",
 	"varaaminen": "Booking",
-	"etsiVarauksiaJaTiloja": "Search bookings and spaces"
+	"etsiVarauksiaJaTiloja": "Search bookings and spaces",
+	"takaisinOmiinVarauksiin": "Back to my bookings",
+	"aikaJaResurssi": "Time and resource",
+	"yhteystiedotOhje": "Visible only to you and the administrators.",
+	"lahetysEstettyPaallekkaisyys": "The booking cannot be submitted because the selected time is already booked.",
+	"lahetysEstettyRajoitus": "The booking cannot be submitted because the selected time is restricted.",
+	"lahetysEstettyEhdot": "Accept the terms before submitting.",
+	"naytaVahemman": "Show less",
+	"naytaKaikkiN": "Show all {{count}}",
+	"ensimmainenAikaJaMuut": "{{first}} + {{count}} more",
+	"avaaKierros": "Open round",
+	"eiVarauksiaValitullaAikavalilla": "No bookings in the selected period",
+	"odottaaHyvaksyntaa": "Awaiting approval",
+	"perututVaraukset": "Cancelled bookings",
+	"varauksenTiedotOsio": "Booking details",
+	"vahvistetutVarauksetOsio": "Confirmed bookings"
 }
