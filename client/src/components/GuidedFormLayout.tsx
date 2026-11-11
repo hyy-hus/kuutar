@@ -25,7 +25,7 @@ export function GuidedFormLayout({
 	return (
 		<div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_15rem]">
 			<div className="min-w-0 space-y-6">{children}</div>
-			<aside className="sticky top-6 hidden space-y-4 lg:block">
+			<aside className="sticky top-0 hidden space-y-4 lg:block">
 				<FormIndex items={index} aria-label={indexLabel} />
 				{summary}
 			</aside>

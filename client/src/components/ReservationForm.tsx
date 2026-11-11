@@ -12,7 +12,6 @@ import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "#/components/Button";
 import { Callout } from "#/components/Callout";
-import { ToggleChip } from "#/components/Chip";
 import { DateTimeInput } from "#/components/DateTimeInput";
 import { FormSection } from "#/components/FormSection";
 import { FormSummaryCard } from "#/components/FormSummaryCard";
@@ -21,10 +20,12 @@ import { Input } from "#/components/Input";
 import { LocalizedRichTextEditor } from "#/components/LocalizedRichTextEditor";
 import { RecurrenceFields } from "#/components/RecurrenceFields";
 import { ResourceInfoDialog } from "#/components/ResourceInfoDialog";
+import { ResourcePicker } from "#/components/ResourcePicker";
 import { Select } from "#/components/Select";
 import { StickyFormActions } from "#/components/StickyFormActions";
 import { Textarea } from "#/components/Textarea";
 import { useAuth, useIsAdmin } from "#/hooks/useAuth";
+import { useCollections } from "#/hooks/useCollections";
 import {
 	type Contract,
 	getApplicableContracts,
@@ -122,6 +123,7 @@ export function ReservationForm({
 	const { t } = useTranslation();
 	const { formatDate, formatRange } = useDateFormatter();
 	const { data: resources, isLoading: loadingResources } = useResources();
+	const { data: collections } = useCollections();
 	const { data: activeContracts, isLoading: loadingContracts } = useContracts({
 		active_only: true,
 	});
@@ -489,7 +491,7 @@ export function ReservationForm({
 											{t("ladataanResursseja", "Ladataan resursseja...")}
 										</div>
 									) : (
-										<div className="flex max-h-36 flex-wrap gap-2 overflow-y-auto">
+										<>
 											{selectableResources(field.state.value).length === 0 && (
 												<p className="text-xs text-stone-600 dark:text-stone-400">
 													{t(
@@ -498,58 +500,53 @@ export function ReservationForm({
 													)}
 												</p>
 											)}
-											{selectableResources(field.state.value).map((res) => {
-												const isChecked = field.state.value.includes(res.id);
-												return (
-													<ToggleChip
-														key={res.id}
-														selected={isChecked}
-														onClick={() => {
-															// A blocks-only resource has its own block times, so for
-															// non-admins it can't be combined with other resources
-															const exclusive =
-																!isAdmin &&
-																(res.blocks_only ||
-																	field.state.value.some(
-																		(id) =>
-																			resources?.find((r) => r.id === id)
-																				?.blocks_only,
-																	));
-															const nextValue = isChecked
-																? field.state.value.filter(
-																		(id) => id !== res.id,
-																	)
-																: exclusive
-																	? [res.id]
-																	: [...field.state.value, res.id];
-															field.handleChange(nextValue);
-															setContractsApproved(false);
-															// Pre-fill the end time from the resources' default duration
-															// until the user has set one themselves
-															const start = form.getFieldValue("start_time");
-															const defaultMinutes = resolveDefaultDuration(
-																(resources ?? []).filter((r) =>
-																	nextValue.includes(r.id),
-																),
-															);
-															if (
-																isCreate &&
-																start &&
-																defaultMinutes &&
-																!form.getFieldMeta("end_time")?.isTouched
-															) {
-																form.setFieldValue(
-																	"end_time",
-																	addMinutes(start, defaultMinutes),
-																);
-															}
-														}}
-													>
-														{res.name}
-													</ToggleChip>
-												);
-											})}
-										</div>
+											<ResourcePicker
+												resources={selectableResources(field.state.value)}
+												collections={collections ?? []}
+												value={field.state.value}
+												onToggle={(id) => {
+													const res = resources?.find((r) => r.id === id);
+													if (!res) return;
+													const isChecked = field.state.value.includes(res.id);
+													// A blocks-only resource has its own block times, so for
+													// non-admins it can't be combined with other resources
+													const exclusive =
+														!isAdmin &&
+														(res.blocks_only ||
+															field.state.value.some(
+																(id) =>
+																	resources?.find((r) => r.id === id)
+																		?.blocks_only,
+															));
+													const nextValue = isChecked
+														? field.state.value.filter((id) => id !== res.id)
+														: exclusive
+															? [res.id]
+															: [...field.state.value, res.id];
+													field.handleChange(nextValue);
+													setContractsApproved(false);
+													// Pre-fill the end time from the resources' default duration
+													// until the user has set one themselves
+													const start = form.getFieldValue("start_time");
+													const defaultMinutes = resolveDefaultDuration(
+														(resources ?? []).filter((r) =>
+															nextValue.includes(r.id),
+														),
+													);
+													if (
+														isCreate &&
+														start &&
+														defaultMinutes &&
+														!form.getFieldMeta("end_time")?.isTouched
+													) {
+														form.setFieldValue(
+															"end_time",
+															addMinutes(start, defaultMinutes),
+														);
+													}
+												}}
+											/>
+										</>
 									)}
 									{field.state.value.length > 0 && (
 										<ResourceInfoDialog

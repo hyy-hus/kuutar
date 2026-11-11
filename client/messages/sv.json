@@ -941,5 +941,11 @@
 	"eiRistiriitaisia": "Inga bokningar som krockar",
 	"eiRistiriitaisiaKuvaus": "Ingen väntande bokning överlappar med en annan bokning.",
 	"eiOdottaviaVarauksiaKuvaus": "Alla förfrågningar för den valda perioden är behandlade. Nya förfrågningar som kräver godkännande visas här. Du kan ändra period eller filter ovan.",
-	"hyvaksyValitutMaara": "Godkänn valda ({{count}})"
+	"hyvaksyValitutMaara": "Godkänn valda ({{count}})",
+	"valitutResurssit": "Valda resurser",
+	"eiValittujaResursseja": "Inga valda resurser",
+	"poistaResurssiValinnasta": "Ta bort {{name}}",
+	"resurssiMuut": "Övriga",
+	"rajattuRyhmille": "Begränsad till grupper",
+	"vainVarausjaksotLyhyt": "Endast bokningsperioder"
 }
