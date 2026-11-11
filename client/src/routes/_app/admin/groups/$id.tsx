@@ -1,14 +1,15 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { Edit, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { BackLink } from "#/components/BackLink";
 import { Button } from "#/components/Button";
-import { Chip } from "#/components/Chip";
+import { DetailLayout } from "#/components/DetailLayout";
 import { RichTextContent } from "#/components/RichTextContent";
+import { useIsAdmin } from "#/hooks/useAuth";
 import { useDeleteGroup, useGroup } from "#/hooks/useGroups";
+import { useUsers } from "#/hooks/useUsers";
 import { requireAuthGuard } from "#/utils/authGuard";
-import { useDateFormatter } from "#/utils/date";
-import { readable_uuid } from "#/utils/uuid";
+import { getLocalizedPlainText } from "#/utils/richText";
 
 export const Route = createFileRoute("/_app/admin/groups/$id")({
 	beforeLoad: async ({ context }) => {
@@ -18,25 +19,32 @@ export const Route = createFileRoute("/_app/admin/groups/$id")({
 });
 
 function ViewGroupPage() {
-	const { t } = useTranslation();
-	const { formatDate } = useDateFormatter();
+	const { t, i18n } = useTranslation();
 	const { id } = Route.useParams();
 	const navigate = useNavigate();
+	const { isAdmin } = useIsAdmin();
 	const { data: group, isLoading, isError } = useGroup(id);
+	const { data: users } = useUsers({ enabled: isAdmin });
 	const deleteGroup = useDeleteGroup();
 
 	if (isLoading)
 		return (
-			<div className="p-4 text-sm text-stone-500">
+			<p className="text-sm text-stone-600 dark:text-stone-400">
 				{t("ladataanRyhm", "Ladataan ryhmää...")}
-			</div>
+			</p>
 		);
 	if (isError || !group)
 		return (
-			<div className="p-4 text-sm text-red-500">
+			<p className="text-sm text-red-600 dark:text-red-400">
 				{t("ryhmEiLytynyt", "Ryhmää ei löytynyt.")}
-			</div>
+			</p>
 		);
+
+	const members = (users ?? [])
+		.filter((u) => u.group_id === group.id)
+		.sort((a, b) => a.name.localeCompare(b.name, i18n.language));
+	const hasDescription =
+		getLocalizedPlainText(group.description, i18n.language) !== "";
 
 	const handleDelete = async () => {
 		if (
@@ -50,59 +58,83 @@ function ViewGroupPage() {
 	};
 
 	return (
-		<div className="p-4 max-w-xl flex flex-col gap-6">
-			<BackLink to="/admin/groups">
-				{t("takaisinRyhmiin", "Takaisin ryhmiin")}
-			</BackLink>
+		<DetailLayout
+			back={
+				<BackLink to="/admin/groups">
+					{t("takaisinRyhmiin", "Takaisin ryhmiin")}
+				</BackLink>
+			}
+			title={group.name}
+			subtitle={
+				isAdmin && users
+					? t("jasenMaara", "{{count}} jäsentä", { count: members.length })
+					: undefined
+			}
+			actions={
+				isAdmin && (
+					<Button variant="outline" asChild>
+						<Link to="/admin/groups/edit/$id" params={{ id: group.id }}>
+							{t("muokkaa", "Muokkaa")}
+						</Link>
+					</Button>
+				)
+			}
+			dangerZone={
+				isAdmin && (
+					<Button
+						variant="danger-outline"
+						onClick={handleDelete}
+						disabled={deleteGroup.isPending}
+					>
+						<Trash2 size={16} />
+						<span>{t("poistaRyhm", "Poista ryhmä")}</span>
+					</Button>
+				)
+			}
+			technical={{
+				id: group.id,
+				createdAt: group.created_at,
+				updatedAt: group.updated_at,
+			}}
+		>
+			{hasDescription && (
+				<RichTextContent
+					value={group.description}
+					className="rounded-md border border-stone-300 bg-stone-50 p-4 dark:border-stone-700 dark:bg-stone-900"
+				/>
+			)}
 
-			<div className="flex items-center justify-between">
-				<h1 className="text-2xl font-bold text-stone-900 dark:text-stone-100">
-					{group.name}
-				</h1>
-				<Chip>{readable_uuid(group.id)}</Chip>
-			</div>
-
-			{/* 2. Localized rich-text description */}
-			<RichTextContent
-				value={group.description}
-				className="p-3 rounded-md border border-stone-200 dark:border-stone-800 bg-stone-50 dark:bg-stone-900"
-			/>
-
-			<div className="space-y-2">
-				<div className="text-md">
-					<p>
-						<strong>{t("muokattu", "Muokattu:")}</strong>{" "}
-						{formatDate(group.updated_at)}
-					</p>
-					<p>
-						<strong>{t("luotu", "Luotu:")}</strong>{" "}
-						{formatDate(group.created_at)}
-					</p>
-				</div>
-			</div>
-
-			<div className="flex flex-col gap-2 pt-2">
-				<Button
-					variant="secondary"
-					className="w-full flex items-center justify-center gap-2"
-					asChild
-				>
-					<Link to="/admin/groups/edit/$id" params={{ id: group.id }}>
-						<span>{t("muokkaa", "Muokkaa")}</span>
-						<Edit size={16} />
-					</Link>
-				</Button>
-
-				<Button
-					variant="danger"
-					className="w-full flex items-center justify-center gap-2"
-					onClick={handleDelete}
-					disabled={deleteGroup.isPending}
-				>
-					<span>{t("poistaRyhm", "Poista ryhmä")}</span>
-					<Trash2 size={16} />
-				</Button>
-			</div>
-		</div>
+			{isAdmin && users && (
+				<section className="space-y-3">
+					<h2 className="text-lg font-semibold">
+						{t("ryhmanJasenet", "Jäsenet")}
+					</h2>
+					{members.length === 0 ? (
+						<p className="text-sm text-stone-600 dark:text-stone-400">
+							{t("ryhmassaEiKayttajia", "Ryhmässä ei ole käyttäjiä.")}
+						</p>
+					) : (
+						<ul className="divide-y divide-stone-200 rounded-md border border-stone-300 bg-stone-50 dark:divide-stone-800 dark:border-stone-700 dark:bg-stone-900">
+							{members.map((u) => (
+								<li key={u.id}>
+									<Link
+										to="/admin/users/$id"
+										params={{ id: u.id }}
+										className="focus-ring flex flex-wrap items-baseline gap-x-3 px-4 py-2 text-sm hover:bg-stone-100 dark:hover:bg-stone-800"
+									>
+										<span className="font-medium">{u.name || u.email}</span>
+										{u.name && (
+											<span className="text-xs text-stone-600 dark:text-stone-400">
+												{u.email}
+											</span>
+										)}
+									</Link>
+								</li>
+							))}
+						</ul>
+					)}
+				</section>
+			)}
+		</DetailLayout>
 	);
 }

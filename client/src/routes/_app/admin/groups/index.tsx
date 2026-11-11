@@ -1,72 +1,47 @@
-// src/routes/_app/groups/index.tsx
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Eye, Loader2, Plus, Users } from "lucide-react";
+import { Loader2, Plus, Users } from "lucide-react";
+import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "#/components/Button";
-import { Chip } from "#/components/Chip";
+import { Callout } from "#/components/Callout";
+import { EmptyState } from "#/components/EmptyState";
+import { EntityCard } from "#/components/EntityCard";
+import { PageContainer } from "#/components/PageContainer";
+import { PageHeader } from "#/components/PageHeader";
 import { useIsAdmin } from "#/hooks/useAuth";
-import { type Group, useGroups } from "#/hooks/useGroups";
+import { useGroups } from "#/hooks/useGroups";
+import { useUsers } from "#/hooks/useUsers";
 import { requireAuthGuard } from "#/utils/authGuard";
 import { getLocalizedPlainText } from "#/utils/richText";
-import { readable_uuid } from "#/utils/uuid";
 
 export const Route = createFileRoute("/_app/admin/groups/")({
 	beforeLoad: async ({ context }) => {
 		await requireAuthGuard(context);
 	},
-	component: RouteComponent,
+	component: GroupList,
 });
 
-function GroupCard({ group }: { group: Group }) {
-	const { t, i18n } = useTranslation();
-	return (
-		<li className="p-3 border-2 border-stone-800 dark:border-stone-700 flex flex-col justify-between gap-3 rounded-md bg-stone-50 dark:bg-stone-900 shadow-xs hover:border-purple-600 dark:hover:border-purple-500 transition-colors min-w-0">
-			<div className="space-y-2 min-w-0">
-				{/* Header: Name and ID Chip */}
-				<div className="flex items-start justify-between gap-2 min-w-0">
-					<h3 className="font-bold text-sm md:text-base text-stone-900 dark:text-stone-100 truncate flex-1">
-						{group.name}
-					</h3>
-					<Chip>{readable_uuid(group.id)}</Chip>
-				</div>
-
-				{/* Description */}
-				<p className="text-xs text-stone-600 dark:text-stone-400 line-clamp-2 min-h-8">
-					{getLocalizedPlainText(group.description, i18n.language) ||
-						t("eiKuvaustaSaatavilla", "Ei kuvausta saatavilla.")}
-				</p>
-			</div>
-
-			{/* Bottom Action Row */}
-			<div className="flex items-center justify-end gap-2 pt-2 border-t border-stone-200 dark:border-stone-800 shrink-0">
-				<Button
-					variant="secondary"
-					size="sm"
-					asChild
-					className="gap-1.5 text-xs"
-				>
-					<Link to="/admin/groups/$id" params={{ id: group.id }}>
-						<span>{t("nyt", "Näytä")}</span>
-						<Eye size={14} />
-					</Link>
-				</Button>
-			</div>
-		</li>
-	);
-}
-
 function GroupList() {
-	const { t } = useTranslation();
+	const { t, i18n } = useTranslation();
 	const { isAdmin } = useIsAdmin();
 	const {
 		data: groups,
 		isLoading: loadingGroups,
 		isError: errorGroups,
 	} = useGroups();
+	// Member counts come from the user list, which only admins may read
+	const { data: users } = useUsers({ enabled: isAdmin });
+
+	const memberCounts = useMemo(() => {
+		const counts = new Map<string, number>();
+		for (const u of users ?? [])
+			counts.set(u.group_id, (counts.get(u.group_id) ?? 0) + 1);
+		return counts;
+	}, [users]);
 
 	if (loadingGroups) {
 		return (
-			<div className="p-8 flex items-center justify-center gap-2 text-stone-500">
+			<div className="flex items-center gap-2 py-8 text-stone-600 dark:text-stone-400">
 				<Loader2 className="animate-spin" size={18} />
 				<span>{t("ladataanRyhmi", "Ladataan ryhmiä...")}</span>
 			</div>
@@ -75,48 +50,58 @@ function GroupList() {
 
 	if (errorGroups) {
 		return (
-			<div className="p-4 text-xs text-rose-600 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 rounded-md">
+			<Callout variant="danger">
 				{t("virheLadattaessaTietoja", "Virhe ladattaessa tietoja.")}
-			</div>
+			</Callout>
 		);
 	}
 
 	return (
-		<div className="flex flex-col gap-4 p-2 sm:p-4 flex-1 min-h-0 min-w-0">
-			{/* Header & Admin Action */}
-			<div className="flex items-center justify-between gap-2 shrink-0 border-b border-stone-200 dark:border-stone-800 pb-3">
-				<div>
-					<h1 className="text-lg sm:text-xl font-bold tracking-tight text-stone-900 dark:text-stone-100 flex items-center gap-2">
-						<Users size={20} className="text-stone-500" />
-						<span>{t("ryhmt", "Ryhmät")}</span>
-					</h1>
-					<p className="text-xs text-stone-500">
-						{t("yhteensaRyhmia", "Yhteensä {{count}} ryhmää", {
-							count: groups?.length || 0,
-						})}
-					</p>
-				</div>
+		<PageContainer>
+			<PageHeader
+				title={t("ryhmt", "Ryhmät")}
+				subtitle={t("yhteensaRyhmia", "Yhteensä {{count}} ryhmää", {
+					count: groups?.length ?? 0,
+				})}
+				actions={
+					isAdmin && (
+						<Button asChild>
+							<Link to="/admin/groups/create">
+								<Plus size={16} />
+								<span>{t("lisRyhm", "Lisää ryhmä")}</span>
+							</Link>
+						</Button>
+					)
+				}
+			/>
 
-				{isAdmin && (
-					<Button asChild size="sm" className="gap-1.5 shrink-0">
-						<Link to="/admin/groups/create">
-							<Plus size={16} />
-							<span>{t("lisRyhm", "Lisää ryhmä")}</span>
-						</Link>
-					</Button>
-				)}
-			</div>
-
-			{/* Grid Listing */}
-			<ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-				{groups?.map((grp) => (
-					<GroupCard key={grp.id} group={grp} />
-				))}
-			</ul>
-		</div>
+			{groups?.length ? (
+				<ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+					{groups.map((grp) => (
+						<li key={grp.id} className="flex min-w-0 flex-col *:flex-1">
+							<EntityCard
+								to="/admin/groups/$id"
+								params={{ id: grp.id }}
+								icon={Users}
+								title={grp.name}
+								meta={
+									isAdmin && users
+										? t("jasenMaara", "{{count}} jäsentä", {
+												count: memberCounts.get(grp.id) ?? 0,
+											})
+										: undefined
+								}
+								description={
+									getLocalizedPlainText(grp.description, i18n.language) ||
+									undefined
+								}
+							/>
+						</li>
+					))}
+				</ul>
+			) : (
+				<EmptyState icon={Users} title={t("eiRyhmia", "Ei ryhmiä")} />
+			)}
+		</PageContainer>
 	);
-}
-
-function RouteComponent() {
-	return <GroupList />;
 }

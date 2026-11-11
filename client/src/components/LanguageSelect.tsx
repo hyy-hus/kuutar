@@ -1,3 +1,4 @@
+import { Select } from "#/components/Select";
 import { SUPPORTED_LANGUAGES } from "#/i18n";
 
 export const LANGUAGE_LABELS: Record<string, string> = {
@@ -11,6 +12,9 @@ interface LanguageSelectProps {
 	value: string;
 	onChange: (language: string) => void;
 	onBlur?: () => void;
+	/** `sm` for filter bars and toolbars (default `md`) */
+	size?: "sm" | "md";
+	"aria-label"?: string;
 }
 
 /** Native select for picking one of the supported languages */
@@ -19,20 +23,23 @@ export function LanguageSelect({
 	value,
 	onChange,
 	onBlur,
+	size,
+	"aria-label": ariaLabel,
 }: LanguageSelectProps) {
 	return (
-		<select
+		<Select
 			id={id}
 			value={value}
+			size={size}
+			aria-label={ariaLabel}
 			onChange={(e) => onChange(e.target.value)}
 			onBlur={onBlur}
-			className="w-full px-3 py-2 text-sm bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
 		>
 			{SUPPORTED_LANGUAGES.map((code) => (
 				<option key={code} value={code}>
 					{LANGUAGE_LABELS[code]}
 				</option>
 			))}
-		</select>
+		</Select>
 	);
 }

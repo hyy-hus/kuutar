@@ -1,10 +1,12 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { Edit, KeyRound, ShieldAlert, Trash2 } from "lucide-react";
+import { Shield, ShieldAlert, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { BackLink } from "#/components/BackLink";
 import { Button } from "#/components/Button";
-import { Chip } from "#/components/Chip";
+import { DetailLayout } from "#/components/DetailLayout";
+import { LANGUAGE_LABELS } from "#/components/LanguageSelect";
 import { SessionList } from "#/components/SessionList";
+import { StatusChip } from "#/components/StatusChip";
 import { useGroup } from "#/hooks/useGroups";
 import {
 	useRevokeAllUserSessions,
@@ -13,8 +15,6 @@ import {
 } from "#/hooks/useSessions";
 import { useDeleteUser, useUser } from "#/hooks/useUsers";
 import { requireAdminGuard } from "#/utils/authGuard";
-import { useDateFormatter } from "#/utils/date";
-import { readable_uuid } from "#/utils/uuid";
 
 export const Route = createFileRoute("/_app/admin/users/$id")({
 	beforeLoad: async ({ context }) => {
@@ -25,7 +25,6 @@ export const Route = createFileRoute("/_app/admin/users/$id")({
 
 function ViewUserPage() {
 	const { t } = useTranslation();
-	const { formatDate } = useDateFormatter();
 	const { id } = Route.useParams();
 	const navigate = useNavigate();
 	const { data: user, isLoading, isError } = useUser(id);
@@ -37,15 +36,15 @@ function ViewUserPage() {
 
 	if (isLoading)
 		return (
-			<div className="p-4 text-sm text-stone-500">
+			<p className="text-sm text-stone-600 dark:text-stone-400">
 				{t("ladataanKyttj", "Ladataan käyttäjää...")}
-			</div>
+			</p>
 		);
 	if (isError || !user)
 		return (
-			<div className="p-4 text-sm text-red-500">
+			<p className="text-sm text-red-600 dark:text-red-400">
 				{t("kyttjEiLytynyt", "Käyttäjää ei löytynyt.")}
-			</div>
+			</p>
 		);
 
 	const handleDelete = async () => {
@@ -75,92 +74,104 @@ function ViewUserPage() {
 		}
 	};
 
+	const hasSessions = (sessions?.length ?? 0) > 0;
+
 	return (
-		<div className="p-4 max-w-xl flex flex-col gap-6">
-			<BackLink to="/admin/users">
-				{t("takaisinKyttjiin", "Takaisin käyttäjiin")}
-			</BackLink>
+		<DetailLayout
+			back={
+				<BackLink to="/admin/users">
+					{t("takaisinKyttjiin", "Takaisin käyttäjiin")}
+				</BackLink>
+			}
+			title={user.name || user.email}
+			subtitle={user.name ? user.email : undefined}
+			status={
+				user.role === "admin" ? (
+					<StatusChip variant="info" icon={Shield}>
+						{t("admin", "Ylläpitäjä")}
+					</StatusChip>
+				) : undefined
+			}
+			actions={
+				<Button variant="outline" asChild>
+					<Link to="/admin/users/edit/$id" params={{ id: user.id }}>
+						{t("muokkaa", "Muokkaa")}
+					</Link>
+				</Button>
+			}
+			dangerZone={
+				<Button
+					variant="danger-outline"
+					onClick={handleDelete}
+					disabled={deleteUser.isPending}
+				>
+					<Trash2 size={16} />
+					<span>{t("poistaKyttj", "Poista käyttäjä")}</span>
+				</Button>
+			}
+			technical={{
+				id: user.id,
+				createdAt: user.created_at,
+				updatedAt: user.updated_at,
+			}}
+		>
+			<section className="space-y-3 rounded-md border border-stone-300 bg-stone-50 p-4 dark:border-stone-700 dark:bg-stone-900">
+				<h2 className="text-lg font-semibold">
+					{t("kayttajanTiedot", "Tiedot")}
+				</h2>
+				<dl className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 text-sm">
+					<dt className="text-stone-600 dark:text-stone-400">
+						{t("ryhm", "Ryhmä")}
+					</dt>
+					<dd>
+						{group ? (
+							<Link
+								to="/admin/groups/$id"
+								params={{ id: group.id }}
+								className="text-purple-700 hover:underline dark:text-purple-400"
+							>
+								{group.name}
+							</Link>
+						) : (
+							"—"
+						)}
+					</dd>
+					<dt className="text-stone-600 dark:text-stone-400">
+						{t("kieli", "Kieli")}
+					</dt>
+					<dd>{LANGUAGE_LABELS[user.language] ?? user.language}</dd>
+					<dt className="text-stone-600 dark:text-stone-400">
+						{t("rooli", "Rooli")}
+					</dt>
+					<dd>
+						{user.role === "admin"
+							? t("admin", "Ylläpitäjä")
+							: t("kyttj", "Käyttäjä")}
+					</dd>
+				</dl>
+			</section>
 
-			{/* Header */}
-			<div className="flex items-center justify-between">
-				<div>
-					<h1 className="text-2xl font-bold text-stone-900 dark:text-stone-100">
-						{user.name}
-					</h1>
-					<p className="text-sm text-stone-500 dark:text-stone-400">
-						{user.email}
-					</p>
-					<span className="text-xs font-semibold uppercase tracking-wider text-purple-600 dark:text-purple-400">
-						{user.role}
-					</span>
-				</div>
-				<Chip>{readable_uuid(user.id)}</Chip>
-			</div>
-
-			{/* Details */}
-			<div className="space-y-2">
-				<div className="text-md">
-					<p>
-						<strong>{t("ryhm2", "Ryhmä:")}</strong> {group?.name ?? "—"}
-					</p>
-					<hr className="my-2 border-stone-300 dark:border-stone-800" />
-					<p>
-						<strong>{t("muokattu", "Muokattu:")}</strong>{" "}
-						{formatDate(user.updated_at)}
-					</p>
-					<p>
-						<strong>{t("luotu", "Luotu:")}</strong>{" "}
-						{formatDate(user.created_at)}
-					</p>
-				</div>
-			</div>
-
-			{/* Active Sessions Box */}
-			<div className="p-4 border border-stone-200 dark:border-stone-800 rounded-md bg-stone-50 dark:bg-stone-900/50 space-y-3">
-				<div className="flex items-center gap-2 text-stone-900 dark:text-stone-100 font-semibold text-sm">
-					<KeyRound size={16} />
-					<span>{t("aktiivisetIstunnot", "Aktiiviset istunnot")}</span>
-				</div>
+			<section className="space-y-3 rounded-md border border-stone-300 bg-stone-50 p-4 dark:border-stone-700 dark:bg-stone-900">
+				<h2 className="text-lg font-semibold">
+					{t("aktiivisetIstunnot", "Aktiiviset istunnot")}
+				</h2>
 				<SessionList
 					sessions={sessions ?? []}
 					onRevoke={(sessionId) => revokeSession.mutate(sessionId)}
 					disabled={revokeSession.isPending}
 				/>
-				<Button
-					variant="outline"
-					size="sm"
-					onClick={handleRevokeAllSessions}
-					disabled={revokeAllSessions.isPending || !sessions?.length}
-					className="w-full flex items-center justify-center gap-2 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-900"
-				>
-					<ShieldAlert size={16} />
-					<span>{t("mittiKaikkiIstunnot", "Mitätöi kaikki istunnot")}</span>
-				</Button>
-			</div>
-
-			{/* Actions */}
-			<div className="flex flex-col gap-2 pt-2">
-				<Button
-					variant="secondary"
-					className="w-full flex items-center justify-center gap-2"
-					asChild
-				>
-					<Link to="/admin/users/edit/$id" params={{ id: user.id }}>
-						<span>{t("muokkaa", "Muokkaa")}</span>
-						<Edit size={16} />
-					</Link>
-				</Button>
-
-				<Button
-					variant="danger"
-					className="w-full flex items-center justify-center gap-2"
-					onClick={handleDelete}
-					disabled={deleteUser.isPending}
-				>
-					<span>{t("poistaKyttj", "Poista käyttäjä")}</span>
-					<Trash2 size={16} />
-				</Button>
-			</div>
-		</div>
+				{hasSessions && (
+					<Button
+						variant="outline"
+						size="sm"
+						onClick={handleRevokeAllSessions}
+						disabled={revokeAllSessions.isPending}
+					>
+						<ShieldAlert size={16} />
+						<span>{t("mittiKaikkiIstunnot", "Mitätöi kaikki istunnot")}</span>
+					</Button>
+				)}
+			</section>
+		</DetailLayout>
 	);
 }
