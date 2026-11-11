@@ -947,5 +947,10 @@
 	"poistaResurssiValinnasta": "Poista {{name}}",
 	"resurssiMuut": "Muut",
 	"rajattuRyhmille": "Rajattu ryhmille",
-	"vainVarausjaksotLyhyt": "Vain varausjaksot"
+	"vainVarausjaksotLyhyt": "Vain varausjaksot",
+	"tyhjenna": "Tyhjennä",
+	"kaikkiResurssitMaara": "Kaikki resurssit ({{count}})",
+	"eiValittujaResursseja": "Ei resursseja valittuna. Avaa lista ja valitse näytettävät resurssit.",
+	"naytaKaikkiValitut": "Näytä kaikki valitut resurssit (+{{count}})",
+	"poistaValinta": "Poista valinta: {{name}}"
 }

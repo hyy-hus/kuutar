@@ -37,8 +37,48 @@ describe("ResourceFilter", () => {
 
 	it("is collapsed on request and shows the selection count", () => {
 		setup(["r1"], false);
-		expect(screen.queryByText("Sali 101")).toBeNull();
+		expect(screen.queryByRole("button", { name: "Sali 101" })).toBeNull();
+		expect(screen.getByText("Sali 101")).toBeTruthy();
 		expect(screen.getByRole("button", { name: /1 \/ 3/ })).toBeTruthy();
+	});
+
+	it("shows all-selected, chips with remove buttons, overflow and empty hint", () => {
+		const onChange = setup(["r1", "r2", "r3"], false);
+		expect(screen.getByText("All resources (3)")).toBeTruthy();
+		fireEvent.click(screen.getByRole("button", { name: "Clear" }));
+		expect(onChange).toHaveBeenLastCalledWith([]);
+	});
+
+	it("deselects a chip directly from the collapsed bar", () => {
+		const onChange = setup(["r1", "r2"], false);
+		fireEvent.click(screen.getByRole("button", { name: "Deselect: Kamera" }));
+		expect(onChange).toHaveBeenLastCalledWith(["r1"]);
+		fireEvent.click(screen.getByRole("button", { name: "Select all" }));
+		expect(onChange).toHaveBeenLastCalledWith(["r1", "r2", "r3"]);
+	});
+
+	it("hints when nothing is selected", () => {
+		setup([], false);
+		expect(screen.getByText(/No resources selected/)).toBeTruthy();
+	});
+
+	it("collapses extra chips into a +N chip that opens the panel", () => {
+		const many = Array.from({ length: 10 }, (_, i) => ({
+			id: `m${i}`,
+			name: `Res ${i}`,
+			color: "blue",
+			collection_id: "c1",
+		}));
+		render(
+			<ResourceFilter
+				resources={many}
+				collections={collections}
+				selectedIds={many.slice(0, 9).map((r) => r.id)}
+				onChange={() => {}}
+			/>,
+		);
+		fireEvent.click(screen.getByRole("button", { name: /\(\+1\)/ }));
+		expect(screen.getByRole("button", { name: "Res 0" })).toBeTruthy();
 	});
 
 	it("toggles a resource and supports solo with ctrl-click", () => {

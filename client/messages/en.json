@@ -947,5 +947,10 @@
 	"poistaResurssiValinnasta": "Remove {{name}}",
 	"resurssiMuut": "Other",
 	"rajattuRyhmille": "Restricted to groups",
-	"vainVarausjaksotLyhyt": "Reservable blocks only"
+	"vainVarausjaksotLyhyt": "Reservable blocks only",
+	"tyhjenna": "Clear",
+	"kaikkiResurssitMaara": "All resources ({{count}})",
+	"eiValittujaResursseja": "No resources selected. Open the list and choose which to show.",
+	"naytaKaikkiValitut": "Show all selected resources (+{{count}})",
+	"poistaValinta": "Deselect: {{name}}"
 }

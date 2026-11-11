@@ -947,5 +947,10 @@
 	"poistaResurssiValinnasta": "Ta bort {{name}}",
 	"resurssiMuut": "Övriga",
 	"rajattuRyhmille": "Begränsad till grupper",
-	"vainVarausjaksotLyhyt": "Endast bokningsperioder"
+	"vainVarausjaksotLyhyt": "Endast bokningsperioder",
+	"tyhjenna": "Töm",
+	"kaikkiResurssitMaara": "Alla resurser ({{count}})",
+	"eiValittujaResursseja": "Inga resurser valda. Öppna listan och välj vilka som ska visas.",
+	"naytaKaikkiValitut": "Visa alla valda resurser (+{{count}})",
+	"poistaValinta": "Avmarkera: {{name}}"
 }
