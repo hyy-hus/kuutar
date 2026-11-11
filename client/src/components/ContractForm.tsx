@@ -1,13 +1,16 @@
 import { useForm } from "@tanstack/react-form";
-import { Globe, Loader2, Plus, Save, X } from "lucide-react";
+import { Loader2, Plus, X } from "lucide-react";
 import { useId, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "#/components/Button";
+import { Callout } from "#/components/Callout";
+import { FormActions } from "#/components/FormActions";
+import { FormSection } from "#/components/FormSection";
 import { Input } from "#/components/Input";
+import { LocaleTabs } from "#/components/LocaleTabs";
 import {
 	type Contract,
 	type CreateContractPayload,
-	getLocalizedText,
 	usePresignUpload,
 } from "#/hooks/useContracts";
 
@@ -26,6 +29,8 @@ export interface ContractFormProps {
 	onSubmit: (payload: CreateContractPayload) => Promise<void>;
 	isSubmitting?: boolean;
 	submitLabel?: string;
+	/** Shows a "Peruuta" button next to the submit button */
+	onCancel?: () => void;
 }
 
 const DEFAULT_LANGS = ["fi", "sv", "en"];
@@ -35,6 +40,7 @@ export function ContractForm({
 	onSubmit,
 	isSubmitting = false,
 	submitLabel,
+	onCancel,
 }: ContractFormProps) {
 	const { t, i18n } = useTranslation();
 	const presignUpload = usePresignUpload();
@@ -168,6 +174,16 @@ export function ContractForm({
 		}
 	};
 
+	const titleMap = form.getFieldValue("titleMap");
+	const filledLanguages = languages.filter((lang) => {
+		const hasTitle = Boolean(titleMap?.[lang]?.trim());
+		const hasFile = Boolean(
+			form.getFieldValue("fileMap")?.[lang] ||
+				form.getFieldValue("s3KeyMap")?.[lang],
+		);
+		return hasTitle && hasFile;
+	});
+
 	return (
 		<form
 			onSubmit={(e) => {
@@ -175,83 +191,39 @@ export function ContractForm({
 				e.stopPropagation();
 				form.handleSubmit();
 			}}
-			className="space-y-5 max-w-2xl w-full"
+			className="w-full space-y-5"
 		>
-			{uploadError && (
-				<div className="p-3 text-xs bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-200 dark:border-rose-900 rounded-md">
-					{uploadError}
-				</div>
-			)}
+			{uploadError && <Callout variant="danger">{uploadError}</Callout>}
 
-			{/* Language Switcher & Manager Bar */}
-			<div className="flex flex-wrap items-center justify-between gap-3 p-2.5 bg-stone-100 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-md">
-				<div className="flex items-center gap-1.5 overflow-x-auto">
-					<Globe size={16} className="text-stone-400 shrink-0 ml-1 mr-0.5" />
-					{languages.map((lang) => {
-						const isCurrent = activeLang === lang;
-						const hasTitle = Boolean(
-							form.getFieldValue("titleMap")?.[lang]?.trim(),
-						);
-						const hasFile = Boolean(
-							form.getFieldValue("fileMap")?.[lang] ||
-								form.getFieldValue("s3KeyMap")?.[lang],
-						);
-						const isLive = hasTitle && hasFile;
-
-						return (
-							<div
-								key={lang}
-								className={`px-2.5 py-1 text-xs font-bold font-mono uppercase rounded transition-all flex items-center gap-1.5 shrink-0 ${
-									isCurrent
-										? "bg-amber-600 text-white shadow-sm dark:bg-amber-500"
-										: isLive
-											? "bg-stone-200 dark:bg-stone-800 text-stone-800 dark:text-stone-200 hover:bg-stone-300 dark:hover:bg-stone-700"
-											: "bg-stone-200/50 dark:bg-stone-800/40 text-stone-400 dark:text-stone-500 hover:bg-stone-200 dark:hover:bg-stone-800"
-								}`}
-							>
-								{/* Active tab select trigger */}
-								<button
-									type="button"
-									onClick={() => setActiveLang(lang)}
-									className="flex items-center gap-1.5 focus:outline-none focus:underline"
-								>
-									<span>{lang}</span>
-
-									{/* Live status indicator dot */}
-									<span
-										className={`w-1.5 h-1.5 rounded-full shrink-0 ${
-											isLive
-												? isCurrent
-													? "bg-emerald-300"
-													: "bg-emerald-500"
-												: "bg-stone-300 dark:bg-stone-600"
-										}`}
-									/>
-								</button>
-
-								{/* Semantic remove button */}
-								{languages.length > 1 && (
-									<button
-										type="button"
-										onClick={(e) => handleRemoveLanguage(lang, e)}
-										aria-label={`${t("poistaKieli", "Poista kieli")}: ${lang.toUpperCase()}`}
-										title={`${t("poistaKieli", "Poista kieli")}: ${lang.toUpperCase()}`}
-										className={`p-0.5 rounded hover:bg-black/20 dark:hover:bg-white/20 transition-colors focus:outline-none ${
-											isCurrent
-												? "text-white/80 hover:text-white"
-												: "text-stone-400 hover:text-stone-700 dark:hover:text-stone-200"
-										}`}
-									>
-										<X size={12} />
-									</button>
-								)}
-							</div>
-						);
-					})}
+			<FormSection
+				title={t("kieliversionTiedot", "Kieliversion tiedot")}
+				description={t(
+					"kieliversioKuvaus",
+					"Lisää otsikko ja PDF-tiedosto vähintään yhdelle kielelle.",
+				)}
+			>
+				{/* Language switcher & manager */}
+				<div className="flex flex-wrap items-center gap-2">
+					<LocaleTabs
+						value={activeLang}
+						onChange={setActiveLang}
+						languages={languages}
+						filled={filledLanguages}
+					/>
+					{languages.length > 1 && (
+						<Button
+							type="button"
+							variant="ghost"
+							size="sm"
+							onClick={(e) => handleRemoveLanguage(activeLang, e)}
+						>
+							<X size={14} aria-hidden="true" />
+							{`${t("poistaKieli", "Poista kieli")}: ${activeLang.toUpperCase()}`}
+						</Button>
+					)}
 				</div>
 
-				{/* Add Language Input & Button */}
-				<div className="flex items-center gap-1">
+				<div className="flex items-center gap-2">
 					<label htmlFor={addLangInputId} className="sr-only">
 						{t("lisaaKielikoodi", "Lisää kielikoodi")}
 					</label>
@@ -266,33 +238,17 @@ export function ContractForm({
 							}
 						}}
 						placeholder={t("esimKielikoodi", "esim. DE")}
-						className="w-20 text-xs uppercase h-8 px-2"
+						className="h-8 w-24 px-2 text-xs uppercase"
 					/>
 					<Button
 						type="button"
-						variant="ghost"
+						variant="outline"
 						size="sm"
 						onClick={handleAddLanguage}
-						className="gap-1 text-xs h-8 px-2 text-stone-700 dark:text-stone-300 hover:bg-stone-200 dark:hover:bg-stone-800"
 					>
-						<Plus size={14} />
-						<span>{t("lisaa", "Lisää")}</span>
+						<Plus size={14} aria-hidden="true" />
+						{t("lisaa", "Lisää")}
 					</Button>
-				</div>
-			</div>
-
-			{/* Active Language Content Section */}
-			<div className="p-4 border border-stone-200 dark:border-stone-800 rounded-md space-y-4 bg-white dark:bg-stone-950">
-				<div className="flex items-center justify-between pb-2 border-b border-stone-100 dark:border-stone-900">
-					<span className="text-xs font-bold font-mono uppercase text-amber-600 dark:text-amber-500">
-						{t("kieliversionTiedot", "Kieliversion tiedot:")} {activeLang}
-					</span>
-					{initialData && (
-						<span className="text-[11px] text-stone-400">
-							{t("nykyinenNaytto", "Esikatselu valmiina:")}{" "}
-							{getLocalizedText(initialData.title, activeLang)}
-						</span>
-					)}
 				</div>
 
 				{/* Title Field */}
@@ -301,10 +257,7 @@ export function ContractForm({
 						const inputId = `title-input-${activeLang}`;
 						return (
 							<div className="space-y-1">
-								<label
-									htmlFor={inputId}
-									className="text-xs font-medium text-stone-700 dark:text-stone-300"
-								>
+								<label htmlFor={inputId} className="text-sm font-medium">
 									{t("asiakirjanOtsikko", "Asiakirjan otsikko")}
 									{" ("}
 									{activeLang.toUpperCase()}
@@ -339,10 +292,7 @@ export function ContractForm({
 
 						return (
 							<div className="space-y-1">
-								<label
-									htmlFor={fileInputId}
-									className="text-xs font-medium text-stone-700 dark:text-stone-300"
-								>
+								<label htmlFor={fileInputId} className="text-sm font-medium">
 									{t("pdfTiedosto", "PDF-tiedosto")}
 									{" ("}
 									{activeLang.toUpperCase()}
@@ -350,15 +300,15 @@ export function ContractForm({
 								</label>
 
 								{currentS3Key && !field.state.value[activeLang] && (
-									<div className="p-2 mb-2 text-xs bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900 rounded flex items-center justify-between">
-										<span className="text-emerald-800 dark:text-emerald-300 font-mono truncate">
-											{t("tallennettuTiedosto", "Nykyinen:")}{" "}
+									<p className="text-xs text-stone-600 dark:text-stone-400">
+										{t("tallennettuTiedosto", "Nykyinen:")}{" "}
+										<span className="font-mono">
 											{currentFileName || currentS3Key}
-										</span>
-										<span className="text-[10px] text-emerald-600 dark:text-emerald-400">
-											{t("ready_in_storage", "palvelimella")}
-										</span>
-									</div>
+										</span>{" "}
+										{"("}
+										{t("ready_in_storage", "palvelimella")}
+										{")"}
+									</p>
 								)}
 
 								<input
@@ -372,29 +322,28 @@ export function ContractForm({
 											[activeLang]: selected,
 										});
 									}}
-									className="w-full text-xs text-stone-600 dark:text-stone-300 file:mr-2 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-amber-100 file:text-amber-800 dark:file:bg-amber-950 dark:file:text-amber-300 hover:file:bg-amber-200"
+									className="focus-ring w-full text-sm text-stone-700 file:mr-3 file:h-8 file:cursor-pointer file:rounded-md file:border file:border-stone-400 file:bg-transparent file:px-3 file:text-xs file:font-semibold file:text-stone-900 hover:file:bg-stone-200 dark:text-stone-300 dark:file:border-stone-600 dark:file:text-stone-100 dark:hover:file:bg-stone-800"
 								/>
 							</div>
 						);
 					}}
 				</form.Field>
-			</div>
+			</FormSection>
 
-			{/* Global & Active Toggles */}
-			<div className="space-y-3 pt-2">
+			<FormSection title={t("asetukset", "Asetukset")}>
 				<form.Field name="is_global">
 					{(field) => (
-						<div className="flex items-center gap-2">
+						<div className="flex items-start gap-2">
 							<input
 								id={isGlobalId}
 								type="checkbox"
 								checked={field.state.value}
 								onChange={(e) => field.handleChange(e.target.checked)}
-								className="rounded border-stone-300 text-amber-600 focus:ring-amber-500"
+								className="mt-0.5 size-4 cursor-pointer accent-stone-900 dark:accent-stone-100"
 							/>
 							<label
 								htmlFor={isGlobalId}
-								className="text-xs text-stone-700 dark:text-stone-300 font-medium cursor-pointer"
+								className="cursor-pointer text-sm font-medium"
 							>
 								{t(
 									"koskeeKaikkiaResursseja",
@@ -407,17 +356,17 @@ export function ContractForm({
 
 				<form.Field name="is_active">
 					{(field) => (
-						<div className="flex items-center gap-2">
+						<div className="flex items-start gap-2">
 							<input
 								id={isActiveId}
 								type="checkbox"
 								checked={field.state.value}
 								onChange={(e) => field.handleChange(e.target.checked)}
-								className="rounded border-stone-300 text-emerald-600 focus:ring-emerald-500"
+								className="mt-0.5 size-4 cursor-pointer accent-stone-900 dark:accent-stone-100"
 							/>
 							<label
 								htmlFor={isActiveId}
-								className="text-xs text-stone-700 dark:text-stone-300 font-medium cursor-pointer"
+								className="cursor-pointer text-sm font-medium"
 							>
 								{t(
 									"asiakirjaOnAktiivinen",
@@ -427,40 +376,31 @@ export function ContractForm({
 						</div>
 					)}
 				</form.Field>
-			</div>
+			</FormSection>
 
-			{/* Submit Button */}
 			<form.Subscribe
 				selector={(state) => [state.canSubmit, state.isSubmitting]}
 			>
-				{([canSubmit, formSubmitting]) => (
-					<Button
-						type="submit"
-						disabled={
-							!canSubmit || isSubmitting || formSubmitting || isUploading
-						}
-						className="w-full flex items-center justify-center gap-2 bg-amber-600 hover:bg-amber-700 text-white mt-4"
-					>
-						{isSubmitting || formSubmitting || isUploading ? (
-							<>
-								<Loader2 className="animate-spin" size={16} />
-								<span>
-									{t(
-										"ladataanTiedostoja",
-										"Ladataan tiedostoja palvelimelle...",
-									)}
-								</span>
-							</>
-						) : (
-							<>
-								<Save size={16} />
-								<span>
-									{submitLabel ?? t("tallennaAsiakirja", "Tallenna asiakirja")}
-								</span>
-							</>
-						)}
-					</Button>
-				)}
+				{([canSubmit, formSubmitting]) => {
+					const busy = isSubmitting || formSubmitting || isUploading;
+					return (
+						<FormActions onCancel={onCancel}>
+							<Button type="submit" disabled={!canSubmit || busy}>
+								{busy ? (
+									<>
+										<Loader2 className="animate-spin" size={16} />
+										{t(
+											"ladataanTiedostoja",
+											"Ladataan tiedostoja palvelimelle...",
+										)}
+									</>
+								) : (
+									(submitLabel ?? t("tallennaAsiakirja", "Tallenna asiakirja"))
+								)}
+							</Button>
+						</FormActions>
+					);
+				}}
 			</form.Subscribe>
 		</form>
 	);

@@ -1,16 +1,16 @@
 import { createFileRoute } from "@tanstack/react-router";
-import {
-	AlertCircle,
-	CheckCircle2,
-	Download,
-	FileJson,
-	Loader2,
-	Upload,
-} from "lucide-react";
+import { CheckCircle2, FileJson, Loader2, Upload } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { BackLink } from "#/components/BackLink";
 import { Button } from "#/components/Button";
+import { Callout } from "#/components/Callout";
+import { DateInput } from "#/components/DateInput";
+import { PageContainer } from "#/components/PageContainer";
+import { PageHeader } from "#/components/PageHeader";
+import { Select } from "#/components/Select";
+import { StatusChip } from "#/components/StatusChip";
+import { Textarea } from "#/components/Textarea";
 import {
 	exportReservationsToPortableJson,
 	type PortableReservationImport,
@@ -32,7 +32,7 @@ export const Route = createFileRoute("/_app/admin/reservations")({
 
 function AdminReservationsSyncPage() {
 	const { t } = useTranslation();
-	const { formatDate } = useDateFormatter();
+	const { formatDateTime } = useDateFormatter();
 	const { data: resources } = useResources();
 	const batchImport = useBatchImportReservations();
 
@@ -190,74 +190,57 @@ function AdminReservationsSyncPage() {
 	};
 
 	return (
-		<div className="max-w-5xl mx-auto space-y-8 p-4 sm:p-6">
-			<BackLink to="/admin/dashboard">
-				{t("takaisinHallintapaneeliin", "Takaisin hallintapaneeliin")}
-			</BackLink>
-			<div>
-				<h1 className="text-xl font-bold tracking-tight text-stone-900 dark:text-stone-100">
-					{t("reservationsDataSync", "Varausten siirto ja synkronointi")}
-				</h1>
-				<p className="text-xs text-stone-500 dark:text-stone-400 mt-1">
-					{t(
-						"dataSyncDescription",
-						"Vie varauksia JSON-tiedostoon tai tuo varauksia eri ympäristöjen välillä käyttäen resurssien nimiä ja sähköposteja.",
-					)}
-				</p>
-			</div>
+		<PageContainer width="default">
+			<PageHeader
+				back={
+					<BackLink to="/admin/dashboard">
+						{t("takaisinHyvaksynnat", "Takaisin hyväksyntöihin")}
+					</BackLink>
+				}
+				title={t("reservationsDataSync", "Varausten siirto ja synkronointi")}
+				subtitle={t(
+					"dataSyncDescription",
+					"Vie varauksia JSON-tiedostoon tai tuo varauksia eri ympäristöjen välillä käyttäen resurssien nimiä ja sähköposteja.",
+				)}
+			/>
 
 			{/* SECTION 1: EXPORT */}
-			<div className="p-4 sm:p-5 bg-stone-100/60 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-lg space-y-4">
-				<div className="flex items-center gap-2 text-stone-900 dark:text-stone-100 font-bold text-sm">
-					<Download size={16} className="text-amber-600 dark:text-amber-500" />
-					<h2>{t("exportReservations", "Vie varaukset JSON-muodossa")}</h2>
-				</div>
+			<section className="space-y-4 rounded-md border border-stone-300 bg-stone-50 p-4 dark:border-stone-700 dark:bg-stone-900">
+				<h2 className="text-lg font-semibold">
+					{t("exportReservations", "Vie varaukset JSON-muodossa")}
+				</h2>
 
-				<div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+				<div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
 					<div className="space-y-1">
-						<label
-							htmlFor="export_start_date"
-							className="text-[11px] font-mono text-stone-600 dark:text-stone-400"
-						>
+						<label htmlFor="export_start_date" className="text-sm font-medium">
 							{t("alstartingFrom", "Alkaen")}
 						</label>
-						<input
+						<DateInput
 							id="export_start_date"
-							type="date"
 							value={exportStartDate}
 							onChange={(e) => setExportStartDate(e.target.value)}
-							className="w-full h-8 px-2.5 text-xs font-mono bg-white dark:bg-stone-950 border border-stone-300 dark:border-stone-700 rounded-md"
 						/>
 					</div>
 
 					<div className="space-y-1">
-						<label
-							htmlFor="export_end_date"
-							className="text-[11px] font-mono text-stone-600 dark:text-stone-400"
-						>
+						<label htmlFor="export_end_date" className="text-sm font-medium">
 							{t("endingAt", "Päättyen")}
 						</label>
-						<input
+						<DateInput
 							id="export_end_date"
-							type="date"
 							value={exportEndDate}
 							onChange={(e) => setExportEndDate(e.target.value)}
-							className="w-full h-8 px-2.5 text-xs font-mono bg-white dark:bg-stone-950 border border-stone-300 dark:border-stone-700 rounded-md"
 						/>
 					</div>
 
 					<div className="space-y-1">
-						<label
-							htmlFor="export_resource_id"
-							className="text-[11px] font-mono text-stone-600 dark:text-stone-400"
-						>
+						<label htmlFor="export_resource_id" className="text-sm font-medium">
 							{t("resurssi", "Resurssi")}
 						</label>
-						<select
+						<Select
 							id="export_resource_id"
 							value={exportResourceId}
 							onChange={(e) => setExportResourceId(e.target.value)}
-							className="w-full h-8 px-2.5 text-xs font-mono bg-white dark:bg-stone-950 border border-stone-300 dark:border-stone-700 rounded-md truncate"
 						>
 							<option value="">
 								{t("kaikkiResurssit", "Kaikki resurssit")}
@@ -267,133 +250,123 @@ function AdminReservationsSyncPage() {
 									{r.name}
 								</option>
 							))}
-						</select>
+						</Select>
 					</div>
 				</div>
 
-				<div className="flex items-center justify-between pt-2 border-t border-stone-200 dark:border-stone-800">
-					<span className="text-xs font-mono text-stone-500">
+				<div className="flex flex-wrap items-center gap-3 border-t border-stone-300 pt-4 dark:border-stone-700">
+					<Button
+						disabled={!exportReservations || exportReservations.length === 0}
+						onClick={handleExport}
+					>
+						<FileJson size={16} aria-hidden="true" />
+						{t("downloadJsonExport", "Lataa JSON-tiedosto")}
+					</Button>
+					<span className="text-sm text-stone-600 tabular-nums dark:text-stone-400">
 						{isFetchingExport
 							? t("ladataan", "Ladataan...")
 							: t("foundReservationsCount", "Löytyi {{count}} varausta", {
 									count: exportReservations?.length || 0,
 								})}
 					</span>
-
-					<Button
-						size="sm"
-						disabled={!exportReservations || exportReservations.length === 0}
-						onClick={handleExport}
-						className="bg-amber-600 hover:bg-amber-700 text-white text-xs gap-1.5"
-					>
-						<FileJson size={14} />
-						<span>{t("downloadJsonExport", "Lataa JSON-tiedosto")}</span>
-					</Button>
 				</div>
-			</div>
+			</section>
 
 			{/* SECTION 2: IMPORT */}
-			<div className="p-4 sm:p-5 bg-stone-100/60 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-lg space-y-4">
-				<div className="flex items-center gap-2 text-stone-900 dark:text-stone-100 font-bold text-sm">
-					<Upload size={16} className="text-purple-600 dark:text-purple-400" />
-					<h2>{t("importReservations", "Tuo varauksia JSON-muodossa")}</h2>
-				</div>
+			<section className="space-y-4 rounded-md border border-stone-300 bg-stone-50 p-4 dark:border-stone-700 dark:bg-stone-900">
+				<h2 className="text-lg font-semibold">
+					{t("importReservations", "Tuo varauksia JSON-muodossa")}
+				</h2>
 
-				<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-					<label className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-stone-300 dark:border-stone-700 rounded-lg cursor-pointer hover:bg-stone-200/50 dark:hover:bg-stone-800/50 transition-colors">
-						<Upload size={22} className="text-stone-400 mb-1.5" />
-						<span className="text-xs font-mono text-stone-600 dark:text-stone-300">
+				<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+					<label className="focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-purple-500 flex cursor-pointer flex-col items-center justify-center rounded-md border border-dashed border-stone-400 p-6 transition-colors hover:bg-stone-100 dark:border-stone-600 dark:hover:bg-stone-800">
+						<Upload
+							size={22}
+							aria-hidden="true"
+							className="mb-1.5 text-stone-600 dark:text-stone-400"
+						/>
+						<span className="text-sm text-stone-700 dark:text-stone-300">
 							{t("uploadJsonFile", "Lataa .json-tiedosto")}
 						</span>
 						<input
 							type="file"
 							accept=".json"
 							onChange={handleFileUpload}
-							className="hidden"
+							className="sr-only"
 						/>
 					</label>
 
-					<textarea
+					<Textarea
 						value={rawJsonText}
 						onChange={(e) => handleParseImportJson(e.target.value)}
+						aria-label={t("importReservations", "Tuo varauksia JSON-muodossa")}
 						placeholder='[&#10;  {&#10;    "title": "Aineistokokous",&#10;    "user_email": "matti@example.com",&#10;    "occurrences": [&#10;      {&#10;        "resource_name": "Sauna 1",&#10;        "start_time": "2026-10-01T10:00:00Z",&#10;        "end_time": "2026-10-01T12:00:00Z"&#10;      }&#10;    ]&#10;  }&#10;]'
 						rows={6}
-						className="w-full p-2.5 text-xs font-mono rounded-md border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-950 focus:outline-none focus:ring-1 focus:ring-purple-600"
+						className="font-mono text-xs"
 					/>
 				</div>
 
-				{/* Errors Banner */}
 				{validationErrors.length > 0 && (
-					<div className="p-3 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 rounded-md">
-						<div className="flex items-center gap-1.5 text-rose-700 dark:text-rose-400 font-semibold text-xs mb-1.5">
-							<AlertCircle size={15} />
-							<span>{t("importErrors", "Tuonnin virheet:")}</span>
-						</div>
-						<ul className="list-disc list-inside text-xs font-mono text-rose-600 dark:text-rose-300 space-y-0.5">
+					<Callout
+						variant="danger"
+						title={t("importErrors", "Tuonnin virheet:")}
+					>
+						<ul className="list-inside list-disc space-y-0.5 font-mono text-xs">
 							{validationErrors.map((err) => (
 								<li key={err}>{err}</li>
 							))}
 						</ul>
-					</div>
+					</Callout>
 				)}
 
-				{/* Success Notification */}
 				{importSuccessCount !== null && (
-					<div className="p-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900 rounded-md flex items-center gap-2 text-xs font-mono text-emerald-800 dark:text-emerald-300">
-						<CheckCircle2 size={16} className="text-emerald-600 shrink-0" />
-						<span>
-							{t(
-								"importSuccessDetails",
-								"Tuonti onnistui! Lisättiin {{count}} varausta.",
-								{
-									count: importSuccessCount,
-								},
-							)}
-						</span>
-					</div>
+					<Callout variant="success">
+						{t(
+							"importSuccessDetails",
+							"Tuonti onnistui! Lisättiin {{count}} varausta.",
+							{ count: importSuccessCount },
+						)}
+					</Callout>
 				)}
 
-				{/* Preview Table & Action */}
 				{parsedImportData.length > 0 && (
 					<div className="space-y-3 pt-2">
-						<div className="flex items-center justify-between">
-							<span className="text-xs font-mono font-semibold flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
-								<CheckCircle2 size={14} />
+						<div className="flex flex-wrap items-center gap-3">
+							<Button
+								disabled={batchImport.isPending}
+								onClick={handleExecuteImport}
+							>
+								{batchImport.isPending ? (
+									<Loader2 size={16} className="animate-spin" />
+								) : (
+									<Upload size={16} aria-hidden="true" />
+								)}
+								{t("vahvistaJaTuoVaraukset", "Vahvista ja tuo varaukset")}
+							</Button>
+							<StatusChip variant="success" icon={CheckCircle2}>
 								{t(
 									"readyToImportCount",
 									"Valmiina tuotavaksi: {{count}} varausta",
-									{
-										count: parsedImportData.length,
-									},
+									{ count: parsedImportData.length },
 								)}
-							</span>
-
-							<Button
-								size="sm"
-								disabled={batchImport.isPending}
-								onClick={handleExecuteImport}
-								className="bg-purple-700 hover:bg-purple-800 text-white text-xs gap-1.5"
-							>
-								{batchImport.isPending ? (
-									<Loader2 size={14} className="animate-spin" />
-								) : (
-									<Upload size={14} />
-								)}
-								<span>
-									{t("vahvistaJaTuoVaraukset", "Vahvista ja tuo varaukset")}
-								</span>
-							</Button>
+							</StatusChip>
 						</div>
 
-						<div className="border border-stone-200 dark:border-stone-800 rounded-md overflow-x-auto max-h-60 overflow-y-auto">
-							<table className="w-full text-left text-xs font-mono">
-								<thead className="bg-stone-200/70 dark:bg-stone-800 text-stone-700 dark:text-stone-300 sticky top-0">
+						<div className="max-h-60 overflow-auto rounded-md border border-stone-300 dark:border-stone-700">
+							<table className="w-full text-left text-sm">
+								<thead className="sticky top-0 bg-stone-100 font-mono text-xs uppercase tracking-wider text-stone-600 dark:bg-stone-800 dark:text-stone-400">
 									<tr>
-										<th className="p-2">{"#"}</th>
-										<th className="p-2">{t("otsikko", "Otsikko")}</th>
-										<th className="p-2">{t("kyttj", "Käyttäjä")}</th>
-										<th className="p-2">{t("resurssi", "Resurssi")}</th>
-										<th className="p-2">{t("aika", "Aika")}</th>
+										<th className="p-2 font-normal">{"#"}</th>
+										<th className="p-2 font-normal">
+											{t("otsikko", "Otsikko")}
+										</th>
+										<th className="p-2 font-normal">
+											{t("kyttj", "Käyttäjä")}
+										</th>
+										<th className="p-2 font-normal">
+											{t("resurssi", "Resurssi")}
+										</th>
+										<th className="p-2 font-normal">{t("aika", "Aika")}</th>
 									</tr>
 								</thead>
 								<tbody>
@@ -401,22 +374,24 @@ function AdminReservationsSyncPage() {
 										<tr
 											// biome-ignore lint/suspicious/noArrayIndexKey: static preview rows may repeat; the index is the displayed row number
 											key={`import-preview-${item.title}-${idx}`}
-											className="border-b border-stone-200/60 dark:border-stone-800 hover:bg-stone-100/50 dark:hover:bg-stone-800/50"
+											className="border-t border-stone-200 hover:bg-stone-100 dark:border-stone-800 dark:hover:bg-stone-800/60"
 										>
-											<td className="p-2 text-stone-400">{idx + 1}</td>
+											<td className="p-2 text-stone-600 tabular-nums dark:text-stone-400">
+												{idx + 1}
+											</td>
 											<td className="p-2 font-bold">{item.title}</td>
 											<td className="p-2 text-stone-600 dark:text-stone-400">
 												{item.user_email ||
 													t("yllapitajaOletuksena", "(Ylläpitäjä oletuksena)")}
 											</td>
-											<td className="p-2 font-semibold text-purple-700 dark:text-purple-300">
+											<td className="p-2">
 												{item.occurrences
 													.map((o) => o.resource_name)
 													.join(", ")}
 											</td>
-											<td className="p-2 text-stone-500">
+											<td className="p-2 text-stone-600 tabular-nums dark:text-stone-400">
 												{item.occurrences[0]?.start_time
-													? formatDate(item.occurrences[0].start_time)
+													? formatDateTime(item.occurrences[0].start_time)
 													: "—"}
 											</td>
 										</tr>
@@ -426,7 +401,7 @@ function AdminReservationsSyncPage() {
 						</div>
 					</div>
 				)}
-			</div>
-		</div>
+			</section>
+		</PageContainer>
 	);
 }
