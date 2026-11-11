@@ -868,5 +868,10 @@
 	"perustiedot": "Basic information",
 	"ajankohtaJaToistuvuus": "Time and recurrence",
 	"koskevatResurssit": "Affected resources",
-	"koskevatResurssitTyhjaKaikki": "If none is selected, the restriction applies to all resources."
+	"koskevatResurssitTyhjaKaikki": "If none is selected, the restriction applies to all resources.",
+	"tnn": "Today",
+	"plusNLisaa": "+{{count}} more",
+	"eiVarauksiaKuussa": "No reservations this month",
+	"selite": "Legend",
+	"rajoitus": "Restriction"
 }

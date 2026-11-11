@@ -80,7 +80,7 @@ export function ReservationBlock({
 			details.push({
 				key: "resource",
 				node: (
-					<span className="text-[10px] text-emerald-800 dark:text-emerald-300 truncate font-medium">
+					<span className="text-xs text-emerald-800 dark:text-emerald-300 truncate font-medium">
 						{event.resourceName}
 					</span>
 				),
@@ -89,7 +89,7 @@ export function ReservationBlock({
 		details.push({
 			key: "time",
 			node: (
-				<span className="text-[10px] italic text-emerald-700 dark:text-emerald-400 truncate">
+				<span className="text-xs italic text-emerald-700 dark:text-emerald-400 truncate">
 					{timeString}
 				</span>
 			),
@@ -99,7 +99,7 @@ export function ReservationBlock({
 			details.push({
 				key: "resource",
 				node: (
-					<span className="text-[10px] text-amber-800 dark:text-amber-300 truncate font-medium">
+					<span className="text-xs text-amber-800 dark:text-amber-300 truncate font-medium">
 						{event.resourceName}
 					</span>
 				),
@@ -108,7 +108,7 @@ export function ReservationBlock({
 		details.push({
 			key: "time",
 			node: (
-				<span className="text-[10px] italic text-amber-700 dark:text-amber-400 truncate">
+				<span className="text-xs italic text-amber-700 dark:text-amber-400 truncate">
 					{timeString}
 				</span>
 			),
@@ -118,7 +118,7 @@ export function ReservationBlock({
 			details.push({
 				key: "pending",
 				node: (
-					<span className="text-[9px] font-semibold text-purple-700 dark:text-purple-300 uppercase tracking-wider truncate">
+					<span className="text-xs font-semibold text-purple-700 dark:text-purple-300 uppercase tracking-wider truncate">
 						{t("odottaaVahvistusta", "Odottaa vahvistusta")}
 					</span>
 				),
@@ -128,7 +128,7 @@ export function ReservationBlock({
 			details.push({
 				key: "user",
 				node: (
-					<span className="text-[10px] text-stone-700 dark:text-stone-300 truncate flex items-center gap-0.5">
+					<span className="text-xs text-stone-700 dark:text-stone-300 truncate flex items-center gap-0.5">
 						<UserIcon
 							size={10}
 							className="shrink-0 text-purple-600 dark:text-purple-400"
@@ -142,7 +142,7 @@ export function ReservationBlock({
 			details.push({
 				key: "resource",
 				node: (
-					<span className="text-[10px] text-stone-600 dark:text-stone-400 truncate font-medium">
+					<span className="text-xs text-stone-600 dark:text-stone-400 truncate font-medium">
 						{event.resourceName}
 					</span>
 				),
@@ -151,7 +151,7 @@ export function ReservationBlock({
 		details.push({
 			key: "time",
 			node: (
-				<span className="text-[10px] italic text-stone-500 dark:text-stone-400 truncate">
+				<span className="text-xs italic text-stone-500 dark:text-stone-400 truncate">
 					{timeString}
 				</span>
 			),
@@ -169,9 +169,15 @@ export function ReservationBlock({
 					isPending && (
 						<Clock
 							size={11}
-							className="text-purple-600 dark:text-purple-400 shrink-0"
+							className="text-purple-700 dark:text-purple-400 shrink-0"
 						/>
 					)
+				)}
+				{/* Short blocks have no room for a details line, so the start time goes in front of the title */}
+				{isTitleOnly && !isBlock && !isRestriction && (
+					<span className="tabular-nums font-normal text-stone-600 dark:text-stone-400 shrink-0">
+						{formatTime(event.eventStart)}
+					</span>
 				)}
 				<span className="truncate">{event.title}</span>
 			</div>

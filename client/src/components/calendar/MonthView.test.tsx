@@ -108,4 +108,33 @@ describe("MonthView", () => {
 		expect(onDayClick).toHaveBeenCalledTimes(1);
 		expect(onDayClick.mock.calls[0][0].getDate()).toBe(11);
 	});
+
+	it("collapses a crowded day into a +N more link that opens the day", async () => {
+		const onDayClick = vi.fn();
+		const crowded = Array.from({ length: 6 }, (_, i) =>
+			event({
+				id: `c${i}`,
+				title: `Event ${i}`,
+				start: new Date(2026, 10, 11, 8 + i),
+				end: new Date(2026, 10, 11, 9 + i),
+			}),
+		);
+		renderWithProviders(
+			<MonthView
+				monthStart={monthStart}
+				events={crowded}
+				onDayClick={onDayClick}
+			/>,
+		);
+		expect(screen.getAllByRole("link")).toHaveLength(2);
+		await userEvent.click(screen.getByRole("button", { name: "+4 more" }));
+		expect(onDayClick.mock.calls[0][0].getDate()).toBe(11);
+	});
+
+	it("shows no overflow link when the day fits", () => {
+		renderWithProviders(
+			<MonthView monthStart={monthStart} events={[event({ id: "a" })]} />,
+		);
+		expect(screen.queryByRole("button", { name: /more/ })).toBeNull();
+	});
 });

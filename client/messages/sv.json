@@ -868,5 +868,10 @@
 	"perustiedot": "Grunduppgifter",
 	"ajankohtaJaToistuvuus": "Tidpunkt och upprepning",
 	"koskevatResurssit": "Berörda resurser",
-	"koskevatResurssitTyhjaKaikki": "Om ingen väljs gäller begränsningen alla resurser."
+	"koskevatResurssitTyhjaKaikki": "Om ingen väljs gäller begränsningen alla resurser.",
+	"tnn": "Idag",
+	"plusNLisaa": "+{{count}} till",
+	"eiVarauksiaKuussa": "Inga bokningar den här månaden",
+	"selite": "Förklaring",
+	"rajoitus": "Begränsning"
 }
