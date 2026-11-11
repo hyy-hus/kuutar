@@ -860,5 +860,13 @@
 	"eiRyhmaa": "Ei ryhmää",
 	"naytaLisaa": "Näytä lisää",
 	"kohderyhma": "Kohderyhmä",
-	"liitaCsv": "Liitä CSV/TSV-sisältö"
+	"liitaCsv": "Liitä CSV/TSV-sisältö",
+	"naytaVahemman": "Näytä vähemmän",
+	"naytaKaikkiN": "Näytä kaikki {{count}}",
+	"varausjaksonAjatMaara": "{{count}} aikaa",
+	"sallittuRyhmaN": "Sallitut ryhmät: {{names}}",
+	"perustiedot": "Perustiedot",
+	"ajankohtaJaToistuvuus": "Ajankohta ja toistuvuus",
+	"koskevatResurssit": "Koskevat resurssit",
+	"koskevatResurssitTyhjaKaikki": "Jos mitään ei valita, rajoitus koskee kaikkia resursseja."
 }

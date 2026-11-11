@@ -1,6 +1,8 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { BackLink } from "#/components/BackLink";
+import { FormLayout } from "#/components/FormLayout";
+import { PageHeader } from "#/components/PageHeader";
 import {
 	ReservableBlockForm,
 	type ReservableBlockFormValues,
@@ -68,13 +70,15 @@ function CreateReservableBlockPage() {
 	};
 
 	return (
-		<div className="max-w-xl mx-auto p-2 sm:p-4 space-y-4 pb-12">
-			<BackLink to="/reservable-blocks">
-				{t("takaisinVarausjaksoihin", "Takaisin varausjaksoihin")}
-			</BackLink>
-			<h1 className="text-xl font-bold text-stone-900 dark:text-stone-100">
-				{t("uusiVarausjakso", "Uusi varausjakso")}
-			</h1>
+		<FormLayout>
+			<PageHeader
+				back={
+					<BackLink to="/reservable-blocks">
+						{t("takaisinVarausjaksoihin", "Takaisin varausjaksoihin")}
+					</BackLink>
+				}
+				title={t("uusiVarausjakso", "Uusi varausjakso")}
+			/>
 			<ReservableBlockForm
 				defaultValues={{
 					resource_ids: resource_id ? [resource_id] : [],
@@ -84,7 +88,8 @@ function CreateReservableBlockPage() {
 				onSubmit={handleSubmit}
 				isSubmitting={createBlock.isPending}
 				submitLabel={t("luoVarausjakso", "Luo varausjakso")}
+				onCancel={() => navigate({ to: "/reservable-blocks" })}
 			/>
-		</div>
+		</FormLayout>
 	);
 }

@@ -1,6 +1,8 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { BackLink } from "#/components/BackLink";
+import { FormLayout } from "#/components/FormLayout";
+import { PageHeader } from "#/components/PageHeader";
 import {
 	ReservableBlockForm,
 	type ReservableBlockFormValues,
@@ -30,17 +32,17 @@ function EditReservableBlockPage() {
 
 	if (isLoading) {
 		return (
-			<div className="p-4 text-xs text-stone-500">
+			<p className="text-sm text-stone-600 dark:text-stone-400">
 				{t("ladataanVarausjaksoa", "Ladataan varausjaksoa...")}
-			</div>
+			</p>
 		);
 	}
 
 	if (!block) {
 		return (
-			<div className="p-4 text-xs text-stone-500">
+			<p className="text-sm text-stone-600 dark:text-stone-400">
 				{t("varausjaksoaEiLytynyt", "Varausjaksoa ei löytynyt.")}
-			</div>
+			</p>
 		);
 	}
 
@@ -71,13 +73,15 @@ function EditReservableBlockPage() {
 	);
 
 	return (
-		<div className="max-w-xl mx-auto p-4 space-y-4">
-			<BackLink to="/reservable-blocks/$id" params={{ id }}>
-				{t("takaisinVarausjaksoon", "Takaisin varausjaksoon")}
-			</BackLink>
-			<h1 className="text-xl font-bold text-stone-900 dark:text-stone-100">
-				{t("muokkaaVarausjaksoa", "Muokkaa varausjaksoa")}
-			</h1>
+		<FormLayout>
+			<PageHeader
+				back={
+					<BackLink to="/reservable-blocks/$id" params={{ id }}>
+						{t("takaisinVarausjaksoon", "Takaisin varausjaksoon")}
+					</BackLink>
+				}
+				title={t("muokkaaVarausjaksoa", "Muokkaa varausjaksoa")}
+			/>
 			<ReservableBlockForm
 				defaultValues={{
 					title: block.title,
@@ -90,7 +94,10 @@ function EditReservableBlockPage() {
 				onSubmit={handleSubmit}
 				isSubmitting={updateBlock.isPending}
 				submitLabel={t("tallennaMuutokset", "Tallenna muutokset")}
+				onCancel={() =>
+					navigate({ to: "/reservable-blocks/$id", params: { id } })
+				}
 			/>
-		</div>
+		</FormLayout>
 	);
 }

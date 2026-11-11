@@ -1,6 +1,8 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { BackLink } from "#/components/BackLink";
+import { FormLayout } from "#/components/FormLayout";
+import { PageHeader } from "#/components/PageHeader";
 import {
 	RestrictionForm,
 	type RestrictionFormValues,
@@ -27,17 +29,17 @@ function EditRestrictionPage() {
 
 	if (isLoading) {
 		return (
-			<div className="p-4 text-xs text-stone-500">
+			<p className="text-sm text-stone-600 dark:text-stone-400">
 				{t("ladataanRajoitusta", "Ladataan rajoitusta...")}
-			</div>
+			</p>
 		);
 	}
 
 	if (!restrictionWithOcc) {
 		return (
-			<div className="p-4 text-xs text-stone-500">
+			<p className="text-sm text-stone-600 dark:text-stone-400">
 				{t("rajoitustaEiLytynyt", "Rajoitusta ei löytynyt.")}
-			</div>
+			</p>
 		);
 	}
 
@@ -75,13 +77,15 @@ function EditRestrictionPage() {
 	);
 
 	return (
-		<div className="max-w-xl mx-auto p-4 space-y-4">
-			<BackLink to="/restrictions/$id" params={{ id }}>
-				{t("takaisinRajoitukseen", "Takaisin rajoitukseen")}
-			</BackLink>
-			<h1 className="text-xl font-bold text-stone-900 dark:text-stone-100">
-				{t("muokkaaRajoitusta", "Muokkaa aikarajoitusta")}
-			</h1>
+		<FormLayout>
+			<PageHeader
+				back={
+					<BackLink to="/restrictions/$id" params={{ id }}>
+						{t("takaisinRajoitukseen", "Takaisin rajoitukseen")}
+					</BackLink>
+				}
+				title={t("muokkaaRajoitusta", "Muokkaa aikarajoitusta")}
+			/>
 			<RestrictionForm
 				defaultValues={{
 					title: restrictionWithOcc.title,
@@ -100,7 +104,8 @@ function EditRestrictionPage() {
 				onSubmit={handleSubmit}
 				isSubmitting={updateRestriction.isPending}
 				submitLabel={t("tallennaMuutokset", "Tallenna muutokset")}
+				onCancel={() => navigate({ to: "/restrictions/$id", params: { id } })}
 			/>
-		</div>
+		</FormLayout>
 	);
 }

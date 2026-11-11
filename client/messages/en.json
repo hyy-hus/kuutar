@@ -860,5 +860,13 @@
 	"eiRyhmaa": "No group",
 	"naytaLisaa": "Show more",
 	"kohderyhma": "Target group",
-	"liitaCsv": "Paste CSV/TSV content"
+	"liitaCsv": "Paste CSV/TSV content",
+	"naytaVahemman": "Show fewer",
+	"naytaKaikkiN": "Show all {{count}}",
+	"varausjaksonAjatMaara": "{{count}} times",
+	"sallittuRyhmaN": "Allowed groups: {{names}}",
+	"perustiedot": "Basic information",
+	"ajankohtaJaToistuvuus": "Time and recurrence",
+	"koskevatResurssit": "Affected resources",
+	"koskevatResurssitTyhjaKaikki": "If none is selected, the restriction applies to all resources."
 }

@@ -860,5 +860,13 @@
 	"eiRyhmaa": "Ingen grupp",
 	"naytaLisaa": "Visa fler",
 	"kohderyhma": "Målgrupp",
-	"liitaCsv": "Klistra in CSV/TSV-innehåll"
+	"liitaCsv": "Klistra in CSV/TSV-innehåll",
+	"naytaVahemman": "Visa färre",
+	"naytaKaikkiN": "Visa alla {{count}}",
+	"varausjaksonAjatMaara": "{{count}} tider",
+	"sallittuRyhmaN": "Tillåtna grupper: {{names}}",
+	"perustiedot": "Grunduppgifter",
+	"ajankohtaJaToistuvuus": "Tidpunkt och upprepning",
+	"koskevatResurssit": "Berörda resurser",
+	"koskevatResurssitTyhjaKaikki": "Om ingen väljs gäller begränsningen alla resurser."
 }
