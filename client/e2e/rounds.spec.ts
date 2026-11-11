@@ -26,19 +26,19 @@ test("admin creates a reservation round for a block-based resource", async ({
 	await page.goto("/resources/create");
 	await page.getByLabel("Resource Name").fill(`Sauna ${suffix}`);
 	await page
-		.getByLabel("Collection", { exact: true })
+		.getByLabel(/^Collection\b/)
 		.selectOption({ label: `Rounds ${suffix}` });
 	await page.getByLabel(/only in blocks defined by an admin/i).check();
 	await page.getByRole("button", { name: "Create resource" }).click();
 	await expect(page).toHaveURL(/\/resources\/[0-9a-f-]+$/);
 
 	await page.goto("/admin/rounds/create");
-	await page.getByLabel("Name", { exact: true }).fill(`Round ${suffix}`);
+	await page.getByLabel(/^Name\b/).fill(`Round ${suffix}`);
 	await page.getByLabel("Applications open").fill(localDateTime(1));
 	await page.getByLabel("Applications close").fill(localDateTime(3));
 	await page.getByLabel("Bookable period starts").fill(localDateTime(7));
 	await page.getByLabel("Bookable period ends").fill(localDateTime(37));
-	await page.getByLabel(`Sauna ${suffix}`).check();
+	await page.getByRole("button", { name: `Sauna ${suffix}` }).click();
 	await page.getByLabel(`Applicants ${suffix}`).check();
 	await page.getByRole("button", { name: "Create round" }).click();
 
@@ -51,7 +51,7 @@ test("admin creates a reservation round for a block-based resource", async ({
 
 	// Rounds that have not started can be edited
 	await page.getByRole("link", { name: "Edit round" }).click();
-	await page.getByLabel("Name", { exact: true }).fill(`Renamed ${suffix}`);
+	await page.getByLabel(/^Name\b/).fill(`Renamed ${suffix}`);
 	await page.getByRole("button", { name: "Save" }).click();
 	await expect(
 		page.getByRole("heading", { name: `Renamed ${suffix}` }),

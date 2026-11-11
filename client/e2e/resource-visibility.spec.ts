@@ -12,7 +12,7 @@ test("admin limits a resource's visibility to selected groups", async ({
 
 	await page.goto("/resources/create");
 	await page.getByLabel("Resource Name").fill(`Hidden room ${suffix}`);
-	await page.getByLabel("Collection", { exact: true }).selectOption({
+	await page.getByLabel(/^Collection\b/).selectOption({
 		label: `Visibility ${suffix}`,
 	});
 

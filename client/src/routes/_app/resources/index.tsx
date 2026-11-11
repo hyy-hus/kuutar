@@ -1,6 +1,6 @@
 // src/routes/_app/resources/index.tsx
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { CheckCircle2, Loader2, Plus, Users } from "lucide-react";
+import { CheckCircle2, EyeOff, Loader2, Plus, Users } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "#/components/Button";
@@ -26,6 +26,19 @@ export const Route = createFileRoute("/_app/resources/")({
 function ResourceCard({ resource }: { resource: Resource }) {
 	const { t, i18n } = useTranslation();
 	const badges = [
+		!resource.is_public && (
+			<span
+				key="hidden"
+				title={t(
+					"rajattuNakyvyysOhje",
+					"Resurssi näkyy vain ylläpitäjille ja valituille ryhmille.",
+				)}
+			>
+				<StatusChip variant="neutral" icon={EyeOff}>
+					{t("rajattuNakyvyys", "Rajattu näkyvyys")}
+				</StatusChip>
+			</span>
+		),
 		resource.reservation_restricted && (
 			<span
 				key="restricted"
