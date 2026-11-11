@@ -874,5 +874,14 @@
 	"rajoitus": "Rajoitus",
 	"istunnot": "Istunnot",
 	"sahkopostipohja": "Sähköpostipohja",
-	"outlookHaeNytEiKaytettavissa": "Hae nyt -toiminto on pois käytöstä, kunnes integraatio on otettu käyttöön."
+	"outlookHaeNytEiKaytettavissa": "Hae nyt -toiminto on pois käytöstä, kunnes integraatio on otettu käyttöön.",
+	"nainVaraat": "Näin varaat",
+	"valitseResurssi": "Valitse resurssi",
+	"valitseResurssiKuvaus": "Selaa resursseja tai kalenteria ja valitse tila tai väline.",
+	"valitseAika": "Valitse aika",
+	"valitseAikaKuvaus": "Katso vapaat ajat kalenterista ja täytä varauslomake.",
+	"odotaVahvistus": "Odota vahvistus",
+	"odotaVahvistusKuvaus": "Osa varauksista vahvistuu heti, osan vahvistaa ylläpito. Saat tiedon sähköpostilla.",
+	"omatVarauksesiLoydatKohdastaOmatVaraukset": "Omat varauksesi löydät kohdasta",
+	"piilotaOhje": "Piilota ohje"
 }

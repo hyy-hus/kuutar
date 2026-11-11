@@ -1195,6 +1195,8 @@ export interface components {
         };
         HealthStatus: {
             status: string;
+            /** Instance name (APP_NAME) */
+            app_name: string;
             version: string;
         };
         HeatCell: {

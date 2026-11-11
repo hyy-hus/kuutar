@@ -874,5 +874,14 @@
 	"rajoitus": "Restriction",
 	"istunnot": "Sessions",
 	"sahkopostipohja": "Email template",
-	"outlookHaeNytEiKaytettavissa": "The \"Check now\" action is disabled until the integration is enabled."
+	"outlookHaeNytEiKaytettavissa": "The \"Check now\" action is disabled until the integration is enabled.",
+	"nainVaraat": "How to book",
+	"valitseResurssi": "Choose a resource",
+	"valitseResurssiKuvaus": "Browse the resources or the calendar and pick a space or item.",
+	"valitseAika": "Pick a time",
+	"valitseAikaKuvaus": "Check the free times in the calendar and fill in the reservation form.",
+	"odotaVahvistus": "Wait for confirmation",
+	"odotaVahvistusKuvaus": "Some reservations are confirmed at once, others by the administrators. You will be notified by email.",
+	"omatVarauksesiLoydatKohdastaOmatVaraukset": "You can find your reservations under",
+	"piilotaOhje": "Hide guide"
 }

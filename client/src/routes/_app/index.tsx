@@ -15,6 +15,7 @@ import { Button } from "#/components/Button";
 import { Callout } from "#/components/Callout";
 import { EmptyState } from "#/components/EmptyState";
 import { Footer } from "#/components/Footer";
+import { HowToReserve } from "#/components/HowToReserve";
 import { OutlookBadge } from "#/components/OutlookBadge";
 import { PageContainer } from "#/components/PageContainer";
 import { PageHeader } from "#/components/PageHeader";
@@ -168,7 +169,7 @@ function HomePage() {
 									<Link
 										to="/reservations/$id"
 										params={{ id: res.id }}
-										className="focus-ring flex flex-col gap-2 rounded-md border border-stone-300 bg-stone-50 p-3 transition-colors hover:border-stone-800 hover:shadow-l1 sm:flex-row sm:items-center sm:justify-between dark:border-stone-700 dark:bg-stone-900 dark:hover:border-stone-300"
+										className="focus-ring flex flex-col gap-2 rounded-md border border-stone-300 bg-stone-50 p-3 transition-colors hover:border-stone-800 sm:flex-row sm:items-center sm:justify-between dark:border-stone-700 dark:bg-stone-900 dark:hover:border-stone-300"
 									>
 										<div className="min-w-0 space-y-0.5">
 											<div className="flex min-w-0 items-center gap-2">
@@ -242,7 +243,7 @@ function HomePage() {
 								<Link
 									to="/resources/$id"
 									params={{ id: res.id }}
-									className="focus-ring block rounded-md border border-stone-300 bg-stone-50 p-3 transition-colors hover:border-stone-800 hover:shadow-l1 dark:border-stone-700 dark:bg-stone-900 dark:hover:border-stone-300"
+									className="focus-ring block rounded-md border border-stone-300 bg-stone-50 p-3 transition-colors hover:border-stone-800 dark:border-stone-700 dark:bg-stone-900 dark:hover:border-stone-300"
 								>
 									<span className="block truncate text-sm font-bold text-stone-900 dark:text-stone-100">
 										{res.name}
@@ -303,6 +304,8 @@ function HomePage() {
 							</Callout>
 						)}
 
+						<HowToReserve dismissible />
+
 						<div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
 							<div className="lg:col-span-2">{upcomingSection}</div>
 							{resourcesSection}
@@ -330,6 +333,8 @@ function HomePage() {
 								</Link>
 							</Button>
 						</section>
+
+						<HowToReserve />
 
 						<div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
 							<div className="lg:col-span-2">{upcomingSection}</div>

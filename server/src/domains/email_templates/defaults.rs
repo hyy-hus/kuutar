@@ -7,7 +7,8 @@ use serde_json::{Value, json};
 use super::models::EmailTemplateKey;
 use crate::utils::rich_text::LocalizedRichText;
 
-const RESERVATION_VARIABLES: [&str; 7] = [
+const RESERVATION_VARIABLES: [&str; 8] = [
+    "app_name",
     "user_name",
     "title",
     "status",
@@ -17,7 +18,7 @@ const RESERVATION_VARIABLES: [&str; 7] = [
     "cancel_reason",
 ];
 
-const USER_VARIABLES: [&str; 3] = ["user_name", "email", "app_url"];
+const USER_VARIABLES: [&str; 4] = ["app_name", "user_name", "email", "app_url"];
 
 /// Placeholders that can be used in a template's subject and body.
 pub fn variables(key: EmailTemplateKey) -> &'static [&'static str] {
@@ -70,9 +71,9 @@ pub fn default_subject(key: EmailTemplateKey) -> HashMap<String, String> {
             ("en", "Reservation cancelled: {{title}}"),
         ],
         EmailTemplateKey::UserWelcome => [
-            ("fi", "Tervetuloa Kuutariin"),
-            ("sv", "Välkommen till Kuutar"),
-            ("en", "Welcome to Kuutar"),
+            ("fi", "Tervetuloa palveluun {{app_name}}"),
+            ("sv", "Välkommen till {{app_name}}"),
+            ("en", "Welcome to {{app_name}}"),
         ],
     };
     pairs
@@ -102,7 +103,7 @@ fn welcome_body() -> LocalizedRichText {
                 "Tervetuloa!",
                 "Käyttäjätilisi on luotu sähköpostiosoitteelle {{email}}.",
                 "Voit kirjautua salasanalla tai sähköpostiisi lähetettävällä kertakäyttökoodilla.",
-                "Avaa Kuutar",
+                "Avaa {{app_name}}",
             ),
         ),
         (
@@ -111,7 +112,7 @@ fn welcome_body() -> LocalizedRichText {
                 "Välkommen!",
                 "Ditt konto har skapats för e-postadressen {{email}}.",
                 "Du kan logga in med lösenord eller med en engångskod som skickas till din e-post.",
-                "Öppna Kuutar",
+                "Öppna {{app_name}}",
             ),
         ),
         (
@@ -120,7 +121,7 @@ fn welcome_body() -> LocalizedRichText {
                 "Welcome!",
                 "Your account has been created for {{email}}.",
                 "You can sign in with a password or with a one-time code sent to your email.",
-                "Open Kuutar",
+                "Open {{app_name}}",
             ),
         ),
     ]

@@ -7,6 +7,7 @@ import { AuthDialog } from "#/components/AuthPopover";
 import { Button } from "#/components/Button";
 import { SearchBar } from "#/components/SearchBar";
 import { SideBar } from "#/components/SideBar";
+import { useAppConfig } from "#/hooks/useAppConfig";
 import { authKeys, fetchMe } from "#/hooks/useAuth";
 import { cn } from "#/utils/cn";
 
@@ -28,6 +29,7 @@ export const Route = createFileRoute("/_app")({
 
 function AppLayout() {
 	const { t } = useTranslation();
+	const { appName } = useAppConfig();
 	// Default open on desktop, closed on mobile
 	const [isSidebarOpen, setIsSidebarOpen] = useState(() => {
 		if (typeof window !== "undefined") {
@@ -80,7 +82,7 @@ function AppLayout() {
 				{/* Clickable Header Logo */}
 				<Link to="/" className="hover:opacity-80 transition-opacity shrink-0">
 					<span className="font-bold text-lg tracking-tight truncate">
-						{"Kuutar"}
+						{appName}
 					</span>
 				</Link>
 
