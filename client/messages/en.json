@@ -776,5 +776,10 @@
 	"yllpitjnMuistiinpanotEiOmistajalle": "Administrator notes (not visible to the reserver)",
 	"omaVari": "Custom color",
 	"kaikki": "All",
-	"vainTamaOhje": "Double-click or Ctrl-click to show only this one"
+	"vainTamaOhje": "Double-click or Ctrl-click to show only this one",
+	"vaarallisetToiminnot": "Danger zone",
+	"teknisetTiedot": "Technical details",
+	"tunniste": "ID",
+	"kopioiTunniste": "Copy ID",
+	"kopioitu": "Copied"
 }

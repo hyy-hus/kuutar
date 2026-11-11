@@ -776,5 +776,10 @@
 	"yllpitjnMuistiinpanotEiOmistajalle": "Administratörens anteckningar (syns inte för bokaren)",
 	"omaVari": "Egen färg",
 	"kaikki": "Alla",
-	"vainTamaOhje": "Dubbelklicka eller Ctrl-klicka för att visa bara denna"
+	"vainTamaOhje": "Dubbelklicka eller Ctrl-klicka för att visa bara denna",
+	"vaarallisetToiminnot": "Farliga åtgärder",
+	"teknisetTiedot": "Tekniska uppgifter",
+	"tunniste": "Identifierare",
+	"kopioiTunniste": "Kopiera identifierare",
+	"kopioitu": "Kopierad"
 }

@@ -4,6 +4,110 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+/*
+ * Design tokens (see the UI style guide). Semantic colours are CSS variables so
+ * that dark mode only has to redefine them; `@theme inline` turns them into
+ * Tailwind utilities: bg-surface, bg-surface-raised, bg-surface-muted,
+ * border-line-subtle, border-line-strong, text-ink, text-ink-muted, text-accent,
+ * bg-status-warning-bg, border-status-warning-line, text-status-warning-ink, ...
+ */
+:root {
+  --surface: var(--color-white);
+  --surface-raised: var(--color-stone-50);
+  --surface-muted: var(--color-stone-100);
+  --line-subtle: var(--color-stone-300);
+  --line-strong: var(--color-stone-800);
+  --ink: var(--color-stone-900);
+  --ink-muted: var(--color-stone-600);
+  --accent: var(--color-purple-700);
+  --accent-focus: var(--color-purple-500);
+
+  --status-neutral-bg: var(--color-stone-100);
+  --status-neutral-line: var(--color-stone-300);
+  --status-neutral-ink: var(--color-stone-700);
+  --status-success-bg: var(--color-emerald-50);
+  --status-success-line: var(--color-emerald-300);
+  --status-success-ink: var(--color-emerald-900);
+  --status-warning-bg: var(--color-amber-50);
+  --status-warning-line: var(--color-amber-300);
+  --status-warning-ink: var(--color-amber-900);
+  --status-danger-bg: var(--color-red-50);
+  --status-danger-line: var(--color-red-300);
+  --status-danger-ink: var(--color-red-900);
+  --status-info-bg: var(--color-sky-50);
+  --status-info-line: var(--color-sky-300);
+  --status-info-ink: var(--color-sky-900);
+}
+
+.dark {
+  --surface: var(--color-stone-950);
+  --surface-raised: var(--color-stone-900);
+  --surface-muted: var(--color-stone-900);
+  --line-subtle: var(--color-stone-700);
+  --line-strong: var(--color-stone-300);
+  --ink: var(--color-stone-100);
+  --ink-muted: var(--color-stone-400);
+  --accent: var(--color-purple-400);
+  --accent-focus: var(--color-purple-400);
+
+  --status-neutral-bg: var(--color-stone-800);
+  --status-neutral-line: var(--color-stone-700);
+  --status-neutral-ink: var(--color-stone-300);
+  --status-success-bg: var(--color-emerald-950);
+  --status-success-line: var(--color-emerald-700);
+  --status-success-ink: var(--color-emerald-200);
+  --status-warning-bg: var(--color-amber-950);
+  --status-warning-line: var(--color-amber-700);
+  --status-warning-ink: var(--color-amber-200);
+  --status-danger-bg: var(--color-red-950);
+  --status-danger-line: var(--color-red-700);
+  --status-danger-ink: var(--color-red-200);
+  --status-info-bg: var(--color-sky-950);
+  --status-info-line: var(--color-sky-700);
+  --status-info-ink: var(--color-sky-200);
+}
+
+@theme inline {
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
+  --color-surface-muted: var(--surface-muted);
+  --color-line-subtle: var(--line-subtle);
+  --color-line-strong: var(--line-strong);
+  --color-ink: var(--ink);
+  --color-ink-muted: var(--ink-muted);
+  --color-accent: var(--accent);
+  --color-accent-focus: var(--accent-focus);
+
+  --color-status-neutral-bg: var(--status-neutral-bg);
+  --color-status-neutral-line: var(--status-neutral-line);
+  --color-status-neutral-ink: var(--status-neutral-ink);
+  --color-status-success-bg: var(--status-success-bg);
+  --color-status-success-line: var(--status-success-line);
+  --color-status-success-ink: var(--status-success-ink);
+  --color-status-warning-bg: var(--status-warning-bg);
+  --color-status-warning-line: var(--status-warning-line);
+  --color-status-warning-ink: var(--status-warning-ink);
+  --color-status-danger-bg: var(--status-danger-bg);
+  --color-status-danger-line: var(--status-danger-line);
+  --color-status-danger-ink: var(--status-danger-ink);
+  --color-status-info-bg: var(--status-info-bg);
+  --color-status-info-line: var(--status-info-line);
+  --color-status-info-ink: var(--status-info-ink);
+
+  /* One radius for controls and cards; chips use rounded-sm */
+  --radius-control: 0.375rem;
+  /* L1 hard offset shadow; follows line-strong so it flips in dark mode */
+  --shadow-l1: 3px 3px 0 0 var(--line-strong);
+}
+
+/* Shared keyboard focus ring: `focus-ring` on any interactive element */
+@utility focus-ring {
+  &:focus-visible {
+    outline: 2px solid var(--accent-focus);
+    outline-offset: 2px;
+  }
+}
+
 * {
   box-sizing: border-box;
 }

@@ -4,7 +4,7 @@ import { type ButtonHTMLAttributes, forwardRef } from "react";
 import { cn } from "#/utils/cn";
 
 export const buttonVariants = cva(
-	"inline-flex items-center justify-center gap-2 rounded-md font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-purple-400 focus:outline-offset-2 disabled:pointer-events-none disabled:opacity-50 cursor-pointer whitespace-nowrap",
+	"inline-flex items-center justify-center gap-2 rounded-md font-semibold transition-colors focus-ring disabled:pointer-events-none disabled:opacity-50 cursor-pointer whitespace-nowrap",
 	{
 		variants: {
 			variant: {
@@ -13,16 +13,17 @@ export const buttonVariants = cva(
 					"dark:hover:bg-stone-300 border border-transparent shadow-xs",
 				],
 				outline:
-					"border-2 border-stone-600 dark:border-stone-600 bg-transparent hover:bg-stone-200 dark:hover:bg-stone-800 text-stone-900 dark:text-stone-100",
+					"border border-stone-400 dark:border-stone-600 bg-transparent hover:bg-stone-200 dark:hover:bg-stone-800 text-stone-900 dark:text-stone-100",
 				secondary:
 					"bg-stone-200 text-stone-900 hover:bg-stone-300 dark:bg-stone-800 dark:text-stone-100 dark:hover:bg-stone-700",
 				ghost:
 					"hover:bg-stone-200 dark:hover:bg-stone-800 text-stone-800 dark:text-stone-200",
+				/** Solid red: only for the confirm button inside a confirmation dialog */
 				danger:
 					"bg-red-600 text-white hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-800 shadow-xs",
-				/** Matches form fields (inputs, selects) so it can sit next to them in a toolbar */
-				field:
-					"border border-stone-300 dark:border-stone-700 bg-stone-50 dark:bg-stone-950 text-stone-900 dark:text-stone-100 font-medium hover:bg-stone-200 dark:hover:bg-stone-800",
+				/** Destructive action that is not yet confirmed, e.g. "Poista" in a danger section */
+				"danger-outline":
+					"border border-red-600 text-red-700 bg-transparent hover:bg-red-50 dark:border-red-500 dark:text-red-400 dark:hover:bg-red-950",
 			},
 			size: {
 				sm: "h-8 px-3 text-xs",

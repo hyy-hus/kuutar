@@ -776,5 +776,10 @@
 	"yllpitjnMuistiinpanotEiOmistajalle": "Ylläpitäjän muistiinpanot (varaaja ei näe näitä)",
 	"omaVari": "Oma väri",
 	"kaikki": "Kaikki",
-	"vainTamaOhje": "Kaksoisnapsauta tai Ctrl-napsauta näyttääksesi vain tämän"
+	"vainTamaOhje": "Kaksoisnapsauta tai Ctrl-napsauta näyttääksesi vain tämän",
+	"vaarallisetToiminnot": "Vaaralliset toiminnot",
+	"teknisetTiedot": "Tekniset tiedot",
+	"tunniste": "Tunniste",
+	"kopioiTunniste": "Kopioi tunniste",
+	"kopioitu": "Kopioitu"
 }

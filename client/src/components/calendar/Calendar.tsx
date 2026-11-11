@@ -50,7 +50,7 @@ interface CalendarProps {
 	onSearchChange: (nextSearch: CalendarSearch) => void;
 }
 
-/** Shared look of the toolbar's inputs and selects, matching the "field" button variant */
+/** Shared look of the toolbar's inputs and selects, matching the outline button variant */
 const FIELD_CLASS =
 	"h-8 px-2 text-xs bg-stone-50 dark:bg-stone-950 border border-stone-300 dark:border-stone-700 rounded-md font-medium";
 
@@ -441,7 +441,7 @@ export function Calendar({
 				<div className="flex items-center gap-2 @max-md:gap-1.5 w-max min-w-full">
 					<div className="flex items-center gap-1 shrink-0">
 						<Button
-							variant="field"
+							variant="outline"
 							size="iconSm"
 							className="@max-md:w-7"
 							onClick={() => moveStart(-1)}
@@ -466,7 +466,7 @@ export function Calendar({
 						/>
 
 						<Button
-							variant="field"
+							variant="outline"
 							size="iconSm"
 							className="@max-md:w-7"
 							onClick={() => moveStart(1)}
@@ -523,7 +523,7 @@ export function Calendar({
 								</select>
 
 								<Button
-									variant="field"
+									variant="outline"
 									size="iconSm"
 									onClick={cycleHourHeight}
 									aria-label={hourHeightLabel}

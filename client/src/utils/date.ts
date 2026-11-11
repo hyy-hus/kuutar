@@ -19,8 +19,18 @@ const DATE_PARTS = new Set<Intl.DateTimeFormatPartTypes>([
 const TIME_PARTS = new Set<Intl.DateTimeFormatPartTypes>(["hour", "minute"]);
 
 export interface DateFormatter {
-	/** Formats a date & time, e.g. "19.10.2026 klo 15.39" */
+	/**
+	 * Formats a date & time, e.g. "19.10.2026 klo 15.39". Despite the name this includes the
+	 * time (kept for existing callers); use `formatDateOnly` for the date alone.
+	 */
 	formatDate: (dateInput?: DateInput) => string;
+	/** Same as `formatDate`, under the name the style guide uses: "19.10.2026 klo 15.39" */
+	formatDateTime: (dateInput?: DateInput) => string;
+	/**
+	 * Compact range for lists: a same-day range collapses to "20.10.2026 klo 18.00–22.00";
+	 * a multi-day range shows both ends in full, "21.10.2026 klo 18.00 – 22.10.2026 klo 02.00".
+	 */
+	formatRange: (start?: DateInput, end?: DateInput) => string;
 	/** Formats only the date, e.g. "19.10.2026" */
 	formatDateOnly: (dateInput?: DateInput) => string;
 	/** Formats only the time, e.g. "15.39" */
@@ -108,6 +118,16 @@ function createDateFormatter(locale: string): DateFormatter {
 		return `${formatDate(startDate)} – ${endFormatted}`;
 	};
 
+	const formatRange = (start?: DateInput, end?: DateInput) => {
+		const startDate = toDate(start);
+		const endDate = toDate(end);
+		if (!startDate) return "—";
+		if (!endDate) return formatDate(startDate);
+		return isSameDay(startDate, endDate)
+			? `${formatDate(startDate)}–${formatTime(endDate)}`
+			: `${formatDate(startDate)} – ${formatDate(endDate)}`;
+	};
+
 	const weekdayFormatter = new Intl.DateTimeFormat(locale, { weekday: "long" });
 	const dayMonthFormatter = new Intl.DateTimeFormat(locale, {
 		day: "numeric",
@@ -143,6 +163,8 @@ function createDateFormatter(locale: string): DateFormatter {
 
 	return {
 		formatDate,
+		formatDateTime: formatDate,
+		formatRange,
 		formatDateOnly,
 		formatTime,
 		formatDateRange,
