@@ -943,7 +943,7 @@
 	"eiOdottaviaVarauksiaKuvaus": "All requests in the selected period have been handled. New requests that need approval will appear here. You can change the period or filters above.",
 	"hyvaksyValitutMaara": "Approve selected ({{count}})",
 	"valitutResurssit": "Selected resources",
-	"eiValittujaResursseja": "No resources selected. Open the list and choose which to show.",
+	"eiValittujaResursseja": "No resources selected",
 	"poistaResurssiValinnasta": "Remove {{name}}",
 	"resurssiMuut": "Other",
 	"rajattuRyhmille": "Restricted to groups",
@@ -951,5 +951,6 @@
 	"tyhjenna": "Clear",
 	"kaikkiResurssitMaara": "All resources ({{count}})",
 	"naytaKaikkiValitut": "Show all selected resources (+{{count}})",
-	"poistaValinta": "Deselect: {{name}}"
+	"poistaValinta": "Deselect: {{name}}",
+	"kalenteriEiValittujaResursseja": "No resources selected. Open the list and choose which to show."
 }

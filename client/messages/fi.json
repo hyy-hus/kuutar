@@ -943,7 +943,7 @@
 	"eiOdottaviaVarauksiaKuvaus": "Kaikki valitun aikavälin pyynnöt on käsitelty. Uudet hyväksyntää vaativat pyynnöt ilmestyvät tähän. Voit muuttaa aikaväliä tai suodattimia yllä.",
 	"hyvaksyValitutMaara": "Hyväksy valitut ({{count}})",
 	"valitutResurssit": "Valitut resurssit",
-	"eiValittujaResursseja": "Ei resursseja valittuna. Avaa lista ja valitse näytettävät resurssit.",
+	"eiValittujaResursseja": "Ei valittuja resursseja",
 	"poistaResurssiValinnasta": "Poista {{name}}",
 	"resurssiMuut": "Muut",
 	"rajattuRyhmille": "Rajattu ryhmille",
@@ -951,5 +951,6 @@
 	"tyhjenna": "Tyhjennä",
 	"kaikkiResurssitMaara": "Kaikki resurssit ({{count}})",
 	"naytaKaikkiValitut": "Näytä kaikki valitut resurssit (+{{count}})",
-	"poistaValinta": "Poista valinta: {{name}}"
+	"poistaValinta": "Poista valinta: {{name}}",
+	"kalenteriEiValittujaResursseja": "Ei resursseja valittuna. Avaa lista ja valitse näytettävät resurssit."
 }

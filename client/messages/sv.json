@@ -943,7 +943,7 @@
 	"eiOdottaviaVarauksiaKuvaus": "Alla förfrågningar för den valda perioden är behandlade. Nya förfrågningar som kräver godkännande visas här. Du kan ändra period eller filter ovan.",
 	"hyvaksyValitutMaara": "Godkänn valda ({{count}})",
 	"valitutResurssit": "Valda resurser",
-	"eiValittujaResursseja": "Inga resurser valda. Öppna listan och välj vilka som ska visas.",
+	"eiValittujaResursseja": "Inga valda resurser",
 	"poistaResurssiValinnasta": "Ta bort {{name}}",
 	"resurssiMuut": "Övriga",
 	"rajattuRyhmille": "Begränsad till grupper",
@@ -951,5 +951,6 @@
 	"tyhjenna": "Töm",
 	"kaikkiResurssitMaara": "Alla resurser ({{count}})",
 	"naytaKaikkiValitut": "Visa alla valda resurser (+{{count}})",
-	"poistaValinta": "Avmarkera: {{name}}"
+	"poistaValinta": "Avmarkera: {{name}}",
+	"kalenteriEiValittujaResursseja": "Inga resurser valda. Öppna listan och välj vilka som ska visas."
 }

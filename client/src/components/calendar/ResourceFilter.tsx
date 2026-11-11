@@ -168,7 +168,7 @@ export function ResourceFilter({
 				) : selectedCount === 0 ? (
 					<span className="text-xs text-stone-600 dark:text-stone-400">
 						{t(
-							"eiValittujaResursseja",
+							"kalenteriEiValittujaResursseja",
 							"Ei resursseja valittuna. Avaa lista ja valitse näytettävät resurssit.",
 						)}
 					</span>
