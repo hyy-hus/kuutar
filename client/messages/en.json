@@ -781,5 +781,9 @@
 	"kopioitu": "Copied",
 	"hyvaksynnat": "Approvals",
 	"varaaminen": "Booking",
-	"etsiVarauksiaJaTiloja": "Search bookings and spaces"
+	"etsiVarauksiaJaTiloja": "Search bookings and spaces",
+	"perustiedot": "Basic details",
+	"istunnot": "Sessions",
+	"sahkopostipohja": "Email template",
+	"outlookHaeNytEiKaytettavissa": "The \"Check now\" action is disabled until the integration is enabled."
 }

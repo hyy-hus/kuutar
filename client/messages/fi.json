@@ -781,5 +781,9 @@
 	"kopioitu": "Kopioitu",
 	"hyvaksynnat": "Hyväksynnät",
 	"varaaminen": "Varaaminen",
-	"etsiVarauksiaJaTiloja": "Etsi varauksia ja tiloja"
+	"etsiVarauksiaJaTiloja": "Etsi varauksia ja tiloja",
+	"perustiedot": "Perustiedot",
+	"istunnot": "Istunnot",
+	"sahkopostipohja": "Sähköpostipohja",
+	"outlookHaeNytEiKaytettavissa": "Hae nyt -toiminto on pois käytöstä, kunnes integraatio on otettu käyttöön."
 }

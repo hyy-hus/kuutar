@@ -781,5 +781,9 @@
 	"kopioitu": "Kopierad",
 	"hyvaksynnat": "Godkännanden",
 	"varaaminen": "Bokning",
-	"etsiVarauksiaJaTiloja": "Sök bokningar och lokaler"
+	"etsiVarauksiaJaTiloja": "Sök bokningar och lokaler",
+	"perustiedot": "Grunduppgifter",
+	"istunnot": "Sessioner",
+	"sahkopostipohja": "E-postmall",
+	"outlookHaeNytEiKaytettavissa": "Funktionen Kontrollera nu är avstängd tills integrationen har tagits i bruk."
 }
