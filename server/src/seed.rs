@@ -1,3 +1,5 @@
+pub mod mock;
+
 use crate::{config::Config, domains::users::models::Role};
 use anyhow::{Context, Result};
 use sqlx::PgPool;
