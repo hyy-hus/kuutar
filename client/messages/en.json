@@ -874,5 +874,8 @@
 	"rajoitus": "Restriction",
 	"istunnot": "Sessions",
 	"sahkopostipohja": "Email template",
-	"outlookHaeNytEiKaytettavissa": "The \"Check now\" action is disabled until the integration is enabled."
+	"outlookHaeNytEiKaytettavissa": "The \"Check now\" action is disabled until the integration is enabled.",
+	"resurssiSuodatinOhje": "Choose which resources to show. Double-click or Ctrl-click a name to show only that one.",
+	"eiYhtaan": "None",
+	"muut": "Other"
 }

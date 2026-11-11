@@ -874,5 +874,8 @@
 	"rajoitus": "Rajoitus",
 	"istunnot": "Istunnot",
 	"sahkopostipohja": "Sähköpostipohja",
-	"outlookHaeNytEiKaytettavissa": "Hae nyt -toiminto on pois käytöstä, kunnes integraatio on otettu käyttöön."
+	"outlookHaeNytEiKaytettavissa": "Hae nyt -toiminto on pois käytöstä, kunnes integraatio on otettu käyttöön.",
+	"resurssiSuodatinOhje": "Valitse näytettävät resurssit. Kaksoisnapsauta tai Ctrl-napsauta nimeä näyttääksesi vain sen.",
+	"eiYhtaan": "Ei yhtään",
+	"muut": "Muut"
 }

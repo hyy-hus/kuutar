@@ -874,5 +874,8 @@
 	"rajoitus": "Begränsning",
 	"istunnot": "Sessioner",
 	"sahkopostipohja": "E-postmall",
-	"outlookHaeNytEiKaytettavissa": "Funktionen Kontrollera nu är avstängd tills integrationen har tagits i bruk."
+	"outlookHaeNytEiKaytettavissa": "Funktionen Kontrollera nu är avstängd tills integrationen har tagits i bruk.",
+	"resurssiSuodatinOhje": "Välj vilka resurser som visas. Dubbelklicka eller Ctrl-klicka på namnet för att visa bara den.",
+	"eiYhtaan": "Ingen",
+	"muut": "Övriga"
 }
