@@ -521,7 +521,6 @@ export function Calendar({
 				collections={collections ?? []}
 				selectedIds={activeResourceIds}
 				onChange={(ids) => onSearchChange({ resources: ids })}
-				defaultOpen={!isMobile}
 			/>
 
 			{/* Main Calendar View */}
