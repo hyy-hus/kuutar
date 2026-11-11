@@ -5,11 +5,11 @@ import { useTranslation } from "react-i18next";
 import { Button } from "#/components/Button";
 import { Callout } from "#/components/Callout";
 import { Chip } from "#/components/Chip";
-import { EmptyState } from "#/components/EmptyState";
 import { EntityCard } from "#/components/EntityCard";
 import { FilterBar } from "#/components/FilterBar";
 import { PageContainer } from "#/components/PageContainer";
 import { PageHeader } from "#/components/PageHeader";
+import { PeriodEmptyState } from "#/components/PeriodEmptyState";
 import { PeriodNavigator } from "#/components/PeriodNavigator";
 import { Select } from "#/components/Select";
 import { useIsAdmin } from "#/hooks/useAuth";
@@ -202,12 +202,12 @@ function RestrictionsDashboardPage() {
 					))}
 				</ul>
 			) : (
-				<EmptyState
+				<PeriodEmptyState
 					icon={ShieldAlert}
-					title={t(
-						"eiRajoituksiaValitullaAikavlill",
-						"Ei aktiivisia aikarajoituksia valitulla aikavälillä.",
-					)}
+					start={start}
+					months={months}
+					what={t("sanaAikarajoituksia", "aikarajoituksia")}
+					onChange={updateSearch}
 				/>
 			)}
 		</PageContainer>

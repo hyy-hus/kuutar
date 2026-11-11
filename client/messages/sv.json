@@ -948,5 +948,13 @@
 	"poistaValinta": "Avmarkera: {{name}}",
 	"kalenteriEiValittujaResursseja": "Inga resurser valda. Öppna listan och välj vilka som ska visas.",
 	"kirjauduVarataksesi": "Logga in om du vill boka den här.",
-	"valitseAikaKuvausVieras": "Logga in, välj en ledig tid och berätta vad du bokar."
+	"valitseAikaKuvausVieras": "Logga in, välj en ledig tid och berätta vad du bokar.",
+	"eiTuloksiaAikavalilla": "Inga {{what}} under perioden {{range}}",
+	"naytaPidempiJakso": "Visa {{period}}",
+	"kokeilePidempaaJaksoa": "Bara den valda perioden har sökts. Prova en längre period eller flytta den med pilarna.",
+	"siirraAikavalia": "Den längsta perioden används redan. Flytta perioden med pilarna.",
+	"sanaVarauksia": "bokningar",
+	"sanaOdottaviaVarauksia": "väntande bokningar",
+	"sanaAikarajoituksia": "tidsbegränsningar",
+	"sanaVarausjaksoja": "bokningsblock"
 }

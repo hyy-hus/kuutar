@@ -23,6 +23,7 @@ import { FilterBar } from "#/components/FilterBar";
 import { OutlookBadge } from "#/components/OutlookBadge";
 import { PageContainer } from "#/components/PageContainer";
 import { PageHeader } from "#/components/PageHeader";
+import { PeriodEmptyState } from "#/components/PeriodEmptyState";
 import { PeriodNavigator } from "#/components/PeriodNavigator";
 import { ResourceFilterField } from "#/components/ResourceFilterField";
 import { Select } from "#/components/Select";
@@ -996,15 +997,13 @@ function AdminDashboardPage() {
 										)}
 									</EmptyState>
 								) : (
-									<EmptyState
+									<PeriodEmptyState
 										icon={Check}
-										title={t("eiOdottaviaVarauksia", "Ei odottavia varauksia")}
-									>
-										{t(
-											"eiOdottaviaVarauksiaKuvaus",
-											"Ei käsiteltäviä pyyntöjä valitulla aikavälillä. Voit vaihtaa aikaväliä tai suodattimia.",
-										)}
-									</EmptyState>
+										start={start}
+										months={months}
+										what={t("sanaOdottaviaVarauksia", "odottavia varauksia")}
+										onChange={updateSearch}
+									/>
 								)}
 							</div>
 						)}

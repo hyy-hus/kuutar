@@ -4,12 +4,12 @@ import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "#/components/Button";
 import { Callout } from "#/components/Callout";
-import { EmptyState } from "#/components/EmptyState";
 import { EntityCard } from "#/components/EntityCard";
 import { FilterBar } from "#/components/FilterBar";
 import { OutlookBadge } from "#/components/OutlookBadge";
 import { PageContainer } from "#/components/PageContainer";
 import { PageHeader } from "#/components/PageHeader";
+import { PeriodEmptyState } from "#/components/PeriodEmptyState";
 import { PeriodNavigator } from "#/components/PeriodNavigator";
 import { ReservationStatusChip } from "#/components/ReservationStatusChip";
 import { ResourceFilterField } from "#/components/ResourceFilterField";
@@ -249,13 +249,13 @@ function UserDashboardPage() {
 					)}
 				</Callout>
 			) : pending.length + confirmed.length + cancelled.length === 0 ? (
-				<EmptyState
-					title={t(
-						"eiVarauksiaValitullaAikavalilla",
-						"Ei varauksia valitulla aikavälillä",
-					)}
+				<PeriodEmptyState
+					start={start}
+					months={months}
+					what={t("sanaVarauksia", "varauksia")}
+					onChange={updateSearch}
 					action={
-						<Button asChild>
+						<Button asChild size="sm">
 							<Link to="/reservations/create">
 								{t("uusiVaraus", "Uusi varaus")}
 							</Link>

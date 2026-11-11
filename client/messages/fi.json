@@ -948,5 +948,13 @@
 	"poistaValinta": "Poista valinta: {{name}}",
 	"kalenteriEiValittujaResursseja": "Ei resursseja valittuna. Avaa lista ja valitse näytettävät resurssit.",
 	"kirjauduVarataksesi": "Kirjaudu sisään, jos haluat varata tämän.",
-	"valitseAikaKuvausVieras": "Kirjaudu sisään, valitse vapaa aika ja kerro, mitä varaat."
+	"valitseAikaKuvausVieras": "Kirjaudu sisään, valitse vapaa aika ja kerro, mitä varaat.",
+	"eiTuloksiaAikavalilla": "Ei {{what}} aikavälillä {{range}}",
+	"naytaPidempiJakso": "Näytä {{period}}",
+	"kokeilePidempaaJaksoa": "Vain valittu aikaväli on haettu. Kokeile pidempää jaksoa tai siirrä sitä nuolilla.",
+	"siirraAikavalia": "Pisin jakso on jo käytössä. Siirrä aikaväliä nuolilla.",
+	"sanaVarauksia": "varauksia",
+	"sanaOdottaviaVarauksia": "odottavia varauksia",
+	"sanaAikarajoituksia": "aikarajoituksia",
+	"sanaVarausjaksoja": "varausjaksoja"
 }

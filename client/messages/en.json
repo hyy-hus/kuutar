@@ -948,5 +948,13 @@
 	"poistaValinta": "Deselect: {{name}}",
 	"kalenteriEiValittujaResursseja": "No resources selected. Open the list and choose which to show.",
 	"kirjauduVarataksesi": "Log in if you want to book this.",
-	"valitseAikaKuvausVieras": "Log in, choose a free time and say what you are booking."
+	"valitseAikaKuvausVieras": "Log in, choose a free time and say what you are booking.",
+	"eiTuloksiaAikavalilla": "No {{what}} in the period {{range}}",
+	"naytaPidempiJakso": "Show {{period}}",
+	"kokeilePidempaaJaksoa": "Only the selected time frame was searched. Try a longer period or move it with the arrows.",
+	"siirraAikavalia": "The longest period is already selected. Move it with the arrows.",
+	"sanaVarauksia": "reservations",
+	"sanaOdottaviaVarauksia": "pending reservations",
+	"sanaAikarajoituksia": "time restrictions",
+	"sanaVarausjaksoja": "reservable blocks"
 }
