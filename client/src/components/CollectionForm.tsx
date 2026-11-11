@@ -2,6 +2,7 @@ import { useForm } from "@tanstack/react-form";
 import { Loader2, Save } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "#/components/Button";
+import { FormActions } from "#/components/FormActions";
 import { Input } from "#/components/Input";
 import { LocalizedRichTextEditor } from "#/components/LocalizedRichTextEditor";
 import type { CreateCollection } from "#/hooks/useCollections";
@@ -17,6 +18,7 @@ interface CollectionFormProps {
 	onSubmit: (values: CreateCollection) => Promise<void>;
 	isSubmitting?: boolean;
 	submitLabel?: string;
+	onCancel?: () => void;
 }
 
 export function CollectionForm({
@@ -24,6 +26,7 @@ export function CollectionForm({
 	onSubmit,
 	isSubmitting = false,
 	submitLabel,
+	onCancel,
 }: CollectionFormProps) {
 	const { t } = useTranslation();
 	const form = useForm({
@@ -48,7 +51,7 @@ export function CollectionForm({
 				e.stopPropagation();
 				form.handleSubmit();
 			}}
-			className="space-y-4 max-w-md"
+			className="space-y-6"
 		>
 			<form.Field
 				name="name"
@@ -63,12 +66,14 @@ export function CollectionForm({
 						<div className="space-y-1">
 							<label
 								htmlFor={field.name}
-								className="text-xs font-medium text-stone-700 dark:text-stone-300"
+								className="text-sm font-medium text-stone-900 dark:text-stone-100"
 							>
-								{t("kokoelmanNimi", "Kokoelman nimi")}
+								{t("kokoelmanNimi", "Kokoelman nimi")}{" "}
+								<span aria-hidden="true">*</span>
 							</label>
 							<Input
 								id={field.name}
+								aria-required="true"
 								value={field.state.value}
 								onChange={(e) => field.handleChange(e.target.value)}
 								onBlur={field.handleBlur}
@@ -76,7 +81,7 @@ export function CollectionForm({
 								placeholder={t("esimPrakennus", "esim. Päärakennus")}
 							/>
 							{hasError && (
-								<p className="text-[11px] text-red-500">
+								<p className="text-xs text-red-600 dark:text-red-400">
 									{field.state.meta.errors.join(", ")}
 								</p>
 							)}
@@ -88,7 +93,7 @@ export function CollectionForm({
 			<form.Field name="description">
 				{(field) => (
 					<div className="space-y-1">
-						<span className="text-xs font-medium text-stone-700 dark:text-stone-300">
+						<span className="text-sm font-medium text-stone-900 dark:text-stone-100">
 							{t("kuvaus", "Kuvaus")}
 						</span>
 						<LocalizedRichTextEditor
@@ -103,7 +108,7 @@ export function CollectionForm({
 			<form.Field name="icon">
 				{(field) => (
 					<fieldset className="space-y-1">
-						<legend className="text-xs font-medium text-stone-700 dark:text-stone-300">
+						<legend className="text-sm font-medium text-stone-900 dark:text-stone-100">
 							{t("kuvake", "Kuvake")}
 						</legend>
 						<div className="flex flex-wrap items-center gap-2">
@@ -149,20 +154,19 @@ export function CollectionForm({
 				selector={(state) => [state.canSubmit, state.isSubmitting]}
 			>
 				{([canSubmit, formSubmitting]) => (
-					<Button
-						type="submit"
-						disabled={!canSubmit || isSubmitting || formSubmitting}
-						className="w-full flex items-center justify-center gap-2 mt-4"
-					>
-						{isSubmitting || formSubmitting ? (
-							<Loader2 className="animate-spin" size={16} />
-						) : (
-							<>
+					<FormActions onCancel={onCancel}>
+						<Button
+							type="submit"
+							disabled={!canSubmit || isSubmitting || formSubmitting}
+						>
+							{isSubmitting || formSubmitting ? (
+								<Loader2 className="animate-spin" size={16} />
+							) : (
 								<Save size={16} />
-								<span>{submitLabel ?? t("tallenna", "Tallenna")}</span>
-							</>
-						)}
-					</Button>
+							)}
+							<span>{submitLabel ?? t("tallenna", "Tallenna")}</span>
+						</Button>
+					</FormActions>
 				)}
 			</form.Subscribe>
 		</form>

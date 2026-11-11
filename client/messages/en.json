@@ -781,5 +781,13 @@
 	"kopioitu": "Copied",
 	"hyvaksynnat": "Approvals",
 	"varaaminen": "Booking",
-	"etsiVarauksiaJaTiloja": "Search bookings and spaces"
+	"etsiVarauksiaJaTiloja": "Search bookings and spaces",
+	"varaa": "Book",
+	"haeResursseja": "Search resources",
+	"kaikkiKokoelmat": "All collections",
+	"eiResursseja": "No resources.",
+	"eiHakuaVastaaviaResursseja": "No resources match your search.",
+	"ilmanKokoelmaa": "No collection",
+	"eiKokoelmia": "No collections.",
+	"eiResurssejaKokoelmassa": "This collection has no resources."
 }
