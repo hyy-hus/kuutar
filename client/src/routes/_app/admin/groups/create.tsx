@@ -1,7 +1,9 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { BackLink } from "#/components/BackLink";
+import { FormLayout } from "#/components/FormLayout";
 import { GroupForm } from "#/components/GroupForm";
+import { PageHeader } from "#/components/PageHeader";
 import { useCreateGroup } from "#/hooks/useGroups";
 import { requireAdminGuard } from "#/utils/authGuard";
 
@@ -23,18 +25,21 @@ function CreateGroupPage() {
 	};
 
 	return (
-		<div className="p-4 space-y-4">
-			<BackLink to="/admin/groups">
-				{t("takaisinRyhmiin", "Takaisin ryhmiin")}
-			</BackLink>
-			<h1 className="text-xl font-bold text-stone-900 dark:text-stone-100">
-				{t("uusiRyhm", "Uusi ryhmä")}
-			</h1>
+		<FormLayout>
+			<PageHeader
+				back={
+					<BackLink to="/admin/groups">
+						{t("takaisinRyhmiin", "Takaisin ryhmiin")}
+					</BackLink>
+				}
+				title={t("uusiRyhm", "Uusi ryhmä")}
+			/>
 			<GroupForm
 				onSubmit={handleSubmit}
 				isSubmitting={createGroup.isPending}
 				submitLabel={t("luoRyhma", "Luo ryhmä")}
+				onCancel={() => navigate({ to: "/admin/groups" })}
 			/>
-		</div>
+		</FormLayout>
 	);
 }

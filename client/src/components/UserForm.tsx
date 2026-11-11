@@ -1,9 +1,13 @@
 import { useForm } from "@tanstack/react-form";
-import { Loader2, Save } from "lucide-react";
+import { AlertCircle, Loader2 } from "lucide-react";
+import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "#/components/Button";
+import { FormActions } from "#/components/FormActions";
+import { FormSection } from "#/components/FormSection";
 import { Input } from "#/components/Input";
 import { LanguageSelect } from "#/components/LanguageSelect";
+import { Select } from "#/components/Select";
 import { useGroups } from "#/hooks/useGroups";
 
 export interface UserFormValues {
@@ -20,6 +24,8 @@ interface UserFormProps {
 	isSubmitting?: boolean;
 	submitLabel?: string;
 	isCreate?: boolean;
+	/** Shows the ghost "Peruuta" button next to the submit button */
+	onCancel?: () => void;
 }
 
 export function UserForm({
@@ -28,6 +34,7 @@ export function UserForm({
 	isSubmitting = false,
 	submitLabel,
 	isCreate = false,
+	onCancel,
 }: UserFormProps) {
 	const { t } = useTranslation();
 	const { data: groups, isLoading: loadingGroups } = useGroups();
@@ -60,113 +67,93 @@ export function UserForm({
 				e.stopPropagation();
 				form.handleSubmit();
 			}}
-			className="space-y-4 max-w-md"
+			className="space-y-6"
 		>
-			{/* Name Field */}
-			<form.Field
-				name="name"
-				validators={{
-					onChange: ({ value }) =>
-						!value ? t("nimiOnPakollinen", "Nimi on pakollinen") : undefined,
-				}}
-			>
-				{(field) => {
-					const hasError = Boolean(field.state.meta.errors.length);
-					return (
-						<div className="space-y-1">
-							<label
-								htmlFor={field.name}
-								className="text-xs font-medium text-stone-700 dark:text-stone-300"
-							>
-								{t("nimi", "Nimi")}
-							</label>
+			<FormSection title={t("perustiedot", "Perustiedot")}>
+				<form.Field
+					name="name"
+					validators={{
+						onChange: ({ value }) =>
+							!value ? t("nimiOnPakollinen", "Nimi on pakollinen") : undefined,
+					}}
+				>
+					{(field) => (
+						<Field
+							id={field.name}
+							label={t("nimi", "Nimi")}
+							required
+							errors={field.state.meta.errors}
+						>
 							<Input
 								id={field.name}
 								type="text"
 								value={field.state.value}
 								onChange={(e) => field.handleChange(e.target.value)}
 								onBlur={field.handleBlur}
-								isError={hasError}
+								isError={Boolean(field.state.meta.errors.length)}
+								aria-required="true"
 								placeholder={t("esimNimi", "Matti Meikäläinen")}
 							/>
-							{hasError && (
-								<p className="text-[11px] text-red-500">
-									{field.state.meta.errors.join(", ")}
-								</p>
-							)}
-						</div>
-					);
-				}}
-			</form.Field>
+						</Field>
+					)}
+				</form.Field>
 
-			{/* Email Field */}
-			<form.Field
-				name="email"
-				validators={{
-					onChange: ({ value }) =>
-						!value
-							? t("shkpostiOnPakollinen", "Sähköposti on pakollinen")
-							: !/\S+@\S+\.\S+/.test(value)
-								? t(
-										"annaKelvollinenSahkoposti",
-										"Anna kelvollinen sähköpostiosoite",
-									)
-								: undefined,
-				}}
-			>
-				{(field) => {
-					const hasError = Boolean(field.state.meta.errors.length);
-					return (
-						<div className="space-y-1">
-							<label
-								htmlFor={field.name}
-								className="text-xs font-medium text-stone-700 dark:text-stone-300"
-							>
-								{t("shkposti", "Sähköposti")}
-							</label>
+				<form.Field
+					name="email"
+					validators={{
+						onChange: ({ value }) =>
+							!value
+								? t("shkpostiOnPakollinen", "Sähköposti on pakollinen")
+								: !/\S+@\S+\.\S+/.test(value)
+									? t(
+											"annaKelvollinenSahkoposti",
+											"Anna kelvollinen sähköpostiosoite",
+										)
+									: undefined,
+					}}
+				>
+					{(field) => (
+						<Field
+							id={field.name}
+							label={t("shkposti", "Sähköposti")}
+							required
+							errors={field.state.meta.errors}
+						>
 							<Input
 								id={field.name}
 								type="email"
 								value={field.state.value}
 								onChange={(e) => field.handleChange(e.target.value)}
 								onBlur={field.handleBlur}
-								isError={hasError}
+								isError={Boolean(field.state.meta.errors.length)}
+								aria-required="true"
 								placeholder={t("esimSahkoposti", "nimi@esimerkki.fi")}
 							/>
-							{hasError && (
-								<p className="text-[11px] text-red-500">
-									{field.state.meta.errors.join(", ")}
-								</p>
-							)}
-						</div>
-					);
-				}}
-			</form.Field>
+						</Field>
+					)}
+				</form.Field>
 
-			{/* Group Field */}
-			<form.Field
-				name="group_id"
-				validators={{
-					onChange: ({ value }) =>
-						!value ? t("valitseRyhma", "Valitse ryhmä") : undefined,
-				}}
-			>
-				{(field) => {
-					const hasError = Boolean(field.state.meta.errors.length);
-					return (
-						<div className="space-y-1">
-							<label
-								htmlFor={field.name}
-								className="text-xs font-medium text-stone-700 dark:text-stone-300"
-							>
-								{t("ryhm", "Ryhmä")}
-							</label>
-							<select
+				<form.Field
+					name="group_id"
+					validators={{
+						onChange: ({ value }) =>
+							!value ? t("valitseRyhma", "Valitse ryhmä") : undefined,
+					}}
+				>
+					{(field) => (
+						<Field
+							id={field.name}
+							label={t("ryhm", "Ryhmä")}
+							required
+							errors={field.state.meta.errors}
+						>
+							<Select
 								id={field.name}
 								value={field.state.value}
 								onChange={(e) => field.handleChange(e.target.value)}
 								onBlur={field.handleBlur}
-								className="w-full px-3 py-2 text-sm bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+								isError={Boolean(field.state.meta.errors.length)}
+								aria-required="true"
 							>
 								<option value="" disabled>
 									{t("valitseRyhm", "Valitse ryhmä...")}
@@ -176,113 +163,136 @@ export function UserForm({
 										{grp.name}
 									</option>
 								))}
-							</select>
-							{hasError && (
-								<p className="text-[11px] text-red-500">
-									{field.state.meta.errors.join(", ")}
-								</p>
-							)}
-						</div>
-					);
-				}}
-			</form.Field>
+							</Select>
+						</Field>
+					)}
+				</form.Field>
 
-			{/* Language Field */}
-			<form.Field name="language">
-				{(field) => (
-					<div className="space-y-1">
-						<label
-							htmlFor={field.name}
-							className="text-xs font-medium text-stone-700 dark:text-stone-300"
-						>
-							{t("kieli", "Kieli")}
-						</label>
-						<LanguageSelect
+				<form.Field name="language">
+					{(field) => (
+						<Field
 							id={field.name}
-							value={field.state.value}
-							onChange={field.handleChange}
-							onBlur={field.handleBlur}
-						/>
-						<p className="text-[11px] text-stone-500">
-							{t(
+							label={t("kieli", "Kieli")}
+							helper={t(
 								"kieliKuvausSahkoposti",
 								"Käyttäjän sähköpostiviestit lähetetään tällä kielellä.",
 							)}
-						</p>
-					</div>
-				)}
-			</form.Field>
+						>
+							<LanguageSelect
+								id={field.name}
+								value={field.state.value}
+								onChange={field.handleChange}
+								onBlur={field.handleBlur}
+							/>
+						</Field>
+					)}
+				</form.Field>
+			</FormSection>
 
-			{/* Password Field */}
-			<form.Field
-				name="password"
-				validators={{
-					onChange: ({ value }) =>
-						isCreate && !value
-							? t("salasanaOnPakollinen", "Salasana on pakollinen")
-							: value && value.length < 8
-								? t(
-										"salasananOnOltavaVhintn8Merkki",
-										"Salasanan on oltava vähintään 8 merkkiä",
-									)
-								: undefined,
-				}}
-			>
-				{(field) => {
-					const hasError = Boolean(field.state.meta.errors.length);
-					return (
-						<div className="space-y-1">
-							<label
-								htmlFor={field.name}
-								className="text-xs font-medium text-stone-700 dark:text-stone-300"
-							>
-								{isCreate
+			<FormSection title={t("salasana", "Salasana")}>
+				<form.Field
+					name="password"
+					validators={{
+						onChange: ({ value }) =>
+							isCreate && !value
+								? t("salasanaOnPakollinen", "Salasana on pakollinen")
+								: value && value.length < 8
+									? t(
+											"salasananOnOltavaVhintn8Merkki",
+											"Salasanan on oltava vähintään 8 merkkiä",
+										)
+									: undefined,
+					}}
+				>
+					{(field) => (
+						<Field
+							id={field.name}
+							label={
+								isCreate
 									? t("salasana", "Salasana")
 									: t(
 											"uusiSalasanaJtTyhjksiJosEiMuuteta",
 											"Uusi salasana (jätä tyhjäksi jos ei muuteta)",
-										)}
-							</label>
+										)
+							}
+							required={isCreate}
+							errors={field.state.meta.errors}
+						>
 							<Input
 								id={field.name}
 								type="password"
 								value={field.state.value}
 								onChange={(e) => field.handleChange(e.target.value)}
 								onBlur={field.handleBlur}
-								isError={hasError}
+								isError={Boolean(field.state.meta.errors.length)}
+								aria-required={isCreate ? "true" : undefined}
+								autoComplete="new-password"
 								placeholder="••••••••"
 							/>
-							{hasError && (
-								<p className="text-[11px] text-red-500">
-									{field.state.meta.errors.join(", ")}
-								</p>
-							)}
-						</div>
-					);
-				}}
-			</form.Field>
+						</Field>
+					)}
+				</form.Field>
+			</FormSection>
 
-			{/* Submit Button */}
 			<form.Subscribe
 				selector={(state) => [state.canSubmit, state.isSubmitting]}
 			>
 				{([canSubmit, formSubmitting]) => (
-					<Button
-						type="submit"
-						disabled={!canSubmit || isSubmitting || formSubmitting}
-						className="w-full flex items-center justify-center gap-2 mt-4"
-					>
-						{isSubmitting || formSubmitting ? (
-							<Loader2 className="animate-spin" size={16} />
-						) : (
-							<>
-								<Save size={16} />
-								<span>{submitLabel ?? t("tallenna", "Tallenna")}</span>
-							</>
-						)}
-					</Button>
+					<FormActions onCancel={onCancel}>
+						<Button
+							type="submit"
+							disabled={!canSubmit || isSubmitting || formSubmitting}
+						>
+							{(isSubmitting || formSubmitting) && (
+								<Loader2 className="animate-spin" size={16} />
+							)}
+							<span>{submitLabel ?? t("tallenna", "Tallenna")}</span>
+						</Button>
+					</FormActions>
 				)}
 			</form.Subscribe>
 		</form>
+	);
+}
+
+function Field({
+	id,
+	label,
+	required,
+	helper,
+	errors,
+	children,
+}: {
+	id: string;
+	label: string;
+	required?: boolean;
+	helper?: string;
+	errors?: unknown[];
+	children: ReactNode;
+}) {
+	return (
+		<div className="space-y-1">
+			<label
+				htmlFor={id}
+				className="text-sm font-medium text-stone-900 dark:text-stone-100"
+			>
+				{label}
+				{required && (
+					<span aria-hidden="true" className="text-red-600">
+						{" *"}
+					</span>
+				)}
+			</label>
+			{children}
+			{helper && (
+				<p className="text-xs text-stone-600 dark:text-stone-400">{helper}</p>
+			)}
+			{errors && errors.length > 0 && (
+				<p className="flex items-center gap-1 text-xs text-red-600 dark:text-red-400">
+					<AlertCircle size={12} aria-hidden="true" />
+					{errors.join(", ")}
+				</p>
+			)}
+		</div>
 	);
 }

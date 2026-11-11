@@ -1,115 +1,83 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
-	Eye,
+	ArrowDown,
+	ArrowUp,
+	ArrowUpDown,
 	FileSpreadsheet,
 	Loader2,
 	Plus,
+	Search,
 	Shield,
-	User as UserIcon,
-	Users,
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "#/components/Button";
-import { Chip } from "#/components/Chip";
+import { Callout } from "#/components/Callout";
+import { EmptyState } from "#/components/EmptyState";
+import { FilterBar } from "#/components/FilterBar";
+import { Input } from "#/components/Input";
 import { LANGUAGE_LABELS } from "#/components/LanguageSelect";
+import { PageContainer } from "#/components/PageContainer";
+import { PageHeader } from "#/components/PageHeader";
+import { Select } from "#/components/Select";
+import { StatusChip } from "#/components/StatusChip";
 import { useIsAdmin } from "#/hooks/useAuth";
 import { useGroups } from "#/hooks/useGroups";
-import { type User, useBulkUpdateUsers, useUsers } from "#/hooks/useUsers";
-import { SUPPORTED_LANGUAGES } from "#/i18n";
+import { useBulkUpdateUsers, useUsers } from "#/hooks/useUsers";
 import { requireAdminGuard } from "#/utils/authGuard";
-import { readable_uuid } from "#/utils/uuid";
+import { cn } from "#/utils/cn";
 
 export const Route = createFileRoute("/_app/admin/users/")({
 	beforeLoad: async ({ context }) => {
 		await requireAdminGuard(context);
 	},
-	component: RouteComponent,
+	component: UserList,
 });
 
-function UserCard({
-	user,
-	groupName,
-	selectable,
-	selected,
-	onToggle,
+type SortKey = "name" | "group" | "language";
+const PAGE_SIZE = 50;
+
+function SortHeader({
+	label,
+	column,
+	sort,
+	onSort,
+	className,
 }: {
-	user: User;
-	groupName?: string;
-	selectable: boolean;
-	selected: boolean;
-	onToggle: () => void;
+	label: string;
+	column: SortKey;
+	sort: { key: SortKey; dir: "asc" | "desc" };
+	onSort: (key: SortKey) => void;
+	className?: string;
 }) {
-	const { t } = useTranslation();
+	const active = sort.key === column;
+	const Icon = !active ? ArrowUpDown : sort.dir === "asc" ? ArrowUp : ArrowDown;
 	return (
-		<li className="p-3 border-2 border-stone-800 dark:border-stone-700 flex flex-col justify-between gap-3 rounded-md bg-stone-50 dark:bg-stone-900 shadow-xs hover:border-purple-600 dark:hover:border-purple-500 transition-colors min-w-0">
-			<div className="space-y-2 min-w-0">
-				{/* Header: Name, Email and ID Chip */}
-				<div className="flex items-start justify-between gap-2 min-w-0">
-					{selectable && (
-						<input
-							type="checkbox"
-							checked={selected}
-							onChange={onToggle}
-							aria-label={t("valitseKayttaja", "Valitse {{name}}", {
-								name: user.name || user.email,
-							})}
-							className="mt-1 h-4 w-4 shrink-0 accent-purple-600 cursor-pointer"
-						/>
-					)}
-					<div className="flex-1 truncate">
-						<h3 className="font-bold text-sm md:text-base text-stone-900 dark:text-stone-100 truncate">
-							{user.name || user.email}
-						</h3>
-						{user.name && (
-							<p className="text-xs text-stone-500 dark:text-stone-400 truncate">
-								{user.email}
-							</p>
-						)}
-					</div>
-					<Chip>{readable_uuid(user.id)}</Chip>
-				</div>
-
-				{/* Group Details */}
-				<div className="flex items-center gap-1.5 text-xs text-stone-500 dark:text-stone-400">
-					<Users size={14} className="shrink-0" />
-					<span className="truncate">{groupName ?? "Ei ryhmää"}</span>
-					<span className="ml-auto font-mono uppercase">{user.language}</span>
-				</div>
-			</div>
-
-			{/* Bottom Controls & Role Badge */}
-			<div className="flex items-center justify-between gap-2 pt-2 border-t border-stone-200 dark:border-stone-800 shrink-0">
-				{user.role === "admin" ? (
-					<span className="inline-flex items-center gap-1 text-[10px] font-mono text-amber-700 dark:text-amber-400 bg-amber-100 dark:bg-amber-950/60 px-1.5 py-0.5 rounded border border-amber-300 dark:border-amber-800">
-						<Shield size={10} />
-						<span>{t("admin", "Admin")}</span>
-					</span>
-				) : (
-					<span className="inline-flex items-center gap-1 text-[10px] font-mono text-stone-600 dark:text-stone-400 bg-stone-200/60 dark:bg-stone-800 px-1.5 py-0.5 rounded">
-						<UserIcon size={10} />
-						<span>{t("kyttj", "Käyttäjä")}</span>
-					</span>
-				)}
-
-				<Button
-					variant="secondary"
-					size="sm"
-					asChild
-					className="gap-1.5 text-xs"
-				>
-					<Link to="/admin/users/$id" params={{ id: user.id }}>
-						<span>{t("nyt", "Näytä")}</span>
-						<Eye size={14} />
-					</Link>
-				</Button>
-			</div>
-		</li>
+		<th
+			scope="col"
+			aria-sort={
+				active ? (sort.dir === "asc" ? "ascending" : "descending") : "none"
+			}
+			className={cn("px-3 py-2 text-left font-normal", className)}
+		>
+			<button
+				type="button"
+				onClick={() => onSort(column)}
+				className="focus-ring inline-flex items-center gap-1 font-mono text-xs uppercase tracking-wider hover:text-stone-900 dark:hover:text-stone-100"
+			>
+				{label}
+				<Icon
+					size={12}
+					aria-hidden="true"
+					className={cn(!active && "opacity-50")}
+				/>
+			</button>
+		</th>
 	);
 }
 
 function UserList() {
-	const { t } = useTranslation();
+	const { t, i18n } = useTranslation();
 	const { isAdmin } = useIsAdmin();
 	const {
 		data: users,
@@ -122,6 +90,40 @@ function UserList() {
 	const [targetGroupId, setTargetGroupId] = useState("");
 	const [targetLanguage, setTargetLanguage] = useState("");
 	const [bulkErrors, setBulkErrors] = useState<string[]>([]);
+	const [query, setQuery] = useState("");
+	const [sort, setSort] = useState<{ key: SortKey; dir: "asc" | "desc" }>({
+		key: "name",
+		dir: "asc",
+	});
+	const [limit, setLimit] = useState(PAGE_SIZE);
+
+	const groupsMap = useMemo(
+		() => new Map(groups?.map((g) => [g.id, g.name])),
+		[groups],
+	);
+
+	const rows = useMemo(() => {
+		const needle = query.trim().toLowerCase();
+		const collator = new Intl.Collator(i18n.language, { sensitivity: "base" });
+		const keyOf = (u: NonNullable<typeof users>[number]) =>
+			sort.key === "group"
+				? (groupsMap.get(u.group_id) ?? "")
+				: sort.key === "language"
+					? u.language
+					: u.name || u.email;
+		return (users ?? [])
+			.filter(
+				(u) =>
+					!needle ||
+					u.name.toLowerCase().includes(needle) ||
+					u.email.toLowerCase().includes(needle) ||
+					(groupsMap.get(u.group_id) ?? "").toLowerCase().includes(needle),
+			)
+			.sort(
+				(a, b) =>
+					(sort.dir === "asc" ? 1 : -1) * collator.compare(keyOf(a), keyOf(b)),
+			);
+	}, [users, query, sort, groupsMap, i18n.language]);
 
 	// Drop selections for users that no longer exist (e.g. after a refetch)
 	const selectedUsers = useMemo(
@@ -131,7 +133,7 @@ function UserList() {
 
 	if (loadingUsers || loadingGroups) {
 		return (
-			<div className="p-8 flex items-center justify-center gap-2 text-stone-500">
+			<div className="flex items-center gap-2 py-8 text-stone-600 dark:text-stone-400">
 				<Loader2 className="animate-spin" size={18} />
 				<span>{t("ladataanKyttji", "Ladataan käyttäjiä...")}</span>
 			</div>
@@ -140,24 +142,41 @@ function UserList() {
 
 	if (errorUsers) {
 		return (
-			<div className="p-4 text-xs text-rose-600 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 rounded-md">
+			<Callout variant="danger">
 				{t("virheLadattaessaTietoja", "Virhe ladattaessa tietoja.")}
-			</div>
+			</Callout>
 		);
 	}
 
-	const groupsMap = new Map(groups?.map((g) => [g.id, g.name]));
-	const allSelected =
-		(users?.length ?? 0) > 0 && selectedUsers.length === users?.length;
+	const visibleRows = rows.slice(0, limit);
+	const allFilteredSelected =
+		rows.length > 0 && rows.every((u) => selectedIds.has(u.id));
 	const canApply =
 		selectedUsers.length > 0 &&
 		(targetGroupId !== "" || targetLanguage !== "") &&
 		!bulkUpdate.isPending;
 
+	const toggleSort = (key: SortKey) =>
+		setSort((prev) =>
+			prev.key === key
+				? { key, dir: prev.dir === "asc" ? "desc" : "asc" }
+				: { key, dir: "asc" },
+		);
+
 	const toggleUser = (id: string) =>
 		setSelectedIds((prev) => {
 			const next = new Set(prev);
 			if (!next.delete(id)) next.add(id);
+			return next;
+		});
+
+	const toggleAllFiltered = () =>
+		setSelectedIds((prev) => {
+			const next = new Set(prev);
+			for (const u of rows) {
+				if (allFilteredSelected) next.delete(u.id);
+				else next.add(u.id);
+			}
 			return next;
 		});
 
@@ -179,72 +198,83 @@ function UserList() {
 		}
 	};
 
-	const selectClass =
-		"px-3 py-1.5 text-sm bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500";
+	const checkboxClass = "h-4 w-4 cursor-pointer accent-purple-600";
 
 	return (
-		<div className="flex flex-col gap-4 p-2 sm:p-4 flex-1 min-h-0 min-w-0">
-			{/* Header & Admin Action */}
-			<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 shrink-0 border-b border-stone-200 dark:border-stone-800 pb-3">
-				<div>
-					<h1 className="text-lg sm:text-xl font-bold tracking-tight text-stone-900 dark:text-stone-100 flex items-center gap-2">
-						<UserIcon size={20} className="text-stone-500" />
-						<span>{t("kyttjt", "Käyttäjät")}</span>
-					</h1>
-					<p className="text-xs text-stone-500">
-						{t("yhteensaKayttajia", "Yhteensä {{count}} käyttäjää", {
-							count: users?.length || 0,
-						})}
-					</p>
+		<PageContainer>
+			<PageHeader
+				title={t("kyttjt", "Käyttäjät")}
+				subtitle={t("yhteensaKayttajia", "Yhteensä {{count}} käyttäjää", {
+					count: users?.length ?? 0,
+				})}
+				actions={
+					isAdmin && (
+						<>
+							<Button asChild>
+								<Link to="/admin/users/create">
+									<Plus size={16} />
+									<span>{t("rekisteriKyttj", "Rekisteröi käyttäjä")}</span>
+								</Link>
+							</Button>
+							<Button variant="outline" asChild>
+								<Link to="/admin/users/batch-register">
+									<FileSpreadsheet size={16} />
+									<span>{t("massaRekisterointi", "Massarekisteröinti")}</span>
+								</Link>
+							</Button>
+						</>
+					)
+				}
+			/>
+
+			<FilterBar>
+				<div className="relative w-full max-w-sm">
+					<Search
+						size={14}
+						aria-hidden="true"
+						className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-stone-600 dark:text-stone-400"
+					/>
+					<Input
+						type="search"
+						size="sm"
+						value={query}
+						onChange={(e) => {
+							setQuery(e.target.value);
+							setLimit(PAGE_SIZE);
+						}}
+						aria-label={t("haeKayttajia", "Hae käyttäjiä")}
+						placeholder={t(
+							"haeKayttajiaPlaceholder",
+							"Hae nimellä, sähköpostilla tai ryhmällä",
+						)}
+						className="pl-8"
+					/>
 				</div>
+				<span className="text-xs text-stone-600 dark:text-stone-400">
+					{t("naytetaanMaara", "Näytetään {{shown}} / {{total}}", {
+						shown: Math.min(limit, rows.length),
+						total: rows.length,
+					})}
+				</span>
+			</FilterBar>
 
-				{isAdmin && (
-					<div className="flex items-center gap-2 shrink-0">
-						<Button variant="secondary" asChild size="sm" className="gap-1.5">
-							<Link to="/admin/users/batch-register">
-								<FileSpreadsheet size={16} />
-								<span>{t("massaRekisterointi", "Massarekisteröinti")}</span>
-							</Link>
-						</Button>
-						<Button asChild size="sm" className="gap-1.5">
-							<Link to="/admin/users/create">
-								<Plus size={16} />
-								<span>{t("rekisteriKyttj", "Rekisteröi käyttäjä")}</span>
-							</Link>
-						</Button>
-					</div>
-				)}
-			</div>
-
-			{/* Bulk actions */}
-			{isAdmin && (users?.length ?? 0) > 0 && (
-				<div className="flex flex-col gap-2 p-3 border border-stone-200 dark:border-stone-800 rounded-md bg-stone-100 dark:bg-stone-900/60">
-					<div className="flex flex-wrap items-center gap-3">
-						<label className="flex items-center gap-2 text-sm font-medium cursor-pointer">
-							<input
-								type="checkbox"
-								checked={allSelected}
-								onChange={() =>
-									setSelectedIds(
-										allSelected
-											? new Set()
-											: new Set((users ?? []).map((u) => u.id)),
-									)
-								}
-								className="h-4 w-4 accent-purple-600 cursor-pointer"
-							/>
-							<span>{t("valitseKaikki", "Valitse kaikki")}</span>
-						</label>
-						<span className="text-xs text-stone-500">
+			{isAdmin && selectedUsers.length > 0 && (
+				<section
+					aria-label={t("massamuutokset", "Massamuutokset")}
+					className="space-y-2 rounded-md border-2 border-stone-800 bg-stone-50 p-3 dark:border-stone-300 dark:bg-stone-900"
+				>
+					<div className="flex flex-wrap items-center gap-2">
+						<span className="text-sm font-medium">
 							{t("valittuMaara", "{{count}} valittu", {
 								count: selectedUsers.length,
 							})}
 						</span>
-						<select
+						<Select
+							size="sm"
+							wrapperClassName="w-auto"
 							aria-label={t("siirraRyhmaan", "Siirrä ryhmään")}
 							value={targetGroupId}
 							onChange={(e) => setTargetGroupId(e.target.value)}
-							className={selectClass}
 						>
 							<option value="">
 								{t("siirraRyhmaanPlaceholder", "-- Siirrä ryhmään --")}
@@ -254,56 +284,173 @@ function UserList() {
 									{g.name}
 								</option>
 							))}
-						</select>
-						<select
-							aria-label={t("asetaKieli", "Aseta kieli")}
+						</Select>
+						<LanguageSelectWithPlaceholder
 							value={targetLanguage}
-							onChange={(e) => setTargetLanguage(e.target.value)}
-							className={selectClass}
-						>
-							<option value="">
-								{t("asetaKieliPlaceholder", "-- Aseta kieli --")}
-							</option>
-							{SUPPORTED_LANGUAGES.map((code) => (
-								<option key={code} value={code}>
-									{LANGUAGE_LABELS[code]}
-								</option>
-							))}
-						</select>
+							onChange={setTargetLanguage}
+							label={t("asetaKieli", "Aseta kieli")}
+							placeholder={t("asetaKieliPlaceholder", "-- Aseta kieli --")}
+						/>
 						<Button size="sm" disabled={!canApply} onClick={handleApply}>
 							{bulkUpdate.isPending && (
 								<Loader2 className="animate-spin" size={14} />
 							)}
 							<span>{t("toteutaMuutokset", "Toteuta muutokset")}</span>
 						</Button>
+						<Button
+							size="sm"
+							variant="ghost"
+							onClick={() => setSelectedIds(new Set())}
+						>
+							{t("tyhjennaValinta", "Tyhjennä valinta")}
+						</Button>
 					</div>
 					{bulkErrors.length > 0 && (
-						<ul className="text-xs text-rose-600 list-disc pl-5">
+						<ul className="list-disc pl-5 text-xs text-red-600 dark:text-red-400">
 							{bulkErrors.map((e) => (
 								<li key={e}>{e}</li>
 							))}
 						</ul>
 					)}
+				</section>
+			)}
+
+			{rows.length === 0 ? (
+				<EmptyState title={t("eiHakutuloksia", "Ei hakutuloksia")} />
+			) : (
+				<div className="overflow-x-auto rounded-md border-2 border-stone-800 bg-stone-50 dark:border-stone-300 dark:bg-stone-900">
+					<table className="w-full text-sm">
+						<thead className="sticky top-0 bg-stone-100 text-stone-700 dark:bg-stone-800 dark:text-stone-300">
+							<tr className="border-b border-stone-300 dark:border-stone-700">
+								{isAdmin && (
+									<th scope="col" className="w-10 px-3 py-2">
+										<input
+											type="checkbox"
+											checked={allFilteredSelected}
+											onChange={toggleAllFiltered}
+											aria-label={t("valitseKaikki", "Valitse kaikki")}
+											className={checkboxClass}
+										/>
+									</th>
+								)}
+								<SortHeader
+									label={t("nimi", "Nimi")}
+									column="name"
+									sort={sort}
+									onSort={toggleSort}
+								/>
+								<SortHeader
+									label={t("ryhm", "Ryhmä")}
+									column="group"
+									sort={sort}
+									onSort={toggleSort}
+									className="hidden sm:table-cell"
+								/>
+								<SortHeader
+									label={t("kieli", "Kieli")}
+									column="language"
+									sort={sort}
+									onSort={toggleSort}
+									className="hidden md:table-cell"
+								/>
+							</tr>
+						</thead>
+						<tbody className="divide-y divide-stone-200 dark:divide-stone-800">
+							{visibleRows.map((u) => (
+								<tr
+									key={u.id}
+									className="hover:bg-stone-100 dark:hover:bg-stone-800/60"
+								>
+									{isAdmin && (
+										<td className="px-3 py-2">
+											<input
+												type="checkbox"
+												checked={selectedIds.has(u.id)}
+												onChange={() => toggleUser(u.id)}
+												aria-label={t("valitseKayttaja", "Valitse {{name}}", {
+													name: u.name || u.email,
+												})}
+												className={checkboxClass}
+											/>
+										</td>
+									)}
+									<td className="min-w-0 px-3 py-2">
+										<div className="flex flex-wrap items-center gap-x-2">
+											<Link
+												to="/admin/users/$id"
+												params={{ id: u.id }}
+												className="focus-ring font-medium text-purple-700 hover:underline dark:text-purple-400"
+											>
+												{u.name || u.email}
+											</Link>
+											{u.role === "admin" && (
+												<StatusChip variant="info" icon={Shield}>
+													{t("admin", "Ylläpitäjä")}
+												</StatusChip>
+											)}
+										</div>
+										{u.name && (
+											<p className="break-all text-xs text-stone-600 dark:text-stone-400">
+												{u.email}
+											</p>
+										)}
+										<p className="text-xs text-stone-600 sm:hidden dark:text-stone-400">
+											{groupsMap.get(u.group_id) ?? t("eiRyhmaa", "Ei ryhmää")}
+										</p>
+									</td>
+									<td className="hidden px-3 py-2 sm:table-cell">
+										{groupsMap.get(u.group_id) ?? t("eiRyhmaa", "Ei ryhmää")}
+									</td>
+									<td className="hidden px-3 py-2 md:table-cell">
+										{LANGUAGE_LABELS[u.language] ?? u.language}
+									</td>
+								</tr>
+							))}
+						</tbody>
+					</table>
 				</div>
 			)}
 
-			{/* Grid Listing */}
-			<ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-				{users?.map((usr) => (
-					<UserCard
-						key={usr.id}
-						user={usr}
-						groupName={groupsMap.get(usr.group_id)}
-						selectable={isAdmin}
-						selected={selectedIds.has(usr.id)}
-						onToggle={() => toggleUser(usr.id)}
-					/>
-				))}
-			</ul>
-		</div>
+			{rows.length > limit && (
+				<div className="flex justify-center">
+					<Button
+						variant="outline"
+						onClick={() => setLimit((l) => l + PAGE_SIZE)}
+					>
+						{t("naytaLisaa", "Näytä lisää")}
+					</Button>
+				</div>
+			)}
+		</PageContainer>
 	);
 }
 
-function RouteComponent() {
-	return <UserList />;
+/** Language select whose empty value means "do not change" */
+function LanguageSelectWithPlaceholder({
+	value,
+	onChange,
+	label,
+	placeholder,
+}: {
+	value: string;
+	onChange: (v: string) => void;
+	label: string;
+	placeholder: string;
+}) {
+	return (
+		<Select
+			size="sm"
+			wrapperClassName="w-auto"
+			aria-label={label}
+			value={value}
+			onChange={(e) => onChange(e.target.value)}
+		>
+			<option value="">{placeholder}</option>
+			{Object.entries(LANGUAGE_LABELS).map(([code, name]) => (
+				<option key={code} value={code}>
+					{name}
+				</option>
+			))}
+		</Select>
+	);
 }
