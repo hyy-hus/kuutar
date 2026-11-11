@@ -54,6 +54,7 @@ import {
 	formatMinutes,
 	resolveDefaultDuration,
 } from "#/utils/duration";
+import { findRestrictionConflicts } from "#/utils/restrictionConflicts";
 import {
 	compactLocalizedRichText,
 	type LocalizedRichText,
@@ -818,6 +819,7 @@ export function ReservationForm({
 								restrictionConflicts={restrictionConflicts}
 								setRestrictionConflicts={setRestrictionConflicts}
 								isAdmin={isAdmin}
+								userGroupId={currentUser?.group_id}
 								reservationId={reservationId}
 							/>
 						)}
@@ -1380,6 +1382,8 @@ interface AutomaticConflictCheckerProps {
 		items: { title: string; start_time: string; end_time: string }[] | null,
 	) => void;
 	isAdmin: boolean;
+	/** Restrictions that exempt this group are not reported */
+	userGroupId?: string;
 	reservationId?: string;
 }
 
@@ -1394,6 +1398,7 @@ function AutomaticConflictChecker({
 	restrictionConflicts,
 	setRestrictionConflicts,
 	isAdmin,
+	userGroupId,
 	reservationId,
 }: AutomaticConflictCheckerProps) {
 	const { t } = useTranslation();
@@ -1440,48 +1445,12 @@ function AutomaticConflictChecker({
 		}
 
 		if (!isAdmin && activeRestrictions && activeRestrictions.length > 0) {
-			const foundRestrictions: {
-				title: string;
-				start_time: string;
-				end_time: string;
-			}[] = [];
-
-			for (const proposed of allOccurrences) {
-				const pStart = new Date(proposed.start_time).getTime();
-				const pEnd = new Date(proposed.end_time).toISOString();
-				const pEndMs = new Date(proposed.end_time).getTime();
-
-				for (const restr of activeRestrictions) {
-					for (const rOcc of restr.occurrences || []) {
-						if (
-							!rOcc.resource_id ||
-							rOcc.resource_id === proposed.resource_id
-						) {
-							const rStartMs = new Date(rOcc.start_time).getTime();
-							const rEndMs = new Date(rOcc.end_time).getTime();
-
-							// The same restriction can overlap once per selected resource;
-							// list each title/time pair only once
-							const isDuplicate = foundRestrictions.some(
-								(f) =>
-									f.title === restr.title &&
-									f.start_time === proposed.start_time &&
-									f.end_time === pEnd,
-							);
-							if (pStart < rEndMs && pEndMs > rStartMs && !isDuplicate) {
-								foundRestrictions.push({
-									title: restr.title,
-									start_time: proposed.start_time,
-									end_time: pEnd,
-								});
-							}
-						}
-					}
-				}
-			}
-
 			setRestrictionConflicts(
-				foundRestrictions.length > 0 ? foundRestrictions : [],
+				findRestrictionConflicts(
+					allOccurrences,
+					activeRestrictions,
+					userGroupId,
+				),
 			);
 		} else {
 			setRestrictionConflicts(null);
@@ -1509,6 +1478,7 @@ function AutomaticConflictChecker({
 		recurrence,
 		activeRestrictions,
 		isAdmin,
+		userGroupId,
 		reservationId,
 		mutateAsync,
 		setConflicts,
