@@ -912,5 +912,11 @@
 	"poikkeuksetMaara": "Exceptions ({{excluded}} / {{total}} days)",
 	"eiYhtaan": "None",
 	"kaikkiPaivatPoissuljettu": "Every day is excluded, so no occurrences will be created.",
-	"poikkeuksetNaytetaanEnsimmaiset": "The list shows the first {{count}} days."
+	"poikkeuksetNaytetaanEnsimmaiset": "The list shows the first {{count}} days.",
+	"teema": "Theme",
+	"teemaVaalea": "Light",
+	"teemaTumma": "Dark",
+	"laajennaValikko": "Expand menu",
+	"tiivistaValikko": "Collapse menu",
+	"paavalikko": "Main menu"
 }

@@ -912,5 +912,11 @@
 	"poikkeuksetMaara": "Poikkeukset ({{excluded}} / {{total}} päivää)",
 	"eiYhtaan": "Ei yhtään",
 	"kaikkiPaivatPoissuljettu": "Kaikki päivät on poissuljettu, joten toistoa ei synny.",
-	"poikkeuksetNaytetaanEnsimmaiset": "Listassa näytetään ensimmäiset {{count}} päivää."
+	"poikkeuksetNaytetaanEnsimmaiset": "Listassa näytetään ensimmäiset {{count}} päivää.",
+	"teema": "Teema",
+	"teemaVaalea": "Vaalea",
+	"teemaTumma": "Tumma",
+	"laajennaValikko": "Laajenna valikko",
+	"tiivistaValikko": "Pienennä valikko",
+	"paavalikko": "Päävalikko"
 }

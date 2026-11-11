@@ -912,5 +912,11 @@
 	"poikkeuksetMaara": "Undantag ({{excluded}} / {{total}} dagar)",
 	"eiYhtaan": "Ingen",
 	"kaikkiPaivatPoissuljettu": "Alla dagar är uteslutna, så ingen upprepning uppstår.",
-	"poikkeuksetNaytetaanEnsimmaiset": "Listan visar de första {{count}} dagarna."
+	"poikkeuksetNaytetaanEnsimmaiset": "Listan visar de första {{count}} dagarna.",
+	"teema": "Tema",
+	"teemaVaalea": "Ljust",
+	"teemaTumma": "Mörkt",
+	"laajennaValikko": "Expandera menyn",
+	"tiivistaValikko": "Förminska menyn",
+	"paavalikko": "Huvudmeny"
 }

@@ -1,32 +1,38 @@
 import { useTranslation } from "react-i18next";
-import { SUPPORTED_LANGUAGES, selectLanguage } from "#/i18n";
+import { LANGUAGE_LABELS } from "#/components/LanguageSelect";
+import { SegmentedControl } from "#/components/SegmentedControl";
+import { selectLanguage } from "#/i18n";
+import { cn } from "#/utils/cn";
 
-export default function LocaleSwitcher() {
-	const { i18n } = useTranslation();
-	const currentLocale = i18n.language || "fi";
+/** Display order; same as `LocaleTabs` */
+const ORDER: string[] = ["fi", "sv", "en"];
+
+interface LocaleSwitcherProps {
+	/** Stretch to the container and share the width between the segments */
+	fullWidth?: boolean;
+}
+
+/** FI | SV | EN switch; the full language name is the tooltip of each segment */
+export default function LocaleSwitcher({ fullWidth }: LocaleSwitcherProps) {
+	const { t, i18n } = useTranslation();
+	const current = ORDER.includes(i18n.language) ? i18n.language : "fi";
 
 	return (
-		<div className="flex items-center gap-2 text-inherit">
-			<div className="flex gap-1">
-				{SUPPORTED_LANGUAGES.map((locale) => {
-					const isActive = locale === currentLocale;
-					return (
-						<button
-							key={locale}
-							type="button"
-							onClick={() => selectLanguage(locale)}
-							aria-pressed={isActive}
-							className={`cursor-pointer px-3 py-1.5 rounded-full border text-xs font-medium tracking-tight transition-colors ${
-								isActive
-									? "bg-stone-900 text-stone-50 border-stone-800 dark:bg-stone-200 dark:text-stone-900 font-bold"
-									: "bg-transparent border-stone-300 hover:bg-stone-200 dark:border-stone-700 dark:hover:bg-stone-800"
-							}`}
-						>
-							{locale.toUpperCase()}
-						</button>
-					);
-				})}
-			</div>
-		</div>
+		<SegmentedControl<string>
+			aria-label={t("kieli", "Kieli")}
+			value={current}
+			onChange={(code) => void selectLanguage(code)}
+			className={cn(
+				fullWidth && "w-full [&>button]:flex-1 [&>button]:justify-center",
+			)}
+			options={ORDER.map((code) => ({
+				value: code,
+				label: (
+					<span title={LANGUAGE_LABELS[code]} lang={code}>
+						{code.toUpperCase()}
+					</span>
+				),
+			}))}
+		/>
 	);
 }

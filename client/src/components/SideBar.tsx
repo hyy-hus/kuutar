@@ -7,7 +7,6 @@ import {
 	Calendar,
 	CalendarCheck,
 	CalendarSync,
-	ChevronDown,
 	FileText,
 	Folder,
 	Globe,
@@ -23,23 +22,30 @@ import {
 	UserCog,
 	Users,
 } from "lucide-react";
+import { Popover } from "radix-ui";
 import { useTranslation } from "react-i18next";
-import { LANGUAGE_LABELS } from "#/components/LanguageSelect";
+import { AccountArea } from "#/components/AccountArea";
+import LocaleSwitcher from "#/components/LocaleSwitcher";
+import { type Theme, ThemeSwitcher } from "#/components/ThemeSwitcher";
+import { Tooltip } from "#/components/Tooltip";
 import { useAuth, useIsAdmin } from "#/hooks/useAuth";
-import { SUPPORTED_LANGUAGES, selectLanguage } from "#/i18n";
+import { cn } from "#/utils/cn";
 
 interface SideBarProps {
-	isSidebarOpen: boolean;
-	theme: "light" | "dark";
-	toggleTheme: () => void;
+	/** Icon-only rail (desktop); labels move into tooltips */
+	collapsed?: boolean;
+	theme: Theme;
+	onThemeChange: (theme: Theme) => void;
 }
 
-export function SideBar({ theme, toggleTheme }: SideBarProps) {
-	const { t, i18n } = useTranslation();
+export function SideBar({
+	collapsed = false,
+	theme,
+	onThemeChange,
+}: SideBarProps) {
+	const { t } = useTranslation();
 	const { user } = useAuth();
 	const { isAdmin } = useIsAdmin();
-
-	const currentLocale = i18n.language || "fi";
 
 	type Access = "public" | "auth" | "admin";
 	interface NavItem {
@@ -180,10 +186,11 @@ export function SideBar({ theme, toggleTheme }: SideBarProps) {
 
 	const renderLink = (item: NavItem) => {
 		const Icon = item.icon;
-		return (
+		const link = (
 			<Link
 				key={item.to}
 				to={item.to}
+				aria-label={collapsed ? item.label : undefined}
 				activeProps={{
 					className:
 						"bg-stone-800 text-stone-100 dark:bg-stone-200 dark:text-stone-900",
@@ -192,21 +199,43 @@ export function SideBar({ theme, toggleTheme }: SideBarProps) {
 					className:
 						"text-stone-800 dark:text-stone-200 hover:bg-stone-200 dark:hover:bg-stone-800",
 				}}
-				className="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-colors focus-visible:outline-2 focus-visible:outline-purple-500 focus-visible:outline-offset-2"
+				className={cn(
+					"focus-ring flex items-center rounded-md text-sm font-medium transition-colors",
+					collapsed ? "mx-auto size-10 justify-center" : "gap-3 px-3 py-2",
+				)}
 			>
-				<Icon size={16} className="shrink-0" />
-				<span className="truncate">{item.label}</span>
+				<Icon size={collapsed ? 18 : 16} className="shrink-0" />
+				{!collapsed && <span className="truncate">{item.label}</span>}
 			</Link>
+		);
+		return collapsed ? (
+			<Tooltip key={item.to} content={item.label}>
+				{link}
+			</Tooltip>
+		) : (
+			link
 		);
 	};
 
+	const iconButtonClass =
+		"focus-ring mx-auto flex size-10 cursor-pointer items-center justify-center rounded-md text-stone-800 transition-colors hover:bg-stone-200 dark:text-stone-200 dark:hover:bg-stone-800";
+
 	return (
-		<div className="flex flex-col justify-between h-full gap-4">
+		<div className="flex h-full flex-col justify-between gap-4">
 			{/* Navigation Links */}
-			<nav className="space-y-4">
-				{visibleGroups.map((group) => (
-					<div key={group.key} className="space-y-1">
-						{group.label && (
+			<nav aria-label={t("paavalikko", "Päävalikko")}>
+				{visibleGroups.map((group, index) => (
+					<div
+						key={group.key}
+						className={cn(
+							"space-y-1",
+							index > 0 &&
+								(collapsed
+									? "mt-3 border-t border-stone-300 pt-3 dark:border-stone-700"
+									: "mt-4"),
+						)}
+					>
+						{group.label && !collapsed && (
 							<div className="px-3 pt-1 pb-0.5 text-xs font-mono uppercase tracking-wider text-stone-600 dark:text-stone-400">
 								{group.label}
 							</div>
@@ -217,44 +246,67 @@ export function SideBar({ theme, toggleTheme }: SideBarProps) {
 			</nav>
 
 			<div className="space-y-3">
-				{meItem && <div>{renderLink(meItem)}</div>}
+				<div className="space-y-3 border-t border-stone-300 pt-3 dark:border-stone-700">
+					<AccountArea collapsed={collapsed} />
+					{meItem && <div>{renderLink(meItem)}</div>}
+				</div>
 
-				{/* Bottom Controls Bar */}
-				<div className="pt-3 border-t border-stone-300 dark:border-stone-800 flex gap-1.5 items-center shrink-0">
-					{/* Language Select Dropdown */}
-					<div className="relative flex-1">
-						<div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-stone-500 dark:text-stone-400">
-							<Globe size={14} />
-						</div>
-						<select
-							value={currentLocale}
-							onChange={(e) => selectLanguage(e.target.value)}
-							className="w-full h-8 pl-8 pr-7 text-sm font-medium rounded-md border border-stone-300 dark:border-stone-700 bg-stone-200/60 dark:bg-stone-800/60 text-stone-900 dark:text-stone-100 appearance-none cursor-pointer hover:bg-stone-200 dark:hover:bg-stone-800 transition-colors focus:outline-none focus:ring-1 focus:ring-purple-600"
-						>
-							{SUPPORTED_LANGUAGES.map((code) => (
-								<option
-									key={code}
-									value={code}
-									className="bg-stone-100 dark:bg-stone-900 text-stone-900 dark:text-stone-100"
+				{/* Language and theme */}
+				<div className="shrink-0 space-y-2 border-t border-stone-300 pt-3 dark:border-stone-700">
+					{collapsed ? (
+						<div className="space-y-1">
+							<Popover.Root>
+								<Tooltip content={t("kieli", "Kieli")}>
+									<Popover.Trigger asChild>
+										<button
+											type="button"
+											aria-label={t("kieli", "Kieli")}
+											className={iconButtonClass}
+										>
+											<Globe size={18} aria-hidden="true" />
+										</button>
+									</Popover.Trigger>
+								</Tooltip>
+								<Popover.Portal>
+									<Popover.Content
+										side="right"
+										align="end"
+										sideOffset={8}
+										className="z-[60] rounded-md border border-stone-300 bg-stone-50 p-2 dark:border-stone-700 dark:bg-stone-900"
+									>
+										<LocaleSwitcher />
+									</Popover.Content>
+								</Popover.Portal>
+							</Popover.Root>
+							<Tooltip
+								content={
+									theme === "light"
+										? t("teemaTumma", "Tumma")
+										: t("teemaVaalea", "Vaalea")
+								}
+							>
+								<button
+									type="button"
+									aria-label={t("toggleTheme", "Vaihda teemaa")}
+									onClick={() =>
+										onThemeChange(theme === "light" ? "dark" : "light")
+									}
+									className={iconButtonClass}
 								>
-									{LANGUAGE_LABELS[code] || code.toUpperCase()}
-								</option>
-							))}
-						</select>
-						<div className="absolute inset-y-0 right-0 pr-2 flex items-center pointer-events-none text-stone-400">
-							<ChevronDown size={13} />
+									{theme === "light" ? (
+										<Sun size={18} aria-hidden="true" />
+									) : (
+										<Moon size={18} aria-hidden="true" />
+									)}
+								</button>
+							</Tooltip>
 						</div>
-					</div>
-
-					{/* Theme Switcher Button */}
-					<button
-						type="button"
-						onClick={toggleTheme}
-						aria-label={t("toggleTheme", "Vaihda teemaa")}
-						className="h-8 w-8 shrink-0 rounded-md border border-stone-300 dark:border-stone-700 bg-stone-200/60 dark:bg-stone-800/60 text-stone-700 dark:text-stone-300 hover:bg-stone-200 dark:hover:bg-stone-800 hover:text-stone-900 dark:hover:text-stone-100 flex items-center justify-center transition-colors focus:outline-none focus:ring-1 focus:ring-purple-600"
-					>
-						{theme === "light" ? <Sun size={14} /> : <Moon size={14} />}
-					</button>
+					) : (
+						<>
+							<LocaleSwitcher fullWidth />
+							<ThemeSwitcher value={theme} onChange={onThemeChange} fullWidth />
+						</>
+					)}
 				</div>
 			</div>
 		</div>
