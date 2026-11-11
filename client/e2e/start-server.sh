@@ -14,6 +14,9 @@ psql "$ADMIN_URL" -v ON_ERROR_STOP=1 -q \
 
 # Same host/credentials as the admin URL, different database.
 export DATABASE_URL="${ADMIN_URL%/*}/$E2E_DB"
+# The database is empty while the server compiles (migrations run at startup), so the sqlx
+# query macros must use the committed .sqlx/ data instead of checking against it.
+export SQLX_OFFLINE=true
 export BIND_ADDR="127.0.0.1:${E2E_API_PORT:-3100}"
 export JWT_SECRET="e2e-only-secret"
 export SEED_ADMIN_EMAIL="admin@localhost"

@@ -1,14 +1,17 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Loader2, Mail } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Callout } from "#/components/Callout";
 import { EmailTemplateEditor } from "#/components/EmailTemplateEditor";
+import { PageContainer } from "#/components/PageContainer";
+import { PageHeader } from "#/components/PageHeader";
+import { SegmentedControl } from "#/components/SegmentedControl";
 import {
 	type EmailTemplateKey,
 	useEmailTemplates,
 } from "#/hooks/useEmailTemplates";
 import { requireAdminGuard } from "#/utils/authGuard";
-import { cn } from "#/utils/cn";
 
 export const Route = createFileRoute("/_app/admin/email-templates")({
 	beforeLoad: async ({ context }) => {
@@ -54,7 +57,7 @@ function EmailTemplatesPage() {
 
 	if (isLoading) {
 		return (
-			<div className="p-8 flex items-center justify-center gap-2 text-stone-500">
+			<div className="flex items-center gap-2 text-stone-600 dark:text-stone-400">
 				<Loader2 className="animate-spin" size={18} />
 				<span>{t("ladataan", "Ladataan...")}</span>
 			</div>
@@ -63,69 +66,51 @@ function EmailTemplatesPage() {
 
 	if (isError || !templates) {
 		return (
-			<div className="p-4 text-xs text-rose-600 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 rounded-md">
+			<Callout variant="danger">
 				{t("virheLadattaessaTietoja", "Virhe ladattaessa tietoja.")}
-			</div>
+			</Callout>
 		);
 	}
 
 	const template = templates.find((item) => item.key === selected);
 
 	return (
-		<div className="flex flex-col gap-4 p-2 sm:p-4 min-w-0">
-			<div className="border-b border-stone-200 dark:border-stone-800 pb-3">
-				<h1 className="text-lg sm:text-xl font-bold tracking-tight text-stone-900 dark:text-stone-100 flex items-center gap-2">
-					<Mail size={20} className="text-stone-500" />
-					<span>{t("sahkopostipohjat", "Sähköpostipohjat")}</span>
-				</h1>
-				<p className="text-xs text-stone-500">
-					{t(
-						"sahkopostipohjatKuvaus",
-						"Muokkaa automaattisesti lähetettävien sähköpostien sisältöä. Käyttäjä saa viestin omalla kielellään.",
-					)}
-				</p>
-			</div>
+		<PageContainer>
+			<PageHeader
+				title={t("sahkopostipohjat", "Sähköpostipohjat")}
+				subtitle={t(
+					"sahkopostipohjatKuvaus",
+					"Muokkaa automaattisesti lähetettäviä sähköposteja. Käyttäjä saa viestin omalla kielellään.",
+				)}
+			/>
 
-			<div role="tablist" className="flex flex-wrap gap-2">
-				{templates.map((item) => (
-					<button
-						key={item.key}
-						type="button"
-						role="tab"
-						aria-selected={item.key === selected}
-						onClick={() => setSelected(item.key)}
-						className={cn(
-							"px-3 py-1.5 text-xs font-medium rounded-md border-2 transition-colors flex items-center gap-1.5",
-							item.key === selected
-								? "bg-stone-800 text-white border-stone-800 dark:bg-stone-200 dark:text-stone-900 dark:border-stone-200"
-								: "border-stone-300 dark:border-stone-700 text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800",
-						)}
-					>
-						{names[item.key].title}
-						{item.customized && (
-							<span
-								role="img"
-								aria-label={t("muokattu", "Muokattu")}
-								title={t("muokattu", "Muokattu")}
-								className="w-1.5 h-1.5 rounded-full bg-emerald-500"
-							/>
-						)}
-					</button>
-				))}
-			</div>
-
-			{template && (
-				<>
+			<div className="space-y-2">
+				<SegmentedControl
+					role="tablist"
+					aria-label={t("sahkopostipohja", "Sähköpostipohja")}
+					className="max-w-full overflow-x-auto"
+					value={selected}
+					onChange={setSelected}
+					options={templates.map((item) => ({
+						value: item.key,
+						label: names[item.key].title,
+						dot: item.customized,
+					}))}
+				/>
+				{template && (
 					<p className="text-xs text-stone-600 dark:text-stone-400">
 						{names[template.key].hint}
 					</p>
-					{/* Remount after save/reset so the editor resyncs with the stored version */}
-					<EmailTemplateEditor
-						key={`${template.key}-${template.updated_at ?? "default"}`}
-						template={template}
-					/>
-				</>
+				)}
+			</div>
+
+			{template && (
+				/* Remount after save/reset so the editor resyncs with the stored version */
+				<EmailTemplateEditor
+					key={`${template.key}-${template.updated_at ?? "default"}`}
+					template={template}
+				/>
 			)}
-		</div>
+		</PageContainer>
 	);
 }

@@ -2,6 +2,8 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { BackLink } from "#/components/BackLink";
+import { FormLayout } from "#/components/FormLayout";
+import { PageHeader } from "#/components/PageHeader";
 import {
 	ResourceForm,
 	type ResourceFormValues,
@@ -46,18 +48,21 @@ function CreateResourcePage() {
 	};
 
 	return (
-		<div className="p-4 space-y-4">
-			<BackLink to="/resources">
-				{t("takaisinResursseihin", "Takaisin resursseihin")}
-			</BackLink>
-			<h1 className="text-xl font-bold text-stone-900 dark:text-stone-100">
-				{t("uusiResurssi", "Uusi resurssi")}
-			</h1>
+		<FormLayout width="guided">
+			<PageHeader
+				back={
+					<BackLink to="/resources">
+						{t("takaisinResursseihin", "Takaisin resursseihin")}
+					</BackLink>
+				}
+				title={t("uusiResurssi", "Uusi resurssi")}
+			/>
 			<ResourceForm
 				onSubmit={handleSubmit}
+				onCancel={() => navigate({ to: "/resources" })}
 				isSubmitting={createResource.isPending}
 				submitLabel={t("luoResurssi", "Luo resurssi")}
 			/>
-		</div>
+		</FormLayout>
 	);
 }

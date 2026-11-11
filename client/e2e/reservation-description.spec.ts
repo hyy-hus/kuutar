@@ -1,12 +1,12 @@
 import { expect, test } from "@playwright/test";
 
-test("the reservation form warns that the description is public", async ({
+test("the reservation form says who sees the title and description", async ({
 	page,
 }) => {
 	await page.goto("/reservations/create");
 
 	await expect(
-		page.getByText("The description is public and visible to everyone.", {
+		page.getByText("The title and description are shown to everyone in the calendar", {
 			exact: false,
 		}),
 	).toBeVisible();
@@ -17,6 +17,6 @@ test("the reservation form warns that the description is public", async ({
 	await message.fill("Please set up the projector");
 	await expect(message).toHaveValue("Please set up the projector");
 	await expect(
-		page.getByText("Only you and the administrators can see this."),
+		page.getByText("Only admins see this, not the calendar."),
 	).toBeVisible();
 });

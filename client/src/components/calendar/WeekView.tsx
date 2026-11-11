@@ -2,7 +2,11 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { type CalendarEvent, splitEventsByDay } from "#/utils/calendarUtils";
+import {
+	type CalendarEvent,
+	splitEventsByDay,
+	todayColumnIndex,
+} from "#/utils/calendarUtils";
 import { formatDateTimeLocal, useDateFormatter } from "#/utils/date";
 import { DayColumn } from "./DayColumn";
 
@@ -21,52 +25,28 @@ interface WeekViewProps {
 	onSlotDoubleClick?: (startTimeISO: string, endTimeISO: string) => void;
 }
 
-function CurrentTimeIndicator({
-	start,
-	days,
-	hourHeightRem,
-}: {
-	start: Date;
-	days: number;
-	hourHeightRem: number;
-}) {
+/** Current time, refreshed every minute */
+function useNow(): Date {
 	const [now, setNow] = useState(() => new Date());
-
 	useEffect(() => {
 		const timer = setInterval(() => setNow(new Date()), 60000);
 		return () => clearInterval(timer);
 	}, []);
+	return now;
+}
 
-	const todayDateOnly = new Date(
-		now.getFullYear(),
-		now.getMonth(),
-		now.getDate(),
-	).getTime();
-	const startDateOnly = new Date(
-		start.getFullYear(),
-		start.getMonth(),
-		start.getDate(),
-	).getTime();
-	const dayOffset = Math.round(
-		(todayDateOnly - startDateOnly) / (1000 * 60 * 60 * 24),
-	);
-
-	const isTodayVisible = dayOffset >= 0 && dayOffset < days;
-
-	if (!isTodayVisible) return null;
-
-	const minutesSinceMidnight = now.getHours() * 60 + now.getMinutes();
-	const topOffset = `calc(3rem + ${(minutesSinceMidnight / 60) * hourHeightRem}rem)`;
-
+/** Line at the current time, drawn inside today's column only */
+function NowLine({ now }: { now: Date }) {
+	const minutes = now.getHours() * 60 + now.getMinutes();
 	return (
 		<div
-			className="absolute left-0 right-0 z-10 pointer-events-none border-none"
-			style={{
-				top: topOffset,
-				gridColumn: `2 / -1`, // Starts strictly after the hour column and spans across all day columns
-			}}
+			data-testid="now-line"
+			aria-hidden="true"
+			className="absolute left-0 right-0 z-10 flex items-center pointer-events-none"
+			style={{ top: `${(minutes / 1440) * 100}%` }}
 		>
-			<div className="h-0.5 bg-rose-500/80 dark:bg-rose-400/80 w-full" />
+			<span className="-ml-1 size-2 shrink-0 rounded-full bg-purple-700 dark:bg-purple-400" />
+			<span className="h-0.5 flex-1 bg-purple-700 dark:bg-purple-400" />
 		</div>
 	);
 }
@@ -79,7 +59,9 @@ export function WeekView({
 	onSlotDoubleClick,
 }: WeekViewProps) {
 	const { t } = useTranslation();
-	const { formatTime, formatWeekday, formatDayMonth } = useDateFormatter();
+	const { formatTime, formatWeekdayShort, formatDayMonth } = useDateFormatter();
+	const now = useNow();
+	const todayColumn = todayColumnIndex(start, days, now);
 	const hours = hourDates.map((d) => formatTime(d));
 	const scrollRef = useRef<HTMLDivElement>(null);
 	const [hoveredCell, setHoveredCell] = useState<{
@@ -137,7 +119,8 @@ export function WeekView({
 		const targetDate = new Date(start);
 		targetDate.setDate(targetDate.getDate() + colIndex);
 
-		const weekday = formatWeekday(targetDate);
+		// Same short weekday as the month view's column headers
+		const weekday = formatWeekdayShort(targetDate);
 		const dayName = weekday.charAt(0).toUpperCase() + weekday.slice(1);
 		const dateFormatted = formatDayMonth(targetDate);
 
@@ -156,13 +139,6 @@ export function WeekView({
 					gridTemplateColumns: `3.5rem repeat(${days}, minmax(${days === 1 ? "100%" : "11rem"}, 1fr))`,
 				}}
 			>
-				{/* Current Time Indicator anchored to gridColumn */}
-				<CurrentTimeIndicator
-					start={start}
-					days={days}
-					hourHeightRem={hourHeightRem}
-				/>
-
 				{/* Grid Cells */}
 				{Array.from({ length: 25 }).map((_, row) =>
 					Array.from({ length: days + 1 }).map((__, col) => {
@@ -202,7 +178,7 @@ export function WeekView({
 									}}
 								>
 									{isHovered && (
-										<span className="w-full text-center text-[10px] font-mono text-purple-700 dark:text-purple-300 bg-purple-200/60 dark:bg-purple-900/60 rounded px-1 py-0.5 mt-auto">
+										<span className="w-full text-center text-xs tabular-nums text-purple-800 dark:text-purple-300 bg-purple-200/60 dark:bg-purple-900/60 rounded px-1 py-0.5 mt-auto">
 											{hours[row - 1]} {t("kaksoisklikkaa", "(Kaksoisklikkaa)")}
 										</span>
 									)}
@@ -219,7 +195,7 @@ export function WeekView({
 										: ""
 								} ${
 									col === 0
-										? "sticky left-0 z-25 bg-stone-100 dark:bg-stone-900 border-r border-stone-300 dark:border-stone-700 font-mono text-stone-500 cursor-default justify-center text-[11px]"
+										? "sticky left-0 z-25 bg-stone-100 dark:bg-stone-900 border-r border-stone-300 dark:border-stone-700 tabular-nums text-stone-600 dark:text-stone-400 cursor-default justify-center text-xs"
 										: ""
 								} ${row === 0 && col === 0 ? "z-40" : ""}`}
 								style={{
@@ -229,10 +205,12 @@ export function WeekView({
 							>
 								{row === 0 && col > 0 && (
 									<div className="flex flex-col items-center">
-										<span className="font-bold text-xs truncate">
+										<span
+											className={`font-semibold text-xs truncate ${col - 1 === todayColumn ? "text-purple-700 dark:text-purple-400" : ""}`}
+										>
 											{dayName}
 										</span>
-										<span className="text-[10px] font-normal text-stone-500">
+										<span className="text-xs font-normal tabular-nums text-stone-600 dark:text-stone-400">
 											{dateFormatted}
 										</span>
 									</div>
@@ -249,7 +227,7 @@ export function WeekView({
 					<div
 						// biome-ignore lint/suspicious/noArrayIndexKey: Grid columns are static and non-reorderable
 						key={`day-${i}`}
-						className="pointer-events-none"
+						className="pointer-events-none relative"
 						style={{ gridColumn: i + 2, gridRow: "2 / span 24" }}
 					>
 						<DayColumn
@@ -257,6 +235,7 @@ export function WeekView({
 							columnIndex={i + 2}
 							hourHeightRem={hourHeightRem}
 						/>
+						{i === todayColumn && <NowLine now={now} />}
 					</div>
 				))}
 			</div>

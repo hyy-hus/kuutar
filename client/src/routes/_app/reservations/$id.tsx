@@ -1,40 +1,47 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import {
-	ArrowLeft,
-	Clock,
-	Edit,
-	Mail,
-	Phone,
-	Shield,
-	Trash2,
-	User as UserIcon,
-	X,
-} from "lucide-react";
+import { Check, Mail, Pencil, Phone, RotateCcw, Trash2, X } from "lucide-react";
+import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
+import { BackLink } from "#/components/BackLink";
 import { Button } from "#/components/Button";
+import { Callout } from "#/components/Callout";
 import { CancelReservationDialog } from "#/components/CancelReservationDialog";
-import { Chip } from "#/components/Chip";
 import { DetachOccurrenceButton } from "#/components/DetachOccurrenceButton";
+import { DetailLayout } from "#/components/DetailLayout";
+import { OccurrenceList } from "#/components/OccurrenceList";
 import { OutlookBadge } from "#/components/OutlookBadge";
+import { PageContainer } from "#/components/PageContainer";
+import { ReservationStatusChip } from "#/components/ReservationStatusChip";
 import { RichTextContent } from "#/components/RichTextContent";
 import { useAuth, useIsAdmin } from "#/hooks/useAuth";
 import {
 	useDeleteReservation,
 	useReservation,
 	useSplitReservation,
+	useUpdateReservation,
 } from "#/hooks/useReservations";
 import { useResources } from "#/hooks/useResorces";
 import { useDateFormatter } from "#/utils/date";
 import { canSplitOccurrence, planSplit } from "#/utils/series";
-import { readable_uuid } from "#/utils/uuid";
 
 export const Route = createFileRoute("/_app/reservations/$id")({
 	component: ViewReservationPage,
 });
 
+function Section({ title, children }: { title: string; children: ReactNode }) {
+	return (
+		<section className="space-y-3">
+			<h2 className="text-lg font-semibold text-stone-900 dark:text-stone-100">
+				{title}
+			</h2>
+			{children}
+		</section>
+	);
+}
+
 function ViewReservationPage() {
 	const { t } = useTranslation();
-	const { formatDate } = useDateFormatter();
+	const { formatDateTime } = useDateFormatter();
 	const { id } = Route.useParams();
 	const navigate = useNavigate();
 	const { isAdmin } = useIsAdmin();
@@ -44,26 +51,28 @@ function ViewReservationPage() {
 	const { data: resources } = useResources();
 	const deleteReservation = useDeleteReservation();
 	const splitReservation = useSplitReservation();
+	const updateReservation = useUpdateReservation();
 
 	if (isLoading) {
 		return (
-			<div className="p-8 text-xs text-stone-500">
-				{t("ladataanVarausta", "Ladataan varausta...")}
-			</div>
+			<PageContainer>
+				<p className="text-sm text-stone-600 dark:text-stone-400">
+					{t("ladataanVarausta", "Ladataan varausta...")}
+				</p>
+			</PageContainer>
 		);
 	}
 
 	if (isError || !reservation || !reservation.title) {
 		return (
-			<div className="p-8 text-center text-stone-500 space-y-2">
-				<p>{t("varaustaEiLytynyt", "Varausta ei löytynyt.")}</p>
-				<Link
-					to="/calendar"
-					className="text-purple-600 hover:underline text-xs"
-				>
-					{t("palaaKalenteriin", "Palaa kalenteriin")}
-				</Link>
-			</div>
+			<PageContainer width="default">
+				<BackLink to="/reservations">
+					{t("takaisinOmiinVarauksiin", "Takaisin omiin varauksiin")}
+				</BackLink>
+				<Callout variant="danger">
+					{t("varaustaEiLytynyt", "Varausta ei löytynyt.")}
+				</Callout>
+			</PageContainer>
 		);
 	}
 
@@ -74,9 +83,13 @@ function ViewReservationPage() {
 	const canEdit =
 		!isOutlook && (isAdmin || (!!user && user.id === reservation.user_id));
 	const isCancelled = reservation.status === "cancelled";
+	const isPending = reservation.status === "pending";
+	// Round applications are decided by the round's allocation, never approved one by one
+	const isRoundApplication = !!reservation.round_id;
+	const canDecide = isAdmin && isPending && !isOutlook && !isRoundApplication;
 	const canCancel = canEdit && !isCancelled;
 	const occurrences = reservation.occurrences || [];
-	const resourceMap = new Map(resources?.map((r) => [r.id, r.name]));
+	const resourceNames = new Map(resources?.map((r) => [r.id, r.name]));
 
 	const rrule = reservation.rrule;
 	const handleDetach = async (occurrence: (typeof occurrences)[number]) => {
@@ -102,220 +115,219 @@ function ViewReservationPage() {
 		}
 	};
 
-	return (
-		<div className="max-w-2xl mx-auto p-4 space-y-6">
-			{/* Top Nav */}
-			<div className="flex items-center justify-between">
-				<Link
-					to="/calendar"
-					className="inline-flex items-center gap-1 text-xs text-stone-500 hover:text-stone-800 dark:hover:text-stone-200"
+	const hasContact =
+		reservation.contact_person ||
+		reservation.contact_email ||
+		reservation.contact_phone ||
+		(isAdmin && reservation.admin_notes);
+
+	const actions = (
+		<>
+			{canDecide && (
+				<Button
+					disabled={updateReservation.isPending}
+					onClick={() =>
+						updateReservation.mutate({
+							id,
+							payload: { status: "confirmed" },
+						})
+					}
 				>
-					<ArrowLeft size={14} />
-					<span>{t("palaaKalenteriin", "Palaa kalenteriin")}</span>
-				</Link>
-
-				<div className="flex items-center gap-2">
-					{canEdit && (
-						<Link to="/reservations/edit/$id" params={{ id }}>
-							<Button variant="outline" size="sm" className="gap-1 text-xs">
-								<Edit size={14} />
-								<span>{t("muokkaa", "Muokkaa")}</span>
-							</Button>
-						</Link>
-					)}
-					{canCancel && (
-						<CancelReservationDialog
-							reservationId={id}
-							reservationTitle={reservation.title}
-							trigger={
-								<Button
-									variant="outline"
-									size="sm"
-									className="gap-1 text-xs text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40"
-								>
-									<X size={14} />
-									<span>{t("peruVaraus", "Peru varaus")}</span>
-								</Button>
-							}
-						/>
-					)}
-					{!isOutlook && isAdmin && (
-						<Button
-							variant="outline"
-							size="sm"
-							onClick={handleDelete}
-							disabled={deleteReservation.isPending}
-							className="gap-1 text-xs text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40"
-						>
-							<Trash2 size={14} />
-							<span>{t("poista", "Poista")}</span>
+					<Check size={16} aria-hidden="true" />
+					{t("hyvksy", "Hyväksy")}
+				</Button>
+			)}
+			{canEdit && (
+				<Button variant="outline" asChild>
+					<Link to="/reservations/edit/$id" params={{ id }}>
+						<Pencil size={16} aria-hidden="true" />
+						{t("muokkaa", "Muokkaa")}
+					</Link>
+				</Button>
+			)}
+			{canCancel && (
+				<CancelReservationDialog
+					reservationId={id}
+					reservationTitle={reservation.title}
+					trigger={
+						<Button variant="outline">
+							<X size={16} aria-hidden="true" />
+							{canDecide ? t("hylk", "Hylkää") : t("peruVaraus", "Peru varaus")}
 						</Button>
-					)}
-				</div>
-			</div>
+					}
+				/>
+			)}
+			{isAdmin && isCancelled && !isOutlook && (
+				<Button
+					variant="outline"
+					disabled={updateReservation.isPending}
+					onClick={() =>
+						updateReservation.mutate({ id, payload: { status: "pending" } })
+					}
+				>
+					<RotateCcw size={16} aria-hidden="true" />
+					{t("palautaOdottavaksi", "Palauta odottavaksi")}
+				</Button>
+			)}
+		</>
+	);
 
-			{/* Main Card */}
-			<div className="p-5 border border-stone-200 dark:border-stone-800 rounded-md bg-stone-50 dark:bg-stone-900 space-y-4">
-				<div className="flex items-start justify-between gap-3">
-					<div>
-						<h1 className="text-xl font-bold text-stone-900 dark:text-stone-100 flex items-center gap-2">
-							{reservation.title}
-							{isOutlook && <OutlookBadge />}
-						</h1>
-						{reservation.user_name && (
-							<p className="text-xs text-stone-600 dark:text-stone-400 flex items-center gap-1 mt-0.5">
-								<UserIcon size={12} className="text-purple-600 shrink-0" />
-								<span>
-									{t("varaaja", "Varaaja")}
-									{": "}
-									{reservation.user_name}
-								</span>
-								{isAdmin && reservation.user_email && (
-									<span className="text-stone-400 font-mono">
-										{"("}
-										{reservation.user_email}
-										{")"}
-									</span>
-								)}
-							</p>
-						)}
-						<RichTextContent
-							value={reservation.description}
-							className="text-xs text-stone-600 dark:text-stone-400 mt-2"
-						/>
-					</div>
-					<Chip>{readable_uuid(reservation.id)}</Chip>
-				</div>
-
-				{isCancelled && (
-					<div className="p-3 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 rounded space-y-1 text-xs text-rose-900 dark:text-rose-200">
-						<p className="font-semibold">
+	return (
+		<DetailLayout
+			title={reservation.title}
+			status={
+				<>
+					<ReservationStatusChip status={reservation.status} />
+					{isOutlook && <OutlookBadge />}
+				</>
+			}
+			subtitle={
+				reservation.user_name
+					? `${t("varaaja", "Varaaja")}: ${reservation.user_name}${
+							isAdmin && reservation.user_email
+								? ` (${reservation.user_email})`
+								: ""
+						}`
+					: undefined
+			}
+			back={
+				<BackLink to="/reservations">
+					{t("takaisinOmiinVarauksiin", "Takaisin omiin varauksiin")}
+				</BackLink>
+			}
+			actions={actions}
+			dangerZone={
+				!isOutlook && isAdmin ? (
+					<Button
+						variant="danger-outline"
+						onClick={handleDelete}
+						disabled={deleteReservation.isPending}
+					>
+						<Trash2 size={16} aria-hidden="true" />
+						{t("poista", "Poista")}
+					</Button>
+				) : undefined
+			}
+			technical={{
+				id: reservation.id,
+				createdAt: reservation.created_at,
+				updatedAt: reservation.updated_at,
+			}}
+		>
+			{isCancelled && (
+				<Callout
+					variant="danger"
+					title={
+						<>
 							{t("varausPeruttu", "Varaus on peruttu")}
 							{reservation.cancelled_at && (
-								<span className="font-normal">
+								<span className="font-normal tabular-nums">
 									{" · "}
-									{formatDate(reservation.cancelled_at)}
+									{formatDateTime(reservation.cancelled_at)}
 								</span>
 							)}
-						</p>
-						{reservation.cancel_reason && (
-							<p>
-								{t("peruutuksenSyy", "Peruutuksen syy")}
-								{": "}
-								{reservation.cancel_reason}
-							</p>
-						)}
-					</div>
-				)}
-
-				{/* Private message from the reserver (admin or owner) */}
-				{canSeeContact && reservation.message_to_admins && (
-					<div className="p-3 bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded space-y-1 text-xs">
-						<p className="font-semibold text-stone-800 dark:text-stone-200">
-							{t("viestiYllapidolle", "Viesti ylläpidolle")}
-						</p>
-						<p className="whitespace-pre-line text-stone-700 dark:text-stone-300">
-							{reservation.message_to_admins}
-						</p>
-					</div>
-				)}
-
-				{/* Contact Details Card (admin or owner) */}
-				{canSeeContact &&
-					(reservation.contact_person ||
-						reservation.contact_email ||
-						reservation.contact_phone ||
-						(isAdmin && reservation.admin_notes)) && (
-						<div className="p-3 bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-900 rounded space-y-2 text-xs">
-							<div className="flex items-center gap-1 font-semibold text-purple-900 dark:text-purple-300">
-								<Shield size={14} />
-								<span>{t("yhteystiedot", "Yhteystiedot")}</span>
-							</div>
-
-							{reservation.contact_person && (
-								<p className="text-stone-800 dark:text-stone-200">
-									<strong>
-										{t("yhteyshenkilo", "Yhteyshenkilö")}
-										{":"}
-									</strong>{" "}
-									{reservation.contact_person}
-								</p>
-							)}
-
-							<div className="flex flex-wrap gap-3 text-stone-700 dark:text-stone-300">
-								{reservation.contact_email && (
-									<span className="flex items-center gap-1">
-										<Mail size={12} />
-										<a
-											href={`mailto:${reservation.contact_email}`}
-											className="hover:underline"
-										>
-											{reservation.contact_email}
-										</a>
-									</span>
-								)}
-								{reservation.contact_phone && (
-									<span className="flex items-center gap-1">
-										<Phone size={12} />
-										<a
-											href={`tel:${reservation.contact_phone}`}
-											className="hover:underline"
-										>
-											{reservation.contact_phone}
-										</a>
-									</span>
-								)}
-							</div>
-
-							{isAdmin && reservation.admin_notes && (
-								<p className="whitespace-pre-line italic text-stone-600 dark:text-stone-400 pt-1 border-t border-purple-200 dark:border-purple-900">
-									<strong>
-										{t("muistiinpanot", "Muistiinpanot")}
-										{":"}
-									</strong>{" "}
-									{reservation.admin_notes}
-								</p>
-							)}
-						</div>
+						</>
+					}
+				>
+					{reservation.cancel_reason && (
+						<>
+							{t("peruutuksenSyy", "Peruutuksen syy")}
+							{": "}
+							{reservation.cancel_reason}
+						</>
 					)}
+				</Callout>
+			)}
 
-				{/* Occurrences List */}
-				<div className="space-y-2 pt-2 border-t border-stone-200 dark:border-stone-800">
-					<span className="text-xs font-semibold text-stone-700 dark:text-stone-300">
-						{t("varatutAjat", "Varatut ajat ja resurssit ({{count}})", {
-							count: occurrences.length,
-						})}
-					</span>
+			<RichTextContent
+				value={reservation.description}
+				className="text-sm text-stone-700 dark:text-stone-300"
+			/>
 
-					<div className="space-y-1.5 max-h-60 overflow-y-auto">
-						{occurrences.map((occ) => (
-							<div
-								key={occ.id}
-								className="flex items-center justify-between gap-2 p-2 bg-stone-100 dark:bg-stone-800/60 rounded border border-stone-200 dark:border-stone-800 text-xs font-mono"
-							>
-								<div className="flex items-center gap-1.5 text-stone-800 dark:text-stone-200">
-									<Clock size={14} className="text-purple-600 shrink-0" />
-									<span>
-										{formatDate(occ.start_time)}
-										{" →"} {formatDate(occ.end_time)}
-									</span>
-								</div>
-								<div className="flex items-center gap-1.5">
-									{canEdit && canSplitOccurrence(rrule, occurrences, occ) && (
-										<DetachOccurrenceButton
-											onDetach={() => handleDetach(occ)}
-											disabled={splitReservation.isPending}
-										/>
-									)}
-									<span className="text-[10px] font-sans font-medium px-1.5 py-0.5 rounded bg-purple-100 dark:bg-purple-950 text-purple-800 dark:text-purple-300 border border-purple-300 dark:border-purple-800">
-										{resourceMap.get(occ.resource_id) || occ.resource_id}
-									</span>
-								</div>
-							</div>
-						))}
-					</div>
-				</div>
-			</div>
-		</div>
+			<Section
+				title={t("varatutAjat", "Varatut ajat ja resurssit ({{count}})", {
+					count: occurrences.length,
+				})}
+			>
+				<OccurrenceList
+					occurrences={occurrences}
+					resourceNames={resourceNames}
+					renderAction={(occ) =>
+						canEdit && canSplitOccurrence(rrule, occurrences, occ) ? (
+							<DetachOccurrenceButton
+								onDetach={() => handleDetach(occ)}
+								disabled={splitReservation.isPending}
+							/>
+						) : null
+					}
+				/>
+			</Section>
+
+			{/* Private message from the reserver (admin or owner) */}
+			{canSeeContact && reservation.message_to_admins && (
+				<Section title={t("viestiYllapidolle", "Viesti ylläpidolle")}>
+					<p className="whitespace-pre-line text-sm text-stone-700 dark:text-stone-300">
+						{reservation.message_to_admins}
+					</p>
+				</Section>
+			)}
+
+			{canSeeContact && hasContact && (
+				<Section title={t("yhteystiedot", "Yhteystiedot")}>
+					<dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">
+						{reservation.contact_person && (
+							<>
+								<dt className="text-stone-600 dark:text-stone-400">
+									{t("yhteyshenkilo", "Yhteyshenkilö")}
+								</dt>
+								<dd>{reservation.contact_person}</dd>
+							</>
+						)}
+						{reservation.contact_email && (
+							<>
+								<dt className="text-stone-600 dark:text-stone-400">
+									<Mail size={14} className="inline" aria-hidden="true" />{" "}
+									{t("yhteysSähköposti", "Sähköposti")}
+								</dt>
+								<dd>
+									<a
+										href={`mailto:${reservation.contact_email}`}
+										className="text-purple-700 hover:underline dark:text-purple-400"
+									>
+										{reservation.contact_email}
+									</a>
+								</dd>
+							</>
+						)}
+						{reservation.contact_phone && (
+							<>
+								<dt className="text-stone-600 dark:text-stone-400">
+									<Phone size={14} className="inline" aria-hidden="true" />{" "}
+									{t("puhelinnumero", "Puhelinnumero")}
+								</dt>
+								<dd>
+									<a
+										href={`tel:${reservation.contact_phone}`}
+										className="text-purple-700 hover:underline dark:text-purple-400"
+									>
+										{reservation.contact_phone}
+									</a>
+								</dd>
+							</>
+						)}
+						{isAdmin && reservation.admin_notes && (
+							<>
+								<dt className="text-stone-600 dark:text-stone-400">
+									{t("muistiinpanot", "Muistiinpanot")}
+								</dt>
+								<dd className="whitespace-pre-line">
+									{reservation.admin_notes}
+								</dd>
+							</>
+						)}
+					</dl>
+				</Section>
+			)}
+		</DetailLayout>
 	);
 }

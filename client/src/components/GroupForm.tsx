@@ -1,7 +1,9 @@
 import { useForm } from "@tanstack/react-form";
-import { Loader2, Save } from "lucide-react";
+import { AlertCircle, Loader2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "#/components/Button";
+import { FormActions } from "#/components/FormActions";
+import { FormSection } from "#/components/FormSection";
 import { Input } from "#/components/Input";
 import { LocalizedRichTextEditor } from "#/components/LocalizedRichTextEditor";
 import type { CreateGroup } from "#/hooks/useGroups";
@@ -15,6 +17,8 @@ interface GroupFormProps {
 	onSubmit: (values: CreateGroup) => Promise<void>;
 	isSubmitting?: boolean;
 	submitLabel?: string;
+	/** Shows the ghost "Peruuta" button next to the submit button */
+	onCancel?: () => void;
 }
 
 export function GroupForm({
@@ -22,6 +26,7 @@ export function GroupForm({
 	onSubmit,
 	isSubmitting = false,
 	submitLabel,
+	onCancel,
 }: GroupFormProps) {
 	const { t } = useTranslation();
 	const form = useForm({
@@ -45,76 +50,80 @@ export function GroupForm({
 				e.stopPropagation();
 				form.handleSubmit();
 			}}
-			className="space-y-4 max-w-md"
+			className="space-y-6"
 		>
-			<form.Field
-				name="name"
-				validators={{
-					onChange: ({ value }) =>
-						!value ? t("nimiOnPakollinen", "Nimi on pakollinen") : undefined,
-				}}
-			>
-				{(field) => {
-					const hasError = Boolean(field.state.meta.errors.length);
-					return (
-						<div className="space-y-1">
-							<label
-								htmlFor={field.name}
-								className="text-xs font-medium text-stone-700 dark:text-stone-300"
-							>
-								{t("ryhmnNimi", "Ryhmän nimi")}
-							</label>
-							<Input
-								id={field.name}
-								value={field.state.value}
-								onChange={(e) => field.handleChange(e.target.value)}
-								onBlur={field.handleBlur}
-								isError={hasError}
-								placeholder={t("esimYllpitjt", "esim. Ylläpitäjät")}
-							/>
-							{hasError && (
-								<p className="text-[11px] text-red-500">
-									{field.state.meta.errors.join(", ")}
-								</p>
-							)}
-						</div>
-					);
-				}}
-			</form.Field>
+			<FormSection title={t("perustiedot", "Perustiedot")}>
+				<form.Field
+					name="name"
+					validators={{
+						onChange: ({ value }) =>
+							!value ? t("nimiOnPakollinen", "Nimi on pakollinen") : undefined,
+					}}
+				>
+					{(field) => {
+						const errors = field.state.meta.errors;
+						return (
+							<div className="space-y-1">
+								<label
+									htmlFor={field.name}
+									className="text-sm font-medium text-stone-900 dark:text-stone-100"
+								>
+									{t("ryhmnNimi", "Ryhmän nimi")}
+									<span aria-hidden="true" className="text-red-600">
+										{" *"}
+									</span>
+								</label>
+								<Input
+									id={field.name}
+									value={field.state.value}
+									onChange={(e) => field.handleChange(e.target.value)}
+									onBlur={field.handleBlur}
+									isError={errors.length > 0}
+									aria-required="true"
+									placeholder={t("esimYllpitjt", "esim. Ylläpitäjät")}
+								/>
+								{errors.length > 0 && (
+									<p className="flex items-center gap-1 text-xs text-red-600 dark:text-red-400">
+										<AlertCircle size={12} aria-hidden="true" />
+										{errors.join(", ")}
+									</p>
+								)}
+							</div>
+						);
+					}}
+				</form.Field>
 
-			<form.Field name="description">
-				{(field) => (
-					<div className="space-y-1">
-						<span className="text-xs font-medium text-stone-700 dark:text-stone-300">
-							{t("kuvaus", "Kuvaus")}
-						</span>
-						<LocalizedRichTextEditor
-							value={field.state.value}
-							onChange={field.handleChange}
-							label={t("kuvaus", "Kuvaus")}
-						/>
-					</div>
-				)}
-			</form.Field>
+				<form.Field name="description">
+					{(field) => (
+						<div className="space-y-1">
+							<span className="text-sm font-medium text-stone-900 dark:text-stone-100">
+								{t("kuvaus", "Kuvaus")}
+							</span>
+							<LocalizedRichTextEditor
+								value={field.state.value}
+								onChange={field.handleChange}
+								label={t("kuvaus", "Kuvaus")}
+							/>
+						</div>
+					)}
+				</form.Field>
+			</FormSection>
 
 			<form.Subscribe
 				selector={(state) => [state.canSubmit, state.isSubmitting]}
 			>
 				{([canSubmit, formSubmitting]) => (
-					<Button
-						type="submit"
-						disabled={!canSubmit || isSubmitting || formSubmitting}
-						className="w-full flex items-center justify-center gap-2 mt-4"
-					>
-						{isSubmitting || formSubmitting ? (
-							<Loader2 className="animate-spin" size={16} />
-						) : (
-							<>
-								<Save size={16} />
-								<span>{submitLabel ?? t("tallenna", "Tallenna")}</span>
-							</>
-						)}
-					</Button>
+					<FormActions onCancel={onCancel}>
+						<Button
+							type="submit"
+							disabled={!canSubmit || isSubmitting || formSubmitting}
+						>
+							{(isSubmitting || formSubmitting) && (
+								<Loader2 className="animate-spin" size={16} />
+							)}
+							<span>{submitLabel ?? t("tallenna", "Tallenna")}</span>
+						</Button>
+					</FormActions>
 				)}
 			</form.Subscribe>
 		</form>

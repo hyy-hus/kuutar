@@ -1,16 +1,14 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import {
-	AlertOctagon,
-	ArrowLeft,
-	Clock,
-	Edit,
-	Trash2,
-	Users,
-} from "lucide-react";
+import { Edit, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { BackLink } from "#/components/BackLink";
 import { Button } from "#/components/Button";
 import { Chip } from "#/components/Chip";
-import { DetachOccurrenceButton } from "#/components/DetachOccurrenceButton";
+import { DetailLayout } from "#/components/DetailLayout";
+import { EmptyState } from "#/components/EmptyState";
+import { OccurrenceListCollapsible } from "#/components/OccurrenceListCollapsible";
+import { PageContainer } from "#/components/PageContainer";
+import { useIsAdmin } from "#/hooks/useAuth";
 import { useGroups } from "#/hooks/useGroups";
 import { useResources } from "#/hooks/useResorces";
 import {
@@ -18,9 +16,7 @@ import {
 	useRestriction,
 	useSplitRestriction,
 } from "#/hooks/useRestrictions";
-import { useDateFormatter } from "#/utils/date";
 import { canSplitOccurrence, planSplit } from "#/utils/series";
-import { readable_uuid } from "#/utils/uuid";
 
 export const Route = createFileRoute("/_app/restrictions/$id")({
 	component: ViewRestrictionPage,
@@ -28,9 +24,9 @@ export const Route = createFileRoute("/_app/restrictions/$id")({
 
 function ViewRestrictionPage() {
 	const { t } = useTranslation();
-	const { formatDate } = useDateFormatter();
 	const { id } = Route.useParams();
 	const navigate = useNavigate();
+	const { isAdmin } = useIsAdmin();
 
 	const isValidUuid = Boolean(id && id.length > 8);
 
@@ -46,24 +42,25 @@ function ViewRestrictionPage() {
 
 	if (!isValidUuid || isError || (!isLoading && !restrictionWithOcc)) {
 		return (
-			<div className="p-8 text-center text-stone-500">
-				<p>{t("rajoitustaEiLytynyt", "Rajoitusta ei löytynyt.")}</p>
-				<Link
-					to="/admin/dashboard"
-					className="text-amber-600 hover:underline text-xs mt-2 inline-block"
-				>
-					{t("palaaHallintapaneeliin", "Palaa hallintapaneeliin")}
-				</Link>
-			</div>
+			<PageContainer width="default">
+				<BackLink to="/restrictions">
+					{t("takaisinRajoituksiin", "Takaisin rajoituksiin")}
+				</BackLink>
+				<EmptyState
+					title={t("rajoitustaEiLytynyt", "Rajoitusta ei löytynyt.")}
+				/>
+			</PageContainer>
 		);
 	}
 
 	// Also narrows restrictionWithOcc for the rest of the component
 	if (isLoading || !restrictionWithOcc) {
 		return (
-			<div className="p-8 text-xs text-stone-500">
-				{t("ladataanRajoitusta", "Ladataan rajoitusta...")}
-			</div>
+			<PageContainer width="default">
+				<p className="text-sm text-stone-600 dark:text-stone-400">
+					{t("ladataanRajoitusta", "Ladataan rajoitusta...")}
+				</p>
+			</PageContainer>
 		);
 	}
 
@@ -71,20 +68,14 @@ function ViewRestrictionPage() {
 	const groupMap = new Map(groups?.map((g) => [g.id, g.name]));
 
 	const occurrences = restrictionWithOcc.occurrences || [];
-
-	const exemptGroups =
-		restrictionWithOcc.exempt_group_ids.length > 0
-			? restrictionWithOcc.exempt_group_ids
-					.map((gId) => groupMap.get(gId) || gId)
-					.join(", ")
-			: t(
-					"eiPoikkeuksiaKaikkiEstetty",
-					"Ei sallittuja ryhmiä (rajoitus koskee kaikkia)",
-				);
+	const exemptGroupNames = restrictionWithOcc.exempt_group_ids.map(
+		(gId) => groupMap.get(gId) || gId,
+	);
 
 	const rrule = restrictionWithOcc.rrule;
-	const handleDetach = async (occurrence: (typeof occurrences)[number]) => {
-		if (!rrule) return;
+	const handleDetach = async (occurrenceId: string) => {
+		const occurrence = occurrences.find((o) => o.id === occurrenceId);
+		if (!rrule || !occurrence) return;
 		const created = await splitRestriction.mutateAsync({
 			id,
 			...planSplit(rrule, occurrences, occurrence),
@@ -102,122 +93,87 @@ function ViewRestrictionPage() {
 			)
 		) {
 			await deleteRestriction.mutateAsync(id);
-			navigate({ to: "/admin/dashboard" });
+			navigate({ to: "/restrictions" });
 		}
 	};
 
 	return (
-		<div className="max-w-2xl mx-auto p-4 space-y-6">
-			{/* Top Nav */}
-			<div className="flex items-center justify-between">
-				<Link
-					to="/admin/dashboard"
-					className="inline-flex items-center gap-1 text-xs text-stone-500 hover:text-stone-800 dark:hover:text-stone-200"
-				>
-					<ArrowLeft size={14} />
-					<span>{t("palaaHallintapaneeliin", "Palaa hallintapaneeliin")}</span>
-				</Link>
-
-				<div className="flex items-center gap-2">
-					<Link to="/restrictions/edit/$id" params={{ id }}>
-						<Button variant="outline" size="sm" className="gap-1 text-xs">
-							<Edit size={14} />
-							<span>{t("muokkaa", "Muokkaa")}</span>
-						</Button>
-					</Link>
+		<DetailLayout
+			back={
+				<BackLink to="/restrictions">
+					{t("takaisinRajoituksiin", "Takaisin rajoituksiin")}
+				</BackLink>
+			}
+			title={restrictionWithOcc.title}
+			subtitle={restrictionWithOcc.description ?? undefined}
+			actions={
+				isAdmin && (
+					<Button variant="outline" asChild>
+						<Link to="/restrictions/edit/$id" params={{ id }}>
+							<Edit size={16} />
+							{t("muokkaa", "Muokkaa")}
+						</Link>
+					</Button>
+				)
+			}
+			dangerZone={
+				isAdmin && (
 					<Button
-						variant="outline"
-						size="sm"
+						variant="danger-outline"
 						onClick={handleDelete}
 						disabled={deleteRestriction.isPending}
-						className="gap-1 text-xs text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40"
 					>
-						<Trash2 size={14} />
-						<span>{t("poista", "Poista")}</span>
+						<Trash2 size={16} />
+						{t("poista", "Poista")}
 					</Button>
-				</div>
-			</div>
+				)
+			}
+			technical={{
+				id: restrictionWithOcc.id,
+				createdAt: restrictionWithOcc.created_at,
+				updatedAt: restrictionWithOcc.updated_at,
+			}}
+		>
+			<section className="space-y-3">
+				<h2 className="text-lg font-semibold">
+					{t("rajoitetutAjanjaksot", "Rajoitetut ajanjaksot ({{count}})", {
+						count: occurrences.length,
+					})}
+				</h2>
+				<OccurrenceListCollapsible
+					items={occurrences.map((occ) => ({
+						id: occ.id,
+						start_time: occ.start_time,
+						end_time: occ.end_time,
+						groupLabel: occ.resource_id
+							? resourceMap.get(occ.resource_id) || occ.resource_id
+							: t("kaikkiResurssitGlobaali", "Kaikki resurssit (globaali)"),
+						canDetach: isAdmin && canSplitOccurrence(rrule, occurrences, occ),
+					}))}
+					onDetach={handleDetach}
+					detachDisabled={splitRestriction.isPending}
+				/>
+			</section>
 
-			{/* Main Card */}
-			<div className="p-5 border border-stone-200 dark:border-stone-800 rounded-md bg-stone-50 dark:bg-stone-900 space-y-4">
-				<div className="flex items-start justify-between gap-3">
-					<div>
-						<h1 className="text-xl font-bold text-stone-900 dark:text-stone-100 flex items-center gap-2">
-							<AlertOctagon
-								size={20}
-								className="text-amber-600 dark:text-amber-500"
-							/>
-							<span>{restrictionWithOcc.title}</span>
-						</h1>
-						{restrictionWithOcc.description && (
-							<p className="text-xs text-stone-600 dark:text-stone-400 mt-1">
-								{restrictionWithOcc.description}
-							</p>
+			<section className="space-y-3">
+				<h2 className="text-lg font-semibold">
+					{t("sallitutRyhmat", "Sallitut käyttäjäryhmät")}
+				</h2>
+				{exemptGroupNames.length > 0 ? (
+					<div className="flex flex-wrap gap-1.5">
+						{exemptGroupNames.map((name) => (
+							<Chip key={name}>{name}</Chip>
+						))}
+					</div>
+				) : (
+					<p className="text-sm text-stone-600 dark:text-stone-400">
+						{t(
+							"eiPoikkeuksiaKaikkiEstetty",
+							"Ei sallittuja ryhmiä (rajoitus koskee kaikkia)",
 						)}
-					</div>
-					<Chip>{readable_uuid(restrictionWithOcc.id)}</Chip>
-				</div>
-
-				{/* Occurrences List */}
-				<div className="space-y-2">
-					<span className="text-xs font-semibold text-stone-700 dark:text-stone-300">
-						{t("rajoitetutAjanjaksot", "Rajoitetut ajanjaksot ({{count}})", {
-							count: occurrences.length,
-						})}
-					</span>
-
-					<div className="space-y-1.5 max-h-60 overflow-y-auto">
-						{occurrences.map((occ) => {
-							const resName = occ.resource_id
-								? resourceMap.get(occ.resource_id) || occ.resource_id
-								: t("kaikkiResurssitGlobaali", "Kaikki resurssit (globaali)");
-
-							return (
-								<div
-									key={occ.id}
-									className="flex flex-wrap items-center justify-between gap-2 p-2 bg-stone-100 dark:bg-stone-800/60 rounded border border-stone-200 dark:border-stone-800 text-xs font-mono"
-								>
-									<div className="flex items-center gap-1.5 text-stone-800 dark:text-stone-200">
-										<Clock size={14} className="text-amber-600 shrink-0" />
-										<span>
-											{formatDate(occ.start_time)}
-											{" →"} {formatDate(occ.end_time)}
-										</span>
-									</div>
-									<div className="flex items-center gap-1.5">
-										{canSplitOccurrence(rrule, occurrences, occ) && (
-											<DetachOccurrenceButton
-												onDetach={() => handleDetach(occ)}
-												disabled={splitRestriction.isPending}
-											/>
-										)}
-										<span className="text-[10px] font-sans font-medium px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800">
-											{resName}
-										</span>
-									</div>
-								</div>
-							);
-						})}
-					</div>
-				</div>
-
-				{/* Group Exemptions */}
-				<div className="flex items-start gap-1 text-xs pt-2 border-t border-stone-200 dark:border-stone-800">
-					<Users
-						size={14}
-						className="text-emerald-600 dark:text-emerald-500 shrink-0 mt-0.5"
-					/>
-					<div>
-						<span className="font-semibold text-stone-700 dark:text-stone-300">
-							{t("sallitutRyhmat", "Sallitut käyttäjäryhmät")}
-							{":"}{" "}
-						</span>
-						<span className="text-stone-900 dark:text-stone-100">
-							{exemptGroups}
-						</span>
-					</div>
-				</div>
-			</div>
-		</div>
+					</p>
+				)}
+			</section>
+		</DetailLayout>
 	);
 }

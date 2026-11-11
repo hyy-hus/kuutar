@@ -1,7 +1,9 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { BackLink } from "#/components/BackLink";
+import { FormLayout } from "#/components/FormLayout";
 import { GroupForm } from "#/components/GroupForm";
+import { PageHeader } from "#/components/PageHeader";
 import { useGroup, useUpdateGroup } from "#/hooks/useGroups";
 import { requireAdminGuard } from "#/utils/authGuard";
 
@@ -20,10 +22,16 @@ function EditGroupPage() {
 	const updateGroup = useUpdateGroup();
 
 	if (isLoading)
-		return <div className="p-4">{t("ladataanRyhm", "Ladataan ryhmää...")}</div>;
+		return (
+			<p className="text-sm text-stone-600 dark:text-stone-400">
+				{t("ladataanRyhm", "Ladataan ryhmää...")}
+			</p>
+		);
 	if (!group)
 		return (
-			<div className="p-4">{t("ryhmEiLytynyt", "Ryhmää ei löytynyt.")}</div>
+			<p className="text-sm text-stone-600 dark:text-stone-400">
+				{t("ryhmEiLytynyt", "Ryhmää ei löytynyt.")}
+			</p>
 		);
 
 	const handleSubmit = async (values: { name: string }) => {
@@ -35,13 +43,15 @@ function EditGroupPage() {
 	};
 
 	return (
-		<div className="p-4 space-y-4">
-			<BackLink to="/admin/groups/$id" params={{ id }}>
-				{t("takaisinRyhmn", "Takaisin ryhmään")}
-			</BackLink>
-			<h1 className="text-xl font-bold text-stone-900 dark:text-stone-100">
-				{t("muokkaaRyhm", "Muokkaa ryhmää")}
-			</h1>
+		<FormLayout>
+			<PageHeader
+				back={
+					<BackLink to="/admin/groups/$id" params={{ id }}>
+						{t("takaisinRyhmn", "Takaisin ryhmään")}
+					</BackLink>
+				}
+				title={t("muokkaaRyhm", "Muokkaa ryhmää")}
+			/>
 			<GroupForm
 				defaultValues={{
 					name: group.name,
@@ -50,7 +60,10 @@ function EditGroupPage() {
 				onSubmit={handleSubmit}
 				isSubmitting={updateGroup.isPending}
 				submitLabel={t("tallennaMuutokset", "Tallenna muutokset")}
+				onCancel={() =>
+					navigate({ to: "/admin/groups/$id", params: { id: group.id } })
+				}
 			/>
-		</div>
+		</FormLayout>
 	);
 }

@@ -9,7 +9,14 @@ const meta = {
 	argTypes: {
 		variant: {
 			control: "select",
-			options: ["default", "outline", "secondary", "ghost", "danger", "field"],
+			options: [
+				"default",
+				"outline",
+				"secondary",
+				"ghost",
+				"danger",
+				"danger-outline",
+			],
 		},
 		size: { control: "select", options: ["sm", "md", "lg", "icon", "iconSm"] },
 	},
@@ -22,6 +29,16 @@ export const Outline: Story = { args: { variant: "outline" } };
 export const Danger: Story = {
 	args: {
 		variant: "danger",
+		children: (
+			<>
+				<Trash2 size={16} /> Poista
+			</>
+		),
+	},
+};
+export const DangerOutline: Story = {
+	args: {
+		variant: "danger-outline",
 		children: (
 			<>
 				<Trash2 size={16} /> Poista

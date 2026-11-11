@@ -1,60 +1,85 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
 	AlertTriangle,
-	Calendar,
 	Check,
-	CheckCircle2,
+	ChevronRight,
 	Clock,
 	FileJson,
-	FileText,
 	Loader2,
 	Printer,
-	User as UserIcon,
+	RotateCcw,
 	X,
-	XCircle,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { Dialog } from "radix-ui";
+import { Fragment, type ReactNode, useId, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "#/components/Button";
+import { Callout } from "#/components/Callout";
 import { CancelReservationDialog } from "#/components/CancelReservationDialog";
+import { Chip, ToggleChip } from "#/components/Chip";
+import { ConflictChip, type ConflictItem } from "#/components/ConflictChip";
+import { EmptyState } from "#/components/EmptyState";
+import { FilterBar } from "#/components/FilterBar";
 import { OutlookBadge } from "#/components/OutlookBadge";
+import { PageContainer } from "#/components/PageContainer";
+import { PageHeader } from "#/components/PageHeader";
+import { PeriodEmptyState } from "#/components/PeriodEmptyState";
 import { PeriodNavigator } from "#/components/PeriodNavigator";
+import { ResourceFilterField } from "#/components/ResourceFilterField";
+import { Select } from "#/components/Select";
+import { StatusChip } from "#/components/StatusChip";
+import { Textarea } from "#/components/Textarea";
 import {
 	type ReservationStatus,
 	type ReservationWithOccurrences,
+	useCancelReservation,
 	useReservations,
 	useUpdateReservation,
 } from "#/hooks/useReservations";
 import { useResources } from "#/hooks/useResorces";
-import { useRounds } from "#/hooks/useRounds";
 import { cn } from "#/utils/cn";
-import { useDateFormatter } from "#/utils/date";
+import { formatYYYYMMDD, useDateFormatter } from "#/utils/date";
 import {
 	getPeriodRange,
 	type PeriodMonths,
 	parsePeriodMonths,
 } from "#/utils/period";
+import {
+	findConflicts,
+	overlappingOccurrence,
+	reservationsOverlap,
+} from "#/utils/reservationConflicts";
+import { parseResourceList, touchesResources } from "#/utils/resourceSearch";
 
 export interface AdminDashboardSearch {
 	start_date?: string;
 	months?: PeriodMonths;
-	resource_id?: string;
-	round_id?: string;
+	/** Selected resource ids; missing means all */
+	resources?: string[];
 }
+
+type PendingSort = "time" | "created";
+
+const MAX_REASON_LENGTH = 500;
+/** Pending rows shown before "Show more" */
+const PAGE_SIZE = 25;
+
+const firstStart = (r: ReservationWithOccurrences) =>
+	r.occurrences?.[0]?.start_time
+		? new Date(r.occurrences[0].start_time).getTime()
+		: Number.MAX_SAFE_INTEGER;
 
 /** Orders reservations by their first occurrence; ones without times go last */
 const sortByDateAsc = (
 	a: ReservationWithOccurrences,
 	b: ReservationWithOccurrences,
-) => {
-	const timeA = a.occurrences?.[0]?.start_time
-		? new Date(a.occurrences[0].start_time).getTime()
-		: Number.MAX_SAFE_INTEGER;
-	const timeB = b.occurrences?.[0]?.start_time
-		? new Date(b.occurrences[0].start_time).getTime()
-		: Number.MAX_SAFE_INTEGER;
-	return timeA - timeB;
-};
+) => firstStart(a) - firstStart(b);
+
+/** Oldest request first: the ones that have waited longest */
+const sortByCreatedAsc = (
+	a: ReservationWithOccurrences,
+	b: ReservationWithOccurrences,
+) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
 
 export const Route = createFileRoute("/_app/admin/dashboard/")({
 	validateSearch: (search: Record<string, unknown>): AdminDashboardSearch => {
@@ -62,14 +87,15 @@ export const Route = createFileRoute("/_app/admin/dashboard/")({
 			start_date:
 				typeof search.start_date === "string" ? search.start_date : undefined,
 			months: parsePeriodMonths(search.months),
-			resource_id:
-				typeof search.resource_id === "string" ? search.resource_id : undefined,
-			round_id:
-				typeof search.round_id === "string" ? search.round_id : undefined,
+			resources: parseResourceList(search.resources, search.resource_id),
 		};
 	},
 	component: AdminDashboardPage,
 });
+
+/** Pending requests can be approved/rejected one by one unless a round or Outlook decides them */
+const isDecidableHere = (r: ReservationWithOccurrences) =>
+	r.status === "pending" && !r.round_id && r.source !== "outlook";
 
 function AdminReservationRow({
 	reservationWithOcc,
@@ -77,59 +103,52 @@ function AdminReservationRow({
 	onStatusChange,
 	onMarkPrinted,
 	isUpdating,
-	hoveredReservation,
-	onHoverReservation,
+	conflictSource,
+	onConflictSourceChange,
+	selectable,
+	selected,
+	onToggleSelected,
+	conflictItems,
 }: {
 	reservationWithOcc: ReservationWithOccurrences;
 	resourceMap: Map<string, string>;
 	onStatusChange: (status: ReservationStatus) => void;
 	onMarkPrinted: (id: string) => Promise<void>;
 	isUpdating: boolean;
-	hoveredReservation: ReservationWithOccurrences | null;
-	onHoverReservation: (res: ReservationWithOccurrences | null) => void;
+	conflictSource: ReservationWithOccurrences | null;
+	onConflictSourceChange: (res: ReservationWithOccurrences | null) => void;
+	/** Shows the checkbox column; the checkbox itself is only enabled for decidable rows */
+	selectable: boolean;
+	selected: boolean;
+	onToggleSelected: () => void;
+	/** What this pending reservation clashes with (empty for none) */
+	conflictItems: ConflictItem[];
 }) {
 	const { t } = useTranslation();
-	const { formatDate, formatDateRange } = useDateFormatter();
-	const firstOccurrence = reservationWithOcc.occurrences?.[0];
+	const { formatDateTime, formatRange } = useDateFormatter();
+	const occurrences = reservationWithOcc.occurrences ?? [];
+	const firstOccurrence = occurrences[0];
 	const isPending = reservationWithOcc.status === "pending";
-	const isCancelled = reservationWithOcc.status === "cancelled";
 	const isOutlook = reservationWithOcc.source === "outlook";
 	// Decided by the round's allocation, never approved one by one
 	const isRoundApplication = isPending && Boolean(reservationWithOcc.round_id);
+	const canSelect = isDecidableHere(reservationWithOcc);
 
-	const isHoveredSource = hoveredReservation?.id === reservationWithOcc.id;
+	const isConflictSource = conflictSource?.id === reservationWithOcc.id;
 
 	// Gather resource names reserved by this item
 	const resourceNames = useMemo(() => {
-		if (!reservationWithOcc.occurrences) return "";
-		const names = reservationWithOcc.occurrences
+		const names = occurrences
 			.map((occ) => resourceMap.get(occ.resource_id))
 			.filter(Boolean);
 		return Array.from(new Set(names)).join(", ");
-	}, [reservationWithOcc.occurrences, resourceMap]);
+	}, [occurrences, resourceMap]);
 
-	// Precise Time & Resource Conflict Calculation
-	const isConflict = useMemo(() => {
-		if (!hoveredReservation || isHoveredSource) {
-			return false;
-		}
-
-		const hoveredOccs = hoveredReservation.occurrences || [];
-		const currentOccs = reservationWithOcc.occurrences || [];
-
-		return currentOccs.some((curr) => {
-			const currStart = new Date(curr.start_time).getTime();
-			const currEnd = new Date(curr.end_time).getTime();
-
-			return hoveredOccs.some((hov) => {
-				if (hov.resource_id !== curr.resource_id) return false;
-				const hovStart = new Date(hov.start_time).getTime();
-				const hovEnd = new Date(hov.end_time).getTime();
-
-				return currStart < hovEnd && currEnd > hovStart;
-			});
-		});
-	}, [hoveredReservation, reservationWithOcc, isHoveredSource]);
+	// Highlighted while another row's conflict chip is open
+	const isConflict =
+		conflictSource !== null &&
+		!isConflictSource &&
+		reservationsOverlap(conflictSource, reservationWithOcc);
 
 	const handlePrintSingle = async () => {
 		await onMarkPrinted(reservationWithOcc.id);
@@ -137,32 +156,47 @@ function AdminReservationRow({
 		window.open(url, "_blank");
 	};
 
-	const formattedTimeSpan = firstOccurrence
-		? formatDateRange(firstOccurrence.start_time, firstOccurrence.end_time)
+	const createdText = formatDateTime(reservationWithOcc.created_at);
+	const updatedText = formatDateTime(reservationWithOcc.updated_at);
+	const timeSpan = firstOccurrence
+		? formatRange(firstOccurrence.start_time, firstOccurrence.end_time)
 		: null;
 
 	return (
 		<tr
 			className={cn(
-				"border-b border-stone-200 dark:border-stone-800 hover:bg-stone-100/80 dark:hover:bg-stone-800/80 transition-colors text-xs font-mono relative outline-none select-none",
-				isPending && "bg-amber-50/40 dark:bg-amber-950/20",
-				isCancelled && "opacity-60 bg-stone-50/30 dark:bg-stone-950/30",
-				// Conflicting target rows: soft rose background and subtle inset shadow instead of outline
+				"relative flex flex-col gap-1 border-b border-stone-200 p-3 text-sm transition-colors last:border-b-0 @4xl:table-row @4xl:p-0 dark:border-stone-800",
+				// Conflicting target rows: soft red background while a conflict chip is open
 				isConflict &&
-					"bg-rose-100/80 dark:bg-rose-950/60 shadow-[inset_0_0_0_1px_rgba(244,63,94,0.6)] z-10",
-				// Active source row: soft amber background and subtle inset shadow
-				isHoveredSource &&
-					"bg-amber-100/80 dark:bg-amber-900/40 shadow-[inset_0_0_0_1px_rgba(245,158,11,0.8)] z-20",
+					"bg-red-100 shadow-[inset_0_0_0_1px_var(--color-red-500)] dark:bg-red-950/60",
+				isConflictSource &&
+					"bg-amber-100 shadow-[inset_0_0_0_1px_var(--color-amber-500)] dark:bg-amber-900/40",
 			)}
 		>
-			{/* Reservation Title & User */}
-			<td className="py-2 px-3 align-middle min-w-[200px] max-w-xl">
-				<div className="flex items-center gap-2 min-w-0">
+			{selectable && (
+				<td className="absolute right-3 top-3 @4xl:static @4xl:table-cell @4xl:w-10 @4xl:px-3 @4xl:py-2 @4xl:align-top">
+					{canSelect && (
+						<input
+							type="checkbox"
+							checked={selected}
+							onChange={onToggleSelected}
+							aria-label={t("valitseVaraus", "Valitse varaus {{title}}", {
+								title: reservationWithOcc.title,
+							})}
+							className="mt-1 size-4 cursor-pointer accent-stone-900 dark:accent-stone-100"
+						/>
+					)}
+				</td>
+			)}
+
+			{/* Reservation title, requester and meta */}
+			<td className="block min-w-0 pr-8 @4xl:table-cell @4xl:min-w-[220px] @4xl:max-w-xl @4xl:px-3 @4xl:py-2 @4xl:pr-3 @4xl:align-top">
+				<div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
 					<Link
 						to="/reservations/$id"
 						params={{ id: reservationWithOcc.id }}
 						title={reservationWithOcc.title}
-						className="font-bold hover:underline text-stone-900 dark:text-stone-100 text-xs truncate max-w-[16rem]"
+						className="focus-ring max-w-[18rem] truncate font-bold text-stone-900 hover:underline dark:text-stone-100"
 					>
 						{reservationWithOcc.title}
 					</Link>
@@ -174,119 +208,104 @@ function AdminReservationRow({
 							to="/admin/rounds/$id"
 							params={{ id: reservationWithOcc.round_id }}
 							title={t("varauskierros", "Varauskierros")}
-							className="shrink-0 text-[11px] font-semibold text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/50 border border-amber-300/60 dark:border-amber-800/60 px-1.5 py-0.5 rounded"
+							className="focus-ring"
 						>
-							{reservationWithOcc.round_name}
-							{reservationWithOcc.round_priority
-								? ` · #${reservationWithOcc.round_priority}`
-								: ""}
+							<Chip>
+								{reservationWithOcc.round_name}
+								{reservationWithOcc.round_priority
+									? ` · #${reservationWithOcc.round_priority}`
+									: ""}
+							</Chip>
 						</Link>
 					)}
-
-					{reservationWithOcc.user_name && (
-						<span
-							title={
-								reservationWithOcc.user_email
-									? `${reservationWithOcc.user_name} (${reservationWithOcc.user_email})`
-									: reservationWithOcc.user_name
-							}
-							className="text-[11px] text-stone-500 dark:text-stone-400 flex items-center gap-0.5 font-sans min-w-0 max-w-[20rem]"
-						>
-							<UserIcon
-								size={11}
-								className="shrink-0 text-stone-400 dark:text-stone-500"
-							/>
-							<span className="truncate">{reservationWithOcc.user_name}</span>
-							{reservationWithOcc.user_email && (
-								<span className="text-stone-400 font-mono text-[10px] truncate hidden xl:inline">
-									{"("}
-									{reservationWithOcc.user_email}
-									{")"}
-								</span>
-							)}
-						</span>
-					)}
 				</div>
-				<div className="mt-0.5 flex flex-wrap gap-x-3 text-[10px] text-stone-400 dark:text-stone-500 font-sans">
-					<span>
-						{t("luotu", "Luotu:")} {formatDate(reservationWithOcc.created_at)}
-					</span>
-					<span>
-						{t("muokattu", "Muokattu:")}{" "}
-						{formatDate(reservationWithOcc.updated_at)}
-					</span>
-				</div>
+				{reservationWithOcc.user_name && (
+					<p
+						title={
+							reservationWithOcc.user_email
+								? `${reservationWithOcc.user_name} (${reservationWithOcc.user_email})`
+								: reservationWithOcc.user_name
+						}
+						className="truncate text-xs text-stone-600 dark:text-stone-400"
+					>
+						{reservationWithOcc.user_name}
+					</p>
+				)}
+				<p className="text-xs text-stone-600 tabular-nums dark:text-stone-400">
+					{t("luotuPvm", "Luotu {{date}}", { date: createdText })}
+					{updatedText !== createdText &&
+						` · ${t("muokattuPvm", "Muokattu {{date}}", { date: updatedText })}`}
+				</p>
 			</td>
 
-			{/* Resource Column */}
-			<td className="py-2 px-3 align-middle whitespace-nowrap min-w-[120px]">
+			{/* Resource */}
+			<td className="block @4xl:table-cell @4xl:min-w-[120px] @4xl:px-3 @4xl:py-2 @4xl:align-top">
 				{resourceNames ? (
-					<span className="inline-block text-[11px] font-semibold text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-950/50 border border-purple-200/60 dark:border-purple-800/60 px-1.5 py-0.5 rounded truncate max-w-[180px]">
-						{resourceNames}
-					</span>
+					<span className="line-clamp-2">{resourceNames}</span>
 				) : (
-					<span className="text-stone-400 italic text-[11px]">{"—"}</span>
+					<span className="text-stone-500">{"—"}</span>
 				)}
 			</td>
 
-			{/* Date & Full Time Span Column */}
-			<td
-				className="py-2 px-3 align-middle whitespace-nowrap cursor-pointer select-none"
-				onMouseEnter={() => onHoverReservation(reservationWithOcc)}
-				onMouseLeave={() => onHoverReservation(null)}
-			>
-				{formattedTimeSpan ? (
-					<div
-						className={cn(
-							"inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-mono transition-colors",
-							isConflict
-								? "bg-rose-200 dark:bg-rose-900 text-rose-950 dark:text-rose-100 font-bold"
-								: isHoveredSource
-									? "bg-amber-200 dark:bg-amber-800 text-amber-950 dark:text-amber-100 font-bold"
-									: "text-stone-700 dark:text-stone-300 bg-stone-100 dark:bg-stone-800/80 hover:bg-stone-200 dark:hover:bg-stone-700",
+			{/* Time; the conflict chip highlights overlapping reservations on the same resource */}
+			<td className="block @4xl:table-cell @4xl:px-3 @4xl:py-2 @4xl:align-top">
+				{timeSpan ? (
+					<div className="space-y-1">
+						<span
+							className={cn(
+								"inline-flex items-center gap-1 tabular-nums @4xl:whitespace-nowrap",
+								isConflict && "font-bold text-red-800 dark:text-red-300",
+							)}
+						>
+							{isConflict && (
+								<AlertTriangle
+									size={14}
+									aria-hidden="true"
+									className="shrink-0"
+								/>
+							)}
+							{timeSpan}
+						</span>
+						{occurrences.length > 1 && (
+							<p className="text-xs text-stone-600 dark:text-stone-400">
+								{t("lisaaAikojaMaara", "+{{count}} muuta aikaa", {
+									count: occurrences.length - 1,
+								})}
+							</p>
 						)}
-					>
-						{isConflict ? (
-							<AlertTriangle
-								size={12}
-								className="shrink-0 text-rose-600 dark:text-rose-400"
-							/>
-						) : (
-							<Calendar size={12} className="shrink-0 text-stone-400" />
+						{conflictItems.length > 0 && (
+							<div>
+								<ConflictChip
+									conflicts={conflictItems}
+									onActiveChange={(active) =>
+										onConflictSourceChange(active ? reservationWithOcc : null)
+									}
+								/>
+							</div>
 						)}
-						<span>{formattedTimeSpan}</span>
 					</div>
 				) : (
-					<span className="text-stone-400 italic text-[11px]">
+					<span className="text-xs text-stone-600 dark:text-stone-400">
 						{t("eiTiettyjAikoja", "Ei tiettyjä aikoja")}
 					</span>
 				)}
 			</td>
 
-			{/* Action Buttons (Secondary Style) */}
-			<td className="py-2 px-3 align-middle text-right whitespace-nowrap">
-				<div className="flex items-center justify-end gap-1">
+			{/* Actions */}
+			<td className="block @4xl:table-cell @4xl:whitespace-nowrap @4xl:px-3 @4xl:py-2 @4xl:text-right @4xl:align-top">
+				<div className="flex items-center justify-end gap-2">
 					<Button
-						variant="secondary"
-						size="sm"
+						variant="ghost"
+						size="iconSm"
 						onClick={handlePrintSingle}
+						aria-label={t("tulostaSopimukset", "Tulosta sopimukset")}
 						title={t("tulostaSopimukset", "Tulosta sopimukset")}
-						className="text-[11px] px-2 py-0.5 h-7 gap-1 font-mono"
 					>
-						<FileText
-							size={12}
-							className="text-amber-600 dark:text-amber-500"
-						/>
-						<span className="hidden xl:inline">{t("tulosta", "Tulosta")}</span>
+						<Printer size={16} />
 					</Button>
 
 					{isOutlook ? null : isRoundApplication ? (
-						<Button
-							variant="secondary"
-							size="sm"
-							asChild
-							className="text-[11px] px-2 py-0.5 h-7 gap-1 font-mono"
-						>
+						<Button variant="outline" size="sm" asChild>
 							<Link
 								to="/admin/rounds/$id"
 								params={{ id: reservationWithOcc.round_id ?? "" }}
@@ -300,38 +319,31 @@ function AdminReservationRow({
 								reservationId={reservationWithOcc.id}
 								reservationTitle={reservationWithOcc.title}
 								trigger={
-									<Button
-										variant="secondary"
-										size="sm"
-										disabled={isUpdating}
-										className="text-rose-600 hover:text-rose-700 dark:text-rose-400 text-[11px] px-2 py-0.5 h-7 gap-1 font-mono"
-									>
-										<X size={12} />
-										<span>{t("hylk", "Hylkää")}</span>
+									<Button variant="ghost" size="sm" disabled={isUpdating}>
+										<X size={14} aria-hidden="true" />
+										{t("hylk", "Hylkää")}
 									</Button>
 								}
 							/>
 							<Button
-								variant="secondary"
+								variant="outline"
 								size="sm"
 								disabled={isUpdating}
 								onClick={() => onStatusChange("confirmed" as ReservationStatus)}
-								className="text-emerald-700 dark:text-emerald-400 font-bold text-[11px] px-2 py-0.5 h-7 gap-1 font-mono"
 							>
-								<Check size={12} />
-								<span>{t("hyvksy", "Hyväksy")}</span>
+								<Check size={14} aria-hidden="true" />
+								{t("hyvksy", "Hyväksy")}
 							</Button>
 						</>
 					) : (
 						<Button
-							variant="secondary"
+							variant="outline"
 							size="sm"
 							disabled={isUpdating}
 							onClick={() => onStatusChange("pending" as ReservationStatus)}
-							className="text-[11px] px-2 py-0.5 h-7 gap-1 font-mono"
 						>
-							<Clock size={12} />
-							<span>{t("palautaOdottavaksi", "Palauta odottavaksi")}</span>
+							<RotateCcw size={14} aria-hidden="true" />
+							{t("palautaOdottavaksi", "Palauta odottavaksi")}
 						</Button>
 					)}
 				</div>
@@ -340,16 +352,236 @@ function AdminReservationRow({
 	);
 }
 
+interface ReservationTableProps {
+	rows: ReservationWithOccurrences[];
+	resourceMap: Map<string, string>;
+	onStatusChange: (id: string, status: ReservationStatus) => void;
+	onMarkPrinted: (id: string) => Promise<void>;
+	isUpdating: boolean;
+	conflictSource: ReservationWithOccurrences | null;
+	onConflictSourceChange: (res: ReservationWithOccurrences | null) => void;
+	/** Shows the checkbox column */
+	selectable: boolean;
+	selectedIds?: Set<string>;
+	onToggleSelected?: (id: string) => void;
+	/** Header checkbox for the select column */
+	selectAll?: ReactNode;
+	/** Conflict details per reservation id (pending rows only) */
+	conflicts?: Map<string, ConflictItem[]>;
+	/** Inserts a sticky day header before the first row of each day (rows must be time-sorted) */
+	groupByDay?: boolean;
+}
+
+/** Local-day key and label of a reservation's first occurrence */
+const dayKey = (r: ReservationWithOccurrences) => {
+	const start = r.occurrences?.[0]?.start_time;
+	return start ? formatYYYYMMDD(new Date(start)) : "none";
+};
+
+/**
+ * Table with header row; the same layout for pending, confirmed and cancelled reservations.
+ * Below `md` the rows stack as cards. No inner scroll container: the page scrolls, so the
+ * header (and day headers) can stick to the top of the scroll area.
+ */
+function ReservationTable({
+	rows,
+	onStatusChange,
+	selectedIds,
+	onToggleSelected,
+	selectAll,
+	selectable,
+	conflicts,
+	groupByDay,
+	...rowProps
+}: ReservationTableProps) {
+	const { t } = useTranslation();
+	const { formatWeekday, formatDayMonth } = useDateFormatter();
+	const columns = selectable ? 5 : 4;
+	return (
+		<table className="block w-full border-collapse text-left @4xl:table">
+			<thead className="hidden @4xl:table-header-group">
+				<tr className="font-mono text-xs uppercase tracking-wider text-stone-600 dark:text-stone-400 [&>th]:sticky [&>th]:top-0 [&>th]:z-20 [&>th]:border-y [&>th]:border-stone-300 [&>th]:bg-stone-100 dark:[&>th]:border-stone-700 dark:[&>th]:bg-stone-800">
+					{selectable && (
+						<th className="h-8 w-10 px-3 py-2 font-normal">{selectAll}</th>
+					)}
+					<th className="h-8 px-3 py-2 font-normal">
+						{t("varausSarake", "Varaus")}
+					</th>
+					<th className="h-8 px-3 py-2 font-normal">
+						{t("resurssi", "Resurssi")}
+					</th>
+					<th className="h-8 px-3 py-2 font-normal">{t("aika", "Aika")}</th>
+					<th className="h-8 px-3 py-2 text-right font-normal">
+						{t("toiminnot", "Toiminnot")}
+					</th>
+				</tr>
+			</thead>
+			<tbody className="block @4xl:table-row-group">
+				{rows.map((res, i) => {
+					const key = dayKey(res);
+					const showDay =
+						groupByDay && (i === 0 || dayKey(rows[i - 1]) !== key);
+					const start = res.occurrences?.[0]?.start_time;
+					return (
+						<Fragment key={res.id}>
+							{showDay && (
+								<tr className="block @4xl:table-row">
+									<th
+										colSpan={columns}
+										scope="colgroup"
+										className="sticky top-0 z-10 block border-b border-stone-300 bg-stone-200 px-3 py-1 text-left text-xs font-semibold text-stone-800 first-letter:uppercase @4xl:top-8 @4xl:table-cell dark:border-stone-700 dark:bg-stone-800 dark:text-stone-200"
+									>
+										{start
+											? `${formatWeekday(start)} ${formatDayMonth(start)}`
+											: t("eiTiettyjAikoja", "Ei tiettyjä aikoja")}
+									</th>
+								</tr>
+							)}
+							<AdminReservationRow
+								reservationWithOcc={res}
+								onStatusChange={(s) => onStatusChange(res.id, s)}
+								selectable={selectable}
+								selected={selectedIds?.has(res.id) ?? false}
+								onToggleSelected={() => onToggleSelected?.(res.id)}
+								conflictItems={conflicts?.get(res.id) ?? []}
+								{...rowProps}
+							/>
+						</Fragment>
+					);
+				})}
+			</tbody>
+		</table>
+	);
+}
+
+/** Collapsed-by-default section for the already decided reservations */
+function HistorySection({
+	title,
+	count,
+	emptyText,
+	children,
+}: {
+	title: string;
+	count: number;
+	emptyText: string;
+	children: ReactNode;
+}) {
+	return (
+		<details className="group overflow-hidden rounded-md border border-stone-300 bg-stone-50 dark:border-stone-700 dark:bg-stone-900">
+			<summary className="focus-ring flex cursor-pointer list-none items-center gap-2 px-4 py-3 text-lg font-semibold text-stone-900 hover:bg-stone-100 dark:text-stone-100 dark:hover:bg-stone-800 [&::-webkit-details-marker]:hidden">
+				<ChevronRight
+					size={18}
+					aria-hidden="true"
+					className="shrink-0 transition-transform group-open:rotate-90"
+				/>
+				{title} {"("}
+				{count}
+				{")"}
+			</summary>
+			{count > 0 ? (
+				children
+			) : (
+				<p className="px-4 pb-4 text-sm text-stone-600 dark:text-stone-400">
+					{emptyText}
+				</p>
+			)}
+		</details>
+	);
+}
+
+/** Rejects (cancels) all given reservations one by one with a shared optional reason */
+function BulkRejectDialog({
+	count,
+	onConfirm,
+	busy,
+	trigger,
+}: {
+	count: number;
+	onConfirm: (reason: string) => Promise<void>;
+	busy: boolean;
+	trigger: ReactNode;
+}) {
+	const { t } = useTranslation();
+	const [open, setOpen] = useState(false);
+	const [reason, setReason] = useState("");
+	const reasonId = useId();
+
+	const handleConfirm = async () => {
+		await onConfirm(reason);
+		setOpen(false);
+		setReason("");
+	};
+
+	return (
+		<Dialog.Root open={open} onOpenChange={setOpen}>
+			<Dialog.Trigger asChild>{trigger}</Dialog.Trigger>
+			<Dialog.Portal>
+				<Dialog.Overlay className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs" />
+				<Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-[calc(100vw-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 space-y-4 rounded-md border border-stone-300 bg-stone-50 p-5 shadow-xl focus:outline-none dark:border-stone-700 dark:bg-stone-900">
+					<div className="space-y-1">
+						<Dialog.Title className="text-base font-bold text-stone-900 dark:text-stone-100">
+							{t("hylkaaValitutOtsikko", "Hylkää valitut varaukset")}
+						</Dialog.Title>
+						<Dialog.Description className="text-sm text-stone-600 dark:text-stone-400">
+							{t(
+								"hylkaaValitutKuvaus",
+								"Haluatko varmasti hylätä {{count}} varausta? Varaukset vapautuvat ja varaajille lähetetään ilmoitus.",
+								{ count },
+							)}
+						</Dialog.Description>
+					</div>
+
+					<div className="space-y-1">
+						<label
+							htmlFor={reasonId}
+							className="text-sm font-medium text-stone-800 dark:text-stone-200"
+						>
+							{t("peruutuksenSyyValinnainen", "Peruutuksen syy (valinnainen)")}
+						</label>
+						<Textarea
+							id={reasonId}
+							value={reason}
+							onChange={(e) => setReason(e.target.value)}
+							maxLength={MAX_REASON_LENGTH}
+							rows={3}
+						/>
+					</div>
+
+					<div className="flex justify-end gap-2">
+						<Dialog.Close asChild>
+							<Button variant="outline" disabled={busy}>
+								{t("cancel", "Peruuta")}
+							</Button>
+						</Dialog.Close>
+						<Button variant="danger" onClick={handleConfirm} disabled={busy}>
+							{busy && <Loader2 size={16} className="animate-spin" />}
+							{t("hylkaaValitut", "Hylkää valitut")}
+						</Button>
+					</div>
+				</Dialog.Content>
+			</Dialog.Portal>
+		</Dialog.Root>
+	);
+}
+
 function AdminDashboardPage() {
 	const { t } = useTranslation();
+	const { formatDayMonth, formatTime, formatRange } = useDateFormatter();
 	const search = Route.useSearch();
 	const navigate = Route.useNavigate();
 
-	const [hoveredReservation, setHoveredReservation] =
+	const [conflictSource, setConflictSource] =
 		useState<ReservationWithOccurrences | null>(null);
+	const [pendingSort, setPendingSort] = useState<PendingSort>("time");
+	const [onlyConflicts, setOnlyConflicts] = useState(false);
+	const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+	const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+	const [bulkBusy, setBulkBusy] = useState(false);
+	const [bulkError, setBulkError] = useState<string | null>(null);
 
-	const { data: resources, isLoading: loadingResources } = useResources();
+	const { data: resources } = useResources();
 	const updateReservation = useUpdateReservation();
+	const cancelReservation = useCancelReservation();
 
 	const resourceMap = useMemo(() => {
 		return new Map(resources?.map((r) => [r.id, r.name]) || []);
@@ -357,9 +589,7 @@ function AdminDashboardPage() {
 
 	// Admins review the whole current year by default
 	const months = search.months ?? 12;
-	const resourceId = search.resource_id;
-	const roundId = search.round_id;
-	const { data: rounds } = useRounds();
+	const selectedResources = search.resources;
 
 	const { start, startDateISO, endDateISO } = useMemo(
 		() => getPeriodRange(search.start_date, months),
@@ -373,11 +603,8 @@ function AdminDashboardPage() {
 	} = useReservations({
 		startDate: startDateISO,
 		endDate: endDateISO,
-		resourceId,
-		roundId,
 	});
 
-	// Chronological sorter helper (earliest start_time first)
 	const { pendingReservations, confirmedReservations, cancelledReservations } =
 		useMemo(() => {
 			if (!reservations) {
@@ -389,20 +616,91 @@ function AdminDashboardPage() {
 			}
 
 			return {
-				// Round applications are handled on the round page; they only show here
-				// when filtering by a round, and then without approve/reject actions
+				// Round applications are handled on the round page, not here
 				pendingReservations: reservations
 					.filter((r) => r.status === "pending")
-					.filter((r) => !r.round_id || roundId !== undefined)
-					.sort(sortByDateAsc),
+					.filter((r) => !r.round_id)
+					.filter((r) => touchesResources(r.occurrences, selectedResources))
+					.sort(pendingSort === "time" ? sortByDateAsc : sortByCreatedAsc),
 				confirmedReservations: reservations
 					.filter((r) => r.status === "confirmed")
+					.filter((r) => touchesResources(r.occurrences, selectedResources))
 					.sort(sortByDateAsc),
 				cancelledReservations: reservations
 					.filter((r) => r.status === "cancelled")
+					.filter((r) => touchesResources(r.occurrences, selectedResources))
 					.sort(sortByDateAsc),
 			};
-		}, [reservations, roundId]);
+		}, [reservations, selectedResources, pendingSort]);
+
+	// Which pending reservations clash with another live one, and with what
+	const conflictsById = useMemo(
+		() => findConflicts(pendingReservations, reservations ?? []),
+		[pendingReservations, reservations],
+	);
+	const conflictItems = useMemo(() => {
+		const byId = new Map<string, ConflictItem[]>();
+		for (const r of pendingReservations) {
+			const others = conflictsById.get(r.id);
+			if (!others) continue;
+			byId.set(
+				r.id,
+				others.map((o) => {
+					const occ = overlappingOccurrence(r, o);
+					return {
+						id: o.id,
+						title: o.title,
+						resource: occ ? (resourceMap.get(occ.resource_id) ?? "") : "",
+						time: occ ? formatRange(occ.start_time, occ.end_time) : "",
+					};
+				}),
+			);
+		}
+		return byId;
+	}, [pendingReservations, conflictsById, resourceMap, formatRange]);
+
+	const filteredPending = useMemo(
+		() =>
+			onlyConflicts
+				? pendingReservations.filter((r) => conflictsById.has(r.id))
+				: pendingReservations,
+		[onlyConflicts, pendingReservations, conflictsById],
+	);
+	const visiblePending = filteredPending.slice(0, visibleCount);
+
+	// Summary strip: soonest upcoming request (falls back to the earliest overall)
+	const nextStart = useMemo(() => {
+		const starts = pendingReservations
+			.map(firstStart)
+			.filter((n) => n !== Number.MAX_SAFE_INTEGER);
+		const upcoming = starts.filter((n) => n >= Date.now());
+		const pool = upcoming.length > 0 ? upcoming : starts;
+		return pool.length > 0 ? new Date(Math.min(...pool)) : null;
+	}, [pendingReservations]);
+
+	// Only visible rows that can actually be decided here are selectable
+	const selectableIds = useMemo(
+		() => visiblePending.filter(isDecidableHere).map((r) => r.id),
+		[visiblePending],
+	);
+	// Drop selections for rows that disappeared (decided, filtered away)
+	const activeSelected = useMemo(
+		() => selectableIds.filter((id) => selectedIds.has(id)),
+		[selectableIds, selectedIds],
+	);
+	const allSelected =
+		selectableIds.length > 0 && activeSelected.length === selectableIds.length;
+
+	const toggleSelected = (id: string) =>
+		setSelectedIds((prev) => {
+			const next = new Set(prev);
+			if (next.has(id)) next.delete(id);
+			else next.add(id);
+			return next;
+		});
+
+	const toggleAll = () =>
+		setSelectedIds(allSelected ? new Set() : new Set(selectableIds));
 
 	const updateSearch = (next: AdminDashboardSearch) => {
 		navigate({
@@ -425,6 +723,44 @@ function AdminDashboardPage() {
 		});
 	};
 
+	/** Runs the single-reservation mutation for each selected id in sequence */
+	const runBulk = async (action: (id: string) => Promise<unknown>) => {
+		const ids = [...activeSelected];
+		setBulkBusy(true);
+		setBulkError(null);
+		const failed: string[] = [];
+		for (const id of ids) {
+			try {
+				await action(id);
+			} catch {
+				failed.push(id);
+			}
+		}
+		setBulkBusy(false);
+		// Keep the failed ones selected so the admin can retry
+		setSelectedIds(new Set(failed));
+		if (failed.length > 0) {
+			setBulkError(
+				t(
+					"massatoimintoEpaonnistui",
+					"{{failed}} / {{total}} varauksen käsittely epäonnistui.",
+					{ failed: failed.length, total: ids.length },
+				),
+			);
+		}
+	};
+
+	const handleBulkApprove = () =>
+		runBulk((id) =>
+			updateReservation.mutateAsync({
+				id,
+				payload: { status: "confirmed" as ReservationStatus },
+			}),
+		);
+
+	const handleBulkReject = (reason: string) =>
+		runBulk((id) => cancelReservation.mutateAsync({ id, reason }));
+
 	const handleBatchPrintConfirmed = async () => {
 		if (confirmedReservations.length === 0) return;
 
@@ -442,258 +778,316 @@ function AdminDashboardPage() {
 		window.open(url, "_blank");
 	};
 
-	return (
-		<div className="flex flex-col gap-4 sm:gap-6 p-2 sm:p-4 flex-1 min-h-0 min-w-0">
-			<div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 shrink-0 border-b border-stone-200 dark:border-stone-800 pb-3">
-				<h1 className="text-lg sm:text-xl font-bold text-stone-900 dark:text-stone-100">
-					{t("yllpidonHallintapaneeli", "Ylläpidon hallintapaneeli")}
-				</h1>
+	const tableProps = {
+		resourceMap,
+		onStatusChange: handleStatusChange,
+		onMarkPrinted: handleMarkPrinted,
+		isUpdating: updateReservation.isPending || bulkBusy,
+		conflictSource,
+		onConflictSourceChange: setConflictSource,
+	};
 
-				<div className="flex flex-col sm:flex-row gap-2">
-					<Button
-						variant="secondary"
-						asChild
-						size="sm"
-						className="gap-1.5 justify-center w-full sm:w-auto text-xs shrink-0"
-					>
-						<Link to="/admin/reservations">
-							<FileJson size={16} />
-							<span>
+	return (
+		<PageContainer>
+			<PageHeader
+				title={t("hyvaksynnat", "Hyväksynnät")}
+				subtitle={t("hyvaksynnatKuvaus", "Päällekkäiset pyynnöt on merkitty.")}
+				actions={
+					<>
+						<Button variant="outline" asChild>
+							<Link to="/admin/reservations">
+								<FileJson size={16} aria-hidden="true" />
 								{t("varaustenTuontiJaVienti", "Varausten tuonti ja vienti")}
-							</span>
-						</Link>
-					</Button>
-					<Button
-						size="sm"
-						disabled={confirmedReservations.length === 0}
-						onClick={handleBatchPrintConfirmed}
-						className="bg-amber-600 hover:bg-amber-700 text-white gap-1.5 justify-center w-full sm:w-auto text-xs shrink-0"
-					>
-						<Printer size={16} />
-						<span className="truncate">
-							{t(
+							</Link>
+						</Button>
+						<Button
+							variant="outline"
+							disabled={confirmedReservations.length === 0}
+							onClick={handleBatchPrintConfirmed}
+							title={t(
 								"tulostaKaikkiSopimukset",
 								"Tulosta vahvistettujen varausten sopimukset ({{length}})",
 								{ length: confirmedReservations.length },
 							)}
-						</span>
-					</Button>
-				</div>
-			</div>
+						>
+							<Printer size={16} aria-hidden="true" />
+							{t("tulostaSopimuksetMaara", "Tulosta sopimukset ({{length}})", {
+								length: confirmedReservations.length,
+							})}
+						</Button>
+					</>
+				}
+			/>
 
-			<div className="flex flex-wrap items-center gap-2 shrink-0 p-2 bg-stone-100 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-md">
+			<FilterBar>
 				<PeriodNavigator
 					start={start}
 					months={months}
 					onChange={updateSearch}
 				/>
+			</FilterBar>
 
-				<select
-					value={resourceId || ""}
-					onChange={(e) =>
-						updateSearch({ resource_id: e.target.value || undefined })
-					}
-					disabled={loadingResources}
-					className="px-2.5 py-1 text-xs bg-stone-50 dark:bg-stone-950 border border-stone-200 dark:border-stone-800 rounded-md font-medium max-w-full truncate"
-				>
-					<option value="">{t("kaikkiResurssit", "Kaikki resurssit")}</option>
-					{resources?.map((res) => (
-						<option key={res.id} value={res.id}>
-							{res.name}
-						</option>
-					))}
-				</select>
-
-				<select
-					value={roundId || ""}
-					onChange={(e) =>
-						updateSearch({ round_id: e.target.value || undefined })
-					}
-					aria-label={t("varauskierros", "Varauskierros")}
-					className="px-2.5 py-1 text-xs bg-stone-50 dark:bg-stone-950 border border-stone-200 dark:border-stone-800 rounded-md font-medium max-w-full truncate"
-				>
-					<option value="">{t("kaikkiKierrokset", "Kaikki kierrokset")}</option>
-					{rounds?.map((round) => (
-						<option key={round.id} value={round.id}>
-							{round.name}
-						</option>
-					))}
-				</select>
-			</div>
+			<ResourceFilterField
+				value={selectedResources}
+				onChange={(resources) => updateSearch({ resources })}
+			/>
 
 			{isLoading ? (
-				<div className="p-8 flex items-center justify-center gap-2 text-stone-500">
+				<div className="flex items-center justify-center gap-2 p-8 text-stone-600 dark:text-stone-400">
 					<Loader2 className="animate-spin" size={18} />
 					<span>
 						{t("ladataanHallintapaneelia", "Ladataan hallintapaneelia...")}
 					</span>
 				</div>
 			) : isError ? (
-				<div className="p-4 text-xs text-rose-600 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 rounded-md">
+				<Callout variant="danger">
 					{t(
 						"virheLadattaessaVaraustietoja",
 						"Virhe ladattaessa varaustietoja.",
 					)}
-				</div>
+				</Callout>
 			) : (
-				<div className="space-y-6">
-					{/* Pending Reservations Inbox Section */}
-					<div className="space-y-3">
-						<div className="flex items-center gap-2 text-amber-600 dark:text-amber-500 font-bold">
-							<Clock size={18} />
-							<h2 className="text-sm sm:text-base">
+				<>
+					{pendingReservations.length > 0 && (
+						<p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-stone-700 tabular-nums dark:text-stone-300">
+							<span className="font-semibold">
+								{t("odottaaMaara", "{{count}} odottaa", {
+									count: pendingReservations.length,
+								})}
+							</span>
+							<span aria-hidden="true">{"·"}</span>
+							{conflictsById.size > 0 ? (
+								<StatusChip variant="danger" icon={AlertTriangle}>
+									{t("ristiriitaaMaara", "{{count}} ristiriitaa", {
+										count: conflictsById.size,
+									})}
+								</StatusChip>
+							) : (
+								<span>{t("eiRistiriitojaYhteenveto", "ei ristiriitoja")}</span>
+							)}
+							{nextStart && (
+								<>
+									<span aria-hidden="true">{"·"}</span>
+									<span>
+										{t("seuraavaAika", "seuraava: {{time}}", {
+											time: `${formatDayMonth(nextStart)} ${formatTime(nextStart)}`,
+										})}
+									</span>
+								</>
+							)}
+						</p>
+					)}
+
+					{/* L1: the pending approvals. No overflow clipping, so the sticky header works. */}
+					<section
+						aria-labelledby="pending-heading"
+						className="@container rounded-md border-2 border-line-strong bg-surface-raised"
+					>
+						<div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
+							<h2
+								id="pending-heading"
+								className="flex items-center gap-2 text-lg font-semibold text-stone-900 dark:text-stone-100"
+							>
+								<Clock
+									size={18}
+									aria-hidden="true"
+									className="text-amber-700 dark:text-amber-400"
+								/>
 								{t(
 									"odottaaHyvksyntLength",
 									"Odottaa hyväksyntää ({{length}})",
 									{ length: pendingReservations.length },
 								)}
 							</h2>
+							{pendingReservations.length > 1 && (
+								<div className="flex flex-wrap items-center gap-3">
+									<ToggleChip
+										selected={onlyConflicts}
+										onClick={() => setOnlyConflicts((v) => !v)}
+										disabled={conflictsById.size === 0 && !onlyConflicts}
+									>
+										<AlertTriangle size={12} aria-hidden="true" />
+										{t("vainRistiriidat", "Vain ristiriidat")}
+									</ToggleChip>
+									<div className="flex items-center gap-2 text-xs text-stone-600 dark:text-stone-400">
+										<span aria-hidden="true">{t("jarjesta", "Järjestä")}</span>
+										<Select
+											size="sm"
+											wrapperClassName="w-auto"
+											aria-label={t("jarjesta", "Järjestä")}
+											value={pendingSort}
+											onChange={(e) =>
+												setPendingSort(e.target.value as PendingSort)
+											}
+										>
+											<option value="time">
+												{t("jarjestaAika", "Ajankohdan mukaan")}
+											</option>
+											<option value="created">
+												{t("jarjestaLuotu", "Luontiajan mukaan")}
+											</option>
+										</Select>
+									</div>
+								</div>
+							)}
 						</div>
 
-						{pendingReservations.length > 0 ? (
-							<div className="border border-stone-200 dark:border-stone-800 rounded-md overflow-x-auto bg-stone-50 dark:bg-stone-900">
-								<table className="w-full text-left border-collapse min-w-[650px]">
-									<thead>
-										<tr className="border-b border-stone-200 dark:border-stone-800 bg-stone-100/80 dark:bg-stone-800/80 text-[11px] text-stone-500 font-mono uppercase tracking-wider">
-											<th className="py-2 px-3">{t("varaus", "Varaus")}</th>
-											<th className="py-2 px-3">{t("resurssi", "Resurssi")}</th>
-											<th className="py-2 px-3">{t("aika", "Aika")}</th>
-											<th className="py-2 px-3 text-right">
-												{t("toiminnot", "Toiminnot")}
-											</th>
-										</tr>
-									</thead>
-									<tbody>
-										{pendingReservations.map((res) => (
-											<AdminReservationRow
-												key={res.id}
-												reservationWithOcc={res}
-												resourceMap={resourceMap}
-												onStatusChange={(s) => handleStatusChange(res.id, s)}
-												onMarkPrinted={handleMarkPrinted}
-												isUpdating={updateReservation.isPending}
-												hoveredReservation={hoveredReservation}
-												onHoverReservation={setHoveredReservation}
-											/>
-										))}
-									</tbody>
-								</table>
+						{bulkError && (
+							<div className="px-4 pb-3">
+								<Callout variant="danger">{bulkError}</Callout>
 							</div>
+						)}
+
+						{visiblePending.length > 0 ? (
+							<>
+								<ReservationTable
+									rows={visiblePending}
+									{...tableProps}
+									conflicts={conflictItems}
+									groupByDay={pendingSort === "time"}
+									selectable={selectableIds.length > 0}
+									selectedIds={selectedIds}
+									onToggleSelected={toggleSelected}
+									selectAll={
+										<input
+											type="checkbox"
+											checked={allSelected}
+											onChange={toggleAll}
+											aria-label={t("valitseKaikki", "Valitse kaikki")}
+											className="size-4 cursor-pointer accent-stone-900 dark:accent-stone-100"
+										/>
+									}
+								/>
+								<div className="flex flex-wrap items-center justify-between gap-3 border-t border-stone-300 px-4 py-3 text-sm dark:border-stone-700">
+									<p className="text-stone-600 tabular-nums dark:text-stone-400">
+										{t("naytetaanMaara", "Näytetään {{shown}} / {{total}}", {
+											shown: visiblePending.length,
+											total: filteredPending.length,
+										})}
+									</p>
+									{visiblePending.length < filteredPending.length && (
+										<Button
+											variant="outline"
+											size="sm"
+											onClick={() => setVisibleCount((c) => c + PAGE_SIZE)}
+										>
+											{t("naytaLisaa", "Näytä lisää")}
+										</Button>
+									)}
+								</div>
+							</>
 						) : (
-							<div className="p-4 text-xs text-stone-500 bg-stone-50 dark:bg-stone-900/40 rounded-md border border-stone-200 dark:border-stone-800">
-								{t(
-									"eiOdottaviaVarauksiaValitullaAikavlill",
-									"Ei odottavia varauksia valitulla aikavälillä.",
+							<div className="px-4 pb-4">
+								{onlyConflicts ? (
+									<EmptyState
+										title={t("eiRistiriitaisia", "Ei ristiriitaisia varauksia")}
+										action={
+											<Button
+												variant="outline"
+												size="sm"
+												onClick={() => setOnlyConflicts(false)}
+											>
+												{t("naytaKaikki", "Näytä kaikki")}
+											</Button>
+										}
+									>
+										{t(
+											"eiRistiriitaisiaKuvaus",
+											"Päällekkäisiä pyyntöjä ei ole.",
+										)}
+									</EmptyState>
+								) : (
+									<PeriodEmptyState
+										icon={Check}
+										start={start}
+										months={months}
+										what={t("sanaOdottaviaVarauksia", "odottavia varauksia")}
+										onChange={updateSearch}
+									/>
 								)}
 							</div>
 						)}
-					</div>
 
-					{/* Confirmed Reservations Inbox Section */}
+						{activeSelected.length > 0 && (
+							<div className="sticky bottom-0 z-30 flex flex-wrap items-center gap-2 rounded-b-sm border-t-2 border-stone-800 bg-stone-100 px-4 py-3 dark:border-stone-300 dark:bg-stone-800">
+								<span className="mr-auto text-sm font-medium">
+									{t("valittuMaara", "{{count}} valittu", {
+										count: activeSelected.length,
+									})}
+								</span>
+								<Button
+									variant="ghost"
+									size="sm"
+									disabled={bulkBusy}
+									onClick={() => setSelectedIds(new Set())}
+								>
+									{t("tyhjennaValinta", "Tyhjennä valinta")}
+								</Button>
+								<BulkRejectDialog
+									count={activeSelected.length}
+									onConfirm={handleBulkReject}
+									busy={bulkBusy}
+									trigger={
+										<Button variant="outline" size="sm" disabled={bulkBusy}>
+											<X size={14} aria-hidden="true" />
+											{t("hylkaaValitut", "Hylkää valitut")}
+										</Button>
+									}
+								/>
+								<Button
+									size="sm"
+									disabled={bulkBusy}
+									onClick={handleBulkApprove}
+								>
+									{bulkBusy ? (
+										<Loader2 size={14} className="animate-spin" />
+									) : (
+										<Check size={14} aria-hidden="true" />
+									)}
+									{t("hyvaksyValitutMaara", "Hyväksy valitut ({{count}})", {
+										count: activeSelected.length,
+									})}
+								</Button>
+							</div>
+						)}
+					</section>
+
 					<div className="space-y-3">
-						<div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-500 font-bold">
-							<CheckCircle2 size={18} />
-							<h2 className="text-sm sm:text-base">
-								{t(
-									"vahvistetutVarauksetLength",
-									"Vahvistetut varaukset ({{length}})",
-									{ length: confirmedReservations.length },
-								)}
-							</h2>
-						</div>
+						<HistorySection
+							title={t("vahvistetutVarauksetOtsikko", "Vahvistetut varaukset")}
+							count={confirmedReservations.length}
+							emptyText={t(
+								"eiVahvistettujaVarauksiaValitullaAikavlill",
+								"Ei vahvistettuja varauksia valitulla aikavälillä.",
+							)}
+						>
+							<ReservationTable
+								rows={confirmedReservations}
+								{...tableProps}
+								selectable={false}
+							/>
+						</HistorySection>
 
-						{confirmedReservations.length > 0 ? (
-							<div className="border border-stone-200 dark:border-stone-800 rounded-md overflow-x-auto bg-stone-50 dark:bg-stone-900">
-								<table className="w-full text-left border-collapse min-w-[650px]">
-									<thead>
-										<tr className="border-b border-stone-200 dark:border-stone-800 bg-stone-100/80 dark:bg-stone-800/80 text-[11px] text-stone-500 font-mono uppercase tracking-wider">
-											<th className="py-2 px-3">{t("varaus", "Varaus")}</th>
-											<th className="py-2 px-3">{t("resurssi", "Resurssi")}</th>
-											<th className="py-2 px-3">{t("aika", "Aika")}</th>
-											<th className="py-2 px-3 text-right">
-												{t("toiminnot", "Toiminnot")}
-											</th>
-										</tr>
-									</thead>
-									<tbody>
-										{confirmedReservations.map((res) => (
-											<AdminReservationRow
-												key={res.id}
-												reservationWithOcc={res}
-												resourceMap={resourceMap}
-												onStatusChange={(s) => handleStatusChange(res.id, s)}
-												onMarkPrinted={handleMarkPrinted}
-												isUpdating={updateReservation.isPending}
-												hoveredReservation={hoveredReservation}
-												onHoverReservation={setHoveredReservation}
-											/>
-										))}
-									</tbody>
-								</table>
-							</div>
-						) : (
-							<div className="p-4 text-xs text-stone-500 bg-stone-50 dark:bg-stone-900/40 rounded-md border border-stone-200 dark:border-stone-800">
-								{t(
-									"eiVahvistettujaVarauksiaValitullaAikavlill",
-									"Ei vahvistettuja varauksia valitulla aikavälillä.",
-								)}
-							</div>
-						)}
+						<HistorySection
+							title={t(
+								"hylatytJaPerututOtsikko",
+								"Hylätyt ja perutut varaukset",
+							)}
+							count={cancelledReservations.length}
+							emptyText={t(
+								"eiHylttyjVarauksiaValitullaAikavlill",
+								"Ei hylättyjä varauksia valitulla aikavälillä.",
+							)}
+						>
+							<ReservationTable
+								rows={cancelledReservations}
+								{...tableProps}
+								selectable={false}
+							/>
+						</HistorySection>
 					</div>
-
-					{/* Cancelled Reservations Inbox Section */}
-					<div className="space-y-3">
-						<div className="flex items-center gap-2 text-rose-600 dark:text-rose-500 font-bold">
-							<XCircle size={18} />
-							<h2 className="text-sm sm:text-base">
-								{t(
-									"hyltytJaPerututVarauksetLength",
-									"Hylätyt ja perutut varaukset ({{length}})",
-									{ length: cancelledReservations.length },
-								)}
-							</h2>
-						</div>
-
-						{cancelledReservations.length > 0 ? (
-							<div className="border border-stone-200 dark:border-stone-800 rounded-md overflow-x-auto bg-stone-50 dark:bg-stone-900">
-								<table className="w-full text-left border-collapse min-w-[650px]">
-									<thead>
-										<tr className="border-b border-stone-200 dark:border-stone-800 bg-stone-100/80 dark:bg-stone-800/80 text-[11px] text-stone-500 font-mono uppercase tracking-wider">
-											<th className="py-2 px-3">{t("varaus", "Varaus")}</th>
-											<th className="py-2 px-3">{t("resurssi", "Resurssi")}</th>
-											<th className="py-2 px-3">{t("aika", "Aika")}</th>
-											<th className="py-2 px-3 text-right">
-												{t("toiminnot", "Toiminnot")}
-											</th>
-										</tr>
-									</thead>
-									<tbody>
-										{cancelledReservations.map((res) => (
-											<AdminReservationRow
-												key={res.id}
-												reservationWithOcc={res}
-												resourceMap={resourceMap}
-												onStatusChange={(s) => handleStatusChange(res.id, s)}
-												onMarkPrinted={handleMarkPrinted}
-												isUpdating={updateReservation.isPending}
-												hoveredReservation={hoveredReservation}
-												onHoverReservation={setHoveredReservation}
-											/>
-										))}
-									</tbody>
-								</table>
-							</div>
-						) : (
-							<div className="p-4 text-xs text-stone-500 bg-stone-50 dark:bg-stone-900/40 rounded-md border border-stone-200 dark:border-stone-800">
-								{t(
-									"eiHylttyjVarauksiaValitullaAikavlill",
-									"Ei hylättyjä varauksia valitulla aikavälillä.",
-								)}
-							</div>
-						)}
-					</div>
-				</div>
+				</>
 			)}
-		</div>
+		</PageContainer>
 	);
 }

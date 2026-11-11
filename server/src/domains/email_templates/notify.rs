@@ -101,6 +101,7 @@ async fn send_welcome_email(pool: &PgPool, config: &Config, user_id: Uuid) -> Re
     let vars = Variables::from([
         ("user_name", user.name.clone()),
         ("email", user.email.clone()),
+        ("app_name", config.app_name.clone()),
         (
             "app_url",
             config.app_base_url.trim_end_matches('/').to_string(),
@@ -182,6 +183,7 @@ async fn reservation_variables(
     let base = config.app_base_url.trim_end_matches('/');
 
     Ok(Variables::from([
+        ("app_name", config.app_name.clone()),
         ("user_name", user_name.to_string()),
         ("title", reservation.reservation.title.clone()),
         (
@@ -228,6 +230,7 @@ pub fn sample_variables(config: &Config, lang: &str) -> Variables {
 
     Variables::from([
         ("user_name", "Matti Meikäläinen".to_string()),
+        ("app_name", config.app_name.clone()),
         ("email", "matti@example.com".to_string()),
         ("app_url", base.to_string()),
         ("title", "Kokous".to_string()),

@@ -2,11 +2,11 @@
 
 import { Link, useNavigate } from "@tanstack/react-router";
 import {
-	CalendarDays,
+	AlertOctagon,
+	CalendarCheck,
 	ChevronLeft,
 	ChevronRight,
-	Columns3,
-	ListChecks,
+	Clock,
 	Loader2,
 	Plus,
 	Rows2,
@@ -17,6 +17,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "#/components/Button";
 import { useIsAdmin } from "#/hooks/useAuth";
+import { useCollections } from "#/hooks/useCollections";
 import { useReservableBlocks } from "#/hooks/useReservableBlocks";
 import { useReservations } from "#/hooks/useReservations";
 import { useResources } from "#/hooks/useResorces";
@@ -24,7 +25,6 @@ import { useRestrictions } from "#/hooks/useRestrictions";
 import type { CalendarSearch, CalendarViewMode } from "#/routes/_app/calendar";
 import type { CalendarEvent } from "#/utils/calendarUtils";
 import { cn } from "#/utils/cn";
-import { getCollectionIcon } from "#/utils/collectionIcons";
 import {
 	addDays,
 	formatYYYYMMDD,
@@ -36,9 +36,15 @@ import {
 	useDateFormatter,
 } from "#/utils/date";
 import { addMinutes, resolveDefaultDuration } from "#/utils/duration";
-import { getContrastColor, getResourceHex } from "#/utils/resourceColors";
-import { ToggleChip } from "../Chip";
+import { DateInput } from "../DateInput";
+import { FilterBar } from "../FilterBar";
+import { PageHeader } from "../PageHeader";
+import { SegmentedControl } from "../SegmentedControl";
+import { Select } from "../Select";
+import { AgendaView } from "./AgendaView";
 import { MonthView } from "./MonthView";
+import { ResourceFilter } from "./ResourceFilter";
+import { useIsMobile } from "./useIsMobile";
 import { WeekView } from "./WeekView";
 
 interface CalendarProps {
@@ -49,10 +55,6 @@ interface CalendarProps {
 	selectedResourceIds?: string[];
 	onSearchChange: (nextSearch: CalendarSearch) => void;
 }
-
-/** Shared look of the toolbar's inputs and selects, matching the "field" button variant */
-const FIELD_CLASS =
-	"h-8 px-2 text-xs bg-stone-50 dark:bg-stone-950 border border-stone-300 dark:border-stone-700 rounded-md font-medium";
 
 /** Height of one hour row in rem, from most compact to roomiest */
 const HOUR_HEIGHTS = [3, 5, 7] as const;
@@ -82,6 +84,7 @@ export function Calendar({
 	const { t } = useTranslation();
 	const { formatMonthYear } = useDateFormatter();
 	const navigate = useNavigate();
+	const isMobile = useIsMobile();
 	const isMonth = view === "month";
 	// The month view always shows the whole month containing the start date
 	const start = useMemo(() => {
@@ -113,12 +116,12 @@ export function Calendar({
 	const hourHeightLabel = `${t("tuntirivinKorkeus", "Tuntirivin korkeus")}: ${hourHeightNames[hourHeight]}`;
 
 	const { data: resources, isLoading: loadingResources } = useResources();
+	const { data: collections } = useCollections();
 	const { isAdmin } = useIsAdmin();
 
 	const activeResourceIds = useMemo(() => {
-		if (selectedResourceIds && selectedResourceIds.length > 0) {
-			return selectedResourceIds;
-		}
+		// An explicit empty selection ("none") shows nothing; only a missing one means all
+		if (selectedResourceIds) return selectedResourceIds;
 		return resources?.map((r) => r.id) || [];
 	}, [selectedResourceIds, resources]);
 
@@ -192,30 +195,15 @@ export function Calendar({
 		}
 	};
 
-	const viewModes: {
-		mode: CalendarViewMode;
-		label: string;
-		icon: typeof CalendarDays;
-	}[] = [
-		{ mode: "days", label: t("pivt", "Päivät"), icon: Columns3 },
-		{ mode: "month", label: t("kuukausi", "Kuukausi"), icon: CalendarDays },
-	];
-
-	const toggleResource = (id: string) => {
-		const nextResources = activeResourceIds.includes(id)
-			? activeResourceIds.filter((item) => item !== id)
-			: [...activeResourceIds, id];
-
-		onSearchChange({ resources: nextResources });
+	/** Jumps to the period containing today, keeping the current view and length */
+	const goToToday = () => {
+		const today = new Date();
+		onSearchChange({
+			start: formatYYYYMMDD(
+				isMonth ? startOfMonth(today) : days === 7 ? startOfWeek(today) : today,
+			),
+		});
 	};
-
-	const allResourceIds = resources?.map((r) => r.id) ?? [];
-	const allSelected =
-		allResourceIds.length > 0 &&
-		allResourceIds.every((id) => activeResourceIds.includes(id));
-
-	/** Shows only this resource; the "All" chip brings the rest back */
-	const soloResource = (id: string) => onSearchChange({ resources: [id] });
 
 	const handleDayClick = (date: Date) => {
 		onSearchChange({ view: "days", days: 1, start: formatYYYYMMDD(date) });
@@ -421,179 +409,131 @@ export function Calendar({
 	}
 
 	return (
-		<div className="flex flex-col gap-3 p-1 md:p-2 h-full min-h-0 min-w-0">
-			{/* Header & New Reservation Button */}
-			<div className="flex items-center justify-between gap-2 shrink-0">
-				<h1 className="text-lg md:text-xl font-bold tracking-tight">
-					{t("kalenteri", "Kalenteri")}
-				</h1>
+		<div className="flex flex-col gap-3 h-full min-h-0 min-w-0 w-full max-w-7xl">
+			<PageHeader
+				title={t("kalenteri", "Kalenteri")}
+				actions={
+					<Button asChild size="md" className="gap-1.5 shrink-0">
+						<Link to="/reservations/create">
+							<Plus size={16} />
+							<span>{t("uusiVaraus", "Uusi varaus")}</span>
+						</Link>
+					</Button>
+				}
+			/>
 
-				<Button asChild size="sm" className="gap-1.5 shrink-0">
-					<Link to="/reservations/create">
-						<Plus size={16} />
-						<span>{t("uusiVaraus", "Uusi varaus")}</span>
-					</Link>
-				</Button>
-			</div>
-
-			{/* Controls Bar: stays on one line, dropping labels as it narrows and scrolling as a last resort */}
-			<div className="@container shrink-0 bg-stone-100 dark:bg-stone-900 p-2 rounded-md border border-stone-200 dark:border-stone-800 overflow-x-auto no-scrollbar">
-				<div className="flex items-center gap-2 @max-md:gap-1.5 w-max min-w-full">
-					<div className="flex items-center gap-1 shrink-0">
-						<Button
-							variant="field"
-							size="iconSm"
-							className="@max-md:w-7"
-							onClick={() => moveStart(-1)}
-							aria-label={t("edellinenJakso", "Edellinen jakso")}
-						>
-							<ChevronLeft size={16} />
-						</Button>
-
-						<input
-							type="date"
-							value={formatYYYYMMDD(start)}
-							// The input value is already YYYY-MM-DD; valueAsDate would be UTC midnight
-							onChange={(e) =>
-								e.target.value && onSearchChange({ start: e.target.value })
-							}
-							// On narrow bars drop the monospace font, the side padding and Chrome/Safari's
-							// picker icon; tapping the field opens the picker on phones anyway
-							className={cn(
-								FIELD_CLASS,
-								"font-mono @max-md:font-sans @max-md:px-1 @max-md:[&::-webkit-calendar-picker-indicator]:hidden",
-							)}
-						/>
-
-						<Button
-							variant="field"
-							size="iconSm"
-							className="@max-md:w-7"
-							onClick={() => moveStart(1)}
-							aria-label={t("seuraavaJakso", "Seuraava jakso")}
-						>
-							<ChevronRight size={16} />
-						</Button>
-					</div>
-
-					<div className="flex items-center gap-1 shrink-0">
-						<fieldset
-							aria-label={t("nkym", "Näkymä")}
-							className="flex h-8 rounded-md border border-stone-300 dark:border-stone-700 overflow-hidden"
-						>
-							{viewModes.map(({ mode, label, icon: Icon }) => {
-								const isActive = mode === view;
-								return (
-									<button
-										key={mode}
-										type="button"
-										onClick={() => handleViewChange(mode)}
-										aria-pressed={isActive}
-										title={label}
-										className={cn(
-											"flex items-center gap-1 px-2 text-xs font-medium cursor-pointer transition-colors",
-											isActive
-												? "bg-stone-900 text-stone-50 dark:bg-stone-100 dark:text-stone-900"
-												: "bg-stone-50 dark:bg-stone-950 hover:bg-stone-200 dark:hover:bg-stone-800",
-										)}
-									>
-										<Icon size={14} className="shrink-0" />
-										<span className="hidden @xl:inline">{label}</span>
-									</button>
-								);
-							})}
-						</fieldset>
-
-						{isMonth ? (
-							// The date input already tells the month, so the label is a bonus where there is room
-							<span className="hidden @md:inline text-sm font-semibold capitalize whitespace-nowrap">
-								{formatMonthYear(start)}
-							</span>
-						) : (
-							<>
-								<select
-									value={days}
-									onChange={(e) => handleDaysChange(Number(e.target.value))}
-									className={FIELD_CLASS}
-								>
-									<option value={1}>{t("1Piv", "1 päivä")}</option>
-									<option value={3}>{t("3Piv", "3 päivää")}</option>
-									<option value={5}>{t("5Piv", "5 päivää")}</option>
-									<option value={7}>{t("1Viikko", "1 viikko")}</option>
-								</select>
-
-								<Button
-									variant="field"
-									size="iconSm"
-									onClick={cycleHourHeight}
-									aria-label={hourHeightLabel}
-									title={hourHeightLabel}
-								>
-									<HourHeightIcon size={16} />
-								</Button>
-							</>
-						)}
-					</div>
-				</div>
-			</div>
-
-			{/* Scrollable Resource Chips */}
-			<div className="flex gap-1.5 shrink-0 overflow-x-auto pb-1.5 no-scrollbar border-b border-stone-200 dark:border-stone-800">
-				<div className="shrink-0">
-					<ToggleChip
-						selected={allSelected}
-						onClick={() => onSearchChange({ resources: allResourceIds })}
+			{/* Two logical groups: date navigation, then view / length / density. Each stays one row. */}
+			<FilterBar className="shrink-0 gap-x-3">
+				<div className="flex w-full items-center gap-1 md:w-auto">
+					<Button
+						variant="outline"
+						size="iconSm"
+						onClick={() => moveStart(-1)}
+						aria-label={t("edellinenJakso", "Edellinen jakso")}
+						title={t("edellinenJakso", "Edellinen jakso")}
 					>
-						<span className="inline-flex items-center gap-1.5">
-							<ListChecks size={12} aria-hidden="true" />
-							{t("kaikki", "Kaikki")}
-						</span>
-					</ToggleChip>
+						<ChevronLeft size={16} />
+					</Button>
+
+					<DateInput
+						size="sm"
+						aria-label={t("jaksonAlku", "Jakson alku")}
+						value={formatYYYYMMDD(start)}
+						// The input value is already YYYY-MM-DD; valueAsDate would be UTC midnight
+						onChange={(e) =>
+							e.target.value && onSearchChange({ start: e.target.value })
+						}
+						className="w-auto min-w-0 tabular-nums"
+					/>
+
+					<Button
+						variant="outline"
+						size="iconSm"
+						onClick={() => moveStart(1)}
+						aria-label={t("seuraavaJakso", "Seuraava jakso")}
+						title={t("seuraavaJakso", "Seuraava jakso")}
+					>
+						<ChevronRight size={16} />
+					</Button>
+
+					<Button
+						variant="outline"
+						size="sm"
+						className="ml-auto md:ml-0"
+						onClick={goToToday}
+					>
+						{t("tnn", "Tänään")}
+					</Button>
 				</div>
-				{resources?.map((res) => {
-					const isSelected = activeResourceIds.includes(res.id);
-					const ResourceIcon = getCollectionIcon(res.collection_icon);
-					return (
-						<div key={res.id} className="shrink-0">
-							<ToggleChip
-								selected={isSelected}
-								title={t(
-									"vainTamaOhje",
-									"Kaksoisnapsauta tai Ctrl-napsauta näyttääksesi vain tämän",
-								)}
-								onClick={(e) =>
-									e.ctrlKey || e.metaKey || e.shiftKey
-										? soloResource(res.id)
-										: toggleResource(res.id)
-								}
-								onDoubleClick={() => soloResource(res.id)}
+
+				<div className="flex w-full items-center gap-2 md:w-auto">
+					<SegmentedControl
+						aria-label={t("nkym", "Näkymä")}
+						value={view}
+						onChange={handleViewChange}
+						options={[
+							{ value: "days", label: t("pivt", "Päivät") },
+							{ value: "month", label: t("kuukausi", "Kuukausi") },
+						]}
+					/>
+
+					{isMonth ? (
+						<span className="ml-1 truncate text-sm font-semibold capitalize">
+							{formatMonthYear(start)}
+						</span>
+					) : (
+						<>
+							<Select
+								id="calendar-days"
+								size="sm"
+								wrapperClassName="w-auto"
+								aria-label={t("jaksonPituus", "Jakson pituus")}
+								value={days}
+								onChange={(e) => handleDaysChange(Number(e.target.value))}
 							>
-								<span className="inline-flex items-center gap-1.5">
-									<span
-										aria-hidden="true"
-										className="size-4 rounded-full inline-flex items-center justify-center shrink-0"
-										style={{
-											backgroundColor: getResourceHex(res.color),
-											color: getContrastColor(getResourceHex(res.color)),
-										}}
-									>
-										<ResourceIcon size={10} />
-									</span>
-									{res.name}
+								<option value={1}>{t("1Piv", "1 päivä")}</option>
+								<option value={3}>{t("3Piv", "3 päivää")}</option>
+								<option value={5}>{t("5Piv", "5 päivää")}</option>
+								<option value={7}>{t("1Viikko", "1 viikko")}</option>
+							</Select>
+
+							<Button
+								variant="outline"
+								size="sm"
+								className="gap-1.5"
+								onClick={cycleHourHeight}
+								aria-label={hourHeightLabel}
+								title={hourHeightLabel}
+							>
+								<HourHeightIcon size={16} />
+								<span className="hidden lg:inline">
+									{hourHeightNames[hourHeight]}
 								</span>
-							</ToggleChip>
-						</div>
-					);
-				})}
-			</div>
+							</Button>
+						</>
+					)}
+				</div>
+			</FilterBar>
+
+			<ResourceFilter
+				className="shrink-0"
+				resources={resources ?? []}
+				collections={collections ?? []}
+				selectedIds={activeResourceIds}
+				onChange={(ids) => onSearchChange({ resources: ids })}
+			/>
 
 			{/* Main Calendar View */}
 			{isMonth ? (
-				<MonthView
-					monthStart={start}
-					events={calendarEvents}
-					onDayClick={handleDayClick}
-				/>
+				isMobile ? (
+					<AgendaView monthStart={start} events={calendarEvents} />
+				) : (
+					<MonthView
+						monthStart={start}
+						events={calendarEvents}
+						onDayClick={handleDayClick}
+					/>
+				)
 			) : (
 				<WeekView
 					start={start}
@@ -603,6 +543,66 @@ export function Calendar({
 					onSlotDoubleClick={handleSlotDoubleClick}
 				/>
 			)}
+
+			<CalendarLegend showSlots={!isMonth} />
 		</div>
+	);
+}
+
+/**
+ * Explains the states that differ by border style and icon: pending, free block, restriction.
+ * Resource colours are not in the legend: the chips above name them and every event shows its
+ * resource name (or its initial in short events, plus the tooltip).
+ */
+function CalendarLegend({ showSlots }: { showSlots: boolean }) {
+	const { t } = useTranslation();
+	const swatch =
+		"inline-flex h-4 w-6 shrink-0 items-center justify-center rounded-xs border";
+	return (
+		<ul
+			aria-label={t("selite", "Selite")}
+			className="flex shrink-0 flex-wrap items-center gap-x-4 gap-y-1 text-xs text-stone-600 dark:text-stone-400"
+		>
+			<li className="flex items-center gap-1.5">
+				<span
+					aria-hidden="true"
+					className={cn(
+						swatch,
+						"border-dashed border-purple-500 bg-purple-50 text-purple-700 dark:bg-purple-950/40 dark:text-purple-300",
+					)}
+				>
+					<Clock size={10} />
+				</span>
+				{t("odottaaVahvistusta", "Odottaa vahvistusta")}
+			</li>
+			{showSlots && (
+				<>
+					<li className="flex items-center gap-1.5">
+						<span
+							aria-hidden="true"
+							className={cn(
+								swatch,
+								"border-dashed border-emerald-500 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300",
+							)}
+						>
+							<CalendarCheck size={10} />
+						</span>
+						{t("vapaaVarausjakso", "Vapaa varausjakso")}
+					</li>
+					<li className="flex items-center gap-1.5">
+						<span
+							aria-hidden="true"
+							className={cn(
+								swatch,
+								"border-amber-500 bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300",
+							)}
+						>
+							<AlertOctagon size={10} />
+						</span>
+						{t("rajoitus", "Rajoitus")}
+					</li>
+				</>
+			)}
+		</ul>
 	);
 }

@@ -46,7 +46,13 @@ pub fn app(pool: PgPool, config: Config) -> Router {
 
     Router::new()
         .merge(swagger_router)
-        .route("/health", get(health_check))
+        .route(
+            "/health",
+            get({
+                let app_name = config.app_name.clone();
+                move || health_check(app_name)
+            }),
+        )
         .nest("/auth", auth::router(auth_state.clone()))
         .nest("/users", users::router(auth_state.clone()))
         .nest("/groups", groups::router(auth_state.clone()))
@@ -73,6 +79,8 @@ pub fn app(pool: PgPool, config: Config) -> Router {
 pub struct HealthStatus {
     pub status: &'static str,
     pub version: &'static str,
+    /// Instance name (`APP_NAME`), so one built client can serve every instance.
+    pub app_name: String,
 }
 
 #[utoipa::path(
@@ -83,9 +91,10 @@ pub struct HealthStatus {
         (status = 200, description = "Service is up", body = HealthStatus)
     )
 )]
-pub async fn health_check() -> impl IntoResponse {
+pub async fn health_check(app_name: String) -> impl IntoResponse {
     Json(HealthStatus {
         status: "ok",
         version: env!("CARGO_PKG_VERSION"),
+        app_name,
     })
 }

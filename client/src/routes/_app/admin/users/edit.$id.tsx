@@ -1,6 +1,8 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { BackLink } from "#/components/BackLink";
+import { FormLayout } from "#/components/FormLayout";
+import { PageHeader } from "#/components/PageHeader";
 import { UserForm, type UserFormValues } from "#/components/UserForm";
 import { useUpdateUser, useUser } from "#/hooks/useUsers";
 import { requireAdminGuard } from "#/utils/authGuard";
@@ -21,11 +23,15 @@ function EditUserPage() {
 
 	if (isLoading)
 		return (
-			<div className="p-4">{t("ladataanKyttj", "Ladataan käyttäjää...")}</div>
+			<p className="text-sm text-stone-600 dark:text-stone-400">
+				{t("ladataanKyttj", "Ladataan käyttäjää...")}
+			</p>
 		);
 	if (!user)
 		return (
-			<div className="p-4">{t("kyttjEiLytynyt", "Käyttäjää ei löytynyt.")}</div>
+			<p className="text-sm text-stone-600 dark:text-stone-400">
+				{t("kyttjEiLytynyt", "Käyttäjää ei löytynyt.")}
+			</p>
 		);
 
 	const handleSubmit = async (values: UserFormValues) => {
@@ -43,13 +49,15 @@ function EditUserPage() {
 	};
 
 	return (
-		<div className="p-4 space-y-4">
-			<BackLink to="/admin/users/$id" params={{ id }}>
-				{t("takaisinKyttjn", "Takaisin käyttäjään")}
-			</BackLink>
-			<h1 className="text-xl font-bold text-stone-900 dark:text-stone-100">
-				{t("muokkaaKyttj", "Muokkaa käyttäjää")}
-			</h1>
+		<FormLayout>
+			<PageHeader
+				back={
+					<BackLink to="/admin/users/$id" params={{ id }}>
+						{t("takaisinKyttjn", "Takaisin käyttäjään")}
+					</BackLink>
+				}
+				title={t("muokkaaKyttj", "Muokkaa käyttäjää")}
+			/>
 			<UserForm
 				defaultValues={{
 					name: user.name,
@@ -61,7 +69,10 @@ function EditUserPage() {
 				isSubmitting={updateUser.isPending}
 				submitLabel={t("tallennaMuutokset", "Tallenna muutokset")}
 				isCreate={false}
+				onCancel={() =>
+					navigate({ to: "/admin/users/$id", params: { id: user.id } })
+				}
 			/>
-		</div>
+		</FormLayout>
 	);
 }

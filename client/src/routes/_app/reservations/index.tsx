@@ -1,45 +1,38 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import {
-	Calendar,
-	CheckCircle2,
-	Clock,
-	Eye,
-	Loader2,
-	RotateCcw,
-	User as UserIcon,
-	X,
-	XCircle,
-} from "lucide-react";
+import { Loader2, Plus } from "lucide-react";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "#/components/Button";
-import { CancelReservationDialog } from "#/components/CancelReservationDialog";
-import { Chip } from "#/components/Chip";
+import { Callout } from "#/components/Callout";
+import { EntityCard } from "#/components/EntityCard";
+import { FilterBar } from "#/components/FilterBar";
 import { OutlookBadge } from "#/components/OutlookBadge";
+import { PageContainer } from "#/components/PageContainer";
+import { PageHeader } from "#/components/PageHeader";
+import { PeriodEmptyState } from "#/components/PeriodEmptyState";
 import { PeriodNavigator } from "#/components/PeriodNavigator";
-import { useIsAdmin } from "#/hooks/useAuth";
+import { ReservationStatusChip } from "#/components/ReservationStatusChip";
+import { ResourceFilterField } from "#/components/ResourceFilterField";
 import {
-	type ReservationStatus,
 	type ReservationWithOccurrences,
 	useMyReservations,
-	useUpdateReservation,
 } from "#/hooks/useReservations";
 import { useResources } from "#/hooks/useResorces";
 import { useOpenRounds } from "#/hooks/useRounds";
 import { requireAuthGuard } from "#/utils/authGuard";
-import { cn } from "#/utils/cn";
 import { useDateFormatter } from "#/utils/date";
 import {
 	getPeriodRange,
 	type PeriodMonths,
 	parsePeriodMonths,
 } from "#/utils/period";
-import { readable_uuid } from "#/utils/uuid";
+import { parseResourceList, touchesResources } from "#/utils/resourceSearch";
 
 export interface UserDashboardSearch {
 	start_date?: string;
 	months?: PeriodMonths;
-	resource_id?: string;
+	/** Selected resource ids; missing means all */
+	resources?: string[];
 }
 
 export const Route = createFileRoute("/_app/reservations/")({
@@ -48,8 +41,7 @@ export const Route = createFileRoute("/_app/reservations/")({
 			start_date:
 				typeof search.start_date === "string" ? search.start_date : undefined,
 			months: parsePeriodMonths(search.months),
-			resource_id:
-				typeof search.resource_id === "string" ? search.resource_id : undefined,
+			resources: parseResourceList(search.resources, search.resource_id),
 		};
 	},
 	beforeLoad: async ({ context }) => {
@@ -58,117 +50,89 @@ export const Route = createFileRoute("/_app/reservations/")({
 	component: UserDashboardPage,
 });
 
-function UserReservationCard({
-	reservationWithOcc,
-	onStatusToggle,
-	isUpdating,
+function ReservationCard({
+	reservation,
+	resourceNames,
 }: {
-	reservationWithOcc: ReservationWithOccurrences;
-	onStatusToggle: (id: string, nextStatus: ReservationStatus) => void;
-	isUpdating: boolean;
+	reservation: ReservationWithOccurrences;
+	resourceNames: Map<string, string>;
 }) {
 	const { t } = useTranslation();
-	const { formatDate } = useDateFormatter();
-	const firstOccurrence = reservationWithOcc.occurrences?.[0];
-	const isPending = reservationWithOcc.status === "pending";
-	const isCancelled = reservationWithOcc.status === "cancelled";
-	const isOutlook = reservationWithOcc.source === "outlook";
-	const { isAdmin } = useIsAdmin();
+	const { formatRange } = useDateFormatter();
+	const occurrences = reservation.occurrences ?? [];
+	const first = occurrences[0];
+	const resources = [
+		...new Set(
+			occurrences.map((occ) => resourceNames.get(occ.resource_id) ?? ""),
+		),
+	].filter(Boolean);
+
+	const when = first
+		? occurrences.length > 1
+			? t("ensimmainenAikaJaMuut", "{{first}} + {{count}} muuta", {
+					first: formatRange(first.start_time, first.end_time),
+					count: occurrences.length - 1,
+				})
+			: formatRange(first.start_time, first.end_time)
+		: t("eiTiettyjAikoja", "Ei tiettyjä aikoja");
 
 	return (
-		<li
-			className={cn(
-				"p-3 border-2 flex flex-col justify-between gap-3 rounded-sm bg-stone-50 dark:bg-stone-900 transition-colors min-w-0",
-				isPending
-					? "border-amber-400 dark:border-amber-600"
-					: isCancelled
-						? "border-rose-300 dark:border-rose-900/60 opacity-80"
-						: "border-stone-200 dark:border-stone-700",
-			)}
-		>
-			<div className="flex items-start justify-between gap-2 min-w-0">
-				<div className="flex-1 truncate">
-					<Link
-						to="/reservations/$id"
-						params={{ id: reservationWithOcc.id }}
-						className="font-bold truncate hover:underline text-stone-900 dark:text-stone-100 block"
-					>
-						{reservationWithOcc.title}
-					</Link>
-					{reservationWithOcc.user_name && (
-						<p className="text-[11px] text-stone-500 dark:text-stone-400 flex items-center gap-1 mt-0.5">
-							<UserIcon size={11} className="shrink-0 text-purple-600" />
-							<span className="truncate">{reservationWithOcc.user_name}</span>
-						</p>
+		<EntityCard
+			to="/reservations/$id"
+			params={{ id: reservation.id }}
+			title={reservation.title}
+			meta={
+				<>
+					<span className="tabular-nums">{when}</span>
+					{resources.length > 0 && (
+						<>
+							{" "}
+							{"·"} {resources.join(", ")}
+						</>
 					)}
-				</div>
-				<div className="flex items-center gap-1 shrink-0">
-					{isOutlook && <OutlookBadge />}
-					<Chip>{readable_uuid(reservationWithOcc.id)}</Chip>
-				</div>
-			</div>
+				</>
+			}
+			badges={
+				<>
+					<ReservationStatusChip status={reservation.status} />
+					{reservation.source === "outlook" && <OutlookBadge />}
+				</>
+			}
+		/>
+	);
+}
 
-			<div className="flex flex-wrap items-center justify-between gap-2 min-w-0">
-				{firstOccurrence ? (
-					<div className="flex items-center gap-1 text-xs text-stone-500 dark:text-stone-400 font-mono">
-						<Calendar size={14} className="shrink-0" />
-						<span>{formatDate(firstOccurrence.start_time)}</span>
-					</div>
-				) : (
-					<span className="text-xs text-stone-400">
-						{t("eiTiettyjAikoja", "Ei tiettyjä aikoja")}
-					</span>
-				)}
-			</div>
-
-			<div className="flex items-center justify-between gap-2 pt-2 border-t border-stone-200 dark:border-stone-800">
-				<Button variant="secondary" size="sm" asChild>
-					<Link
-						to="/reservations/$id"
-						params={{ id: reservationWithOcc.id }}
-						className="gap-1 text-xs"
+function ReservationSection({
+	title,
+	reservations,
+	resourceNames,
+}: {
+	title: string;
+	reservations: ReservationWithOccurrences[];
+	resourceNames: Map<string, string>;
+}) {
+	return (
+		<section className="space-y-3">
+			<h2 className="text-lg font-semibold text-stone-900 dark:text-stone-100">
+				{title}
+				<span className="ml-2 text-sm font-normal text-stone-600 tabular-nums dark:text-stone-400">
+					{reservations.length}
+				</span>
+			</h2>
+			<ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+				{reservations.map((reservation) => (
+					<li
+						key={reservation.id}
+						className="flex min-w-0 flex-col [&>a]:flex-1"
 					>
-						<Eye size={14} />
-						<span>{t("nytTiedot", "Näytä tiedot")}</span>
-					</Link>
-				</Button>
-
-				{isOutlook ? null : isCancelled ? (
-					isAdmin && (
-						<Button
-							variant="outline"
-							size="sm"
-							disabled={isUpdating}
-							onClick={() =>
-								onStatusToggle(
-									reservationWithOcc.id,
-									"pending" as ReservationStatus,
-								)
-							}
-							className="text-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/50 text-xs px-2.5 py-1 gap-1"
-						>
-							<RotateCcw size={14} />
-							<span>{t("palautaOdottavaksi", "Palauta odottavaksi")}</span>
-						</Button>
-					)
-				) : (
-					<CancelReservationDialog
-						reservationId={reservationWithOcc.id}
-						reservationTitle={reservationWithOcc.title}
-						trigger={
-							<Button
-								variant="outline"
-								size="sm"
-								className="text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/50 text-xs px-2.5 py-1 gap-1"
-							>
-								<X size={14} />
-								<span>{t("peruVaraus", "Peru varaus")}</span>
-							</Button>
-						}
-					/>
-				)}
-			</div>
-		</li>
+						<ReservationCard
+							reservation={reservation}
+							resourceNames={resourceNames}
+						/>
+					</li>
+				))}
+			</ul>
+		</section>
 	);
 }
 
@@ -176,12 +140,13 @@ function UserDashboardPage() {
 	const { t } = useTranslation();
 	const search = Route.useSearch();
 	const navigate = Route.useNavigate();
+	const { formatDateTime } = useDateFormatter();
 
-	const { data: resources, isLoading: loadingResources } = useResources();
-	const updateReservation = useUpdateReservation();
+	const { data: resources } = useResources();
+	const { data: openRounds } = useOpenRounds();
 
 	const months = search.months ?? 1;
-	const resourceId = search.resource_id;
+	const selectedResources = search.resources;
 
 	const { start, startDateISO, endDateISO } = useMemo(
 		() => getPeriodRange(search.start_date, months),
@@ -195,29 +160,22 @@ function UserDashboardPage() {
 	} = useMyReservations({
 		startDate: startDateISO,
 		endDate: endDateISO,
-		resourceId,
 	});
 
-	const { pendingReservations, confirmedReservations, cancelledReservations } =
-		useMemo(() => {
-			if (!reservations) {
-				return {
-					pendingReservations: [],
-					confirmedReservations: [],
-					cancelledReservations: [],
-				};
-			}
+	const resourceNames = useMemo(
+		() => new Map(resources?.map((res) => [res.id, res.name])),
+		[resources],
+	);
 
-			return {
-				pendingReservations: reservations.filter((r) => r.status === "pending"),
-				confirmedReservations: reservations.filter(
-					(r) => r.status === "confirmed",
-				),
-				cancelledReservations: reservations.filter(
-					(r) => r.status === "cancelled",
-				),
-			};
-		}, [reservations]);
+	const byStatus = (status: ReservationWithOccurrences["status"]) =>
+		(reservations ?? []).filter(
+			(r) =>
+				r.status === status &&
+				touchesResources(r.occurrences, selectedResources),
+		);
+	const pending = byStatus("pending");
+	const confirmed = byStatus("confirmed");
+	const cancelled = byStatus("cancelled");
 
 	const updateSearch = (next: UserDashboardSearch) => {
 		navigate({
@@ -226,188 +184,125 @@ function UserDashboardPage() {
 		});
 	};
 
-	const handleStatusToggle = async (
-		id: string,
-		nextStatus: ReservationStatus,
-	) => {
-		await updateReservation.mutateAsync({
-			id,
-			payload: { status: nextStatus },
-		});
-	};
-
-	const { data: openRounds } = useOpenRounds();
-	const { formatDate } = useDateFormatter();
-
 	return (
-		<div className="flex flex-col gap-6 p-4 flex-1 min-h-0">
-			<div className="flex items-center justify-between gap-4 shrink-0">
-				<h1 className="text-xl font-bold text-stone-900 dark:text-stone-100">
-					{t("omatVaraukset", "Omat varaukset")}
-				</h1>
-			</div>
+		<PageContainer>
+			<PageHeader
+				title={t("omatVaraukset", "Omat varaukset")}
+				actions={
+					<Button asChild>
+						<Link to="/reservations/create">
+							<Plus size={16} aria-hidden="true" />
+							{t("uusiVaraus", "Uusi varaus")}
+						</Link>
+					</Button>
+				}
+			/>
 
 			{openRounds && openRounds.length > 0 && (
-				<ul className="shrink-0 space-y-1">
+				<div className="space-y-2">
 					{openRounds.map((round) => (
-						<li
+						<Callout
 							key={round.id}
-							className="text-sm p-2 rounded-md border border-amber-300 bg-amber-50 dark:bg-amber-950/40 dark:border-amber-800"
+							variant="info"
+							action={
+								<Button variant="outline" size="sm" asChild>
+									<Link to="/reservations/rounds/$id" params={{ id: round.id }}>
+										{t("avaaKierros", "Avaa kierros")}
+									</Link>
+								</Button>
+							}
 						>
-							<Link
-								to="/reservations/rounds/$id"
-								params={{ id: round.id }}
-								className="underline font-medium"
-							>
-								{round.name}
-							</Link>
+							<strong>{round.name}</strong>
 							{" – "}
 							{t("hakuaikaPttyy", "Haku päättyy")}{" "}
-							{formatDate(round.applications_close_at)}
-						</li>
+							<span className="tabular-nums">
+								{formatDateTime(round.applications_close_at)}
+							</span>
+						</Callout>
 					))}
-				</ul>
+				</div>
 			)}
 
-			<div className="flex flex-wrap items-center gap-2 shrink-0 p-2 bg-stone-100 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-md">
+			<FilterBar>
 				<PeriodNavigator
 					start={start}
 					months={months}
 					onChange={updateSearch}
 				/>
+			</FilterBar>
 
-				<select
-					value={resourceId || ""}
-					onChange={(e) =>
-						updateSearch({ resource_id: e.target.value || undefined })
-					}
-					disabled={loadingResources}
-					className="px-3 py-1.5 text-xs bg-stone-50 dark:bg-stone-950 border border-stone-200 dark:border-stone-800 rounded-md font-medium max-w-full truncate"
-				>
-					<option value="">{t("kaikkiResurssit", "Kaikki resurssit")}</option>
-					{resources?.map((res) => (
-						<option key={res.id} value={res.id}>
-							{res.name}
-						</option>
-					))}
-				</select>
-			</div>
+			<ResourceFilterField
+				value={selectedResources}
+				onChange={(resources) => updateSearch({ resources })}
+			/>
 
 			{isLoading ? (
-				<div className="p-8 flex items-center justify-center gap-2 text-stone-500">
-					<Loader2 className="animate-spin" size={18} />
+				<div className="flex items-center justify-center gap-2 p-8 text-sm text-stone-600 dark:text-stone-400">
+					<Loader2 className="animate-spin" size={18} aria-hidden="true" />
 					<span>{t("ladataanVarauksiasi", "Ladataan varauksiasi...")}</span>
 				</div>
 			) : isError ? (
-				<div className="p-4 text-xs text-rose-600 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 rounded-md">
+				<Callout variant="danger">
 					{t(
 						"virheLadattaessaVaraustietoja",
 						"Virhe ladattaessa varaustietoja.",
 					)}
-				</div>
+				</Callout>
+			) : pending.length + confirmed.length + cancelled.length === 0 ? (
+				<PeriodEmptyState
+					start={start}
+					months={months}
+					what={t("sanaVarauksia", "varauksia")}
+					onChange={updateSearch}
+					action={
+						<Button asChild size="sm">
+							<Link to="/reservations/create">
+								{t("uusiVaraus", "Uusi varaus")}
+							</Link>
+						</Button>
+					}
+				/>
 			) : (
-				<div className="space-y-6">
-					{/* SECTION 1: Pending Reservations */}
-					<div className="space-y-3">
-						<div className="flex items-center gap-2 text-amber-600 dark:text-amber-500 font-bold">
-							<Clock size={18} />
-							<h2>
-								{t(
-									"odottaaHyvksyntLength",
-									"Odottaa hyväksyntää ({{length}})",
-									{ length: pendingReservations.length },
-								)}
-							</h2>
-						</div>
-
-						{pendingReservations.length > 0 ? (
-							<ul className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-3">
-								{pendingReservations.map((res) => (
-									<UserReservationCard
-										key={res.id}
-										reservationWithOcc={res}
-										onStatusToggle={handleStatusToggle}
-										isUpdating={updateReservation.isPending}
-									/>
+				<>
+					{pending.length > 0 && (
+						<ReservationSection
+							title={t("odottaaHyvaksyntaa", "Odottaa hyväksyntää")}
+							reservations={pending}
+							resourceNames={resourceNames}
+						/>
+					)}
+					{confirmed.length > 0 && (
+						<ReservationSection
+							title={t("vahvistetutVarauksetOsio", "Vahvistetut varaukset")}
+							reservations={confirmed}
+							resourceNames={resourceNames}
+						/>
+					)}
+					{cancelled.length > 0 && (
+						<details className="group space-y-3">
+							<summary className="focus-ring w-fit cursor-pointer select-none text-lg font-semibold text-stone-900 hover:underline dark:text-stone-100">
+								{t("perututVaraukset", "Perutut varaukset")}
+								<span className="ml-2 text-sm font-normal text-stone-600 tabular-nums dark:text-stone-400">
+									{cancelled.length}
+								</span>
+							</summary>
+							<ul className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+								{cancelled.map((reservation) => (
+									<li
+										key={reservation.id}
+										className="flex min-w-0 flex-col [&>a]:flex-1"
+									>
+										<ReservationCard
+											reservation={reservation}
+											resourceNames={resourceNames}
+										/>
+									</li>
 								))}
 							</ul>
-						) : (
-							<div className="p-4 text-xs text-stone-500 bg-stone-50 dark:bg-stone-900/40 rounded-md border border-stone-200 dark:border-stone-800">
-								{t(
-									"eiOdottaviaVarauksiaValitullaAikavlill",
-									"Ei odottavia varauksia valitulla aikavälillä.",
-								)}
-							</div>
-						)}
-					</div>
-
-					{/* SECTION 2: Confirmed Reservations */}
-					<div className="space-y-3">
-						<div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-500 font-bold">
-							<CheckCircle2 size={18} />
-							<h2>
-								{t(
-									"vahvistetutVarauksetLength",
-									"Vahvistetut varaukset ({{length}})",
-									{ length: confirmedReservations.length },
-								)}
-							</h2>
-						</div>
-
-						{confirmedReservations.length > 0 ? (
-							<ul className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-3">
-								{confirmedReservations.map((res) => (
-									<UserReservationCard
-										key={res.id}
-										reservationWithOcc={res}
-										onStatusToggle={handleStatusToggle}
-										isUpdating={updateReservation.isPending}
-									/>
-								))}
-							</ul>
-						) : (
-							<div className="p-4 text-xs text-stone-500 bg-stone-50 dark:bg-stone-900/40 rounded-md border border-stone-200 dark:border-stone-800">
-								{t(
-									"eiVahvistettujaVarauksiaValitullaAikavlill",
-									"Ei vahvistettuja varauksia valitulla aikavälillä.",
-								)}
-							</div>
-						)}
-					</div>
-
-					{/* SECTION 3: Cancelled Reservations */}
-					<div className="space-y-3">
-						<div className="flex items-center gap-2 text-rose-600 dark:text-rose-500 font-bold">
-							<XCircle size={18} />
-							<h2>
-								{t("perututVarauksetLength", "Perutut varaukset ({{length}})", {
-									length: cancelledReservations.length,
-								})}
-							</h2>
-						</div>
-
-						{cancelledReservations.length > 0 ? (
-							<ul className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-3">
-								{cancelledReservations.map((res) => (
-									<UserReservationCard
-										key={res.id}
-										reservationWithOcc={res}
-										onStatusToggle={handleStatusToggle}
-										isUpdating={updateReservation.isPending}
-									/>
-								))}
-							</ul>
-						) : (
-							<div className="p-4 text-xs text-stone-500 bg-stone-50 dark:bg-stone-900/40 rounded-md border border-stone-200 dark:border-stone-800">
-								{t(
-									"eiPeruttujaVarauksiaValitullaAikavlill",
-									"Ei peruttuja varauksia valitulla aikavälillä.",
-								)}
-							</div>
-						)}
-					</div>
-				</div>
+						</details>
+					)}
+				</>
 			)}
-		</div>
+		</PageContainer>
 	);
 }

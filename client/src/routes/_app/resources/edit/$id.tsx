@@ -1,6 +1,8 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { BackLink } from "#/components/BackLink";
+import { FormLayout } from "#/components/FormLayout";
+import { PageHeader } from "#/components/PageHeader";
 import {
 	ResourceForm,
 	type ResourceFormValues,
@@ -36,17 +38,17 @@ function EditResourcePage() {
 
 	if (loadingResource || loadingContracts) {
 		return (
-			<div className="p-4">
+			<p className="text-sm text-stone-600 dark:text-stone-400">
 				{t("ladataanResurssia", "Ladataan resurssia...")}
-			</div>
+			</p>
 		);
 	}
 
 	if (!resource) {
 		return (
-			<div className="p-4">
+			<p className="text-sm text-stone-600 dark:text-stone-400">
 				{t("resurssiaEiLytynyt", "Resurssia ei löytynyt.")}
-			</div>
+			</p>
 		);
 	}
 
@@ -86,13 +88,15 @@ function EditResourcePage() {
 	};
 
 	return (
-		<div className="p-4 space-y-4 max-w-xl mx-auto">
-			<BackLink to="/resources/$id" params={{ id: resourceId }}>
-				{t("takaisinResurssiin", "Takaisin resurssiin")}
-			</BackLink>
-			<h1 className="text-xl font-bold text-stone-900 dark:text-stone-100">
-				{t("muokkaaResurssia", "Muokkaa resurssia")}
-			</h1>
+		<FormLayout width="guided">
+			<PageHeader
+				back={
+					<BackLink to="/resources/$id" params={{ id: resourceId }}>
+						{t("takaisinResurssiin", "Takaisin resurssiin")}
+					</BackLink>
+				}
+				title={t("muokkaaResurssia", "Muokkaa resurssia")}
+			/>
 			<ResourceForm
 				defaultValues={{
 					name: resource.name,
@@ -115,9 +119,12 @@ function EditResourcePage() {
 					contract_ids: initialContractIds,
 				}}
 				onSubmit={handleSubmit}
+				onCancel={() =>
+					navigate({ to: "/resources/$id", params: { id: resource.id } })
+				}
 				isSubmitting={updateResource.isPending}
 				submitLabel={t("tallennaMuutokset", "Tallenna muutokset")}
 			/>
-		</div>
+		</FormLayout>
 	);
 }

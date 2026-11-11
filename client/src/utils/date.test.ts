@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
 	addDays,
 	formatYYYYMMDD,
+	getDateFormatter,
 	localDayRangeISO,
 	monthGridRange,
 	parseLocalDate,
@@ -59,5 +60,50 @@ describe("local date helpers", () => {
 		const march = monthGridRange(new Date(2026, 2, 1));
 		expect(formatYYYYMMDD(march.start)).toBe("2026-02-23");
 		expect(march.days).toBe(42);
+	});
+});
+
+describe("date formatter", () => {
+	// Local times, so the expectations do not depend on the machine's time zone
+	const start = new Date(2026, 9, 20, 8, 30);
+	const sameDayEnd = new Date(2026, 9, 20, 11, 30);
+	const nextDayEnd = new Date(2026, 9, 21, 2, 0);
+
+	it("formats date, time and date-time in Finnish", () => {
+		const f = getDateFormatter("fi");
+		expect(f.formatDateOnly(start)).toBe("20.10.2026");
+		expect(f.formatTime(start)).toBe("08.30");
+		expect(f.formatDateTime(start)).toBe("20.10.2026 klo 08.30");
+		expect(f.formatDate(start)).toBe(f.formatDateTime(start));
+	});
+
+	it("collapses a same-day range", () => {
+		const f = getDateFormatter("fi");
+		expect(f.formatRange(start, sameDayEnd)).toBe("20.10.2026 klo 08.30–11.30");
+	});
+
+	it("shows both ends of a multi-day range", () => {
+		const f = getDateFormatter("fi");
+		expect(f.formatRange(start, nextDayEnd)).toBe(
+			"20.10.2026 klo 08.30 – 21.10.2026 klo 02.00",
+		);
+	});
+
+	it("handles a missing end and missing dates", () => {
+		const f = getDateFormatter("fi");
+		expect(f.formatRange(start)).toBe("20.10.2026 klo 08.30");
+		expect(f.formatRange(undefined, start)).toBe("—");
+		expect(f.formatDateTime("not a date")).toBe("—");
+	});
+
+	it("follows the locale for Swedish and English", () => {
+		// The separators depend on the ICU data of the Node version, so accept the known variants
+		const sv = getDateFormatter("sv");
+		expect(sv.formatTime(start)).toMatch(/^08[:.]30$/);
+		expect(sv.formatDateOnly(start)).toMatch(/^(2026-10-20|20\.10\.2026)$/);
+		const en = getDateFormatter("en");
+		expect(en.formatTime(start)).toMatch(/^08[:.]30$/);
+		expect(en.formatDateOnly(start)).toBe("20/10/2026");
+		expect(en.formatRange(start, sameDayEnd)).toMatch(/08[:.]30–11[:.]30/);
 	});
 });

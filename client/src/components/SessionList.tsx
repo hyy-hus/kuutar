@@ -16,11 +16,11 @@ export function SessionList({
 	disabled?: boolean;
 }) {
 	const { t } = useTranslation();
-	const { formatDate } = useDateFormatter();
+	const { formatDateTime } = useDateFormatter();
 
 	if (sessions.length === 0) {
 		return (
-			<p className="text-xs text-stone-500">
+			<p className="text-xs text-stone-600 dark:text-stone-400">
 				{t("eiAktiivisiaIstuntoja", "Ei aktiivisia istuntoja.")}
 			</p>
 		);
@@ -33,23 +33,27 @@ export function SessionList({
 					key={session.session_id}
 					className="flex items-center gap-3 p-2 rounded-md border border-stone-200 dark:border-stone-800 bg-stone-50 dark:bg-stone-900"
 				>
-					<Monitor size={16} className="shrink-0 text-stone-500" />
+					<Monitor
+						size={16}
+						aria-hidden="true"
+						className="shrink-0 text-stone-600 dark:text-stone-400"
+					/>
 					<div className="min-w-0 flex-1 text-xs">
 						<p className="font-semibold text-stone-900 dark:text-stone-100 truncate">
 							{describeUserAgent(session.user_agent) ??
 								t("tuntematonLaite", "Tuntematon laite")}
 							{session.current && (
-								<span className="ml-2 font-normal text-purple-600 dark:text-purple-400">
+								<span className="ml-2 font-normal text-purple-700 dark:text-purple-400">
 									{t("tamaLaite", "Tämä laite")}
 								</span>
 							)}
 						</p>
-						<p className="text-stone-500">
-							{`${t("viimeksiAktiivinen", "Viimeksi aktiivinen")}: ${formatDate(session.last_active_at)}`}
+						<p className="tabular-nums text-stone-600 dark:text-stone-400">
+							{`${t("viimeksiAktiivinen", "Viimeksi aktiivinen")}: ${formatDateTime(session.last_active_at)}`}
 							{session.ip ? ` · ${session.ip}` : ""}
 						</p>
-						<p className="text-stone-500">
-							{`${t("istuntoAlkoi", "Alkoi")}: ${formatDate(session.started_at)}`}
+						<p className="tabular-nums text-stone-600 dark:text-stone-400">
+							{`${t("istuntoAlkoi", "Alkoi")}: ${formatDateTime(session.started_at)}`}
 						</p>
 					</div>
 					{!session.current && (

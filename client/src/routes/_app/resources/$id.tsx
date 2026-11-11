@@ -1,20 +1,19 @@
-// src/routes/resources/$id.tsx
+// src/routes/_app/resources/$id.tsx
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { Edit, Lock, Trash2 } from "lucide-react";
+import { CalendarPlus, Lock, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { AccessSummary } from "#/components/AccessSummary";
 import { BackLink } from "#/components/BackLink";
 import { Button } from "#/components/Button";
-import { Chip } from "#/components/Chip";
+import { Callout } from "#/components/Callout";
+import { DetailLayout } from "#/components/DetailLayout";
 import { RichTextContent } from "#/components/RichTextContent";
-import { useIsAdmin } from "#/hooks/useAuth";
+import { useAuth, useIsAdmin } from "#/hooks/useAuth";
 import { useCollection } from "#/hooks/useCollections";
 import { useGroups } from "#/hooks/useGroups";
 import { useDeleteResource, useResource } from "#/hooks/useResorces";
 import { getCollectionIcon } from "#/utils/collectionIcons";
-import { useDateFormatter } from "#/utils/date";
 import { summarizeResourceAccess } from "#/utils/resourceAccess";
-import { readable_uuid } from "#/utils/uuid";
 
 export const Route = createFileRoute("/_app/resources/$id")({
 	component: ViewResourcePage,
@@ -23,7 +22,7 @@ export const Route = createFileRoute("/_app/resources/$id")({
 function ViewResourcePage() {
 	const { t } = useTranslation();
 	const { isAdmin } = useIsAdmin();
-	const { formatDate } = useDateFormatter();
+	const { user } = useAuth();
 	const { id } = Route.useParams();
 	const navigate = useNavigate();
 	const { data: resource, isLoading, isError } = useResource(id);
@@ -34,15 +33,15 @@ function ViewResourcePage() {
 
 	if (isLoading)
 		return (
-			<div className="p-4 text-sm text-stone-500">
+			<p className="text-sm text-stone-600 dark:text-stone-400">
 				{t("ladataanResurssia", "Ladataan resurssia...")}
-			</div>
+			</p>
 		);
 	if (isError || !resource)
 		return (
-			<div className="p-4 text-sm text-red-500">
+			<Callout variant="danger">
 				{t("resurssiaEiLytynyt", "Resurssia ei löytynyt.")}
-			</div>
+			</Callout>
 		);
 
 	const handleDelete = async () => {
@@ -60,24 +59,72 @@ function ViewResourcePage() {
 	};
 
 	return (
-		<div className="p-4 max-w-xl flex flex-col gap-6">
-			{/* Back navigation */}
-			<BackLink to="/resources">
-				{t("takaisinResursseihin", "Takaisin resursseihin")}
-			</BackLink>
-
-			{/* 1. Header: Name & ID Chip */}
-			<div className="flex items-center justify-between">
-				<h1 className="text-2xl font-bold text-stone-900 dark:text-stone-100">
-					{resource.name}
-				</h1>
-				<Chip>{readable_uuid(resource.id)}</Chip>
-			</div>
-
-			{/* 2. Localized rich-text description */}
+		<DetailLayout
+			title={resource.name}
+			back={
+				<BackLink to="/resources">
+					{t("takaisinResursseihin", "Takaisin resursseihin")}
+				</BackLink>
+			}
+			subtitle={
+				<span className="inline-flex items-center gap-1.5">
+					<CollectionIcon size={14} aria-hidden="true" className="shrink-0" />
+					{collection ? (
+						<Link
+							to="/collections/$id"
+							params={{ id: collection.id }}
+							className="focus-ring text-purple-700 hover:underline dark:text-purple-400"
+						>
+							{collection.name}
+						</Link>
+					) : (
+						"—"
+					)}
+				</span>
+			}
+			actions={
+				<>
+					{resource.can_reserve && (
+						<Button asChild>
+							<Link
+								to="/reservations/create"
+								search={{ resource_ids: [resource.id] }}
+							>
+								<CalendarPlus size={16} />
+								<span>{t("varaa", "Varaa")}</span>
+							</Link>
+						</Button>
+					)}
+					{isAdmin && (
+						<Button variant="outline" asChild>
+							<Link to="/resources/edit/$id" params={{ id: resource.id }}>
+								{t("muokkaa", "Muokkaa")}
+							</Link>
+						</Button>
+					)}
+				</>
+			}
+			dangerZone={
+				isAdmin && (
+					<Button
+						variant="danger-outline"
+						onClick={handleDelete}
+						disabled={deleteResource.isPending}
+					>
+						<Trash2 size={16} />
+						<span>{t("poistaResurssi", "Poista resurssi")}</span>
+					</Button>
+				)
+			}
+			technical={{
+				id: resource.id,
+				createdAt: resource.created_at,
+				updatedAt: resource.updated_at,
+			}}
+		>
 			<RichTextContent
 				value={resource.description}
-				className="p-3 rounded-md border border-stone-200 dark:border-stone-800 bg-stone-50 dark:bg-stone-900"
+				className="rounded-md border border-stone-300 bg-stone-50 p-4 dark:border-stone-700 dark:bg-stone-900"
 			/>
 
 			{/* Who can see, reserve and get confirmed */}
@@ -95,62 +142,19 @@ function ViewResourcePage() {
 				/>
 			) : (
 				!resource.can_reserve && (
-					<p className="flex items-center gap-2 p-3 text-xs rounded-md border border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/20 text-amber-800 dark:text-amber-300">
-						<Lock size={14} className="shrink-0" />
-						<span>
-							{t(
-								"eiVarausoikeutta",
-								"Ryhmälläsi ei ole oikeutta varata tätä resurssia.",
-							)}
-						</span>
-					</p>
+					<Callout variant="warning" icon={Lock}>
+						{user
+							? t(
+									"eiVarausoikeutta",
+									"Sinulla ei ole oikeutta varata tätä resurssia.",
+								)
+							: t(
+									"kirjauduVarataksesi",
+									"Kirjaudu sisään, jos haluat varata tämän.",
+								)}
+					</Callout>
 				)
 			)}
-
-			<div className="space-y-2">
-				<div className="text-md">
-					<p>
-						<strong>{t("kokoelma2", "Kokoelma:")}</strong>{" "}
-						<CollectionIcon size={14} className="inline -mt-0.5 mr-1" />
-						{collection?.name ?? "—"}
-					</p>
-					<hr className="my-2 border-stone-300" />
-					<p>
-						<strong>{t("muokattu", "Muokattu:")}</strong>{" "}
-						{formatDate(resource.updated_at)}
-					</p>
-					<p>
-						<strong>{t("luotu", "Luotu:")}</strong>{" "}
-						{formatDate(resource.created_at)}
-					</p>
-				</div>
-			</div>
-
-			{/* 3. Vertically Stacked Action Buttons (admins only) */}
-			{isAdmin && (
-				<div className="flex flex-col gap-2 pt-2">
-					<Button
-						variant="secondary"
-						className="w-full flex items-center justify-center gap-2"
-						asChild
-					>
-						<Link to="/resources/edit/$id" params={{ id: resource.id }}>
-							<span>{t("muokkaa", "Muokkaa")}</span>
-							<Edit size={16} />
-						</Link>
-					</Button>
-
-					<Button
-						variant="danger"
-						className="w-full flex items-center justify-center gap-2"
-						onClick={handleDelete}
-						disabled={deleteResource.isPending}
-					>
-						<span>{t("poistaResurssi", "Poista resurssi")}</span>
-						<Trash2 size={16} />
-					</Button>
-				</div>
-			)}
-		</div>
+		</DetailLayout>
 	);
 }

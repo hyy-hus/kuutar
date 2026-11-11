@@ -215,3 +215,85 @@ export function layoutDay(events: DaySegment[]) {
 	const maxCols = Math.max(1, ...placed.map((p) => p.col));
 	return { maxCols, placed };
 }
+
+/**
+ * Per-day lists for compact views (month grid, agenda): only existing reservations (restrictions
+ * and bookable blocks belong to the days view), an overnight event ending by morning stays on the
+ * day it starts, and each day is sorted by start time.
+ */
+export function compactEventsByDay(
+	events: CalendarEvent[],
+	rangeStart: Date,
+	days: number,
+): DaySegment[][] {
+	return splitEventsByDay(
+		events.filter((evt) => !evt.isRestriction && !evt.isBlock),
+		rangeStart,
+		days,
+	).map((segments) =>
+		segments
+			.filter((segment) => !isOvernightTail(segment))
+			.sort(
+				(a, b) =>
+					a.start.getTime() - b.start.getTime() ||
+					a.eventStart.getTime() - b.eventStart.getTime(),
+			),
+	);
+}
+
+export interface AgendaDay {
+	date: Date;
+	segments: DaySegment[];
+}
+
+/** Agenda grouping: the days of the range that have reservations, in order, each with its sorted list */
+export function groupAgendaByDay(
+	events: CalendarEvent[],
+	rangeStart: Date,
+	days: number,
+): AgendaDay[] {
+	return compactEventsByDay(events, rangeStart, days)
+		.map((segments, i) => ({
+			date: new Date(
+				rangeStart.getFullYear(),
+				rangeStart.getMonth(),
+				rangeStart.getDate() + i,
+			),
+			segments,
+		}))
+		.filter((day) => day.segments.length > 0);
+}
+
+/**
+ * Splits a day's list for a cell with room for `max` lines. When everything fits all of it is
+ * shown; otherwise the last line is given to a "+N more" link, so `visible.length + 1` lines are
+ * used and `hidden` counts the events behind it.
+ */
+export function splitOverflow<T>(
+	items: T[],
+	max: number,
+): { visible: T[]; hidden: number } {
+	if (items.length <= max) return { visible: items, hidden: 0 };
+	const visible = items.slice(0, Math.max(0, max - 1));
+	return { visible, hidden: items.length - visible.length };
+}
+
+/**
+ * Index (0-based) of the column showing `now`'s date among `days` columns starting at
+ * `rangeStart`, or -1 when today is not in view. The now-line is drawn in this column only.
+ */
+export function todayColumnIndex(
+	rangeStart: Date,
+	days: number,
+	now: Date,
+): number {
+	const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+	const first = new Date(
+		rangeStart.getFullYear(),
+		rangeStart.getMonth(),
+		rangeStart.getDate(),
+	);
+	// Rounding absorbs the 23/25 hour days around daylight saving changes
+	const offset = Math.round((today.getTime() - first.getTime()) / 86_400_000);
+	return offset >= 0 && offset < days ? offset : -1;
+}

@@ -1,6 +1,7 @@
 import { CheckCircle2, Eye, Users } from "lucide-react";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
+import { Callout } from "#/components/Callout";
 import type { Group } from "#/hooks/useGroups";
 import type { ResourceAccessSummary } from "#/utils/resourceAccess";
 
@@ -66,21 +67,19 @@ export function AccessSummary({ summary, groups }: AccessSummaryProps) {
 	];
 
 	return (
-		<dl
-			aria-label={t("yhteenvetoOtsikko", "Kuka voi tehdä mitä")}
-			className="p-3 space-y-1.5 bg-purple-50 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-900 rounded-md"
+		<Callout
+			variant="info"
+			title={t("yhteenvetoOtsikko", "Kuka voi tehdä mitä")}
 		>
-			{rows.map((row) => (
-				<div key={row.label} className="flex items-start gap-2 text-xs">
-					<span className="mt-0.5 text-purple-600 dark:text-purple-400 shrink-0">
-						{row.icon}
-					</span>
-					<dt className="font-medium text-stone-700 dark:text-stone-300 w-32 shrink-0">
-						{row.label}
-					</dt>
-					<dd className="text-stone-900 dark:text-stone-100">{row.value}</dd>
-				</div>
-			))}
-		</dl>
+			<dl className="mt-1.5 space-y-1.5">
+				{rows.map((row) => (
+					<div key={row.label} className="flex items-start gap-2 text-sm">
+						<span className="mt-0.5 shrink-0">{row.icon}</span>
+						<dt className="w-36 shrink-0 font-medium">{row.label}</dt>
+						<dd>{row.value}</dd>
+					</div>
+				))}
+			</dl>
+		</Callout>
 	);
 }

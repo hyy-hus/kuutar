@@ -1,6 +1,10 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { BackLink } from "#/components/BackLink";
+import { Callout } from "#/components/Callout";
+import { FormLayout } from "#/components/FormLayout";
+import { PageContainer } from "#/components/PageContainer";
+import { PageHeader } from "#/components/PageHeader";
 import {
 	ReservationForm,
 	type ReservationFormValues,
@@ -32,13 +36,19 @@ function EditReservationPage() {
 
 	if (isLoading)
 		return (
-			<div className="p-4">{t("ladataanVarausta", "Ladataan varausta...")}</div>
+			<PageContainer width="narrow">
+				<p className="text-sm text-stone-600 dark:text-stone-400">
+					{t("ladataanVarausta", "Ladataan varausta...")}
+				</p>
+			</PageContainer>
 		);
 	if (!reservation)
 		return (
-			<div className="p-4">
-				{t("varaustaEiLytynyt", "Varausta ei löytynyt.")}
-			</div>
+			<PageContainer width="narrow">
+				<Callout variant="danger">
+					{t("varaustaEiLytynyt", "Varausta ei löytynyt.")}
+				</Callout>
+			</PageContainer>
 		);
 
 	const firstOccurrence = reservation.occurrences?.[0];
@@ -78,13 +88,15 @@ function EditReservationPage() {
 	};
 
 	return (
-		<div className="p-4 space-y-4">
-			<BackLink to="/reservations/$id" params={{ id }}>
-				{t("takaisinVaraukseen", "Takaisin varaukseen")}
-			</BackLink>
-			<h1 className="text-xl font-bold text-stone-900 dark:text-stone-100">
-				{t("muokkaaVarausta", "Muokkaa varausta")}
-			</h1>
+		<FormLayout width="guided">
+			<PageHeader
+				back={
+					<BackLink to="/reservations/$id" params={{ id }}>
+						{t("takaisinVaraukseen", "Takaisin varaukseen")}
+					</BackLink>
+				}
+				title={t("muokkaaVarausta", "Muokkaa varausta")}
+			/>
 			<ReservationForm
 				reservationId={reservation.id}
 				defaultValues={{
@@ -106,10 +118,13 @@ function EditReservationPage() {
 					occurrences: reservation.occurrences,
 				}}
 				onSubmit={handleSubmit}
+				onCancel={() =>
+					navigate({ to: "/reservations/$id", params: { id: reservation.id } })
+				}
 				isSubmitting={updateReservation.isPending}
 				submitLabel={t("tallennaMuutokset", "Tallenna muutokset")}
 				isCreate={false}
 			/>
-		</div>
+		</FormLayout>
 	);
 }

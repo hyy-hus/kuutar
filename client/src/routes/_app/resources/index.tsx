@@ -1,143 +1,130 @@
 // src/routes/_app/resources/index.tsx
 import { createFileRoute, Link } from "@tanstack/react-router";
-import {
-	CheckCircle2,
-	Eye,
-	EyeOff,
-	Loader2,
-	Plus,
-	RefreshCw,
-	Users,
-} from "lucide-react";
+import { CheckCircle2, EyeOff, Loader2, Plus, Users } from "lucide-react";
+import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "#/components/Button";
-import { Chip } from "#/components/Chip";
-import { RichTextContent } from "#/components/RichTextContent";
+import { Callout } from "#/components/Callout";
+import { EmptyState } from "#/components/EmptyState";
+import { EntityCard } from "#/components/EntityCard";
+import { FilterBar } from "#/components/FilterBar";
+import { Input } from "#/components/Input";
+import { PageContainer } from "#/components/PageContainer";
+import { PageHeader } from "#/components/PageHeader";
+import { Select } from "#/components/Select";
+import { StatusChip } from "#/components/StatusChip";
 import { useIsAdmin } from "#/hooks/useAuth";
 import { type Collection, useCollections } from "#/hooks/useCollections";
 import { type Resource, useResources } from "#/hooks/useResorces";
 import { getCollectionIcon } from "#/utils/collectionIcons";
-import { readable_uuid } from "#/utils/uuid";
+import { getLocalizedPlainText } from "#/utils/richText";
 
 export const Route = createFileRoute("/_app/resources/")({
-	component: RouteComponent,
+	component: ResourceList,
 });
 
-function ResourceCard({
-	resource,
+function ResourceCard({ resource }: { resource: Resource }) {
+	const { t, i18n } = useTranslation();
+	const badges = [
+		!resource.is_public && (
+			<span
+				key="hidden"
+				title={t(
+					"rajattuNakyvyysOhje",
+					"Resurssi näkyy vain ylläpitäjille ja valituille ryhmille.",
+				)}
+			>
+				<StatusChip variant="neutral" icon={EyeOff}>
+					{t("rajattuNakyvyys", "Rajattu näkyvyys")}
+				</StatusChip>
+			</span>
+		),
+		resource.reservation_restricted && (
+			<span
+				key="restricted"
+				title={t(
+					"rajattuVarausoikeusOhje",
+					"Vain valitut ryhmät voivat varata tämän resurssin.",
+				)}
+			>
+				<StatusChip variant="warning" icon={Users}>
+					{t("rajattuVarausoikeus", "Rajattu varausoikeus")}
+				</StatusChip>
+			</span>
+		),
+		resource.auto_confirm && (
+			<span
+				key="auto"
+				title={t(
+					"vahvistuuAutomaattisestiOhje",
+					"Varaukset vahvistuvat ilman ylläpitäjän hyväksyntää.",
+				)}
+			>
+				<StatusChip variant="success" icon={CheckCircle2}>
+					{t("vahvistuuAutomaattisesti", "Vahvistuu automaattisesti")}
+				</StatusChip>
+			</span>
+		),
+	].filter(Boolean);
+
+	return (
+		<EntityCard
+			to="/resources/$id"
+			params={{ id: resource.id }}
+			title={resource.name}
+			icon={getCollectionIcon(resource.collection_icon)}
+			description={
+				getLocalizedPlainText(resource.description, i18n.language) || undefined
+			}
+			badges={badges.length > 0 ? badges : undefined}
+		/>
+	);
+}
+
+function CollectionGroup({
 	collection,
+	resources,
 }: {
-	resource: Resource;
 	collection?: Collection;
+	resources: Resource[];
 }) {
 	const { t } = useTranslation();
-	const CollectionIcon = getCollectionIcon(resource.collection_icon);
+	const Icon = getCollectionIcon(collection?.icon);
 	return (
-		<li className="p-3 border-2 border-stone-800 dark:border-stone-700 flex flex-col justify-between gap-3 rounded-md bg-stone-50 dark:bg-stone-900 shadow-xs hover:border-purple-600 dark:hover:border-purple-500 transition-colors min-w-0">
-			<div className="space-y-2 min-w-0">
-				{/* Header: Name and ID Chip */}
-				<div className="flex items-start justify-between gap-2 min-w-0">
-					<h3 className="font-bold text-sm md:text-base text-stone-900 dark:text-stone-100 truncate flex-1">
-						{resource.name}
-					</h3>
-					<Chip>{readable_uuid(resource.id)}</Chip>
-				</div>
-
-				{/* Collection Link */}
-				{collection && (
-					<div className="flex items-center gap-1.5 text-xs text-stone-500 dark:text-stone-400">
-						<CollectionIcon size={14} className="shrink-0" />
-						<Link
-							to="/collections/$id"
-							params={{ id: collection.id }}
-							className="hover:underline font-medium truncate"
-						>
-							{collection.name}
-						</Link>
-					</div>
-				)}
-
-				{/* Description */}
-				<RichTextContent
-					value={resource.description}
-					className="text-xs text-stone-600 dark:text-stone-400"
-					fallback={
-						<p className="text-xs text-stone-600 dark:text-stone-400">
-							{t("eiKuvaustaSaatavilla", "Ei kuvausta saatavilla.")}
-						</p>
-					}
-				/>
-			</div>
-
-			{/* Bottom Controls */}
-			<div className="flex items-center justify-between gap-2 pt-2 border-t border-stone-200 dark:border-stone-800 shrink-0">
-				{/* Capability Badges */}
-				<div className="flex flex-wrap items-center gap-1 min-w-0">
-					{!resource.is_public && (
-						<span
-							title={t(
-								"rajattuNakyvyysOhje",
-								"Resurssi näkyy vain ylläpitäjille ja valituille ryhmille.",
-							)}
-							className="inline-flex items-center gap-1 text-[10px] font-mono text-stone-700 dark:text-stone-300 bg-stone-200 dark:bg-stone-800 px-1.5 py-0.5 rounded"
-						>
-							<EyeOff size={10} />
-							<span>{t("rajattuNakyvyys", "Rajattu näkyvyys")}</span>
-						</span>
-					)}
-					{resource.reservation_restricted && (
-						<span
-							title={t(
-								"rajattuVarausoikeusOhje",
-								"Vain valitut ryhmät voivat varata tämän resurssin.",
-							)}
-							className="inline-flex items-center gap-1 text-[10px] font-mono text-amber-700 dark:text-amber-400 bg-amber-100 dark:bg-amber-950/40 px-1.5 py-0.5 rounded"
-						>
-							<Users size={10} />
-							<span>{t("rajattuVarausoikeus", "Rajattu varausoikeus")}</span>
-						</span>
-					)}
-					{resource.auto_confirm && (
-						<span
-							title={t(
-								"vahvistuuAutomaattisestiOhje",
-								"Varaukset vahvistuvat ilman ylläpitäjän hyväksyntää.",
-							)}
-							className="inline-flex items-center gap-1 text-[10px] font-mono text-emerald-700 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-950/40 px-1.5 py-0.5 rounded"
-						>
-							<CheckCircle2 size={10} />
-							<span>
-								{t("vahvistuuAutomaattisesti", "Vahvistuu automaattisesti")}
-							</span>
-						</span>
-					)}
-					{resource.allow_recurring && (
-						<span className="inline-flex items-center gap-1 text-[10px] font-mono text-stone-600 dark:text-stone-400 bg-stone-200/60 dark:bg-stone-800 px-1.5 py-0.5 rounded">
-							<RefreshCw size={10} />
-							<span>{t("toistuva", "Toistuva")}</span>
-						</span>
-					)}
-				</div>
-
-				<Button
-					variant="secondary"
-					size="sm"
-					asChild
-					className="gap-1.5 text-xs"
-				>
-					<Link to="/resources/$id" params={{ id: resource.id }}>
-						<span>{t("nyt", "Näytä")}</span>
-						<Eye size={14} />
+		<section className="space-y-3">
+			<h2 className="flex items-center gap-2 text-lg font-semibold">
+				<Icon size={18} aria-hidden="true" className="shrink-0" />
+				{collection ? (
+					<Link
+						to="/collections/$id"
+						params={{ id: collection.id }}
+						className="focus-ring hover:underline"
+					>
+						{collection.name}
 					</Link>
-				</Button>
-			</div>
-		</li>
+				) : (
+					t("ilmanKokoelmaa", "Ilman kokoelmaa")
+				)}
+				<span className="text-xs font-normal text-stone-600 tabular-nums dark:text-stone-400">
+					{resources.length}
+				</span>
+			</h2>
+			<ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+				{resources.map((res) => (
+					<li key={res.id} className="flex min-w-0 flex-col [&>a]:h-full">
+						<ResourceCard resource={res} />
+					</li>
+				))}
+			</ul>
+		</section>
 	);
 }
 
 function ResourceList() {
-	const { t } = useTranslation();
+	const { t, i18n } = useTranslation();
 	const { isAdmin } = useIsAdmin();
+	const [query, setQuery] = useState("");
+	const [collectionId, setCollectionId] = useState("");
 	const {
 		data: resources,
 		isLoading: loadingResources,
@@ -149,9 +136,30 @@ function ResourceList() {
 		isError: errorCollections,
 	} = useCollections();
 
+	const groups = useMemo(() => {
+		const needle = query.trim().toLowerCase();
+		const matches = (res: Resource) =>
+			(!collectionId || res.collection_id === collectionId) &&
+			(!needle ||
+				res.name.toLowerCase().includes(needle) ||
+				getLocalizedPlainText(res.description, i18n.language)
+					.toLowerCase()
+					.includes(needle));
+		const visible = (resources ?? []).filter(matches);
+		const known = new Set((collections ?? []).map((c) => c.id));
+		const result: { collection?: Collection; resources: Resource[] }[] = [];
+		for (const collection of collections ?? []) {
+			const items = visible.filter((r) => r.collection_id === collection.id);
+			if (items.length > 0) result.push({ collection, resources: items });
+		}
+		const orphans = visible.filter((r) => !known.has(r.collection_id));
+		if (orphans.length > 0) result.push({ resources: orphans });
+		return result;
+	}, [resources, collections, query, collectionId, i18n.language]);
+
 	if (loadingResources || loadingCollections) {
 		return (
-			<div className="p-8 flex items-center justify-center gap-2 text-stone-500">
+			<div className="flex items-center gap-2 text-sm text-stone-600 dark:text-stone-400">
 				<Loader2 className="animate-spin" size={18} />
 				<span>{t("ladataanResursseja", "Ladataan resursseja...")}</span>
 			</div>
@@ -160,53 +168,79 @@ function ResourceList() {
 
 	if (errorResources || errorCollections) {
 		return (
-			<div className="p-4 text-xs text-rose-600 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 rounded-md">
+			<Callout variant="danger">
 				{t("virheLadattaessaTietoja", "Virhe ladattaessa tietoja.")}
-			</div>
+			</Callout>
 		);
 	}
 
-	const collectionsMap = new Map(collections?.map((c) => [c.id, c]));
+	const total = resources?.length ?? 0;
 
 	return (
-		<div className="flex flex-col gap-4 p-2 sm:p-4 flex-1 min-h-0 min-w-0">
-			{/* Header & Admin Action */}
-			<div className="flex items-center justify-between gap-2 shrink-0 border-b border-stone-200 dark:border-stone-800 pb-3">
-				<div>
-					<h1 className="text-lg sm:text-xl font-bold tracking-tight text-stone-900 dark:text-stone-100">
-						{t("resurssit", "Resurssit")}
-					</h1>
-					<p className="text-xs text-stone-500">
-						{t("yhteensaResursseja", "Yhteensä {{count}} resurssia", {
-							count: resources?.length || 0,
-						})}
-					</p>
-				</div>
+		<PageContainer>
+			<PageHeader
+				title={t("resurssit", "Resurssit")}
+				subtitle={t("yhteensaResursseja", "Yhteensä {{count}} resurssia", {
+					count: total,
+				})}
+				actions={
+					isAdmin && (
+						<Button asChild>
+							<Link to="/resources/create">
+								<Plus size={16} />
+								<span>{t("lisResurssi", "Lisää resurssi")}</span>
+							</Link>
+						</Button>
+					)
+				}
+			/>
 
-				{isAdmin && (
-					<Button asChild size="sm" className="gap-1.5 shrink-0">
-						<Link to="/resources/create">
-							<Plus size={16} />
-							<span>{t("lisResurssi", "Lisää resurssi")}</span>
-						</Link>
-					</Button>
-				)}
-			</div>
-
-			{/* Grid Listing */}
-			<ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-				{resources?.map((res) => (
-					<ResourceCard
-						key={res.id}
-						resource={res}
-						collection={collectionsMap.get(res.collection_id)}
+			{total > 0 && (
+				<FilterBar>
+					<Input
+						type="search"
+						size="sm"
+						value={query}
+						onChange={(e) => setQuery(e.target.value)}
+						placeholder={t("haeResursseja", "Hae resursseja")}
+						aria-label={t("haeResursseja", "Hae resursseja")}
+						className="w-56"
 					/>
-				))}
-			</ul>
-		</div>
-	);
-}
+					<Select
+						size="sm"
+						wrapperClassName="w-auto"
+						value={collectionId}
+						onChange={(e) => setCollectionId(e.target.value)}
+						aria-label={t("kokoelma", "Kokoelma")}
+					>
+						<option value="">{t("kaikkiKokoelmat", "Kaikki kokoelmat")}</option>
+						{collections?.map((c) => (
+							<option key={c.id} value={c.id}>
+								{c.name}
+							</option>
+						))}
+					</Select>
+				</FilterBar>
+			)}
 
-function RouteComponent() {
-	return <ResourceList />;
+			{total === 0 ? (
+				<EmptyState title={t("eiResursseja", "Ei resursseja.")} />
+			) : groups.length === 0 ? (
+				<EmptyState
+					title={t(
+						"eiHakuaVastaaviaResursseja",
+						"Ei hakua vastaavia resursseja.",
+					)}
+				/>
+			) : (
+				groups.map((g) => (
+					<CollectionGroup
+						key={g.collection?.id ?? "none"}
+						collection={g.collection}
+						resources={g.resources}
+					/>
+				))
+			)}
+		</PageContainer>
+	);
 }

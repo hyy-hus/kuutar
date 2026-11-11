@@ -1,9 +1,16 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { AlertCircle, CheckCircle2, Trash2, Upload, Users } from "lucide-react";
+import { CheckCircle2, Trash2, Upload } from "lucide-react";
 import Papa from "papaparse";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { BackLink } from "#/components/BackLink";
+import { Button } from "#/components/Button";
+import { Callout } from "#/components/Callout";
+import { FormSection } from "#/components/FormSection";
+import { PageContainer } from "#/components/PageContainer";
+import { PageHeader } from "#/components/PageHeader";
+import { Select } from "#/components/Select";
+import { Textarea } from "#/components/Textarea";
 import { useGroups } from "#/hooks/useGroups";
 import {
 	type BatchUserOperation,
@@ -246,110 +253,113 @@ function BatchRegisterUserPage() {
 	};
 
 	return (
-		<div className="max-w-4xl mx-auto space-y-6 p-6">
-			<BackLink to="/admin/users">
-				{t("takaisinKyttjiin", "Takaisin käyttäjiin")}
-			</BackLink>
-			<div>
-				<h1 className="text-xl font-bold tracking-tight">
-					{t("batchRegisterUsers", "Käyttäjien massarekisteröinti")}
-				</h1>
-				<p className="text-sm text-stone-500 dark:text-stone-400">
-					{t(
-						"batchRegisterDescription",
-						"Tuo käyttäjälista CSV/TSV-tiedostosta tai leikepöydältä. Uudet käyttäjät luodaan ja sähköpostilla löytyvät olemassa olevat käyttäjät päivitetään. Sarakkeet: email, name, password sekä valinnaiset contact_person, contact_email ja contact_phone. Tyhjä solu jättää olemassa olevan arvon ennalleen.",
-					)}
-				</p>
-			</div>
+		<PageContainer>
+			<PageHeader
+				back={
+					<BackLink to="/admin/users">
+						{t("takaisinKyttjiin", "Takaisin käyttäjiin")}
+					</BackLink>
+				}
+				title={t("batchRegisterUsers", "Käyttäjien massarekisteröinti")}
+				subtitle={t(
+					"batchRegisterDescription",
+					"Tuo käyttäjälista CSV/TSV-tiedostosta tai leikepöydältä. Uudet käyttäjät luodaan ja sähköpostilla löytyvät olemassa olevat käyttäjät päivitetään. Sarakkeet: email, name, password sekä valinnaiset contact_person, contact_email ja contact_phone. Tyhjä solu jättää olemassa olevan arvon ennalleen.",
+				)}
+			/>
 
-			{/* Target Group Selector */}
-			<div className="p-4 bg-stone-100 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-lg space-y-2">
-				<label
-					htmlFor="group-select"
-					className="text-xs font-mono font-semibold flex items-center gap-2 text-stone-700 dark:text-stone-300"
-				>
-					<Users size={14} />
-					{t("targetGroup", "Valitse kohderyhmä uusille käyttäjille:")}
-				</label>
-				<select
-					id="group-select"
-					value={selectedGroupId}
-					onChange={(e) => setSelectedGroupId(e.target.value)}
-					disabled={isLoadingGroups}
-					className="w-full h-9 px-3 text-xs font-mono rounded-md border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-800 text-stone-900 dark:text-stone-100 focus:outline-none focus:ring-1 focus:ring-purple-600"
-				>
-					<option value="">
-						{isLoadingGroups
-							? t("ladataanRyhmia", "Ladataan ryhmiä...")
-							: t("selectGroupPlaceholder", "-- Valitse ryhmä --")}
-					</option>
-					{groups?.map((group) => (
-						<option key={group.id} value={group.id}>
-							{group.name}
-							{" ("}
-							{group.id}
-							{")"}
+			<FormSection title={t("kohderyhma", "Kohderyhmä")}>
+				<div className="space-y-1">
+					<label
+						htmlFor="group-select"
+						className="text-sm font-medium text-stone-900 dark:text-stone-100"
+					>
+						{t("targetGroup", "Valitse kohderyhmä uusille käyttäjille:")}
+					</label>
+					<Select
+						id="group-select"
+						value={selectedGroupId}
+						onChange={(e) => setSelectedGroupId(e.target.value)}
+						disabled={isLoadingGroups}
+					>
+						<option value="">
+							{isLoadingGroups
+								? t("ladataanRyhmia", "Ladataan ryhmiä...")
+								: t("selectGroupPlaceholder", "-- Valitse ryhmä --")}
 						</option>
-					))}
-				</select>
-				<label className="flex items-center gap-2 text-xs font-mono text-stone-600 dark:text-stone-300">
+						{groups?.map((group) => (
+							<option key={group.id} value={group.id}>
+								{group.name}
+							</option>
+						))}
+					</Select>
+				</div>
+				<label className="flex items-center gap-2 text-sm text-stone-800 dark:text-stone-200">
 					<input
 						type="checkbox"
 						checked={moveExisting}
 						onChange={(e) => setMoveExisting(e.target.checked)}
+						className="h-4 w-4 accent-purple-600"
 					/>
 					{t(
 						"moveExistingToGroup",
 						"Siirrä myös olemassa olevat käyttäjät valittuun ryhmään",
 					)}
 				</label>
-			</div>
+			</FormSection>
 
 			{/* Input Methods */}
 			<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-				<label className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-stone-300 dark:border-stone-700 rounded-lg cursor-pointer hover:bg-stone-100 dark:hover:bg-stone-900 transition-colors">
-					<Upload size={24} className="text-stone-400 mb-2" />
-					<span className="text-xs font-mono text-stone-600 dark:text-stone-300">
+				<label className="focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-purple-500 flex cursor-pointer flex-col items-center justify-center rounded-md border border-dashed border-stone-400 p-6 transition-colors hover:bg-stone-100 dark:border-stone-600 dark:hover:bg-stone-900">
+					<Upload
+						size={24}
+						aria-hidden="true"
+						className="mb-2 text-stone-600 dark:text-stone-400"
+					/>
+					<span className="text-sm text-stone-700 dark:text-stone-300">
 						{t("uploadCsvFile", "Lataa .csv- tai .tsv-tiedosto")}
 					</span>
 					<input
 						type="file"
 						accept=".csv,.tsv,.txt"
 						onChange={handleFileUpload}
-						className="hidden"
+						className="sr-only"
 					/>
 				</label>
 
-				<textarea
+				<Textarea
 					value={rawText}
 					onChange={(e) => handleParseInput(e.target.value)}
+					aria-label={t("liitaCsv", "Liitä CSV/TSV-sisältö")}
 					placeholder="email, name, password, contact_person, contact_email, contact_phone&#10;matti@example.com, Matti Meikäläinen, secret123, Maija Meikäläinen, maija@example.com, 0401234567"
 					rows={5}
-					className="w-full p-3 text-xs font-mono rounded-md border border-stone-300 dark:border-stone-700 bg-stone-50 dark:bg-stone-900 focus:outline-none focus:ring-1 focus:ring-purple-600"
+					className="font-mono text-xs"
 				/>
 			</div>
 
-			{/* Errors Banner */}
+			{/* Errors */}
 			{errors.length > 0 && (
-				<div className="p-4 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 rounded-md">
-					<div className="flex items-center gap-2 text-red-700 dark:text-red-400 font-semibold text-xs mb-2">
-						<AlertCircle size={16} />
-						<span>{t("validationErrors", "Havaittuja virheitä:")}</span>
-					</div>
-					<ul className="list-disc list-inside text-xs font-mono text-red-600 dark:text-red-300 space-y-1">
+				<Callout
+					variant="danger"
+					title={t("validationErrors", "Havaittuja virheitä:")}
+				>
+					<ul className="list-inside list-disc space-y-1 text-xs">
 						{errors.map((err) => (
 							<li key={err}>{err}</li>
 						))}
 					</ul>
-				</div>
+				</Callout>
 			)}
 
 			{/* Preview Table */}
 			{parsedRows.length > 0 && (
 				<div className="space-y-3">
 					<div className="flex items-center justify-between">
-						<span className="text-xs font-mono font-semibold flex items-center gap-1.5">
-							<CheckCircle2 size={14} className="text-green-600" />
+						<span className="flex items-center gap-1.5 text-sm font-medium">
+							<CheckCircle2
+								size={14}
+								aria-hidden="true"
+								className="text-emerald-700 dark:text-emerald-400"
+							/>
 							{t(
 								"valmiinaTuotavaksiKayttajia",
 								"Valmiina tuotavaksi: {{count}} käyttäjää ({{create}} uutta, {{update}} päivitettävää)",
@@ -360,42 +370,62 @@ function BatchRegisterUserPage() {
 								},
 							)}
 						</span>
-						<button
-							type="button"
-							onClick={clearAll}
-							className="text-xs font-mono text-stone-500 hover:text-red-600 flex items-center gap-1"
-						>
-							<Trash2 size={12} />
+						<Button type="button" variant="ghost" size="sm" onClick={clearAll}>
+							<Trash2 size={14} />
 							{t("clear", "Tyhjennä")}
-						</button>
+						</Button>
 					</div>
 
-					<div className="border border-stone-200 dark:border-stone-800 rounded-md overflow-hidden">
-						<table className="w-full text-left text-xs font-mono">
-							<thead className="bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300">
+					<div className="overflow-x-auto rounded-md border border-stone-300 bg-stone-50 dark:border-stone-700 dark:bg-stone-900">
+						<table className="w-full text-left text-sm">
+							<thead className="bg-stone-100 font-mono text-xs uppercase tracking-wider text-stone-700 dark:bg-stone-800 dark:text-stone-300">
 								<tr>
-									<th className="p-2 border-b border-stone-200 dark:border-stone-700">
+									<th
+										scope="col"
+										className="border-b border-stone-300 p-2 font-normal dark:border-stone-700"
+									>
 										{"#"}
 									</th>
-									<th className="p-2 border-b border-stone-200 dark:border-stone-700">
+									<th
+										scope="col"
+										className="border-b border-stone-300 p-2 font-normal dark:border-stone-700"
+									>
 										{t("shkposti", "Sähköposti")}
 									</th>
-									<th className="p-2 border-b border-stone-200 dark:border-stone-700">
+									<th
+										scope="col"
+										className="border-b border-stone-300 p-2 font-normal dark:border-stone-700"
+									>
 										{t("nimi", "Nimi")}
 									</th>
-									<th className="p-2 border-b border-stone-200 dark:border-stone-700">
+									<th
+										scope="col"
+										className="border-b border-stone-300 p-2 font-normal dark:border-stone-700"
+									>
 										{t("salasana", "Salasana")}
 									</th>
-									<th className="p-2 border-b border-stone-200 dark:border-stone-700">
+									<th
+										scope="col"
+										className="border-b border-stone-300 p-2 font-normal dark:border-stone-700"
+									>
 										{t("yhteyshenkilo", "Yhteyshenkilö")}
 									</th>
-									<th className="p-2 border-b border-stone-200 dark:border-stone-700">
+									<th
+										scope="col"
+										className="border-b border-stone-300 p-2 font-normal dark:border-stone-700"
+									>
 										{t("yhteyssahkoposti", "Yhteyssähköposti")}
 									</th>
-									<th className="p-2 border-b border-stone-200 dark:border-stone-700">
+									<th
+										scope="col"
+										className="border-b border-stone-300 p-2 font-normal dark:border-stone-700"
+									>
 										{t("yhteyspuhelin", "Puhelin")}
 									</th>
-									<th className="p-2 border-b border-stone-200 dark:border-stone-700">
+									<th
+										scope="col"
+										className="border-b border-stone-300 p-2 font-normal dark:border-stone-700"
+									>
 										{t("toiminto", "Toiminto")}
 									</th>
 								</tr>
@@ -407,12 +437,14 @@ function BatchRegisterUserPage() {
 										key={`import-${user.email}-${idx}`}
 										className="border-b border-stone-100 dark:border-stone-800/60 hover:bg-stone-50 dark:hover:bg-stone-900/50"
 									>
-										<td className="p-2 text-stone-400">{idx + 1}</td>
+										<td className="p-2 tabular-nums text-stone-600 dark:text-stone-400">
+											{idx + 1}
+										</td>
 										<td className="p-2 font-medium">{user.email}</td>
 										<td className="p-2 text-stone-700 dark:text-stone-300">
 											{user.name || t("eiAsetettu", "(Ei asetettu)")}
 										</td>
-										<td className="p-2 text-stone-400">
+										<td className="p-2 text-stone-600 dark:text-stone-400">
 											{user.password
 												? "••••••••"
 												: t("eiAsetettu", "(Ei asetettu)")}
@@ -437,15 +469,8 @@ function BatchRegisterUserPage() {
 						</table>
 					</div>
 
-					<div className="flex justify-end gap-3 pt-2">
-						<button
-							type="button"
-							onClick={() => navigate({ to: "/admin/users" })}
-							className="px-4 py-2 text-xs font-mono border border-stone-300 dark:border-stone-700 rounded-md hover:bg-stone-100 dark:hover:bg-stone-800"
-						>
-							{t("cancel", "Peruuta")}
-						</button>
-						<button
+					<div className="flex flex-wrap items-center gap-2 border-t border-stone-300 pt-4 dark:border-stone-700">
+						<Button
 							type="button"
 							disabled={
 								batchUpsert.isPending ||
@@ -454,7 +479,6 @@ function BatchRegisterUserPage() {
 								errors.length > 0
 							}
 							onClick={handleSubmit}
-							className="px-4 py-2 text-xs font-mono font-bold bg-purple-700 hover:bg-purple-800 text-white rounded-md disabled:opacity-50 transition-colors"
 						>
 							{batchUpsert.isPending
 								? t("registering", "Tallennetaan käyttäjiä...")
@@ -462,10 +486,17 @@ function BatchRegisterUserPage() {
 										"vahvistaJaTallennaKayttajat",
 										"Vahvista ja tallenna käyttäjät",
 									)}
-						</button>
+						</Button>
+						<Button
+							type="button"
+							variant="ghost"
+							onClick={() => navigate({ to: "/admin/users" })}
+						>
+							{t("cancel", "Peruuta")}
+						</Button>
 					</div>
 				</div>
 			)}
-		</div>
+		</PageContainer>
 	);
 }

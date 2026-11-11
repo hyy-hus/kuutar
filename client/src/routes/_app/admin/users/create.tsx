@@ -1,6 +1,8 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { BackLink } from "#/components/BackLink";
+import { FormLayout } from "#/components/FormLayout";
+import { PageHeader } from "#/components/PageHeader";
 import { UserForm, type UserFormValues } from "#/components/UserForm";
 import { useCreateUser } from "#/hooks/useUsers";
 import { requireAdminGuard } from "#/utils/authGuard";
@@ -32,19 +34,22 @@ function CreateUserPage() {
 	};
 
 	return (
-		<div className="p-4 space-y-4">
-			<BackLink to="/admin/users">
-				{t("takaisinKyttjiin", "Takaisin käyttäjiin")}
-			</BackLink>
-			<h1 className="text-xl font-bold text-stone-900 dark:text-stone-100">
-				{t("rekisteriUusiKyttj", "Rekisteröi uusi käyttäjä")}
-			</h1>
+		<FormLayout>
+			<PageHeader
+				back={
+					<BackLink to="/admin/users">
+						{t("takaisinKyttjiin", "Takaisin käyttäjiin")}
+					</BackLink>
+				}
+				title={t("rekisteriUusiKyttj", "Rekisteröi uusi käyttäjä")}
+			/>
 			<UserForm
 				onSubmit={handleSubmit}
 				isSubmitting={createUser.isPending}
 				submitLabel={t("rekisteriKyttj", "Rekisteröi käyttäjä")}
 				isCreate={true}
+				onCancel={() => navigate({ to: "/admin/users" })}
 			/>
-		</div>
+		</FormLayout>
 	);
 }

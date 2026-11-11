@@ -13,7 +13,7 @@ export function OutlookBadge({ className }: { className?: string }) {
 				"Tämä varaus tulee Outlookista. Muokkaa tai peru se Outlookissa.",
 			)}
 		>
-			<Mail size={11} className="mr-1 shrink-0" />
+			<Mail size={12} className="mr-1 shrink-0" />
 			{"Outlook"}
 		</Chip>
 	);

@@ -1,9 +1,13 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowDown, ArrowUp, Loader2, X } from "lucide-react";
-import { useMemo } from "react";
+import { type ReactNode, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { BackLink } from "#/components/BackLink";
 import { Button } from "#/components/Button";
+import { Callout } from "#/components/Callout";
+import { DetailLayout } from "#/components/DetailLayout";
+import { EmptyState } from "#/components/EmptyState";
+import { RoundPhaseChip } from "#/components/RoundPhaseChip";
 import {
 	type ReservationWithOccurrences,
 	useCancelReservation,
@@ -27,7 +31,7 @@ const MAX_RANGE_MS = 364 * 24 * 60 * 60 * 1000;
 function RoundApplicationsPage() {
 	const { id } = Route.useParams();
 	const { t } = useTranslation();
-	const { formatDate, formatDateRange } = useDateFormatter();
+	const { formatDateTime, formatDateOnly, formatRange } = useDateFormatter();
 	const { data: round } = useRound(id);
 	const { data: resources } = useResources();
 	const setPriorities = useSetPriorities(id);
@@ -74,52 +78,100 @@ function RoundApplicationsPage() {
 		setPriorities.mutate({ resource_id: resourceId, reservation_ids: ids });
 	};
 
+	const resourceName = (rid: string) =>
+		resources?.find((r) => r.id === rid)?.name ?? rid;
+
 	return (
-		<div className="max-w-xl mx-auto space-y-4 pb-12">
-			<BackLink to="/reservations">
-				{t("takaisinVarauksiin", "Takaisin varauksiin")}
-			</BackLink>
-			<h1 className="text-xl font-bold">{round.name}</h1>
+		<DetailLayout
+			back={
+				<BackLink to="/reservations">
+					{t("takaisinVarauksiin", "Takaisin varauksiin")}
+				</BackLink>
+			}
+			title={round.name}
+			status={<RoundPhaseChip round={round} />}
+			actions={
+				isOpen && (
+					<Button asChild>
+						<Link
+							to="/reservations/create"
+							search={{ resource_ids: round.resource_ids }}
+						>
+							{t("haeVarausjaksoa", "Hae varausjaksoa")}
+						</Link>
+					</Button>
+				)
+			}
+		>
 			{round.description && <p className="text-sm">{round.description}</p>}
-			<p className="text-sm text-stone-600 dark:text-stone-400">
-				{`${t("hakuaika", "Hakuaika")}: ${formatDate(round.applications_open_at)} – ${formatDate(round.applications_close_at)}`}
-			</p>
-			<p className="text-sm">
-				{t(
-					"kierrosOhje",
-					"Voit hakea resurssia kohden enintään {{max}} varausjaksoa. Järjestä hakemuksesi mieluisuusjärjestykseen: ylin on toivotuin. Päätökset lähetetään sähköpostilla kierroksen päätyttyä.",
-					{ max: round.max_pending_per_resource },
-				)}
-			</p>
+
+			{isOpen ? (
+				<Callout
+					variant="info"
+					title={t("kierrosOhjeOtsikko", "Näin haku toimii")}
+				>
+					{t(
+						"kierrosOhje",
+						"Voit hakea enintään {{max}} aikaa kutakin resurssia kohden. Aseta toivotuin ensimmäiseksi. Päätös tulee sähköpostiin haun päätyttyä.",
+						{ max: round.max_pending_per_resource },
+					)}
+				</Callout>
+			) : (
+				<Callout variant="info">
+					{t(
+						"kierrosEiAvoinna",
+						"Haku ei ole käynnissä, joten hakemuksia ei voi jättää tai muuttaa.",
+					)}
+				</Callout>
+			)}
+
+			<dl className="grid grid-cols-1 gap-x-6 gap-y-3 rounded-md border border-stone-300 bg-stone-50 p-4 text-sm sm:grid-cols-2 dark:border-stone-700 dark:bg-stone-900">
+				<DateItem label={t("hakuaikaAlkaa", "Haku alkaa")}>
+					{formatDateTime(round.applications_open_at)}
+				</DateItem>
+				<DateItem label={t("hakuaikaPttyy", "Haku päättyy")}>
+					{formatDateTime(round.applications_close_at)}
+				</DateItem>
+				<DateItem label={t("kierroksenAjanjakso", "Varattava ajanjakso")}>
+					{`${formatDateOnly(round.period_start)} – ${formatDateOnly(round.period_end)}`}
+				</DateItem>
+				<DateItem label={t("resurssit", "Resurssit")}>
+					{round.resource_ids.map(resourceName).join(", ")}
+				</DateItem>
+			</dl>
+
+			<h2 className="text-lg font-semibold">
+				{t("omatHakemukset", "Omat hakemukset")}
+			</h2>
 
 			{byResource.size === 0 && (
-				<p className="text-sm text-stone-500">
-					{t(
+				<EmptyState
+					title={t(
 						"eiOmiaHakemuksia",
 						"Sinulla ei ole hakemuksia tällä kierroksella.",
 					)}
-				</p>
+				/>
 			)}
 
 			{[...byResource.entries()].map(([resourceId, list]) => (
 				<section key={resourceId} className="space-y-2">
-					<h2 className="font-bold">
-						{resources?.find((r) => r.id === resourceId)?.name}
-						<span className="text-xs font-normal text-stone-500">
-							{` (${t("jaljella", "jäljellä")}: ${remainingApplications(round.max_pending_per_resource, list.length)})`}
+					<h3 className="text-base font-bold">
+						{resourceName(resourceId)}
+						<span className="ml-2 text-xs font-normal text-stone-600 dark:text-stone-400">
+							{`${t("jaljella", "jäljellä")}: ${remainingApplications(round.max_pending_per_resource, list.length)}`}
 						</span>
-					</h2>
+					</h3>
 					<ol className="space-y-2">
 						{list.map((app, index) => (
 							<li
 								key={app.id}
-								className="p-3 border-2 border-stone-800 dark:border-stone-700 rounded-md bg-stone-50 dark:bg-stone-900 flex items-center gap-3"
+								className="flex items-center gap-3 rounded-md border border-stone-300 bg-stone-50 p-3 dark:border-stone-700 dark:bg-stone-900"
 							>
-								<span className="font-bold w-6 text-center">{`${index + 1}.`}</span>
-								<div className="flex-1 min-w-0 text-sm">
-									<div className="font-medium truncate">{app.title}</div>
-									<div className="text-xs text-stone-600 dark:text-stone-400">
-										{formatDateRange(
+								<span className="w-6 text-center font-bold tabular-nums">{`${index + 1}.`}</span>
+								<div className="min-w-0 flex-1 text-sm">
+									<div className="truncate font-medium">{app.title}</div>
+									<div className="text-xs tabular-nums text-stone-600 dark:text-stone-400">
+										{formatRange(
 											app.occurrences[0]?.start_time,
 											app.occurrences[0]?.end_time,
 										)}
@@ -128,18 +180,20 @@ function RoundApplicationsPage() {
 								{isOpen && (
 									<div className="flex gap-1">
 										<Button
-											variant="secondary"
-											size="sm"
+											variant="outline"
+											size="iconSm"
 											aria-label={t("siirraYlos", "Siirrä ylös")}
+											title={t("siirraYlos", "Siirrä ylös")}
 											disabled={index === 0 || setPriorities.isPending}
 											onClick={() => move(resourceId, index, -1)}
 										>
 											<ArrowUp size={14} />
 										</Button>
 										<Button
-											variant="secondary"
-											size="sm"
+											variant="outline"
+											size="iconSm"
 											aria-label={t("siirraAlas", "Siirrä alas")}
+											title={t("siirraAlas", "Siirrä alas")}
 											disabled={
 												index === list.length - 1 || setPriorities.isPending
 											}
@@ -148,9 +202,10 @@ function RoundApplicationsPage() {
 											<ArrowDown size={14} />
 										</Button>
 										<Button
-											variant="secondary"
-											size="sm"
+											variant="outline"
+											size="iconSm"
 											aria-label={t("peruHakemus", "Peru hakemus")}
+											title={t("peruHakemus", "Peru hakemus")}
 											disabled={cancel.isPending}
 											onClick={() => cancel.mutate({ id: app.id })}
 										>
@@ -164,10 +219,21 @@ function RoundApplicationsPage() {
 				</section>
 			))}
 			{(setPriorities.isError || cancel.isError) && (
-				<p role="alert" className="text-sm text-red-600">
+				<Callout variant="danger">
 					{(setPriorities.error ?? cancel.error)?.message}
-				</p>
+				</Callout>
 			)}
+		</DetailLayout>
+	);
+}
+
+function DateItem({ label, children }: { label: string; children: ReactNode }) {
+	return (
+		<div className="min-w-0 space-y-0.5">
+			<dt className="font-mono text-xs uppercase tracking-wider text-stone-600 dark:text-stone-400">
+				{label}
+			</dt>
+			<dd className="tabular-nums">{children}</dd>
 		</div>
 	);
 }

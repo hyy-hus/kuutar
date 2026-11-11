@@ -1,6 +1,8 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { BackLink } from "#/components/BackLink";
+import { FormLayout } from "#/components/FormLayout";
+import { PageHeader } from "#/components/PageHeader";
 import {
 	RestrictionForm,
 	type RestrictionFormValues,
@@ -70,13 +72,15 @@ function CreateRestrictionPage() {
 	};
 
 	return (
-		<div className="max-w-xl mx-auto p-2 sm:p-4 space-y-4 pb-12">
-			<BackLink to="/restrictions">
-				{t("takaisinRajoituksiin", "Takaisin rajoituksiin")}
-			</BackLink>
-			<h1 className="text-xl font-bold text-stone-900 dark:text-stone-100">
-				{t("uusiAikarajoitus", "Uusi aikarajoitus")}
-			</h1>
+		<FormLayout>
+			<PageHeader
+				back={
+					<BackLink to="/restrictions">
+						{t("takaisinRajoituksiin", "Takaisin rajoituksiin")}
+					</BackLink>
+				}
+				title={t("uusiAikarajoitus", "Uusi aikarajoitus")}
+			/>
 			<RestrictionForm
 				defaultValues={{
 					occurrences: [
@@ -90,7 +94,8 @@ function CreateRestrictionPage() {
 				onSubmit={handleSubmit}
 				isSubmitting={createRestriction.isPending}
 				submitLabel={t("luoRajoitus", "Luo aikarajoitus")}
+				onCancel={() => navigate({ to: "/restrictions" })}
 			/>
-		</div>
+		</FormLayout>
 	);
 }
