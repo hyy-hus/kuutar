@@ -2,6 +2,9 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Loader2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { BackLink } from "#/components/BackLink";
+import { Callout } from "#/components/Callout";
+import { FormLayout } from "#/components/FormLayout";
+import { PageHeader } from "#/components/PageHeader";
 import { RoundForm } from "#/components/RoundForm";
 import { useRound, useUpdateRound } from "#/hooks/useRounds";
 import { requireAdminGuard } from "#/utils/authGuard";
@@ -26,20 +29,22 @@ function EditRoundPage() {
 	const started = phase !== "upcoming";
 
 	return (
-		<div className="space-y-4">
-			<BackLink to="/admin/rounds/$id" params={{ id }}>
-				{t("takaisinKierrokseen", "Takaisin kierrokseen")}
-			</BackLink>
-			<h1 className="text-xl font-bold">
-				{t("muokkaaKierrosta", "Muokkaa kierrosta")}
-			</h1>
+		<FormLayout width="default">
+			<PageHeader
+				back={
+					<BackLink to="/admin/rounds/$id" params={{ id }}>
+						{t("takaisinKierrokseen", "Takaisin kierrokseen")}
+					</BackLink>
+				}
+				title={t("muokkaaKierrosta", "Muokkaa kierrosta")}
+			/>
 			{phase === "completed" ? (
-				<p className="text-sm">
+				<Callout variant="info">
 					{t(
 						"paattynytEiMuokattavissa",
 						"Päättynyttä kierrosta ei voi muokata.",
 					)}
-				</p>
+				</Callout>
 			) : (
 				<RoundForm
 					key={round.id}
@@ -48,6 +53,7 @@ function EditRoundPage() {
 					submitLabel={t("tallenna", "Tallenna")}
 					isSubmitting={updateRound.isPending}
 					error={updateRound.error?.message}
+					onCancel={() => navigate({ to: "/admin/rounds/$id", params: { id } })}
 					onSubmit={async (values) => {
 						// The server rejects changes to locked fields even when unchanged
 						await updateRound.mutateAsync({
@@ -64,6 +70,6 @@ function EditRoundPage() {
 					}}
 				/>
 			)}
-		</div>
+		</FormLayout>
 	);
 }

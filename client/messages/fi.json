@@ -781,5 +781,19 @@
 	"kopioitu": "Kopioitu",
 	"hyvaksynnat": "Hyväksynnät",
 	"varaaminen": "Varaaminen",
-	"etsiVarauksiaJaTiloja": "Etsi varauksia ja tiloja"
+	"etsiVarauksiaJaTiloja": "Etsi varauksia ja tiloja",
+	"kierroksiaMaara": "Kierroksia: {{count}}",
+	"vainRistiriidat": "Vain ristiriidat",
+	"eiRistiriitoja": "Ei ristiriitoja.",
+	"ristiriita": "Ristiriita",
+	"hakijoitaJaRistiriitoja": "{{applicants}} hakijaa, {{conflicts}} ristiriitaa",
+	"vahvistaPoistaKierros": "Poistetaanko kierros? Tätä ei voi perua.",
+	"haeVarausjaksoa": "Hae varausjaksoa",
+	"kierrosOhjeOtsikko": "Näin haku toimii",
+	"kierrosEiAvoinna": "Haku ei ole käynnissä, joten hakemuksia ei voi jättää tai muuttaa.",
+	"kierroksenPerustiedot": "Perustiedot",
+	"kierroksenAjoitus": "Ajoitus",
+	"kierroksenAjoitusKuvaus": "Hakuaika on aika, jolloin hakemuksia voi jättää. Varattava ajanjakso on aika, jolle haetut varaukset sijoittuvat.",
+	"kierroksenKohderyhma": "Resurssit ja hakijat",
+	"kierrosTayta": "Täytä kaikki pakolliset kentät ja valitse vähintään yksi resurssi ja ryhmä."
 }

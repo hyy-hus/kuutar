@@ -781,5 +781,19 @@
 	"kopioitu": "Copied",
 	"hyvaksynnat": "Approvals",
 	"varaaminen": "Booking",
-	"etsiVarauksiaJaTiloja": "Search bookings and spaces"
+	"etsiVarauksiaJaTiloja": "Search bookings and spaces",
+	"kierroksiaMaara": "Rounds: {{count}}",
+	"vainRistiriidat": "Conflicts only",
+	"eiRistiriitoja": "No conflicts.",
+	"ristiriita": "Conflict",
+	"hakijoitaJaRistiriitoja": "{{applicants}} applicants, {{conflicts}} conflicts",
+	"vahvistaPoistaKierros": "Delete the round? This cannot be undone.",
+	"haeVarausjaksoa": "Apply for a block",
+	"kierrosOhjeOtsikko": "How applying works",
+	"kierrosEiAvoinna": "Applications are not open, so applications cannot be submitted or changed.",
+	"kierroksenPerustiedot": "Basic details",
+	"kierroksenAjoitus": "Schedule",
+	"kierroksenAjoitusKuvaus": "The application period is when applications can be submitted. The reservable period is the time the requested reservations fall within.",
+	"kierroksenKohderyhma": "Resources and applicants",
+	"kierrosTayta": "Fill in all required fields and select at least one resource and one group."
 }
