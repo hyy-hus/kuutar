@@ -38,7 +38,8 @@ export function ToggleChip({
 	return (
 		<button
 			type={type}
-			aria-pressed={selected}
+			// With role="checkbox" the caller sets aria-checked instead
+			aria-pressed={props.role === "checkbox" ? undefined : selected}
 			className={cn(
 				"focus-ring px-2.5 py-1 rounded-sm text-xs font-medium inline-flex items-center justify-center gap-1.5 border transition-colors cursor-pointer select-none",
 				selected

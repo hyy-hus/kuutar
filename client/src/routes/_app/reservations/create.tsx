@@ -112,7 +112,7 @@ function CreateReservationPage() {
 	};
 
 	return (
-		<FormLayout width="default">
+		<FormLayout width="guided">
 			<PageHeader
 				back={
 					<BackLink to="/reservations">

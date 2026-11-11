@@ -1,12 +1,13 @@
-import { useForm } from "@tanstack/react-form";
+import { useForm, useSelector } from "@tanstack/react-form";
 import { Loader2, Save } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { AccessSummary } from "#/components/AccessSummary";
 import { ChipSelect } from "#/components/ChipSelect";
 import { DateInput } from "#/components/DateInput";
-import { FormActions } from "#/components/FormActions";
+import { FormDetails } from "#/components/FormDetails";
 import { FormSection } from "#/components/FormSection";
 import { GroupChecklist } from "#/components/GroupChecklist";
+import { GuidedFormLayout } from "#/components/GuidedFormLayout";
 import { LocalizedRichTextEditor } from "#/components/LocalizedRichTextEditor";
 import { useCollections } from "#/hooks/useCollections";
 import { getLocalizedText, useContracts } from "#/hooks/useContracts";
@@ -27,6 +28,7 @@ import {
 import { Button } from "./Button";
 import { Input } from "./Input";
 import { Select } from "./Select";
+import { StickyFormActions } from "./StickyFormActions";
 
 export interface ResourceFormValues
 	extends Omit<CreateResource, "reservable_until"> {
@@ -113,6 +115,12 @@ export function ResourceForm({
 		},
 	});
 
+	const nameValue = useSelector(form.store, (state) => state.values.name);
+	const collectionValue = useSelector(
+		form.store,
+		(state) => state.values.collection_id,
+	);
+
 	if (loadingCollections) {
 		return (
 			<div className="text-sm text-stone-600 dark:text-stone-400">
@@ -121,6 +129,30 @@ export function ResourceForm({
 		);
 	}
 
+	const sectionIndex = [
+		{ id: "resource-basic", label: t("osioPerustiedot", "Perustiedot") },
+		{
+			id: "resource-description",
+			label: t("osioKuvausKielittain", "Kuvaus kielittäin"),
+		},
+		{ id: "resource-look", label: t("osioUlkonako", "Ulkonäkö ja Outlook") },
+		{ id: "resource-access", label: t("osioOikeudet", "Näkyvyys ja oikeudet") },
+		{
+			id: "resource-rules",
+			label: t("osioAikaSaannot", "Aika- ja toistosäännöt"),
+		},
+		{
+			id: "resource-confirm",
+			label: t("osioVahvistusJaSopimukset", "Vahvistaminen ja sopimukset"),
+		},
+	];
+	const summaryLine = [
+		nameValue,
+		collections?.find((c) => c.id === collectionValue)?.name,
+	]
+		.filter(Boolean)
+		.join(" · ");
+
 	return (
 		<form
 			onSubmit={(e) => {
@@ -128,432 +160,464 @@ export function ResourceForm({
 				e.stopPropagation();
 				form.handleSubmit();
 			}}
-			className="space-y-6"
 		>
-			<FormSection title={t("osioPerustiedot", "Perustiedot")}>
-				{/* Resource Name */}
-				<form.Field
-					name="name"
-					validators={{
-						onChange: ({ value }) =>
-							!value ? t("nimiOnPakollinen", "Nimi on pakollinen") : undefined,
-					}}
-				>
-					{(field) => {
-						const hasError = Boolean(field.state.meta.errors.length);
-						return (
-							<div className="space-y-1">
-								<label
-									htmlFor={field.name}
-									className="text-sm font-medium text-stone-900 dark:text-stone-100"
-								>
-									{t("resurssinNimi", "Resurssin nimi")}{" "}
-									<span aria-hidden="true">*</span>
-								</label>
-								<Input
-									id={field.name}
-									aria-required="true"
-									value={field.state.value}
-									onChange={(e) => field.handleChange(e.target.value)}
-									onBlur={field.handleBlur}
-									isError={hasError}
-									placeholder={t("esimSauna1", "esim. Sauna 1")}
-								/>
-								{hasError && (
-									<p className="text-xs text-red-600 dark:text-red-400">
-										{field.state.meta.errors.join(", ")}
-									</p>
-								)}
-							</div>
-						);
-					}}
-				</form.Field>
-
-				{/* Collection Selection */}
-				<form.Field
-					name="collection_id"
-					validators={{
-						onChange: ({ value }) =>
-							!value
-								? t("kokoelmaOnPakollinen", "Valitse kokoelma")
-								: undefined,
-					}}
-				>
-					{(field) => {
-						const hasError = Boolean(field.state.meta.errors.length);
-						return (
-							<div className="space-y-1">
-								<label
-									htmlFor={field.name}
-									className="text-sm font-medium text-stone-900 dark:text-stone-100"
-								>
-									{t("kokoelma", "Kokoelma")} <span aria-hidden="true">*</span>
-								</label>
-								<Select
-									id={field.name}
-									aria-required="true"
-									value={field.state.value}
-									onChange={(e) => field.handleChange(e.target.value)}
-									onBlur={field.handleBlur}
-									isError={hasError}
-								>
-									<option value="" disabled>
-										{t("valitseKokoelma", "Valitse kokoelma...")}
-									</option>
-									{collections?.map((col) => (
-										<option key={col.id} value={col.id}>
-											{col.name}
-										</option>
-									))}
-								</Select>
-								{hasError && (
-									<p className="text-xs text-red-600 dark:text-red-400">
-										{field.state.meta.errors.join(", ")}
-									</p>
-								)}
-							</div>
-						);
-					}}
-				</form.Field>
-
-				<form.Field name="description">
-					{(field) => (
-						<div className="space-y-1">
-							<span className="text-sm font-medium text-stone-900 dark:text-stone-100">
-								{t("kuvaus", "Kuvaus")}
-							</span>
-							<LocalizedRichTextEditor
-								value={field.state.value}
-								onChange={field.handleChange}
-								label={t("kuvaus", "Kuvaus")}
-							/>
-						</div>
+			<GuidedFormLayout
+				index={sectionIndex}
+				indexLabel={t("lomakkeenOsiot", "Lomakkeen osiot")}
+			>
+				<FormSection
+					id="resource-basic"
+					step={1}
+					title={t("osioPerustiedot", "Perustiedot")}
+					description={t(
+						"osioPerustiedotKuvaus",
+						"Resurssin nimi ja kokoelma, johon se kuuluu. Nimi näkyy kalenterissa ja varauslomakkeella.",
 					)}
-				</form.Field>
-
-				{/* Calendar color */}
-				<form.Field name="color">
-					{(field) => (
-						<fieldset className="space-y-1">
-							<legend className="text-sm font-medium text-stone-900 dark:text-stone-100">
-								{t("vari", "Väri kalenterissa")}
-							</legend>
-							<div className="flex flex-wrap items-center gap-2">
-								<button
-									type="button"
-									aria-pressed={!field.state.value}
-									onClick={() => field.handleChange("")}
-									className={cn(
-										"px-2 py-1 rounded-sm text-xs border cursor-pointer",
-										!field.state.value
-											? "border-stone-900 dark:border-stone-100 font-semibold"
-											: "border-stone-300 dark:border-stone-700",
+				>
+					{/* Resource Name */}
+					<form.Field
+						name="name"
+						validators={{
+							onChange: ({ value }) =>
+								!value
+									? t("nimiOnPakollinen", "Nimi on pakollinen")
+									: undefined,
+						}}
+					>
+						{(field) => {
+							const hasError = Boolean(field.state.meta.errors.length);
+							return (
+								<div className="space-y-1">
+									<label
+										htmlFor={field.name}
+										className="text-sm font-medium text-stone-900 dark:text-stone-100"
+									>
+										{t("resurssinNimi", "Resurssin nimi")}{" "}
+										<span aria-hidden="true">*</span>
+									</label>
+									<Input
+										id={field.name}
+										aria-required="true"
+										value={field.state.value}
+										onChange={(e) => field.handleChange(e.target.value)}
+										onBlur={field.handleBlur}
+										isError={hasError}
+										placeholder={t("esimSauna1", "esim. Sauna 1")}
+									/>
+									{hasError && (
+										<p className="text-xs text-red-600 dark:text-red-400">
+											{field.state.meta.errors.join(", ")}
+										</p>
 									)}
-								>
-									{t("eiVaria", "Ei väriä")}
-								</button>
-								{RESOURCE_COLORS.map((key) => (
+								</div>
+							);
+						}}
+					</form.Field>
+
+					{/* Collection Selection */}
+					<form.Field
+						name="collection_id"
+						validators={{
+							onChange: ({ value }) =>
+								!value
+									? t("kokoelmaOnPakollinen", "Valitse kokoelma")
+									: undefined,
+						}}
+					>
+						{(field) => {
+							const hasError = Boolean(field.state.meta.errors.length);
+							return (
+								<div className="space-y-1">
+									<label
+										htmlFor={field.name}
+										className="text-sm font-medium text-stone-900 dark:text-stone-100"
+									>
+										{t("kokoelma", "Kokoelma")}{" "}
+										<span aria-hidden="true">*</span>
+									</label>
+									<Select
+										id={field.name}
+										aria-required="true"
+										value={field.state.value}
+										onChange={(e) => field.handleChange(e.target.value)}
+										onBlur={field.handleBlur}
+										isError={hasError}
+									>
+										<option value="" disabled>
+											{t("valitseKokoelma", "Valitse kokoelma...")}
+										</option>
+										{collections?.map((col) => (
+											<option key={col.id} value={col.id}>
+												{col.name}
+											</option>
+										))}
+									</Select>
+									{hasError && (
+										<p className="text-xs text-red-600 dark:text-red-400">
+											{field.state.meta.errors.join(", ")}
+										</p>
+									)}
+								</div>
+							);
+						}}
+					</form.Field>
+				</FormSection>
+
+				<FormSection
+					id="resource-description"
+					step={2}
+					title={t("osioKuvausKielittain", "Kuvaus kielittäin")}
+					description={t(
+						"osioKuvausKielittainKuvaus",
+						"Kuvaus näkyy varaajille resurssin sivulla ja varauslomakkeella. Kirjoita se vähintään suomeksi; muut kielet ovat valinnaisia.",
+					)}
+				>
+					<form.Field name="description">
+						{(field) => (
+							<div className="space-y-1">
+								<span className="text-sm font-medium text-stone-900 dark:text-stone-100">
+									{t("kuvaus", "Kuvaus")}
+								</span>
+								<LocalizedRichTextEditor
+									value={field.state.value}
+									onChange={field.handleChange}
+									label={t("kuvaus", "Kuvaus")}
+								/>
+							</div>
+						)}
+					</form.Field>
+				</FormSection>
+
+				<FormSection
+					id="resource-look"
+					step={3}
+					title={t("osioUlkonako", "Ulkonäkö ja Outlook")}
+					description={t(
+						"osioUlkonakoKuvaus",
+						"Väri auttaa tunnistamaan resurssin kalenterissa.",
+					)}
+				>
+					{/* Calendar color */}
+					<form.Field name="color">
+						{(field) => (
+							<fieldset className="space-y-1">
+								<legend className="text-sm font-medium text-stone-900 dark:text-stone-100">
+									{t("vari", "Väri kalenterissa")}
+								</legend>
+								<div className="flex flex-wrap items-center gap-2">
 									<button
-										key={key}
 										type="button"
-										aria-label={key}
-										aria-pressed={field.state.value === key}
-										onClick={() => field.handleChange(key)}
+										aria-pressed={!field.state.value}
+										onClick={() => field.handleChange("")}
 										className={cn(
-											"size-6 rounded-full cursor-pointer ring-offset-2 ring-offset-stone-50 dark:ring-offset-stone-950",
-											getResourceColor(key)?.swatch,
-											field.state.value === key &&
+											"px-2 py-1 rounded-sm text-xs border cursor-pointer",
+											!field.state.value
+												? "border-stone-900 dark:border-stone-100 font-semibold"
+												: "border-stone-300 dark:border-stone-700",
+										)}
+									>
+										{t("eiVaria", "Ei väriä")}
+									</button>
+									{RESOURCE_COLORS.map((key) => (
+										<button
+											key={key}
+											type="button"
+											aria-label={key}
+											aria-pressed={field.state.value === key}
+											onClick={() => field.handleChange(key)}
+											className={cn(
+												"size-6 rounded-full cursor-pointer ring-offset-2 ring-offset-stone-50 dark:ring-offset-stone-950",
+												getResourceColor(key)?.swatch,
+												field.state.value === key &&
+													"ring-2 ring-stone-900 dark:ring-stone-100",
+											)}
+										/>
+									))}
+									{/* Any color: the native picker sits invisibly over the swatch */}
+									<label
+										title={t("omaVari", "Oma väri")}
+										className={cn(
+											"relative size-6 rounded-full cursor-pointer ring-offset-2 ring-offset-stone-50 dark:ring-offset-stone-950 focus-within:outline-2 focus-within:outline-purple-500",
+											!isHexColor(field.state.value) &&
+												"bg-[conic-gradient(red,yellow,lime,cyan,blue,magenta,red)]",
+											isHexColor(field.state.value) &&
 												"ring-2 ring-stone-900 dark:ring-stone-100",
 										)}
-									/>
-								))}
-								{/* Any color: the native picker sits invisibly over the swatch */}
-								<label
-									title={t("omaVari", "Oma väri")}
-									className={cn(
-										"relative size-6 rounded-full cursor-pointer ring-offset-2 ring-offset-stone-50 dark:ring-offset-stone-950 focus-within:outline-2 focus-within:outline-purple-500",
-										!isHexColor(field.state.value) &&
-											"bg-[conic-gradient(red,yellow,lime,cyan,blue,magenta,red)]",
-										isHexColor(field.state.value) &&
-											"ring-2 ring-stone-900 dark:ring-stone-100",
-									)}
-									style={
-										isHexColor(field.state.value)
-											? { backgroundColor: field.state.value }
-											: undefined
-									}
-								>
-									<input
-										type="color"
-										aria-label={t("omaVari", "Oma väri")}
-										value={
+										style={
 											isHexColor(field.state.value)
-												? field.state.value
-												: "#8b5cf6"
+												? { backgroundColor: field.state.value }
+												: undefined
 										}
-										onChange={(e) =>
-											field.handleChange(e.target.value.toLowerCase())
-										}
-										className="absolute inset-0 size-full cursor-pointer opacity-0"
-									/>
-								</label>
-							</div>
-						</fieldset>
-					)}
-				</form.Field>
+									>
+										<input
+											type="color"
+											aria-label={t("omaVari", "Oma väri")}
+											value={
+												isHexColor(field.state.value)
+													? field.state.value
+													: "#8b5cf6"
+											}
+											onChange={(e) =>
+												field.handleChange(e.target.value.toLowerCase())
+											}
+											className="absolute inset-0 size-full cursor-pointer opacity-0"
+										/>
+									</label>
+								</div>
+							</fieldset>
+						)}
+					</form.Field>
 
-				{/* Outlook mailbox */}
-				<form.Field
-					name="outlook_email"
-					validators={{
-						onChange: ({ value }) =>
-							value && !/^\S+@\S+$/.test(value.trim())
-								? t("virheellinenSahkoposti", "Virheellinen sähköposti")
-								: undefined,
-					}}
-				>
-					{(field) => {
-						const hasError = Boolean(field.state.meta.errors.length);
-						return (
-							<div className="space-y-1">
-								<label
-									htmlFor={field.name}
-									className="text-sm font-medium text-stone-900 dark:text-stone-100"
-								>
-									{t("outlookPostilaatikko", "Outlook-resurssin sähköposti")}
-								</label>
-								<Input
-									id={field.name}
-									type="email"
-									value={field.state.value ?? ""}
-									onChange={(e) => field.handleChange(e.target.value)}
-									onBlur={field.handleBlur}
-									isError={hasError}
-									placeholder="sauna@hyy.fi"
-								/>
-								{hasError ? (
-									<p className="text-xs text-red-600 dark:text-red-400">
-										{field.state.meta.errors.join(", ")}
-									</p>
-								) : (
-									<p className="text-xs text-stone-600 dark:text-stone-400">
-										{t(
-											"outlookPostilaatikkoOhje",
-											"Outlookissa kutsuttu resurssi näytetään tämän resurssin varauksena. Jätä tyhjäksi, jos resurssi ei ole Outlookissa.",
+					<FormDetails
+						title={t("osioOutlookIntegraatio", "Outlook-integraatio")}
+						description={t(
+							"osioOutlookIntegraatioKuvaus",
+							"Tarvitaan vain, jos resurssi on myös Outlookissa.",
+						)}
+						defaultOpen={Boolean(defaultValues?.outlook_email)}
+					>
+						{/* Outlook mailbox */}
+						<form.Field
+							name="outlook_email"
+							validators={{
+								onChange: ({ value }) =>
+									value && !/^\S+@\S+$/.test(value.trim())
+										? t("virheellinenSahkoposti", "Virheellinen sähköposti")
+										: undefined,
+							}}
+						>
+							{(field) => {
+								const hasError = Boolean(field.state.meta.errors.length);
+								return (
+									<div className="space-y-1">
+										<label
+											htmlFor={field.name}
+											className="text-sm font-medium text-stone-900 dark:text-stone-100"
+										>
+											{t(
+												"outlookPostilaatikko",
+												"Outlook-resurssin sähköposti",
+											)}
+										</label>
+										<Input
+											id={field.name}
+											type="email"
+											value={field.state.value ?? ""}
+											onChange={(e) => field.handleChange(e.target.value)}
+											onBlur={field.handleBlur}
+											isError={hasError}
+											placeholder="sauna@hyy.fi"
+										/>
+										{hasError ? (
+											<p className="text-xs text-red-600 dark:text-red-400">
+												{field.state.meta.errors.join(", ")}
+											</p>
+										) : (
+											<p className="text-xs text-stone-600 dark:text-stone-400">
+												{t(
+													"outlookPostilaatikkoOhje",
+													"Outlookissa kutsuttu resurssi näytetään tämän resurssin varauksena. Jätä tyhjäksi, jos resurssi ei ole Outlookissa.",
+												)}
+											</p>
 										)}
-									</p>
-								)}
-							</div>
-						);
-					}}
-				</form.Field>
-			</FormSection>
+									</div>
+								);
+							}}
+						</form.Field>
+					</FormDetails>
+				</FormSection>
 
-			<FormSection
-				title={t("osioOikeudet", "Näkyvyys ja oikeudet")}
-				description={t(
-					"osioOikeudetKuvaus",
-					"Päätä, ketkä näkevät resurssin ja ketkä voivat varata sen.",
-				)}
-			>
-				<form.Subscribe selector={(state) => state.values}>
-					{(values) => (
-						<AccessSummary
-							groups={groups}
-							summary={summarizeResourceAccess({
-								is_public: values.is_public ?? false,
-								visibility_group_ids: values.visibility_group_ids,
-								reservation_restricted: values.reservation_restricted ?? false,
-								reserve_group_ids: values.group_ids,
-								auto_confirm: values.auto_confirm ?? false,
-								auto_confirm_group_ids: values.auto_confirm_group_ids,
-							})}
-						/>
+				<FormSection
+					id="resource-access"
+					step={4}
+					title={t("osioOikeudet", "Näkyvyys ja oikeudet")}
+					description={t(
+						"osioOikeudetKuvaus2",
+						"Näkyvyys ja varausoikeus ovat eri asioita: resurssi voi näkyä kaikille, vaikka vain tietyt ryhmät saavat varata sen. Ylläpitäjät näkevät ja voivat varata aina kaiken.",
 					)}
-				</form.Subscribe>
-				{/* Who can see the resource */}
-				<form.Field name="is_public">
-					{(field) => (
-						<fieldset className="p-3 bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-md space-y-2">
-							<legend className="px-1 text-sm font-medium text-stone-900 dark:text-stone-100">
-								<span>{t("kukaNakeeResurssin", "Kuka näkee resurssin")}</span>
-							</legend>
-							{(
-								[
-									[true, t("nakyyKaikille", "Kaikille (julkinen)")],
+				>
+					<form.Subscribe selector={(state) => state.values}>
+						{(values) => (
+							<AccessSummary
+								groups={groups}
+								summary={summarizeResourceAccess({
+									is_public: values.is_public ?? false,
+									visibility_group_ids: values.visibility_group_ids,
+									reservation_restricted:
+										values.reservation_restricted ?? false,
+									reserve_group_ids: values.group_ids,
+									auto_confirm: values.auto_confirm ?? false,
+									auto_confirm_group_ids: values.auto_confirm_group_ids,
+								})}
+							/>
+						)}
+					</form.Subscribe>
+					{/* Who can see the resource */}
+					<form.Field name="is_public">
+						{(field) => (
+							<fieldset className="p-3 bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-md space-y-2">
+								<legend className="px-1 text-sm font-medium text-stone-900 dark:text-stone-100">
+									<span>{t("kukaNakeeResurssin", "Kuka näkee resurssin")}</span>
+								</legend>
+								{(
 									[
-										false,
-										t("nakyyValituilleRyhmille", "Vain valituille ryhmille"),
-									],
-								] as const
-							).map(([isPublic, label]) => (
-								<label
-									key={String(isPublic)}
-									className="flex items-center gap-2 text-sm font-medium text-stone-900 dark:text-stone-100 cursor-pointer"
-								>
-									<input
-										type="radio"
-										name={field.name}
-										checked={field.state.value === isPublic}
-										onChange={() => field.handleChange(isPublic)}
-										className="w-4 h-4 text-purple-600 border-stone-300 focus:ring-purple-500"
-									/>
-									<span>{label}</span>
-								</label>
-							))}
+										[true, t("nakyyKaikille", "Kaikille (julkinen)")],
+										[
+											false,
+											t("nakyyValituilleRyhmille", "Vain valituille ryhmille"),
+										],
+									] as const
+								).map(([isPublic, label]) => (
+									<label
+										key={String(isPublic)}
+										className="flex items-center gap-2 text-sm font-medium text-stone-900 dark:text-stone-100 cursor-pointer"
+									>
+										<input
+											type="radio"
+											name={field.name}
+											checked={field.state.value === isPublic}
+											onChange={() => field.handleChange(isPublic)}
+											className="w-4 h-4 text-purple-600 border-stone-300 focus:ring-purple-500"
+										/>
+										<span>{label}</span>
+									</label>
+								))}
 
-							{!field.state.value && (
-								<div className="space-y-1.5 pl-6">
-									<form.Field name="visibility_group_ids">
+								{!field.state.value && (
+									<div className="space-y-1.5 pl-6">
+										<form.Field name="visibility_group_ids">
+											{(groupField) => (
+												<GroupChecklist
+													groups={groups}
+													loading={loadingGroups}
+													value={groupField.state.value}
+													onChange={groupField.handleChange}
+												/>
+											)}
+										</form.Field>
+										<p className="text-xs text-stone-600 dark:text-stone-400">
+											{t(
+												"nakyvyysRyhmatOhje",
+												"Ylläpitäjät näkevät aina kaikki resurssit. Ryhmät, jotka saavat varata resurssin, näkevät sen myös. Ilman valittuja ryhmiä resurssi näkyy vain ylläpitäjille.",
+											)}
+										</p>
+									</div>
+								)}
+							</fieldset>
+						)}
+					</form.Field>
+
+					{/* Who can reserve the resource */}
+					<form.Field name="reservation_restricted">
+						{(field) => (
+							<div className="p-3 bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-md space-y-2">
+								<div className="flex items-center gap-3">
+									<input
+										type="checkbox"
+										id={field.name}
+										checked={field.state.value ?? false}
+										onChange={(e) => field.handleChange(e.target.checked)}
+										className="w-4 h-4 text-purple-600 rounded border-stone-300 focus:ring-purple-500 dark:border-stone-700 dark:bg-stone-950"
+									/>
+									<label
+										htmlFor={field.name}
+										className="text-sm font-medium text-stone-900 dark:text-stone-100 cursor-pointer select-none flex items-center gap-1.5"
+									>
+										<span>
+											{t(
+												"vainValitutRyhmatVoivatVarata",
+												"Vain valitut ryhmät voivat varata",
+											)}
+										</span>
+									</label>
+								</div>
+								<p className="text-xs text-stone-600 dark:text-stone-400 pl-7">
+									{t(
+										"varausRajoitusOhje",
+										"Varata voivat vain valitut ryhmät ja ylläpitäjät. Olemassa olevia varauksia ei muuteta.",
+									)}
+								</p>
+
+								{field.state.value && (
+									<form.Field name="group_ids">
 										{(groupField) => (
 											<GroupChecklist
 												groups={groups}
 												loading={loadingGroups}
 												value={groupField.state.value}
-												onChange={groupField.handleChange}
+												onChange={(next) => {
+													const previous = groupField.state.value;
+													groupField.handleChange(next);
+													// A newly checked group must also be able to see the resource
+													const visible = form.getFieldValue(
+														"visibility_group_ids",
+													);
+													const added = next.filter(
+														(id) =>
+															!previous.includes(id) && !visible.includes(id),
+													);
+													if (added.length > 0)
+														form.setFieldValue("visibility_group_ids", [
+															...visible,
+															...added,
+														]);
+												}}
+												className="ml-7"
 											/>
 										)}
 									</form.Field>
-									<p className="text-xs text-stone-600 dark:text-stone-400">
-										{t(
-											"nakyvyysRyhmatOhje",
-											"Ylläpitäjät näkevät aina kaikki resurssit. Ryhmät, jotka saavat varata resurssin, näkevät sen myös. Ilman valittuja ryhmiä resurssi näkyy vain ylläpitäjille.",
-										)}
-									</p>
-								</div>
-							)}
-						</fieldset>
-					)}
-				</form.Field>
+								)}
+							</div>
+						)}
+					</form.Field>
+				</FormSection>
 
-				{/* Who can reserve the resource */}
-				<form.Field name="reservation_restricted">
-					{(field) => (
-						<div className="p-3 bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-md space-y-2">
-							<div className="flex items-center gap-3">
-								<input
-									type="checkbox"
-									id={field.name}
-									checked={field.state.value ?? false}
-									onChange={(e) => field.handleChange(e.target.checked)}
-									className="w-4 h-4 text-purple-600 rounded border-stone-300 focus:ring-purple-500 dark:border-stone-700 dark:bg-stone-950"
-								/>
+				<FormSection
+					id="resource-rules"
+					step={5}
+					title={t("osioAikaSaannot", "Aika- ja toistosäännöt")}
+					description={t(
+						"osioAikaSaannotKuvaus",
+						"Rajaa, kuinka pitkään ja kuinka pitkälle eteenpäin resurssin voi varata ja saako varauksen toistaa. Rajat koskevat muita kuin ylläpitäjiä.",
+					)}
+				>
+					{/* Reservable Until Cutoff Date */}
+					<form.Field name="reservable_until">
+						{(field) => (
+							<div className="space-y-1">
 								<label
 									htmlFor={field.name}
-									className="text-sm font-medium text-stone-900 dark:text-stone-100 cursor-pointer select-none flex items-center gap-1.5"
+									className="text-sm font-medium text-stone-900 dark:text-stone-100"
 								>
-									<span>
-										{t(
-											"vainValitutRyhmatVoivatVarata",
-											"Vain valitut ryhmät voivat varata",
-										)}
-									</span>
-								</label>
-							</div>
-							<p className="text-xs text-stone-600 dark:text-stone-400 pl-7">
-								{t(
-									"varausRajoitusOhje",
-									"Varata voivat vain valitut ryhmät ja ylläpitäjät. Olemassa olevia varauksia ei muuteta.",
-								)}
-							</p>
-
-							{field.state.value && (
-								<form.Field name="group_ids">
-									{(groupField) => (
-										<GroupChecklist
-											groups={groups}
-											loading={loadingGroups}
-											value={groupField.state.value}
-											onChange={(next) => {
-												const previous = groupField.state.value;
-												groupField.handleChange(next);
-												// A newly checked group must also be able to see the resource
-												const visible = form.getFieldValue(
-													"visibility_group_ids",
-												);
-												const added = next.filter(
-													(id) =>
-														!previous.includes(id) && !visible.includes(id),
-												);
-												if (added.length > 0)
-													form.setFieldValue("visibility_group_ids", [
-														...visible,
-														...added,
-													]);
-											}}
-											className="ml-7"
-										/>
+									{t(
+										"varattavissaAsti",
+										"Varattavissa enintään päivämäärään asti",
 									)}
-								</form.Field>
-							)}
-						</div>
-					)}
-				</form.Field>
-			</FormSection>
+								</label>
+								<DateInput
+									id={field.name}
+									value={field.state.value}
+									onChange={(e) => field.handleChange(e.target.value)}
+									onBlur={field.handleBlur}
+								/>
+								<p className="text-xs text-stone-600 dark:text-stone-400">
+									{t(
+										"varattavissaAstiOhje",
+										"Jätä tyhjäksi, jos varauksille ei ole takarajaa.",
+									)}
+								</p>
+							</div>
+						)}
+					</form.Field>
 
-			<FormSection title={t("osioVarausSaannot", "Varaussäännöt")}>
-				{/* Reservable Until Cutoff Date */}
-				<form.Field name="reservable_until">
-					{(field) => (
-						<div className="space-y-1">
-							<label
-								htmlFor={field.name}
-								className="text-sm font-medium text-stone-900 dark:text-stone-100"
-							>
-								{t(
-									"varattavissaAsti",
-									"Varattavissa enintään päivämäärään asti",
-								)}
-							</label>
-							<DateInput
-								id={field.name}
-								value={field.state.value}
-								onChange={(e) => field.handleChange(e.target.value)}
-								onBlur={field.handleBlur}
-							/>
-							<p className="text-xs text-stone-600 dark:text-stone-400">
-								{t(
-									"varattavissaAstiOhje",
-									"Jätä tyhjäksi, jos varauksille ei ole takarajaa.",
-								)}
-							</p>
-						</div>
-					)}
-				</form.Field>
-
-				{/* Allow Recurring Toggle */}
-				<form.Field name="allow_recurring">
-					{(field) => (
-						<div className="flex items-center gap-3 p-3 bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-md">
-							<input
-								type="checkbox"
-								id={field.name}
-								checked={field.state.value}
-								onChange={(e) => field.handleChange(e.target.checked)}
-								className="w-4 h-4 text-purple-600 rounded border-stone-300 focus:ring-purple-500 dark:border-stone-700 dark:bg-stone-950"
-							/>
-							<label
-								htmlFor={field.name}
-								className="text-sm font-medium text-stone-900 dark:text-stone-100 cursor-pointer select-none"
-							>
-								{t(
-									"salliToistuvatVarauksetTlleResurssille",
-									"Salli toistuvat varaukset tälle resurssille",
-								)}
-							</label>
-						</div>
-					)}
-				</form.Field>
-
-				{/* Blocks Only Toggle */}
-				<form.Field name="blocks_only">
-					{(field) => (
-						<div className="p-3 bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-md space-y-1">
-							<div className="flex items-center gap-3">
+					{/* Allow Recurring Toggle */}
+					<form.Field name="allow_recurring">
+						{(field) => (
+							<div className="flex items-center gap-3 p-3 bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-md">
 								<input
 									type="checkbox"
 									id={field.name}
-									checked={field.state.value ?? false}
+									checked={field.state.value}
 									onChange={(e) => field.handleChange(e.target.checked)}
 									className="w-4 h-4 text-purple-600 rounded border-stone-300 focus:ring-purple-500 dark:border-stone-700 dark:bg-stone-950"
 								/>
@@ -562,235 +626,273 @@ export function ResourceForm({
 									className="text-sm font-medium text-stone-900 dark:text-stone-100 cursor-pointer select-none"
 								>
 									{t(
-										"vainVarausjaksot",
-										"Varattavissa vain ylläpitäjän määrittelemissä varausjaksoissa",
+										"salliToistuvatVarauksetTlleResurssille",
+										"Salli toistuvat varaukset tälle resurssille",
 									)}
 								</label>
 							</div>
-							<p className="text-xs text-stone-600 dark:text-stone-400 pl-7">
-								{t(
-									"vainVarausjaksotOhje",
-									"Käyttäjät voivat varata vain kokonaisia varausjaksoja. Ylläpitäjä voi edelleen tehdä varauksia jaksojen ulkopuolelle.",
-								)}
-							</p>
-						</div>
-					)}
-				</form.Field>
-				{/* Booking durations (minutes) */}
-				<fieldset className="p-3 bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-md space-y-2">
-					<legend className="px-1 text-sm font-medium text-stone-900 dark:text-stone-100">
-						{t("varauksenKesto", "Varauksen kesto")}
-					</legend>
-					<div className="grid grid-cols-3 gap-2">
-						{(
-							[
-								["default_duration_minutes", t("oletuskesto", "Oletus (min)")],
+						)}
+					</form.Field>
+
+					{/* Blocks Only Toggle */}
+					<form.Field name="blocks_only">
+						{(field) => (
+							<div className="p-3 bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-md space-y-1">
+								<div className="flex items-center gap-3">
+									<input
+										type="checkbox"
+										id={field.name}
+										checked={field.state.value ?? false}
+										onChange={(e) => field.handleChange(e.target.checked)}
+										className="w-4 h-4 text-purple-600 rounded border-stone-300 focus:ring-purple-500 dark:border-stone-700 dark:bg-stone-950"
+									/>
+									<label
+										htmlFor={field.name}
+										className="text-sm font-medium text-stone-900 dark:text-stone-100 cursor-pointer select-none"
+									>
+										{t(
+											"vainVarausjaksot",
+											"Varattavissa vain ylläpitäjän määrittelemissä varausjaksoissa",
+										)}
+									</label>
+								</div>
+								<p className="text-xs text-stone-600 dark:text-stone-400 pl-7">
+									{t(
+										"vainVarausjaksotOhje",
+										"Käyttäjät voivat varata vain kokonaisia varausjaksoja. Ylläpitäjä voi edelleen tehdä varauksia jaksojen ulkopuolelle.",
+									)}
+								</p>
+							</div>
+						)}
+					</form.Field>
+					{/* Booking durations (minutes) */}
+					<fieldset className="p-3 bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-md space-y-2">
+						<legend className="px-1 text-sm font-medium text-stone-900 dark:text-stone-100">
+							{t("varauksenKesto", "Varauksen kesto")}
+						</legend>
+						<div className="grid grid-cols-3 gap-2">
+							{(
 								[
-									"min_duration_minutes",
-									t("vahimmaiskesto", "Vähintään (min)"),
-								],
-								["max_duration_minutes", t("enimmaiskesto", "Enintään (min)")],
-							] as const
-						).map(([name, label]) => (
-							<form.Field
-								key={name}
-								name={name}
-								validators={{
-									onChangeListenTo: [
+									[
 										"default_duration_minutes",
-										"min_duration_minutes",
-										"max_duration_minutes",
+										t("oletuskesto", "Oletus (min)"),
 									],
-									onChange: ({ fieldApi }) => {
-										const get = (n: typeof name) =>
-											fieldApi.form.getFieldValue(n) ?? null;
-										const def = get("default_duration_minutes");
-										const min = get("min_duration_minutes");
-										const max = get("max_duration_minutes");
-										if (
-											name === "min_duration_minutes" &&
-											min &&
-											max &&
-											min > max
-										)
-											return t(
-												"vahimmaiskestoLiianSuuri",
-												"Vähintään ei voi ylittää enimmäiskestoa.",
-											);
-										if (name === "default_duration_minutes" && def) {
-											if (min && def < min)
+									[
+										"min_duration_minutes",
+										t("vahimmaiskesto", "Vähintään (min)"),
+									],
+									[
+										"max_duration_minutes",
+										t("enimmaiskesto", "Enintään (min)"),
+									],
+								] as const
+							).map(([name, label]) => (
+								<form.Field
+									key={name}
+									name={name}
+									validators={{
+										onChangeListenTo: [
+											"default_duration_minutes",
+											"min_duration_minutes",
+											"max_duration_minutes",
+										],
+										onChange: ({ fieldApi }) => {
+											const get = (n: typeof name) =>
+												fieldApi.form.getFieldValue(n) ?? null;
+											const def = get("default_duration_minutes");
+											const min = get("min_duration_minutes");
+											const max = get("max_duration_minutes");
+											if (
+												name === "min_duration_minutes" &&
+												min &&
+												max &&
+												min > max
+											)
 												return t(
-													"oletuskestoAlleMinimin",
-													"Oletus on vähimmäiskestoa lyhyempi.",
+													"vahimmaiskestoLiianSuuri",
+													"Vähintään ei voi ylittää enimmäiskestoa.",
 												);
-											if (max && def > max)
-												return t(
-													"oletuskestoYliMaksimin",
-													"Oletus on enimmäiskestoa pidempi.",
-												);
-										}
-										return undefined;
-									},
-								}}
-							>
-								{(field) => (
-									<div className="space-y-1">
-										<label
-											htmlFor={field.name}
-											className="text-sm font-medium text-stone-900 dark:text-stone-100"
-										>
-											{label}
-										</label>
-										<Input
-											id={field.name}
-											type="number"
-											min={1}
-											step={1}
-											value={field.state.value ?? ""}
-											onChange={(e) =>
-												field.handleChange(
-													e.target.value ? Number(e.target.value) : null,
-												)
+											if (name === "default_duration_minutes" && def) {
+												if (min && def < min)
+													return t(
+														"oletuskestoAlleMinimin",
+														"Oletus on vähimmäiskestoa lyhyempi.",
+													);
+												if (max && def > max)
+													return t(
+														"oletuskestoYliMaksimin",
+														"Oletus on enimmäiskestoa pidempi.",
+													);
 											}
-											onBlur={field.handleBlur}
-											isError={Boolean(field.state.meta.errors.length)}
-										/>
-										{field.state.meta.errors.length > 0 && (
-											<p className="text-xs text-red-600 dark:text-red-400">
-												{field.state.meta.errors.join(", ")}
-											</p>
+											return undefined;
+										},
+									}}
+								>
+									{(field) => (
+										<div className="space-y-1">
+											<label
+												htmlFor={field.name}
+												className="text-sm font-medium text-stone-900 dark:text-stone-100"
+											>
+												{label}
+											</label>
+											<Input
+												id={field.name}
+												type="number"
+												min={1}
+												step={1}
+												value={field.state.value ?? ""}
+												onChange={(e) =>
+													field.handleChange(
+														e.target.value ? Number(e.target.value) : null,
+													)
+												}
+												onBlur={field.handleBlur}
+												isError={Boolean(field.state.meta.errors.length)}
+											/>
+											{field.state.meta.errors.length > 0 && (
+												<p className="text-xs text-red-600 dark:text-red-400">
+													{field.state.meta.errors.join(", ")}
+												</p>
+											)}
+										</div>
+									)}
+								</form.Field>
+							))}
+						</div>
+						<p className="text-xs text-stone-600 dark:text-stone-400">
+							{t(
+								"varauksenKestoOhje",
+								"Oletus esitäyttää päättymisajan. Vähimmäis- ja enimmäiskesto koskevat muita kuin ylläpitäjiä. Jätä tyhjäksi, jos rajaa ei ole.",
+							)}
+						</p>
+					</fieldset>
+				</FormSection>
+
+				<FormSection
+					id="resource-confirm"
+					step={6}
+					title={t("osioVahvistusJaSopimukset", "Vahvistaminen ja sopimukset")}
+					description={t(
+						"osioVahvistusJaSopimuksetKuvaus",
+						"Vahvistus kertoo, hyväksyykö ylläpito varaukset käsin vai vahvistuvatko ne heti. Sopimukset ovat ehtoja, jotka varaajan on hyväksyttävä.",
+					)}
+				>
+					{/* Auto-confirm Toggle + optional group limit */}
+					<form.Field name="auto_confirm">
+						{(field) => (
+							<div className="p-3 bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-md space-y-2">
+								<div className="flex items-center gap-3">
+									<input
+										type="checkbox"
+										id={field.name}
+										checked={field.state.value ?? false}
+										onChange={(e) => field.handleChange(e.target.checked)}
+										className="w-4 h-4 text-purple-600 rounded border-stone-300 focus:ring-purple-500 dark:border-stone-700 dark:bg-stone-950"
+									/>
+									<label
+										htmlFor={field.name}
+										className="text-sm font-medium text-stone-900 dark:text-stone-100 cursor-pointer select-none flex items-center gap-1.5"
+									>
+										<span>
+											{t(
+												"vahvistaAutomaattisesti",
+												"Vahvista varaukset automaattisesti",
+											)}
+										</span>
+									</label>
+								</div>
+								<p className="text-xs text-stone-600 dark:text-stone-400 pl-7">
+									{t(
+										"vahvistaAutomaattisestiOhje",
+										"Varaukset vahvistuvat heti ilman ylläpitäjän hyväksyntää. Jos valitset ryhmiä, vain niiden varaukset vahvistuvat automaattisesti; muut jäävät odottamaan hyväksyntää. Tyhjä valinta tarkoittaa kaikkia ryhmiä.",
+									)}
+								</p>
+
+								{field.state.value && (
+									<form.Field name="auto_confirm_group_ids">
+										{(groupField) => (
+											<GroupChecklist
+												groups={groups}
+												loading={loadingGroups}
+												value={groupField.state.value}
+												onChange={groupField.handleChange}
+												className="ml-7"
+											/>
+										)}
+									</form.Field>
+								)}
+							</div>
+						)}
+					</form.Field>
+					{/* Resource Contracts Selection */}
+					<form.Field name="contract_ids">
+						{(field) => (
+							<div className="space-y-1.5">
+								<span className="block text-sm font-medium text-stone-900 dark:text-stone-100">
+									{t("liitetytSopimukset", "Liitetyt sopimukset ja säännöt")}
+								</span>
+								<p className="text-xs text-stone-600 dark:text-stone-400">
+									{t(
+										"valitseSopimuksetKuvaus",
+										"Valitse tähän resurssiin sovellettavat kohdekohtaiset sopimusasiakirjat. (Yleiset sopimukset pätevät automaattisesti).",
+									)}
+								</p>
+
+								{loadingContracts ? (
+									<div className="text-xs text-stone-600 dark:text-stone-400 py-2 flex items-center gap-2">
+										<Loader2 className="animate-spin" size={14} />
+										<span>
+											{t("ladataanSopimuksia", "Ladataan sopimuksia...")}
+										</span>
+									</div>
+								) : resourceContracts.length > 0 ? (
+									<ChipSelect
+										aria-label={t(
+											"liitetytSopimukset",
+											"Liitetyt sopimukset ja säännöt",
+										)}
+										options={resourceContracts.map((contract) => ({
+											value: contract.id,
+											label: getLocalizedText(contract.title, i18n.language),
+										}))}
+										value={field.state.value}
+										onChange={field.handleChange}
+									/>
+								) : (
+									<div className="text-xs text-stone-600 dark:text-stone-400">
+										{t(
+											"eiKohdekohtaisiaSopimuksia",
+											"Ei kohdekohtaisia sopimuksia saatavilla.",
 										)}
 									</div>
 								)}
-							</form.Field>
-						))}
-					</div>
-					<p className="text-xs text-stone-600 dark:text-stone-400">
-						{t(
-							"varauksenKestoOhje",
-							"Oletus esitäyttää päättymisajan. Vähimmäis- ja enimmäiskesto koskevat muita kuin ylläpitäjiä. Jätä tyhjäksi, jos rajaa ei ole.",
-						)}
-					</p>
-				</fieldset>
-			</FormSection>
-
-			<FormSection title={t("osioVahvistus", "Vahvistus")}>
-				{/* Auto-confirm Toggle + optional group limit */}
-				<form.Field name="auto_confirm">
-					{(field) => (
-						<div className="p-3 bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-md space-y-2">
-							<div className="flex items-center gap-3">
-								<input
-									type="checkbox"
-									id={field.name}
-									checked={field.state.value ?? false}
-									onChange={(e) => field.handleChange(e.target.checked)}
-									className="w-4 h-4 text-purple-600 rounded border-stone-300 focus:ring-purple-500 dark:border-stone-700 dark:bg-stone-950"
-								/>
-								<label
-									htmlFor={field.name}
-									className="text-sm font-medium text-stone-900 dark:text-stone-100 cursor-pointer select-none flex items-center gap-1.5"
-								>
-									<span>
-										{t(
-											"vahvistaAutomaattisesti",
-											"Vahvista varaukset automaattisesti",
-										)}
-									</span>
-								</label>
 							</div>
-							<p className="text-xs text-stone-600 dark:text-stone-400 pl-7">
-								{t(
-									"vahvistaAutomaattisestiOhje",
-									"Varaukset vahvistuvat heti ilman ylläpitäjän hyväksyntää. Jos valitset ryhmiä, vain niiden varaukset vahvistuvat automaattisesti; muut jäävät odottamaan hyväksyntää. Tyhjä valinta tarkoittaa kaikkia ryhmiä.",
+						)}
+					</form.Field>
+				</FormSection>
+
+				{/* Submit Button */}
+				<form.Subscribe
+					selector={(state) => [state.canSubmit, state.isSubmitting]}
+				>
+					{([canSubmit, formSubmitting]) => (
+						<StickyFormActions onCancel={onCancel} summary={summaryLine}>
+							<Button
+								type="submit"
+								disabled={!canSubmit || isSubmitting || formSubmitting}
+							>
+								{isSubmitting || formSubmitting ? (
+									<Loader2 className="animate-spin" size={16} />
+								) : (
+									<Save size={16} />
 								)}
-							</p>
-
-							{field.state.value && (
-								<form.Field name="auto_confirm_group_ids">
-									{(groupField) => (
-										<GroupChecklist
-											groups={groups}
-											loading={loadingGroups}
-											value={groupField.state.value}
-											onChange={groupField.handleChange}
-											className="ml-7"
-										/>
-									)}
-								</form.Field>
-							)}
-						</div>
+								<span>{submitLabel ?? t("tallenna", "Tallenna")}</span>
+							</Button>
+						</StickyFormActions>
 					)}
-				</form.Field>
-			</FormSection>
-
-			<FormSection
-				title={t("liitetytSopimukset", "Liitetyt sopimukset ja säännöt")}
-			>
-				{/* Resource Contracts Selection */}
-				<form.Field name="contract_ids">
-					{(field) => (
-						<div className="space-y-1.5">
-							<p className="text-xs text-stone-600 dark:text-stone-400">
-								{t(
-									"valitseSopimuksetKuvaus",
-									"Valitse tähän resurssiin sovellettavat kohdekohtaiset sopimusasiakirjat. (Yleiset sopimukset pätevät automaattisesti).",
-								)}
-							</p>
-
-							{loadingContracts ? (
-								<div className="text-xs text-stone-600 dark:text-stone-400 py-2 flex items-center gap-2">
-									<Loader2 className="animate-spin" size={14} />
-									<span>
-										{t("ladataanSopimuksia", "Ladataan sopimuksia...")}
-									</span>
-								</div>
-							) : resourceContracts.length > 0 ? (
-								<ChipSelect
-									aria-label={t(
-										"liitetytSopimukset",
-										"Liitetyt sopimukset ja säännöt",
-									)}
-									options={resourceContracts.map((contract) => ({
-										value: contract.id,
-										label: getLocalizedText(contract.title, i18n.language),
-									}))}
-									value={field.state.value}
-									onChange={field.handleChange}
-								/>
-							) : (
-								<div className="text-xs text-stone-600 dark:text-stone-400">
-									{t(
-										"eiKohdekohtaisiaSopimuksia",
-										"Ei kohdekohtaisia sopimuksia saatavilla.",
-									)}
-								</div>
-							)}
-						</div>
-					)}
-				</form.Field>
-			</FormSection>
-
-			{/* Submit Button */}
-			<form.Subscribe
-				selector={(state) => [state.canSubmit, state.isSubmitting]}
-			>
-				{([canSubmit, formSubmitting]) => (
-					<FormActions onCancel={onCancel}>
-						<Button
-							type="submit"
-							disabled={!canSubmit || isSubmitting || formSubmitting}
-						>
-							{isSubmitting || formSubmitting ? (
-								<Loader2 className="animate-spin" size={16} />
-							) : (
-								<Save size={16} />
-							)}
-							<span>{submitLabel ?? t("tallenna", "Tallenna")}</span>
-						</Button>
-					</FormActions>
-				)}
-			</form.Subscribe>
+				</form.Subscribe>
+			</GuidedFormLayout>
 		</form>
 	);
 }

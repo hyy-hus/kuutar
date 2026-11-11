@@ -1,6 +1,13 @@
+import { Repeat } from "lucide-react";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
+import { Button } from "#/components/Button";
+import { ToggleChip } from "#/components/Chip";
+import { DateInput } from "#/components/DateInput";
+import { Input } from "#/components/Input";
+import { Select } from "#/components/Select";
 import { formatYYYYMMDD, parseLocalDate, useDateFormatter } from "#/utils/date";
+import { WEEK_ORDER, weekdayRuns } from "#/utils/recurrenceSummary";
 import {
 	listSeriesStarts,
 	NO_RECURRENCE,
@@ -8,7 +15,6 @@ import {
 	type RRuleConfig,
 	recurrenceDefaults,
 } from "#/utils/rruleUtils";
-import { Input } from "./Input";
 
 interface RecurrenceFieldsProps {
 	/** Start of the first occurrence (datetime-local string). Yearly repeats and the defaults follow it. */
@@ -19,12 +25,10 @@ interface RecurrenceFieldsProps {
 	maxExceptionRows?: number;
 }
 
-const SELECT_CLASS =
-	"w-full px-2 py-1.5 text-xs bg-stone-50 dark:bg-stone-950 border border-stone-300 dark:border-stone-700 rounded-sm";
-const LABEL_CLASS = "text-[11px] text-stone-600 dark:text-stone-400";
+const LABEL_CLASS = "block text-sm font-medium text-ink";
+const CHECKBOX_CLASS =
+	"size-4 shrink-0 accent-purple-600 dark:accent-purple-400";
 
-/** Monday first; the numbers are what Date#getDay returns */
-const WEEK_ORDER = [1, 2, 3, 4, 5, 6, 0];
 const WORKDAYS = [1, 2, 3, 4, 5];
 const ALL_DAYS = [0, 1, 2, 3, 4, 5, 6];
 const MONTHS = Array.from({ length: 12 }, (_, i) => i + 1);
@@ -114,18 +118,81 @@ export function RecurrenceFields({
 		onChange({ ...value, exdates: include ? rest : [...rest, date] });
 	};
 
+	const excludedCount = value.exdates.length;
+	const occurrenceCount = Math.max(candidates.length - excludedCount, 0);
+
+	const weekdayName = (day: number) => formatWeekdayShort(dateOfWeekday(day));
+
+	/** One sentence describing the series, e.g. "Toistuu viikoittain ma–su 5.10.2026–31.12.2027, 453 kertaa" */
+	const summary = (() => {
+		if (value.freq === "none" || candidates.length === 0) return null;
+		let pattern: string;
+		switch (value.freq) {
+			case "weekly":
+				pattern = t("toistuuViikoittain", "Toistuu viikoittain {{days}}", {
+					days: weekdayRuns(value.weekdays)
+						.map((run) =>
+							run.from === run.to
+								? weekdayName(run.from)
+								: `${weekdayName(run.from)}–${weekdayName(run.to)}`,
+						)
+						.join(", "),
+				});
+				break;
+			case "monthly":
+				pattern =
+					value.monthlyMode === "day"
+						? value.monthDay === -1
+							? t(
+									"toistuuKuukausittainViimeinen",
+									"Toistuu kuukausittain kuukauden viimeisenä päivänä",
+								)
+							: t(
+									"toistuuKuukausittainPaiva",
+									"Toistuu kuukausittain {{day}}. päivä",
+									{ day: value.monthDay },
+								)
+						: t(
+								"toistuuKuukausittainNth",
+								"Toistuu kuukausittain: {{nth}} {{weekday}}",
+								{
+									nth: ordinal(value.nth),
+									weekday: formatWeekday(
+										dateOfWeekday(value.nthWeekday),
+									).toLowerCase(),
+								},
+							);
+				break;
+			case "yearly":
+				pattern = t("toistuuVuosittain", "Toistuu vuosittain {{date}}", {
+					date: new Intl.DateTimeFormat(locale, {
+						day: "numeric",
+						month: "long",
+					}).format(new Date(2026, value.yearMonth - 1, value.yearDay)),
+				});
+				break;
+			default:
+				pattern = t("toistuuMukautetusti", "Toistuu mukautetun säännön mukaan");
+		}
+		const first = candidates[0];
+		const last = candidates[candidates.length - 1];
+		const times = t("toistoKertaa", "{{count}} kertaa", {
+			count: occurrenceCount,
+		});
+		return `${pattern} ${formatDateOnly(first)}–${formatDateOnly(last)}, ${times}`;
+	})();
+
 	return (
-		<div className="space-y-2">
-			<div className="grid grid-cols-2 gap-2">
+		<div className="space-y-4">
+			<div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
 				<div className="space-y-1">
 					<label htmlFor="recurrence_freq" className={LABEL_CLASS}>
 						{t("toistuvuusjakso", "Toistuvuusjakso")}
 					</label>
-					<select
+					<Select
 						id="recurrence_freq"
 						value={value.freq}
 						onChange={(e) => setFreq(e.target.value as RecurrenceFreq)}
-						className={SELECT_CLASS}
 					>
 						<option value="none">{t("eiToistoa", "Ei toistoa")}</option>
 						<option value="weekly">
@@ -143,7 +210,7 @@ export function RecurrenceFields({
 								{t("mukautettuToisto", "Mukautettu toisto")}
 							</option>
 						)}
-					</select>
+					</Select>
 				</div>
 
 				{value.freq !== "none" && (
@@ -151,7 +218,7 @@ export function RecurrenceFields({
 						<label htmlFor="recurrence_end_mode" className={LABEL_CLASS}>
 							{t("toistoPttyy", "Toisto päättyy")}
 						</label>
-						<select
+						<Select
 							id="recurrence_end_mode"
 							value={endMode}
 							onChange={(e) =>
@@ -160,66 +227,69 @@ export function RecurrenceFields({
 									count: e.target.value === "count" ? 10 : null,
 								})
 							}
-							className={SELECT_CLASS}
 						>
 							<option value="until">{t("pivmrn", "Päivämäärään")}</option>
 							<option value="count">
 								{t("toistojenJlkeen", "Toistojen jälkeen")}
 							</option>
-						</select>
+						</Select>
 					</div>
 				)}
 			</div>
 
 			{value.freq === "weekly" && (
-				<fieldset className="space-y-1">
+				<fieldset className="m-0 min-w-0 space-y-2 border-0 p-0">
 					<legend className={LABEL_CLASS}>
 						{t("viikonpivt", "Viikonpäivät")}
 					</legend>
-					<div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
+					<div className="flex flex-wrap items-center gap-2">
 						{WEEK_ORDER.map((day) => {
-							const id = `recurrence_weekday_${day}`;
+							const date = dateOfWeekday(day);
+							const selected = value.weekdays.includes(day);
 							return (
-								<span key={day} className="flex items-center gap-1">
-									<input
-										id={id}
-										type="checkbox"
-										checked={value.weekdays.includes(day)}
-										onChange={(e) => toggleWeekday(day, e.target.checked)}
-									/>
-									<label htmlFor={id} title={formatWeekday(dateOfWeekday(day))}>
-										{formatWeekdayShort(dateOfWeekday(day))}
-									</label>
-								</span>
+								<ToggleChip
+									key={day}
+									id={`recurrence_weekday_${day}`}
+									role="checkbox"
+									aria-checked={selected}
+									aria-label={formatWeekdayShort(date)}
+									title={formatWeekday(date)}
+									selected={selected}
+									className="min-w-10 justify-center"
+									onClick={() => toggleWeekday(day, !selected)}
+								>
+									{formatWeekdayShort(date)}
+								</ToggleChip>
 							);
 						})}
-					</div>
-					<div className="flex gap-3 text-[11px]">
-						<button
+						<span aria-hidden="true" className="mx-1 h-5 w-px bg-line-subtle" />
+						<Button
 							type="button"
-							className="underline text-stone-600 dark:text-stone-400"
+							variant="outline"
+							size="sm"
 							onClick={() => setPattern({ weekdays: WORKDAYS })}
 						>
 							{t("arkipivt", "Arkipäivät")}
-						</button>
-						<button
+						</Button>
+						<Button
 							type="button"
-							className="underline text-stone-600 dark:text-stone-400"
+							variant="outline"
+							size="sm"
 							onClick={() => setPattern({ weekdays: ALL_DAYS })}
 						>
 							{t("jokaPiv", "Joka päivä")}
-						</button>
+						</Button>
 					</div>
 				</fieldset>
 			)}
 
 			{value.freq === "monthly" && (
-				<div className="grid grid-cols-2 gap-2">
+				<div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
 					<div className="space-y-1">
 						<label htmlFor="recurrence_monthly_mode" className={LABEL_CLASS}>
 							{t("kuukaudenToistuvuus", "Kuukauden toistuvuus")}
 						</label>
-						<select
+						<Select
 							id="recurrence_monthly_mode"
 							value={value.monthlyMode}
 							onChange={(e) =>
@@ -227,7 +297,6 @@ export function RecurrenceFields({
 									monthlyMode: e.target.value as RRuleConfig["monthlyMode"],
 								})
 							}
-							className={SELECT_CLASS}
 						>
 							<option value="day">
 								{t("kuukaudenTiettyPiv", "Kuukauden tiettynä päivänä")}
@@ -235,7 +304,7 @@ export function RecurrenceFields({
 							<option value="nthWeekday">
 								{t("kuukaudenTietyViikonpiv", "Kuukauden tietty viikonpäivä")}
 							</option>
-						</select>
+						</Select>
 					</div>
 
 					{value.monthlyMode === "day" ? (
@@ -243,13 +312,12 @@ export function RecurrenceFields({
 							<label htmlFor="recurrence_month_day" className={LABEL_CLASS}>
 								{t("pivKuukaudessa", "Päivä")}
 							</label>
-							<select
+							<Select
 								id="recurrence_month_day"
 								value={value.monthDay}
 								onChange={(e) =>
 									setPattern({ monthDay: Number(e.target.value) })
 								}
-								className={SELECT_CLASS}
 							>
 								{MONTH_DAYS.map((day) => (
 									<option key={day} value={day}>
@@ -259,45 +327,43 @@ export function RecurrenceFields({
 								<option value={-1}>
 									{t("viimeinenPiv", "Viimeinen päivä")}
 								</option>
-							</select>
+							</Select>
 						</div>
 					) : (
-						<div className="grid grid-cols-2 gap-2">
+						<div className="grid grid-cols-2 gap-3">
 							<div className="space-y-1">
 								<label htmlFor="recurrence_nth" className={LABEL_CLASS}>
 									{t("kerta", "Monesko")}
 								</label>
-								<select
+								<Select
 									id="recurrence_nth"
 									value={value.nth}
 									onChange={(e) => setPattern({ nth: Number(e.target.value) })}
-									className={SELECT_CLASS}
 								>
 									{NTH_OPTIONS.map((n) => (
 										<option key={n} value={n}>
 											{ordinal(n)}
 										</option>
 									))}
-								</select>
+								</Select>
 							</div>
 							<div className="space-y-1">
 								<label htmlFor="recurrence_nth_weekday" className={LABEL_CLASS}>
 									{t("viikonpiv", "Viikonpäivä")}
 								</label>
-								<select
+								<Select
 									id="recurrence_nth_weekday"
 									value={value.nthWeekday}
 									onChange={(e) =>
 										setPattern({ nthWeekday: Number(e.target.value) })
 									}
-									className={SELECT_CLASS}
 								>
 									{WEEK_ORDER.map((day) => (
 										<option key={day} value={day}>
 											{formatWeekday(dateOfWeekday(day))}
 										</option>
 									))}
-								</select>
+								</Select>
 							</div>
 						</div>
 					)}
@@ -305,56 +371,53 @@ export function RecurrenceFields({
 			)}
 
 			{value.freq === "yearly" && (
-				<div className="grid grid-cols-2 gap-2">
+				<div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
 					<div className="space-y-1">
 						<label htmlFor="recurrence_year_month" className={LABEL_CLASS}>
 							{t("kuukausi", "Kuukausi")}
 						</label>
-						<select
+						<Select
 							id="recurrence_year_month"
 							value={value.yearMonth}
 							onChange={(e) =>
 								setPattern({ yearMonth: Number(e.target.value) })
 							}
-							className={SELECT_CLASS}
 						>
 							{MONTHS.map((month) => (
 								<option key={month} value={month}>
 									{monthName(month)}
 								</option>
 							))}
-						</select>
+						</Select>
 					</div>
 					<div className="space-y-1">
 						<label htmlFor="recurrence_year_day" className={LABEL_CLASS}>
 							{t("pivKuukaudessa", "Päivä")}
 						</label>
-						<select
+						<Select
 							id="recurrence_year_day"
 							value={value.yearDay}
 							onChange={(e) => setPattern({ yearDay: Number(e.target.value) })}
-							className={SELECT_CLASS}
 						>
 							{MONTH_DAYS.map((day) => (
 								<option key={day} value={day}>
 									{`${day}.`}
 								</option>
 							))}
-						</select>
+						</Select>
 					</div>
 				</div>
 			)}
 
 			{value.freq !== "none" && (
-				<div className="space-y-1">
+				<div className="space-y-1 sm:max-w-[calc(50%-0.375rem)]">
 					{endMode === "until" ? (
 						<>
 							<label htmlFor="recurrence_until" className={LABEL_CLASS}>
 								{t("viimeinenPiv", "Viimeinen päivä")}
 							</label>
-							<Input
+							<DateInput
 								id="recurrence_until"
-								type="date"
 								value={untilStr}
 								onChange={(e) =>
 									onChange({
@@ -392,39 +455,94 @@ export function RecurrenceFields({
 				</div>
 			)}
 
+			{summary && (
+				<p
+					aria-live="polite"
+					className="flex items-start gap-2 rounded-md bg-surface-muted p-3 text-sm text-ink"
+				>
+					<Repeat size={16} aria-hidden="true" className="mt-0.5 shrink-0" />
+					<span>{summary}</span>
+				</p>
+			)}
+
 			{value.freq !== "none" && candidates.length > 1 && (
-				<details className="text-xs">
-					<summary className="cursor-pointer text-stone-700 dark:text-stone-300">
-						{value.exdates.length > 0
-							? t("poikkeuksetCount", "Poikkeukset ({{count}})", {
-									count: value.exdates.length,
-								})
-							: t("poikkeukset", "Poikkeukset")}
-					</summary>
-					<p className="mt-1 text-[11px] text-stone-500 dark:text-stone-400">
+				<details className="group rounded-md border border-line-subtle bg-surface">
+					<summary className="focus-ring flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-ink">
 						{t(
-							"poistaValintaNiiltPiviltJoinaToistoaEiPidet",
-							"Poista valinta niiltä päiviltä, joina toistoa ei pidetä.",
+							"poikkeuksetMaara",
+							"Poikkeukset ({{excluded}} / {{total}} päivää)",
+							{ excluded: excludedCount, total: candidates.length },
 						)}
-					</p>
-					<ul className="mt-1 max-h-40 overflow-y-auto space-y-0.5">
-						{candidates.slice(0, maxExceptionRows).map((date) => {
-							const id = `recurrence_occ_${date.getTime()}`;
-							return (
-								<li key={date.getTime()} className="flex items-center gap-2">
-									<input
-										id={id}
-										type="checkbox"
-										checked={!excluded.has(date.getTime())}
-										onChange={(e) => toggleExdate(date, e.target.checked)}
-									/>
-									<label htmlFor={id}>
-										{formatWeekday(date)} {formatDateOnly(date)}
-									</label>
-								</li>
-							);
-						})}
-					</ul>
+					</summary>
+					<div className="space-y-2 border-t border-line-subtle p-3">
+						<p className="text-xs text-ink-muted">
+							{t(
+								"poistaValintaNiiltPiviltJoinaToistoaEiPidet",
+								"Poista valinta niiltä päiviltä, joina toistoa ei pidetä.",
+							)}
+						</p>
+						<div className="flex flex-wrap gap-2">
+							<Button
+								type="button"
+								variant="outline"
+								size="sm"
+								disabled={excludedCount === 0}
+								onClick={() => onChange({ ...value, exdates: [] })}
+							>
+								{t("valitseKaikki", "Valitse kaikki")}
+							</Button>
+							<Button
+								type="button"
+								variant="outline"
+								size="sm"
+								disabled={excludedCount === candidates.length}
+								onClick={() => onChange({ ...value, exdates: [...candidates] })}
+							>
+								{t("eiYhtaan", "Ei yhtään")}
+							</Button>
+						</div>
+						{occurrenceCount === 0 && (
+							<p className="text-xs text-status-danger-ink">
+								{t(
+									"kaikkiPaivatPoissuljettu",
+									"Kaikki päivät on poissuljettu, joten toistoa ei synny.",
+								)}
+							</p>
+						)}
+						<ul className="max-h-48 space-y-1 overflow-y-auto rounded-md border border-line-subtle bg-surface-raised p-2">
+							{candidates.slice(0, maxExceptionRows).map((date) => {
+								const id = `recurrence_occ_${date.getTime()}`;
+								return (
+									<li key={date.getTime()}>
+										<label
+											htmlFor={id}
+											className="flex cursor-pointer items-center gap-2 rounded-sm px-1 py-0.5 text-sm tabular-nums hover:bg-surface-muted"
+										>
+											<input
+												id={id}
+												type="checkbox"
+												className={CHECKBOX_CLASS}
+												checked={!excluded.has(date.getTime())}
+												onChange={(e) => toggleExdate(date, e.target.checked)}
+											/>
+											<span>
+												{formatWeekday(date)} {formatDateOnly(date)}
+											</span>
+										</label>
+									</li>
+								);
+							})}
+						</ul>
+						{candidates.length > maxExceptionRows && (
+							<p className="text-xs text-ink-muted">
+								{t(
+									"poikkeuksetNaytetaanEnsimmaiset",
+									"Listassa näytetään ensimmäiset {{count}} päivää.",
+									{ count: maxExceptionRows },
+								)}
+							</p>
+						)}
+					</div>
 				</details>
 			)}
 		</div>
