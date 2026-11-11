@@ -5,7 +5,7 @@ import {
 	Outlet,
 	useRouterState,
 } from "@tanstack/react-router";
-import { Menu, PanelLeftClose, PanelLeftOpen, X } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { AuthDialog } from "#/components/AuthPopover";
@@ -13,6 +13,7 @@ import { Button } from "#/components/Button";
 import { SearchBar } from "#/components/SearchBar";
 import { SideBar } from "#/components/SideBar";
 import type { Theme } from "#/components/ThemeSwitcher";
+import { Tooltip } from "#/components/Tooltip";
 import { useAppConfig } from "#/hooks/useAppConfig";
 import { authKeys, fetchMe } from "#/hooks/useAuth";
 import { cn } from "#/utils/cn";
@@ -93,6 +94,11 @@ function AppLayout() {
 			setIsDrawerOpen((prev) => !prev);
 		}
 	};
+	const menuLabel = isDesktop
+		? isCollapsed
+			? t("laajennaValikko", "Laajenna valikko")
+			: t("tiivistaValikko", "Pienennä valikko")
+		: t("toggleMenu", "Avaa/sulje valikko");
 	const showRail = isDesktop && isCollapsed;
 
 	const [theme, setTheme] = useState<Theme>(() =>
@@ -108,14 +114,17 @@ function AppLayout() {
 		<div className="h-screen w-screen overflow-hidden flex flex-col bg-stone-50 dark:bg-stone-950 text-stone-900 dark:text-stone-100">
 			{/* Header */}
 			<header className="h-16 flex gap-2 items-center px-3 border-b-2 border-stone-800 dark:border-stone-600 bg-stone-100 dark:bg-stone-900 shrink-0 z-40">
-				<Button
-					variant="ghost"
-					size="icon"
-					onClick={toggleMenu}
-					aria-label={t("toggleMenu", "Toggle Menu")}
-				>
-					<Menu size={20} />
-				</Button>
+				<Tooltip content={menuLabel} side="bottom">
+					<Button
+						variant="ghost"
+						size="icon"
+						onClick={toggleMenu}
+						aria-label={menuLabel}
+						aria-expanded={isDesktop ? !isCollapsed : isDrawerOpen}
+					>
+						<Menu size={20} aria-hidden="true" />
+					</Button>
+				</Tooltip>
 
 				{/* Clickable Header Logo */}
 				<Link to="/" className="hover:opacity-80 transition-opacity shrink-0">
@@ -172,41 +181,12 @@ function AppLayout() {
 						</Button>
 					</div>
 
-					<div
-						className={cn(
-							"flex-1 overflow-y-auto overflow-x-hidden p-2",
-							!showRail && "md:min-w-60",
-						)}
-					>
+					<div className={cn("min-h-0 flex-1", !showRail && "md:min-w-60")}>
 						<SideBar
 							collapsed={showRail}
 							theme={theme}
 							onThemeChange={setTheme}
 						/>
-					</div>
-
-					{/* Collapse toggle (desktop only) */}
-					<div className="hidden md:block border-t border-stone-300 dark:border-stone-700 p-2">
-						<Button
-							variant="ghost"
-							size={showRail ? "icon" : "sm"}
-							className={cn(showRail ? "mx-auto flex" : "w-full justify-start")}
-							onClick={toggleMenu}
-							aria-label={
-								isCollapsed
-									? t("laajennaValikko", "Laajenna valikko")
-									: t("tiivistaValikko", "Pienennä valikko")
-							}
-						>
-							{isCollapsed ? (
-								<PanelLeftOpen size={16} aria-hidden="true" />
-							) : (
-								<>
-									<PanelLeftClose size={16} aria-hidden="true" />
-									{t("tiivistaValikko", "Pienennä valikko")}
-								</>
-							)}
-						</Button>
 					</div>
 				</aside>
 

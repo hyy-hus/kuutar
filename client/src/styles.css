@@ -174,3 +174,12 @@ body {
     break-after: page !important;
   }
 }
+
+/* Thin themed scrollbar for scrollable panels such as the sidebar nav */
+.thin-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-stone-400) transparent;
+}
+:root.dark .thin-scrollbar {
+  scrollbar-color: var(--color-stone-600) transparent;
+}

@@ -1,24 +1,15 @@
 import { screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import { renderWithProviders } from "#/test/render";
 import { SideBar } from "./SideBar";
 
 describe("SideBar", () => {
-	it("shows labels, the sign-in button and a language and theme switch when expanded", async () => {
-		const onThemeChange = vi.fn();
-		renderWithProviders(
-			<SideBar theme="light" onThemeChange={onThemeChange} />,
-		);
+	it("shows labels and a quiet sign-in row when expanded", async () => {
+		renderWithProviders(<SideBar theme="light" onThemeChange={() => {}} />);
 		expect(await screen.findByRole("link", { name: "Calendar" })).toBeVisible();
 		expect(screen.getByText("Calendar")).toBeVisible();
 		expect(screen.getByRole("button", { name: "Log In" })).toBeVisible();
-		expect(screen.getByRole("button", { name: "EN" })).toHaveAttribute(
-			"aria-pressed",
-			"true",
-		);
-		await userEvent.click(screen.getByRole("button", { name: /Dark/ }));
-		expect(onThemeChange).toHaveBeenCalledWith("dark");
+		expect(screen.queryByRole("button", { name: /collapse menu/i })).toBeNull();
 	});
 
 	it("keeps icon links with accessible names and drops text when collapsed", async () => {
@@ -29,6 +20,6 @@ describe("SideBar", () => {
 		expect(link).toHaveTextContent("");
 		expect(screen.queryByText("Calendar")).toBeNull();
 		expect(screen.getByRole("button", { name: "Log In" })).toBeVisible();
-		expect(screen.getByRole("button", { name: "Language" })).toBeVisible();
+		expect(screen.getByRole("button", { name: "Settings" })).toBeVisible();
 	});
 });

@@ -9,24 +9,18 @@ import {
 	CalendarSync,
 	FileText,
 	Folder,
-	Globe,
 	Home,
 	type LucideIcon,
 	Mail,
-	Moon,
 	Repeat,
 	Shield,
 	ShieldAlert,
-	Sun,
 	User,
-	UserCog,
 	Users,
 } from "lucide-react";
-import { Popover } from "radix-ui";
 import { useTranslation } from "react-i18next";
 import { AccountArea } from "#/components/AccountArea";
-import LocaleSwitcher from "#/components/LocaleSwitcher";
-import { type Theme, ThemeSwitcher } from "#/components/ThemeSwitcher";
+import type { Theme } from "#/components/ThemeSwitcher";
 import { Tooltip } from "#/components/Tooltip";
 import { useAuth, useIsAdmin } from "#/hooks/useAuth";
 import { cn } from "#/utils/cn";
@@ -175,15 +169,6 @@ export function SideBar({
 		.map((group) => ({ ...group, items: group.items.filter(isVisible) }))
 		.filter((group) => group.items.length > 0);
 
-	const meItem: NavItem | null = user
-		? {
-				to: "/me",
-				label: t("omatTiedot", "Omat tiedot"),
-				icon: UserCog,
-				access: "auth",
-			}
-		: null;
-
 	const renderLink = (item: NavItem) => {
 		const Icon = item.icon;
 		const link = (
@@ -217,13 +202,13 @@ export function SideBar({
 		);
 	};
 
-	const iconButtonClass =
-		"focus-ring mx-auto flex size-10 cursor-pointer items-center justify-center rounded-md text-stone-800 transition-colors hover:bg-stone-200 dark:text-stone-200 dark:hover:bg-stone-800";
-
 	return (
-		<div className="flex h-full flex-col justify-between gap-4">
-			{/* Navigation Links */}
-			<nav aria-label={t("paavalikko", "Päävalikko")}>
+		<div className="flex h-full min-h-0 flex-col">
+			{/* Only the nav list scrolls; the account area stays pinned */}
+			<nav
+				aria-label={t("paavalikko", "Päävalikko")}
+				className="thin-scrollbar min-h-0 flex-1 overflow-y-auto overflow-x-hidden p-2"
+			>
 				{visibleGroups.map((group, index) => (
 					<div
 						key={group.key}
@@ -231,7 +216,7 @@ export function SideBar({
 							"space-y-1",
 							index > 0 &&
 								(collapsed
-									? "mt-3 border-t border-stone-300 pt-3 dark:border-stone-700"
+									? "mt-2 border-t border-stone-300 pt-2 dark:border-stone-700"
 									: "mt-4"),
 						)}
 					>
@@ -245,69 +230,12 @@ export function SideBar({
 				))}
 			</nav>
 
-			<div className="space-y-3">
-				<div className="space-y-3 border-t border-stone-300 pt-3 dark:border-stone-700">
-					<AccountArea collapsed={collapsed} />
-					{meItem && <div>{renderLink(meItem)}</div>}
-				</div>
-
-				{/* Language and theme */}
-				<div className="shrink-0 space-y-2 border-t border-stone-300 pt-3 dark:border-stone-700">
-					{collapsed ? (
-						<div className="space-y-1">
-							<Popover.Root>
-								<Tooltip content={t("kieli", "Kieli")}>
-									<Popover.Trigger asChild>
-										<button
-											type="button"
-											aria-label={t("kieli", "Kieli")}
-											className={iconButtonClass}
-										>
-											<Globe size={18} aria-hidden="true" />
-										</button>
-									</Popover.Trigger>
-								</Tooltip>
-								<Popover.Portal>
-									<Popover.Content
-										side="right"
-										align="end"
-										sideOffset={8}
-										className="z-[60] rounded-md border border-stone-300 bg-stone-50 p-2 dark:border-stone-700 dark:bg-stone-900"
-									>
-										<LocaleSwitcher />
-									</Popover.Content>
-								</Popover.Portal>
-							</Popover.Root>
-							<Tooltip
-								content={
-									theme === "light"
-										? t("teemaTumma", "Tumma")
-										: t("teemaVaalea", "Vaalea")
-								}
-							>
-								<button
-									type="button"
-									aria-label={t("toggleTheme", "Vaihda teemaa")}
-									onClick={() =>
-										onThemeChange(theme === "light" ? "dark" : "light")
-									}
-									className={iconButtonClass}
-								>
-									{theme === "light" ? (
-										<Sun size={18} aria-hidden="true" />
-									) : (
-										<Moon size={18} aria-hidden="true" />
-									)}
-								</button>
-							</Tooltip>
-						</div>
-					) : (
-						<>
-							<LocaleSwitcher fullWidth />
-							<ThemeSwitcher value={theme} onChange={onThemeChange} fullWidth />
-						</>
-					)}
-				</div>
+			<div className="shrink-0 border-t border-stone-300 p-2 dark:border-stone-700">
+				<AccountArea
+					collapsed={collapsed}
+					theme={theme}
+					onThemeChange={onThemeChange}
+				/>
 			</div>
 		</div>
 	);
