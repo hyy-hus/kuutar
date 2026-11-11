@@ -1,5 +1,5 @@
 // src/routes/sandbox.tsx
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { CalendarX, Check, Clock, Lock, Plus, Users, X } from "lucide-react";
 import { type ReactNode, useState } from "react";
 import { BackLink } from "#/components/BackLink";
@@ -28,6 +28,10 @@ import { Textarea } from "#/components/Textarea";
 import type { PeriodMonths } from "#/utils/period";
 
 export const Route = createFileRoute("/_app/sandbox")({
+	// Developer showcase: not reachable in production builds
+	beforeLoad: () => {
+		if (!import.meta.env.DEV) throw redirect({ to: "/", replace: true });
+	},
 	component: SandboxPage,
 });
 

@@ -1,11 +1,15 @@
 import { useForm } from "@tanstack/react-form";
 import { createFileRoute } from "@tanstack/react-router";
-import { Loader2, Save } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "#/components/Button";
+import { FormActions } from "#/components/FormActions";
+import { FormLayout } from "#/components/FormLayout";
+import { FormSection } from "#/components/FormSection";
 import { Input } from "#/components/Input";
 import { LanguageSelect } from "#/components/LanguageSelect";
+import { PageHeader } from "#/components/PageHeader";
 import { SessionList } from "#/components/SessionList";
 import { useAuth } from "#/hooks/useAuth";
 import {
@@ -25,7 +29,11 @@ export const Route = createFileRoute("/_app/me")({
 
 function FieldError({ errors }: { errors: unknown[] }) {
 	if (errors.length === 0) return null;
-	return <p className="text-[11px] text-red-500">{errors.join(", ")}</p>;
+	return (
+		<p className="text-xs text-red-600 dark:text-red-400">
+			{errors.join(", ")}
+		</p>
+	);
 }
 
 function MePage() {
@@ -62,13 +70,11 @@ function MePage() {
 
 	if (!user) return null;
 
-	const labelClass = "text-xs font-medium text-stone-700 dark:text-stone-300";
+	const labelClass = "text-sm font-medium text-stone-900 dark:text-stone-100";
 
 	return (
-		<div className="p-4 space-y-4 max-w-md">
-			<h1 className="text-xl font-bold text-stone-900 dark:text-stone-100">
-				{t("omatTiedot", "Omat tiedot")}
-			</h1>
+		<FormLayout>
+			<PageHeader title={t("omatTiedot", "Omat tiedot")} />
 
 			<form
 				onSubmit={(e) => {
@@ -76,143 +82,101 @@ function MePage() {
 					e.stopPropagation();
 					form.handleSubmit();
 				}}
-				className="space-y-4"
+				className="space-y-6"
 			>
-				<form.Field
-					name="name"
-					validators={{
-						onChange: ({ value }) =>
-							!value.trim()
-								? t("nimiOnPakollinen", "Nimi on pakollinen")
-								: undefined,
-					}}
-				>
-					{(field) => (
-						<div className="space-y-1">
-							<label htmlFor={field.name} className={labelClass}>
-								{t("nimi", "Nimi")}
-							</label>
-							<Input
-								id={field.name}
-								value={field.state.value}
-								onChange={(e) => field.handleChange(e.target.value)}
-								onBlur={field.handleBlur}
-								isError={field.state.meta.errors.length > 0}
-							/>
-							<FieldError errors={field.state.meta.errors} />
-						</div>
-					)}
-				</form.Field>
-
-				<form.Field
-					name="email"
-					validators={{
-						onChange: ({ value }) =>
-							!value
-								? t("shkpostiOnPakollinen", "Sähköposti on pakollinen")
-								: !/\S+@\S+\.\S+/.test(value)
-									? t(
-											"annaKelvollinenSahkoposti",
-											"Anna kelvollinen sähköpostiosoite",
-										)
+				<FormSection title={t("perustiedot", "Perustiedot")}>
+					<form.Field
+						name="name"
+						validators={{
+							onChange: ({ value }) =>
+								!value.trim()
+									? t("nimiOnPakollinen", "Nimi on pakollinen")
 									: undefined,
-					}}
+						}}
+					>
+						{(field) => (
+							<div className="space-y-1">
+								<label htmlFor={field.name} className={labelClass}>
+									{t("nimi", "Nimi")}
+								</label>
+								<Input
+									id={field.name}
+									value={field.state.value}
+									onChange={(e) => field.handleChange(e.target.value)}
+									onBlur={field.handleBlur}
+									isError={field.state.meta.errors.length > 0}
+								/>
+								<FieldError errors={field.state.meta.errors} />
+							</div>
+						)}
+					</form.Field>
+
+					<form.Field
+						name="email"
+						validators={{
+							onChange: ({ value }) =>
+								!value
+									? t("shkpostiOnPakollinen", "Sähköposti on pakollinen")
+									: !/\S+@\S+\.\S+/.test(value)
+										? t(
+												"annaKelvollinenSahkoposti",
+												"Anna kelvollinen sähköpostiosoite",
+											)
+										: undefined,
+						}}
+					>
+						{(field) => (
+							<div className="space-y-1">
+								<label htmlFor={field.name} className={labelClass}>
+									{t("shkposti", "Sähköposti")}
+								</label>
+								<Input
+									id={field.name}
+									type="email"
+									value={field.state.value}
+									onChange={(e) => field.handleChange(e.target.value)}
+									onBlur={field.handleBlur}
+									isError={field.state.meta.errors.length > 0}
+								/>
+								<FieldError errors={field.state.meta.errors} />
+							</div>
+						)}
+					</form.Field>
+
+					<form.Field name="language">
+						{(field) => (
+							<div className="space-y-1">
+								<label htmlFor={field.name} className={labelClass}>
+									{t("kieli", "Kieli")}
+								</label>
+								<LanguageSelect
+									id={field.name}
+									value={field.state.value}
+									onChange={field.handleChange}
+									onBlur={field.handleBlur}
+								/>
+								<p className="text-xs text-stone-600 dark:text-stone-400">
+									{t(
+										"kieliKuvausSahkoposti",
+										"Käyttäjän sähköpostiviestit lähetetään tällä kielellä.",
+									)}
+								</p>
+							</div>
+						)}
+					</form.Field>
+				</FormSection>
+
+				<FormSection
+					title={t("oletusyhteystiedot", "Oletusyhteystiedot")}
+					description={t(
+						"oletusyhteystiedotKuvaus",
+						"Näillä tiedoilla täytetään uusien varausten yhteystiedot automaattisesti.",
+					)}
 				>
-					{(field) => (
-						<div className="space-y-1">
-							<label htmlFor={field.name} className={labelClass}>
-								{t("shkposti", "Sähköposti")}
-							</label>
-							<Input
-								id={field.name}
-								type="email"
-								value={field.state.value}
-								onChange={(e) => field.handleChange(e.target.value)}
-								onBlur={field.handleBlur}
-								isError={field.state.meta.errors.length > 0}
-							/>
-							<FieldError errors={field.state.meta.errors} />
-						</div>
-					)}
-				</form.Field>
-
-				<form.Field name="language">
-					{(field) => (
-						<div className="space-y-1">
-							<label htmlFor={field.name} className={labelClass}>
-								{t("kieli", "Kieli")}
-							</label>
-							<LanguageSelect
-								id={field.name}
-								value={field.state.value}
-								onChange={field.handleChange}
-								onBlur={field.handleBlur}
-							/>
-							<p className="text-[11px] text-stone-500">
-								{t(
-									"kieliKuvausSahkoposti",
-									"Käyttäjän sähköpostiviestit lähetetään tällä kielellä.",
-								)}
-							</p>
-						</div>
-					)}
-				</form.Field>
-
-				<form.Field
-					name="password"
-					validators={{
-						onChange: ({ value }) =>
-							value && value.length < 8
-								? t(
-										"salasananOnOltavaVhintn8Merkki",
-										"Salasanan on oltava vähintään 8 merkkiä",
-									)
-								: undefined,
-					}}
-				>
-					{(field) => (
-						<div className="space-y-1">
-							<label htmlFor={field.name} className={labelClass}>
-								{t(
-									"uusiSalasanaJtTyhjksiJosEiMuuteta",
-									"Uusi salasana (jätä tyhjäksi jos ei muuteta)",
-								)}
-							</label>
-							<Input
-								id={field.name}
-								type="password"
-								autoComplete="new-password"
-								value={field.state.value}
-								onChange={(e) => field.handleChange(e.target.value)}
-								onBlur={field.handleBlur}
-								isError={field.state.meta.errors.length > 0}
-								placeholder="••••••••"
-							/>
-							<FieldError errors={field.state.meta.errors} />
-						</div>
-					)}
-				</form.Field>
-
-				<div className="p-3 bg-stone-100 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-md space-y-3">
-					<div>
-						<h2 className="text-xs font-bold text-purple-700 dark:text-purple-400">
-							{t("oletusyhteystiedot", "Oletusyhteystiedot")}
-						</h2>
-						<p className="text-[11px] text-stone-600 dark:text-stone-400">
-							{t(
-								"oletusyhteystiedotKuvaus",
-								"Näillä tiedoilla täytetään uusien varausten yhteystiedot automaattisesti.",
-							)}
-						</p>
-					</div>
-
 					<form.Field name="default_contact_person">
 						{(field) => (
-							<div className="space-y-0.5">
-								<label
-									htmlFor={field.name}
-									className="text-[11px] text-stone-600 dark:text-stone-400"
-								>
+							<div className="space-y-1">
+								<label htmlFor={field.name} className={labelClass}>
 									{t("yhteyshenkilo", "Yhteyshenkilö")}
 								</label>
 								<Input
@@ -225,7 +189,7 @@ function MePage() {
 						)}
 					</form.Field>
 
-					<div className="grid grid-cols-2 gap-2">
+					<div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
 						<form.Field
 							name="default_contact_email"
 							validators={{
@@ -239,11 +203,8 @@ function MePage() {
 							}}
 						>
 							{(field) => (
-								<div className="space-y-0.5">
-									<label
-										htmlFor={field.name}
-										className="text-[11px] text-stone-600 dark:text-stone-400"
-									>
+								<div className="space-y-1">
+									<label htmlFor={field.name} className={labelClass}>
 										{t("yhteysSähköposti", "Sähköposti")}
 									</label>
 									<Input
@@ -265,11 +226,8 @@ function MePage() {
 
 						<form.Field name="default_contact_phone">
 							{(field) => (
-								<div className="space-y-0.5">
-									<label
-										htmlFor={field.name}
-										className="text-[11px] text-stone-600 dark:text-stone-400"
-									>
+								<div className="space-y-1">
+									<label htmlFor={field.name} className={labelClass}>
 										{t("puhelinnumero", "Puhelinnumero")}
 									</label>
 									<Input
@@ -283,43 +241,82 @@ function MePage() {
 							)}
 						</form.Field>
 					</div>
-				</div>
+				</FormSection>
+
+				<FormSection title={t("salasana", "Salasana")}>
+					<form.Field
+						name="password"
+						validators={{
+							onChange: ({ value }) =>
+								value && value.length < 8
+									? t(
+											"salasananOnOltavaVhintn8Merkki",
+											"Salasanan on oltava vähintään 8 merkkiä",
+										)
+									: undefined,
+						}}
+					>
+						{(field) => (
+							<div className="space-y-1">
+								<label htmlFor={field.name} className={labelClass}>
+									{t(
+										"uusiSalasanaJtTyhjksiJosEiMuuteta",
+										"Uusi salasana (jätä tyhjäksi jos ei muuteta)",
+									)}
+								</label>
+								<Input
+									id={field.name}
+									type="password"
+									autoComplete="new-password"
+									value={field.state.value}
+									onChange={(e) => field.handleChange(e.target.value)}
+									onBlur={field.handleBlur}
+									isError={field.state.meta.errors.length > 0}
+									placeholder="••••••••"
+								/>
+								<FieldError errors={field.state.meta.errors} />
+							</div>
+						)}
+					</form.Field>
+				</FormSection>
 
 				{updateMe.isError && (
-					<p className="text-xs text-red-500">{updateMe.error.message}</p>
+					<p className="text-xs text-red-600 dark:text-red-400">
+						{updateMe.error.message}
+					</p>
 				)}
 				{saved && !updateMe.isPending && (
-					<p className="text-xs text-emerald-600 dark:text-emerald-400">
+					<output className="block text-xs text-emerald-700 dark:text-emerald-400">
 						{t("tiedotTallennettu", "Tiedot tallennettu.")}
-					</p>
+					</output>
 				)}
 
 				<form.Subscribe
 					selector={(state) => [state.canSubmit, state.isSubmitting] as const}
 				>
 					{([canSubmit, submitting]) => (
-						<Button
-							type="submit"
-							disabled={!canSubmit || submitting || updateMe.isPending}
-							className="w-full flex items-center justify-center gap-2"
+						<FormActions
+							onCancel={() => {
+								form.reset();
+								setSaved(false);
+							}}
 						>
-							{submitting || updateMe.isPending ? (
-								<Loader2 className="animate-spin" size={16} />
-							) : (
-								<>
-									<Save size={16} />
-									<span>{t("tallennaMuutokset", "Tallenna muutokset")}</span>
-								</>
-							)}
-						</Button>
+							<Button
+								type="submit"
+								disabled={!canSubmit || submitting || updateMe.isPending}
+								className="gap-2"
+							>
+								{submitting || updateMe.isPending ? (
+									<Loader2 className="animate-spin" size={16} />
+								) : null}
+								<span>{t("tallennaMuutokset", "Tallenna muutokset")}</span>
+							</Button>
+						</FormActions>
 					)}
 				</form.Subscribe>
 			</form>
 
-			<section className="space-y-2 pt-4 border-t border-stone-200 dark:border-stone-800">
-				<h2 className="text-sm font-bold text-stone-900 dark:text-stone-100">
-					{t("aktiivisetIstunnot", "Aktiiviset istunnot")}
-				</h2>
+			<FormSection title={t("istunnot", "Istunnot")}>
 				<SessionList
 					sessions={sessions ?? []}
 					onRevoke={(sessionId) => revokeSession.mutate(sessionId)}
@@ -329,14 +326,13 @@ function MePage() {
 					<Button
 						variant="outline"
 						size="sm"
-						className="w-full"
 						disabled={logoutOthers.isPending}
 						onClick={() => logoutOthers.mutate()}
 					>
 						{t("kirjauduUlosMuualta", "Kirjaudu ulos muilta laitteilta")}
 					</Button>
 				)}
-			</section>
-		</div>
+			</FormSection>
+		</FormLayout>
 	);
 }

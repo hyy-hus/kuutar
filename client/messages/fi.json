@@ -875,5 +875,9 @@
 	"plusNLisaa": "+{{count}} lisää",
 	"eiVarauksiaKuussa": "Ei varauksia tässä kuussa",
 	"selite": "Selite",
-	"rajoitus": "Rajoitus"
+	"rajoitus": "Rajoitus",
+	"perustiedot": "Perustiedot",
+	"istunnot": "Istunnot",
+	"sahkopostipohja": "Sähköpostipohja",
+	"outlookHaeNytEiKaytettavissa": "Hae nyt -toiminto on pois käytöstä, kunnes integraatio on otettu käyttöön."
 }

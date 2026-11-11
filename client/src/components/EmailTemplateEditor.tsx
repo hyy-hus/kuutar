@@ -3,7 +3,9 @@ import { Loader2, RotateCcw, Save, Send } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "#/components/Button";
+import { Callout } from "#/components/Callout";
 import { Input } from "#/components/Input";
+import { LocaleTabs } from "#/components/LocaleTabs";
 import { RichTextEditor } from "#/components/RichTextEditor";
 import {
 	type EmailTemplate,
@@ -13,7 +15,6 @@ import {
 	useSendTestEmail,
 } from "#/hooks/useEmailTemplates";
 import { SUPPORTED_LANGUAGES } from "#/i18n";
-import { cn } from "#/utils/cn";
 import {
 	compactLocalizedRichText,
 	isEmptyDoc,
@@ -22,6 +23,17 @@ import {
 } from "#/utils/richText";
 
 const PREVIEW_DEBOUNCE_MS = 500;
+
+/** Links in the preview use the app accent (purple-700) instead of the browser default blue */
+const PREVIEW_STYLE = "<style>a{color:#7e22ce}</style>";
+
+function withAccentLinks(html: string | undefined): string {
+	if (!html) return "";
+	// Keep any doctype first: a style tag before it would switch the iframe to quirks mode
+	return /<\/head>/i.test(html)
+		? html.replace(/<\/head>/i, `${PREVIEW_STYLE}</head>`)
+		: html + PREVIEW_STYLE;
+}
 
 interface EmailTemplateEditorProps {
 	template: EmailTemplate;
@@ -64,6 +76,10 @@ export function EmailTemplateEditor({ template }: EmailTemplateEditorProps) {
 		text: `{{${name}}}`,
 	}));
 
+	const filledLanguages = SUPPORTED_LANGUAGES.filter((code) => {
+		const doc = bodies[code];
+		return (subjects[code] ?? "").trim() !== "" || (doc && !isEmptyDoc(doc));
+	});
 	const subject = subjects[lang] ?? "";
 	const body: JSONContent | undefined = bodies[lang];
 
@@ -173,30 +189,17 @@ export function EmailTemplateEditor({ template }: EmailTemplateEditorProps) {
 	return (
 		<div className="grid grid-cols-1 xl:grid-cols-2 gap-4 min-w-0">
 			<div className="space-y-3 min-w-0">
-				<div role="tablist" className="flex gap-1">
-					{SUPPORTED_LANGUAGES.map((code) => (
-						<button
-							key={code}
-							type="button"
-							role="tab"
-							aria-selected={code === lang}
-							onClick={() => setLang(code)}
-							className={cn(
-								"px-2.5 py-1 text-xs font-mono font-bold uppercase rounded-sm border transition-colors",
-								code === lang
-									? "bg-stone-800 text-white border-stone-800 dark:bg-stone-200 dark:text-stone-900 dark:border-stone-200"
-									: "bg-white dark:bg-stone-900 text-stone-600 dark:text-stone-400 border-stone-300 dark:border-stone-700 hover:bg-stone-100 dark:hover:bg-stone-800",
-							)}
-						>
-							{code}
-						</button>
-					))}
-				</div>
+				<LocaleTabs
+					value={lang}
+					onChange={setLang}
+					filled={filledLanguages}
+					languages={SUPPORTED_LANGUAGES}
+				/>
 
 				<div className="space-y-1">
 					<label
 						htmlFor={`subject-${template.key}`}
-						className="text-xs font-medium text-stone-700 dark:text-stone-300"
+						className="text-sm font-medium"
 					>
 						{t("otsikko", "Otsikko")}
 					</label>
@@ -211,9 +214,7 @@ export function EmailTemplateEditor({ template }: EmailTemplateEditorProps) {
 				</div>
 
 				<div className="space-y-1">
-					<span className="text-xs font-medium text-stone-700 dark:text-stone-300">
-						{t("viesti", "Viesti")}
-					</span>
+					<span className="text-sm font-medium">{t("viesti", "Viesti")}</span>
 					{/* Remount per language so each tab edits its own document */}
 					<RichTextEditor
 						key={`${template.key}-${lang}`}
@@ -226,87 +227,75 @@ export function EmailTemplateEditor({ template }: EmailTemplateEditorProps) {
 
 				<div className="flex flex-wrap items-center gap-2 pt-1">
 					<Button
-						size="sm"
 						onClick={handleSave}
 						disabled={!isDirty || !subjectsValid || save.isPending}
 						className="gap-1.5"
 					>
 						{save.isPending ? (
-							<Loader2 size={14} className="animate-spin" />
+							<Loader2 size={16} className="animate-spin" />
 						) : (
-							<Save size={14} />
+							<Save size={16} />
 						)}
 						{t("tallenna", "Tallenna")}
 					</Button>
 					<Button
-						size="sm"
-						variant="secondary"
+						variant="outline"
 						onClick={handleSendTest}
 						disabled={!subject.trim() || sendTest.isPending}
 						className="gap-1.5"
 					>
 						{sendTest.isPending ? (
-							<Loader2 size={14} className="animate-spin" />
+							<Loader2 size={16} className="animate-spin" />
 						) : (
-							<Send size={14} />
+							<Send size={16} />
 						)}
 						{t("lahetaTestiviesti", "Lähetä testiviesti minulle")}
 					</Button>
 					{template.customized && (
 						<Button
-							size="sm"
 							variant="ghost"
 							onClick={handleReset}
 							disabled={reset.isPending}
 							className="gap-1.5"
 						>
-							<RotateCcw size={14} />
+							<RotateCcw size={16} />
 							{t("palautaOletus", "Palauta oletus")}
 						</Button>
 					)}
 				</div>
 
 				{notice && (
-					<output
-						className={cn(
-							"text-xs",
-							notice.kind === "success"
-								? "text-emerald-600 dark:text-emerald-400"
-								: "text-red-600 dark:text-red-400",
-						)}
-					>
+					<Callout variant={notice.kind === "success" ? "success" : "danger"}>
 						{notice.text}
-					</output>
+					</Callout>
 				)}
 			</div>
 
 			<div className="space-y-2 min-w-0">
-				<h2 className="text-xs font-medium text-stone-700 dark:text-stone-300">
+				<h2 className="text-lg font-semibold">
 					{t("esikatselu", "Esikatselu")}
 				</h2>
-				<p className="text-[11px] text-stone-500">
+				<p className="text-xs text-stone-600 dark:text-stone-400">
 					{t(
 						"esikatseluEsimerkkitiedoilla",
 						"Muuttujat korvataan esimerkkitiedoilla.",
 					)}
 				</p>
-				<div className="border border-stone-300 dark:border-stone-700 rounded-md overflow-hidden bg-white">
+				<div className="overflow-hidden rounded-md border border-stone-300 bg-white dark:border-stone-700">
 					<div className="px-3 py-2 text-xs border-b border-stone-200 bg-stone-50 text-stone-900 truncate">
-						<span className="text-stone-500">{`${t("aihe", "Aihe")}: `}</span>
+						<span className="text-stone-600">{`${t("aihe", "Aihe")}: `}</span>
 						{preview.data?.subject ?? ""}
 					</div>
 					{/* Sandboxed: previews render admin-authored HTML */}
 					<iframe
 						title={t("esikatselu", "Esikatselu")}
 						sandbox=""
-						srcDoc={preview.data?.html ?? ""}
+						srcDoc={withAccentLinks(preview.data?.html)}
 						className="w-full min-h-[320px] bg-white"
 					/>
 				</div>
 				{preview.isError && (
-					<p className="text-xs text-red-600 dark:text-red-400">
-						{preview.error.message}
-					</p>
+					<Callout variant="danger">{preview.error.message}</Callout>
 				)}
 			</div>
 		</div>

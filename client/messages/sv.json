@@ -875,5 +875,9 @@
 	"plusNLisaa": "+{{count}} till",
 	"eiVarauksiaKuussa": "Inga bokningar den här månaden",
 	"selite": "Förklaring",
-	"rajoitus": "Begränsning"
+	"rajoitus": "Begränsning",
+	"perustiedot": "Grunduppgifter",
+	"istunnot": "Sessioner",
+	"sahkopostipohja": "E-postmall",
+	"outlookHaeNytEiKaytettavissa": "Funktionen Kontrollera nu är avstängd tills integrationen har tagits i bruk."
 }

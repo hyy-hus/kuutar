@@ -875,5 +875,9 @@
 	"plusNLisaa": "+{{count}} more",
 	"eiVarauksiaKuussa": "No reservations this month",
 	"selite": "Legend",
-	"rajoitus": "Restriction"
+	"rajoitus": "Restriction",
+	"perustiedot": "Basic details",
+	"istunnot": "Sessions",
+	"sahkopostipohja": "Email template",
+	"outlookHaeNytEiKaytettavissa": "The \"Check now\" action is disabled until the integration is enabled."
 }
