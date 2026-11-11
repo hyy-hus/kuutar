@@ -2,6 +2,8 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { BackLink } from "#/components/BackLink";
 import { CollectionForm } from "#/components/CollectionForm";
+import { FormLayout } from "#/components/FormLayout";
+import { PageHeader } from "#/components/PageHeader";
 import { useCreateCollection } from "#/hooks/useCollections";
 import { requireAdminGuard } from "#/utils/authGuard";
 
@@ -23,18 +25,21 @@ function CreateCollectionPage() {
 	};
 
 	return (
-		<div className="p-4 space-y-4">
-			<BackLink to="/collections">
-				{t("takaisinKokoelmiin", "Takaisin kokoelmiin")}
-			</BackLink>
-			<h1 className="text-xl font-bold text-stone-900 dark:text-stone-100">
-				{t("uusiKokoelma", "Uusi kokoelma")}
-			</h1>
+		<FormLayout>
+			<PageHeader
+				back={
+					<BackLink to="/collections">
+						{t("takaisinKokoelmiin", "Takaisin kokoelmiin")}
+					</BackLink>
+				}
+				title={t("uusiKokoelma", "Uusi kokoelma")}
+			/>
 			<CollectionForm
 				onSubmit={handleSubmit}
+				onCancel={() => navigate({ to: "/collections" })}
 				isSubmitting={createCollection.isPending}
 				submitLabel={t("luoKokoelma", "Luo kokoelma")}
 			/>
-		</div>
+		</FormLayout>
 	);
 }

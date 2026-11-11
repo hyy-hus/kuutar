@@ -1,77 +1,25 @@
 // src/routes/_app/collections/index.tsx
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Eye, Loader2, Plus } from "lucide-react";
+import { Loader2, Plus } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "#/components/Button";
-import { Chip } from "#/components/Chip";
+import { Callout } from "#/components/Callout";
+import { EmptyState } from "#/components/EmptyState";
+import { EntityCard } from "#/components/EntityCard";
+import { PageContainer } from "#/components/PageContainer";
+import { PageHeader } from "#/components/PageHeader";
 import { useIsAdmin } from "#/hooks/useAuth";
-import { type Collection, useCollections } from "#/hooks/useCollections";
+import { useCollections } from "#/hooks/useCollections";
 import { useResources } from "#/hooks/useResorces";
 import { getCollectionIcon } from "#/utils/collectionIcons";
 import { getLocalizedPlainText } from "#/utils/richText";
-import { readable_uuid } from "#/utils/uuid";
 
 export const Route = createFileRoute("/_app/collections/")({
-	component: RouteComponent,
+	component: CollectionList,
 });
 
-function CollectionCard({
-	collection,
-	resourceCount,
-}: {
-	collection: Collection;
-	resourceCount: number;
-}) {
-	const { t, i18n } = useTranslation();
-	const CollectionIcon = getCollectionIcon(collection.icon);
-	return (
-		<li className="p-3 border-2 border-stone-800 dark:border-stone-700 flex flex-col justify-between gap-3 rounded-md bg-stone-50 dark:bg-stone-900 shadow-xs hover:border-purple-600 dark:hover:border-purple-500 transition-colors min-w-0">
-			<div className="space-y-2 min-w-0">
-				{/* Header: Name and ID Chip */}
-				<div className="flex items-start justify-between gap-2 min-w-0">
-					<h3 className="font-bold text-sm md:text-base text-stone-900 dark:text-stone-100 truncate flex-1">
-						{collection.name}
-					</h3>
-					<Chip>{readable_uuid(collection.id)}</Chip>
-				</div>
-
-				{/* Resource Count Badge */}
-				<div className="flex items-center gap-1.5 text-xs text-stone-500 dark:text-stone-400">
-					<CollectionIcon size={14} className="shrink-0" />
-					<span>
-						{t("resourcecountResurssia", "{{resourceCount}} resurssia", {
-							resourceCount,
-						})}
-					</span>
-				</div>
-
-				{/* Description */}
-				<p className="text-xs text-stone-600 dark:text-stone-400 line-clamp-2 min-h-8">
-					{getLocalizedPlainText(collection.description, i18n.language) ||
-						t("eiKuvaustaSaatavilla", "Ei kuvausta saatavilla.")}
-				</p>
-			</div>
-
-			{/* Bottom Action Row */}
-			<div className="flex items-center justify-end gap-2 pt-2 border-t border-stone-200 dark:border-stone-800 shrink-0">
-				<Button
-					variant="secondary"
-					size="sm"
-					asChild
-					className="gap-1.5 text-xs"
-				>
-					<Link to="/collections/$id" params={{ id: collection.id }}>
-						<span>{t("nyt", "Näytä")}</span>
-						<Eye size={14} />
-					</Link>
-				</Button>
-			</div>
-		</li>
-	);
-}
-
 function CollectionList() {
-	const { t } = useTranslation();
+	const { t, i18n } = useTranslation();
 	const { isAdmin } = useIsAdmin();
 	const {
 		data: collections,
@@ -86,7 +34,7 @@ function CollectionList() {
 
 	if (loadingCollections || loadingResources) {
 		return (
-			<div className="p-8 flex items-center justify-center gap-2 text-stone-500">
+			<div className="flex items-center gap-2 text-sm text-stone-600 dark:text-stone-400">
 				<Loader2 className="animate-spin" size={18} />
 				<span>{t("ladataanKokoelmia", "Ladataan kokoelmia...")}</span>
 			</div>
@@ -95,58 +43,65 @@ function CollectionList() {
 
 	if (errorCollections || errorResources) {
 		return (
-			<div className="p-4 text-xs text-rose-600 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 rounded-md">
+			<Callout variant="danger">
 				{t("virheLadattaessaTietoja", "Virhe ladattaessa tietoja.")}
-			</div>
+			</Callout>
 		);
 	}
 
 	// Count assigned resources per collection
 	const resourceCounts = new Map<string, number>();
-	resources?.forEach((res) => {
-		const current = resourceCounts.get(res.collection_id) ?? 0;
-		resourceCounts.set(res.collection_id, current + 1);
-	});
+	for (const res of resources ?? []) {
+		resourceCounts.set(
+			res.collection_id,
+			(resourceCounts.get(res.collection_id) ?? 0) + 1,
+		);
+	}
 
 	return (
-		<div className="flex flex-col gap-4 p-2 sm:p-4 flex-1 min-h-0 min-w-0">
-			{/* Header & Admin Action */}
-			<div className="flex items-center justify-between gap-2 shrink-0 border-b border-stone-200 dark:border-stone-800 pb-3">
-				<div>
-					<h1 className="text-lg sm:text-xl font-bold tracking-tight text-stone-900 dark:text-stone-100">
-						{t("kokoelmat", "Kokoelmat")}
-					</h1>
-					<p className="text-xs text-stone-500">
-						{t("yhteensaKokoelmia", "Yhteensä {{count}} kokoelmaa", {
-							count: collections?.length || 0,
-						})}
-					</p>
-				</div>
+		<PageContainer>
+			<PageHeader
+				title={t("kokoelmat", "Kokoelmat")}
+				subtitle={t("yhteensaKokoelmia", "Yhteensä {{count}} kokoelmaa", {
+					count: collections?.length ?? 0,
+				})}
+				actions={
+					isAdmin && (
+						<Button asChild>
+							<Link to="/collections/create">
+								<Plus size={16} />
+								<span>{t("lisKokoelma", "Lisää kokoelma")}</span>
+							</Link>
+						</Button>
+					)
+				}
+			/>
 
-				{isAdmin && (
-					<Button asChild size="sm" className="gap-1.5 shrink-0">
-						<Link to="/collections/create">
-							<Plus size={16} />
-							<span>{t("lisKokoelma", "Lisää kokoelma")}</span>
-						</Link>
-					</Button>
-				)}
-			</div>
-
-			{/* Grid Listing */}
-			<ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-				{collections?.map((col) => (
-					<CollectionCard
-						key={col.id}
-						collection={col}
-						resourceCount={resourceCounts.get(col.id) ?? 0}
-					/>
-				))}
-			</ul>
-		</div>
+			{collections && collections.length > 0 ? (
+				<ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+					{collections.map((col) => (
+						<li key={col.id} className="flex min-w-0 flex-col [&>a]:h-full">
+							<EntityCard
+								to="/collections/$id"
+								params={{ id: col.id }}
+								title={col.name}
+								icon={getCollectionIcon(col.icon)}
+								meta={t(
+									"resourcecountResurssia",
+									"{{resourceCount}} resurssia",
+									{ resourceCount: resourceCounts.get(col.id) ?? 0 },
+								)}
+								description={
+									getLocalizedPlainText(col.description, i18n.language) ||
+									undefined
+								}
+							/>
+						</li>
+					))}
+				</ul>
+			) : (
+				<EmptyState title={t("eiKokoelmia", "Ei kokoelmia.")} />
+			)}
+		</PageContainer>
 	);
-}
-
-function RouteComponent() {
-	return <CollectionList />;
 }

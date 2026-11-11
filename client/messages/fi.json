@@ -781,5 +781,13 @@
 	"kopioitu": "Kopioitu",
 	"hyvaksynnat": "Hyväksynnät",
 	"varaaminen": "Varaaminen",
-	"etsiVarauksiaJaTiloja": "Etsi varauksia ja tiloja"
+	"etsiVarauksiaJaTiloja": "Etsi varauksia ja tiloja",
+	"varaa": "Varaa",
+	"haeResursseja": "Hae resursseja",
+	"kaikkiKokoelmat": "Kaikki kokoelmat",
+	"eiResursseja": "Ei resursseja.",
+	"eiHakuaVastaaviaResursseja": "Ei hakua vastaavia resursseja.",
+	"ilmanKokoelmaa": "Ilman kokoelmaa",
+	"eiKokoelmia": "Ei kokoelmia.",
+	"eiResurssejaKokoelmassa": "Tässä kokoelmassa ei ole resursseja."
 }

@@ -52,11 +52,6 @@ export function ResourceInfoDialog({ resources }: { resources: Resource[] }) {
 								<RichTextContent
 									value={res.description}
 									className="text-stone-700 dark:text-stone-300"
-									fallback={
-										<p className="text-xs text-stone-500">
-											{t("eiKuvaustaSaatavilla", "Ei kuvausta saatavilla.")}
-										</p>
-									}
 								/>
 							</li>
 						))}

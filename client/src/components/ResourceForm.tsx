@@ -1,17 +1,10 @@
 import { useForm } from "@tanstack/react-form";
-import {
-	CalendarClock,
-	CheckCircle2,
-	Eye,
-	FileText,
-	Info,
-	Loader2,
-	Save,
-	ShieldCheck,
-	Users,
-} from "lucide-react";
+import { Loader2, Save } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { AccessSummary } from "#/components/AccessSummary";
+import { ChipSelect } from "#/components/ChipSelect";
+import { DateInput } from "#/components/DateInput";
+import { FormActions } from "#/components/FormActions";
 import { FormSection } from "#/components/FormSection";
 import { GroupChecklist } from "#/components/GroupChecklist";
 import { LocalizedRichTextEditor } from "#/components/LocalizedRichTextEditor";
@@ -33,6 +26,7 @@ import {
 } from "#/utils/richText";
 import { Button } from "./Button";
 import { Input } from "./Input";
+import { Select } from "./Select";
 
 export interface ResourceFormValues
 	extends Omit<CreateResource, "reservable_until"> {
@@ -56,6 +50,7 @@ interface ResourceFormProps {
 	onSubmit: (values: ResourceFormValues) => Promise<void>;
 	isSubmitting?: boolean;
 	submitLabel?: string;
+	onCancel?: () => void;
 }
 
 /** Turns an ISO timestamp into the YYYY-MM-DD value of a date input */
@@ -70,6 +65,7 @@ export function ResourceForm({
 	onSubmit,
 	isSubmitting = false,
 	submitLabel,
+	onCancel,
 }: ResourceFormProps) {
 	const { t, i18n } = useTranslation();
 	const { data: collections, isLoading: loadingCollections } = useCollections();
@@ -119,7 +115,7 @@ export function ResourceForm({
 
 	if (loadingCollections) {
 		return (
-			<div className="text-sm text-stone-500">
+			<div className="text-sm text-stone-600 dark:text-stone-400">
 				{t("ladataanKokoelmia", "Ladataan kokoelmia...")}
 			</div>
 		);
@@ -132,9 +128,9 @@ export function ResourceForm({
 				e.stopPropagation();
 				form.handleSubmit();
 			}}
-			className="space-y-4 max-w-md"
+			className="space-y-6"
 		>
-			<FormSection title={t("osioPerustiedot", "Perustiedot")} icon={Info}>
+			<FormSection title={t("osioPerustiedot", "Perustiedot")}>
 				{/* Resource Name */}
 				<form.Field
 					name="name"
@@ -149,12 +145,14 @@ export function ResourceForm({
 							<div className="space-y-1">
 								<label
 									htmlFor={field.name}
-									className="text-xs font-medium text-stone-700 dark:text-stone-300"
+									className="text-sm font-medium text-stone-900 dark:text-stone-100"
 								>
-									{t("resurssinNimi", "Resurssin nimi")}
+									{t("resurssinNimi", "Resurssin nimi")}{" "}
+									<span aria-hidden="true">*</span>
 								</label>
 								<Input
 									id={field.name}
+									aria-required="true"
 									value={field.state.value}
 									onChange={(e) => field.handleChange(e.target.value)}
 									onBlur={field.handleBlur}
@@ -162,28 +160,13 @@ export function ResourceForm({
 									placeholder={t("esimSauna1", "esim. Sauna 1")}
 								/>
 								{hasError && (
-									<p className="text-[11px] text-red-500">
+									<p className="text-xs text-red-600 dark:text-red-400">
 										{field.state.meta.errors.join(", ")}
 									</p>
 								)}
 							</div>
 						);
 					}}
-				</form.Field>
-
-				<form.Field name="description">
-					{(field) => (
-						<div className="space-y-1">
-							<span className="text-xs font-medium text-stone-700 dark:text-stone-300">
-								{t("kuvaus", "Kuvaus")}
-							</span>
-							<LocalizedRichTextEditor
-								value={field.state.value}
-								onChange={field.handleChange}
-								label={t("kuvaus", "Kuvaus")}
-							/>
-						</div>
-					)}
 				</form.Field>
 
 				{/* Collection Selection */}
@@ -202,16 +185,17 @@ export function ResourceForm({
 							<div className="space-y-1">
 								<label
 									htmlFor={field.name}
-									className="text-xs font-medium text-stone-700 dark:text-stone-300"
+									className="text-sm font-medium text-stone-900 dark:text-stone-100"
 								>
-									{t("kokoelma", "Kokoelma")}
+									{t("kokoelma", "Kokoelma")} <span aria-hidden="true">*</span>
 								</label>
-								<select
+								<Select
 									id={field.name}
+									aria-required="true"
 									value={field.state.value}
 									onChange={(e) => field.handleChange(e.target.value)}
 									onBlur={field.handleBlur}
-									className="w-full px-3 py-2 text-sm bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+									isError={hasError}
 								>
 									<option value="" disabled>
 										{t("valitseKokoelma", "Valitse kokoelma...")}
@@ -221,9 +205,9 @@ export function ResourceForm({
 											{col.name}
 										</option>
 									))}
-								</select>
+								</Select>
 								{hasError && (
-									<p className="text-[11px] text-red-500">
+									<p className="text-xs text-red-600 dark:text-red-400">
 										{field.state.meta.errors.join(", ")}
 									</p>
 								)}
@@ -232,11 +216,26 @@ export function ResourceForm({
 					}}
 				</form.Field>
 
+				<form.Field name="description">
+					{(field) => (
+						<div className="space-y-1">
+							<span className="text-sm font-medium text-stone-900 dark:text-stone-100">
+								{t("kuvaus", "Kuvaus")}
+							</span>
+							<LocalizedRichTextEditor
+								value={field.state.value}
+								onChange={field.handleChange}
+								label={t("kuvaus", "Kuvaus")}
+							/>
+						</div>
+					)}
+				</form.Field>
+
 				{/* Calendar color */}
 				<form.Field name="color">
 					{(field) => (
 						<fieldset className="space-y-1">
-							<legend className="text-xs font-medium text-stone-700 dark:text-stone-300">
+							<legend className="text-sm font-medium text-stone-900 dark:text-stone-100">
 								{t("vari", "Väri kalenterissa")}
 							</legend>
 							<div className="flex flex-wrap items-center gap-2">
@@ -319,7 +318,7 @@ export function ResourceForm({
 							<div className="space-y-1">
 								<label
 									htmlFor={field.name}
-									className="text-xs font-medium text-stone-700 dark:text-stone-300"
+									className="text-sm font-medium text-stone-900 dark:text-stone-100"
 								>
 									{t("outlookPostilaatikko", "Outlook-resurssin sähköposti")}
 								</label>
@@ -333,11 +332,11 @@ export function ResourceForm({
 									placeholder="sauna@hyy.fi"
 								/>
 								{hasError ? (
-									<p className="text-[11px] text-red-500">
+									<p className="text-xs text-red-600 dark:text-red-400">
 										{field.state.meta.errors.join(", ")}
 									</p>
 								) : (
-									<p className="text-[11px] text-stone-500 dark:text-stone-400">
+									<p className="text-xs text-stone-600 dark:text-stone-400">
 										{t(
 											"outlookPostilaatikkoOhje",
 											"Outlookissa kutsuttu resurssi näytetään tämän resurssin varauksena. Jätä tyhjäksi, jos resurssi ei ole Outlookissa.",
@@ -356,7 +355,6 @@ export function ResourceForm({
 					"osioOikeudetKuvaus",
 					"Päätä, ketkä näkevät resurssin ja ketkä voivat varata sen.",
 				)}
-				icon={ShieldCheck}
 			>
 				<form.Subscribe selector={(state) => state.values}>
 					{(values) => (
@@ -377,11 +375,7 @@ export function ResourceForm({
 				<form.Field name="is_public">
 					{(field) => (
 						<fieldset className="p-3 bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-md space-y-2">
-							<legend className="px-1 text-xs font-medium text-stone-800 dark:text-stone-200 flex items-center gap-1.5">
-								<Eye
-									size={14}
-									className="text-purple-600 dark:text-purple-400"
-								/>
+							<legend className="px-1 text-sm font-medium text-stone-900 dark:text-stone-100">
 								<span>{t("kukaNakeeResurssin", "Kuka näkee resurssin")}</span>
 							</legend>
 							{(
@@ -395,7 +389,7 @@ export function ResourceForm({
 							).map(([isPublic, label]) => (
 								<label
 									key={String(isPublic)}
-									className="flex items-center gap-2 text-xs font-medium text-stone-800 dark:text-stone-200 cursor-pointer"
+									className="flex items-center gap-2 text-sm font-medium text-stone-900 dark:text-stone-100 cursor-pointer"
 								>
 									<input
 										type="radio"
@@ -420,7 +414,7 @@ export function ResourceForm({
 											/>
 										)}
 									</form.Field>
-									<p className="text-[11px] text-stone-500 dark:text-stone-400">
+									<p className="text-xs text-stone-600 dark:text-stone-400">
 										{t(
 											"nakyvyysRyhmatOhje",
 											"Ylläpitäjät näkevät aina kaikki resurssit. Ryhmät, jotka saavat varata resurssin, näkevät sen myös. Ilman valittuja ryhmiä resurssi näkyy vain ylläpitäjille.",
@@ -446,12 +440,8 @@ export function ResourceForm({
 								/>
 								<label
 									htmlFor={field.name}
-									className="text-xs font-medium text-stone-800 dark:text-stone-200 cursor-pointer select-none flex items-center gap-1.5"
+									className="text-sm font-medium text-stone-900 dark:text-stone-100 cursor-pointer select-none flex items-center gap-1.5"
 								>
-									<Users
-										size={14}
-										className="text-purple-600 dark:text-purple-400"
-									/>
 									<span>
 										{t(
 											"vainValitutRyhmatVoivatVarata",
@@ -460,7 +450,7 @@ export function ResourceForm({
 									</span>
 								</label>
 							</div>
-							<p className="text-[11px] text-stone-500 pl-7">
+							<p className="text-xs text-stone-600 dark:text-stone-400 pl-7">
 								{t(
 									"varausRajoitusOhje",
 									"Varata voivat vain valitut ryhmät ja ylläpitäjät. Olemassa olevia varauksia ei muuteta.",
@@ -501,31 +491,27 @@ export function ResourceForm({
 				</form.Field>
 			</FormSection>
 
-			<FormSection
-				title={t("osioVarausSaannot", "Varaussäännöt")}
-				icon={CalendarClock}
-			>
+			<FormSection title={t("osioVarausSaannot", "Varaussäännöt")}>
 				{/* Reservable Until Cutoff Date */}
 				<form.Field name="reservable_until">
 					{(field) => (
 						<div className="space-y-1">
 							<label
 								htmlFor={field.name}
-								className="text-xs font-medium text-stone-700 dark:text-stone-300"
+								className="text-sm font-medium text-stone-900 dark:text-stone-100"
 							>
 								{t(
 									"varattavissaAsti",
 									"Varattavissa enintään päivämäärään asti",
 								)}
 							</label>
-							<Input
+							<DateInput
 								id={field.name}
-								type="date"
 								value={field.state.value}
 								onChange={(e) => field.handleChange(e.target.value)}
 								onBlur={field.handleBlur}
 							/>
-							<p className="text-[11px] text-stone-500 dark:text-stone-400">
+							<p className="text-xs text-stone-600 dark:text-stone-400">
 								{t(
 									"varattavissaAstiOhje",
 									"Jätä tyhjäksi, jos varauksille ei ole takarajaa.",
@@ -548,7 +534,7 @@ export function ResourceForm({
 							/>
 							<label
 								htmlFor={field.name}
-								className="text-xs font-medium text-stone-800 dark:text-stone-200 cursor-pointer select-none"
+								className="text-sm font-medium text-stone-900 dark:text-stone-100 cursor-pointer select-none"
 							>
 								{t(
 									"salliToistuvatVarauksetTlleResurssille",
@@ -573,7 +559,7 @@ export function ResourceForm({
 								/>
 								<label
 									htmlFor={field.name}
-									className="text-xs font-medium text-stone-800 dark:text-stone-200 cursor-pointer select-none"
+									className="text-sm font-medium text-stone-900 dark:text-stone-100 cursor-pointer select-none"
 								>
 									{t(
 										"vainVarausjaksot",
@@ -581,7 +567,7 @@ export function ResourceForm({
 									)}
 								</label>
 							</div>
-							<p className="text-[11px] text-stone-500 pl-7">
+							<p className="text-xs text-stone-600 dark:text-stone-400 pl-7">
 								{t(
 									"vainVarausjaksotOhje",
 									"Käyttäjät voivat varata vain kokonaisia varausjaksoja. Ylläpitäjä voi edelleen tehdä varauksia jaksojen ulkopuolelle.",
@@ -592,7 +578,7 @@ export function ResourceForm({
 				</form.Field>
 				{/* Booking durations (minutes) */}
 				<fieldset className="p-3 bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-md space-y-2">
-					<legend className="px-1 text-xs font-medium text-stone-800 dark:text-stone-200">
+					<legend className="px-1 text-sm font-medium text-stone-900 dark:text-stone-100">
 						{t("varauksenKesto", "Varauksen kesto")}
 					</legend>
 					<div className="grid grid-cols-3 gap-2">
@@ -651,7 +637,7 @@ export function ResourceForm({
 									<div className="space-y-1">
 										<label
 											htmlFor={field.name}
-											className="text-xs font-medium text-stone-700 dark:text-stone-300"
+											className="text-sm font-medium text-stone-900 dark:text-stone-100"
 										>
 											{label}
 										</label>
@@ -670,7 +656,7 @@ export function ResourceForm({
 											isError={Boolean(field.state.meta.errors.length)}
 										/>
 										{field.state.meta.errors.length > 0 && (
-											<p className="text-[11px] text-red-500">
+											<p className="text-xs text-red-600 dark:text-red-400">
 												{field.state.meta.errors.join(", ")}
 											</p>
 										)}
@@ -679,7 +665,7 @@ export function ResourceForm({
 							</form.Field>
 						))}
 					</div>
-					<p className="text-[11px] text-stone-500 dark:text-stone-400">
+					<p className="text-xs text-stone-600 dark:text-stone-400">
 						{t(
 							"varauksenKestoOhje",
 							"Oletus esitäyttää päättymisajan. Vähimmäis- ja enimmäiskesto koskevat muita kuin ylläpitäjiä. Jätä tyhjäksi, jos rajaa ei ole.",
@@ -688,7 +674,7 @@ export function ResourceForm({
 				</fieldset>
 			</FormSection>
 
-			<FormSection title={t("osioVahvistus", "Vahvistus")} icon={CheckCircle2}>
+			<FormSection title={t("osioVahvistus", "Vahvistus")}>
 				{/* Auto-confirm Toggle + optional group limit */}
 				<form.Field name="auto_confirm">
 					{(field) => (
@@ -703,12 +689,8 @@ export function ResourceForm({
 								/>
 								<label
 									htmlFor={field.name}
-									className="text-xs font-medium text-stone-800 dark:text-stone-200 cursor-pointer select-none flex items-center gap-1.5"
+									className="text-sm font-medium text-stone-900 dark:text-stone-100 cursor-pointer select-none flex items-center gap-1.5"
 								>
-									<CheckCircle2
-										size={14}
-										className="text-purple-600 dark:text-purple-400"
-									/>
 									<span>
 										{t(
 											"vahvistaAutomaattisesti",
@@ -717,7 +699,7 @@ export function ResourceForm({
 									</span>
 								</label>
 							</div>
-							<p className="text-[11px] text-stone-500 pl-7">
+							<p className="text-xs text-stone-600 dark:text-stone-400 pl-7">
 								{t(
 									"vahvistaAutomaattisestiOhje",
 									"Varaukset vahvistuvat heti ilman ylläpitäjän hyväksyntää. Jos valitset ryhmiä, vain niiden varaukset vahvistuvat automaattisesti; muut jäävät odottamaan hyväksyntää. Tyhjä valinta tarkoittaa kaikkia ryhmiä.",
@@ -744,13 +726,12 @@ export function ResourceForm({
 
 			<FormSection
 				title={t("liitetytSopimukset", "Liitetyt sopimukset ja säännöt")}
-				icon={FileText}
 			>
 				{/* Resource Contracts Selection */}
 				<form.Field name="contract_ids">
 					{(field) => (
 						<div className="space-y-1.5">
-							<p className="text-[11px] text-stone-500 dark:text-stone-400">
+							<p className="text-xs text-stone-600 dark:text-stone-400">
 								{t(
 									"valitseSopimuksetKuvaus",
 									"Valitse tähän resurssiin sovellettavat kohdekohtaiset sopimusasiakirjat. (Yleiset sopimukset pätevät automaattisesti).",
@@ -758,53 +739,27 @@ export function ResourceForm({
 							</p>
 
 							{loadingContracts ? (
-								<div className="text-xs text-stone-500 py-2 flex items-center gap-2">
+								<div className="text-xs text-stone-600 dark:text-stone-400 py-2 flex items-center gap-2">
 									<Loader2 className="animate-spin" size={14} />
 									<span>
 										{t("ladataanSopimuksia", "Ladataan sopimuksia...")}
 									</span>
 								</div>
 							) : resourceContracts.length > 0 ? (
-								<div className="space-y-1.5 max-h-48 overflow-y-auto p-2 bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-md">
-									{resourceContracts.map((contract) => {
-										const isChecked = field.state.value.includes(contract.id);
-										const checkboxId = `contract-check-${contract.id}`;
-										const title = getLocalizedText(
-											contract.title,
-											i18n.language,
-										);
-
-										return (
-											<div
-												key={contract.id}
-												className="flex items-center gap-2.5 p-1.5 hover:bg-stone-100 dark:hover:bg-stone-800 rounded transition-colors"
-											>
-												<input
-													type="checkbox"
-													id={checkboxId}
-													checked={isChecked}
-													onChange={(e) => {
-														const next = e.target.checked
-															? [...field.state.value, contract.id]
-															: field.state.value.filter(
-																	(id) => id !== contract.id,
-																);
-														field.handleChange(next);
-													}}
-													className="w-4 h-4 text-amber-600 rounded border-stone-300 focus:ring-amber-500 dark:border-stone-700 dark:bg-stone-950"
-												/>
-												<label
-													htmlFor={checkboxId}
-													className="text-xs text-stone-800 dark:text-stone-200 font-medium cursor-pointer flex-1 truncate"
-												>
-													{title}
-												</label>
-											</div>
-										);
-									})}
-								</div>
+								<ChipSelect
+									aria-label={t(
+										"liitetytSopimukset",
+										"Liitetyt sopimukset ja säännöt",
+									)}
+									options={resourceContracts.map((contract) => ({
+										value: contract.id,
+										label: getLocalizedText(contract.title, i18n.language),
+									}))}
+									value={field.state.value}
+									onChange={field.handleChange}
+								/>
 							) : (
-								<div className="p-3 text-xs text-stone-500 bg-stone-50 dark:bg-stone-900/50 rounded border border-stone-200 dark:border-stone-800">
+								<div className="text-xs text-stone-600 dark:text-stone-400">
 									{t(
 										"eiKohdekohtaisiaSopimuksia",
 										"Ei kohdekohtaisia sopimuksia saatavilla.",
@@ -821,20 +776,19 @@ export function ResourceForm({
 				selector={(state) => [state.canSubmit, state.isSubmitting]}
 			>
 				{([canSubmit, formSubmitting]) => (
-					<Button
-						type="submit"
-						disabled={!canSubmit || isSubmitting || formSubmitting}
-						className="w-full flex items-center justify-center gap-2 mt-4"
-					>
-						{isSubmitting || formSubmitting ? (
-							<Loader2 className="animate-spin" size={16} />
-						) : (
-							<>
+					<FormActions onCancel={onCancel}>
+						<Button
+							type="submit"
+							disabled={!canSubmit || isSubmitting || formSubmitting}
+						>
+							{isSubmitting || formSubmitting ? (
+								<Loader2 className="animate-spin" size={16} />
+							) : (
 								<Save size={16} />
-								<span>{submitLabel ?? t("tallenna", "Tallenna")}</span>
-							</>
-						)}
-					</Button>
+							)}
+							<span>{submitLabel ?? t("tallenna", "Tallenna")}</span>
+						</Button>
+					</FormActions>
 				)}
 			</form.Subscribe>
 		</form>

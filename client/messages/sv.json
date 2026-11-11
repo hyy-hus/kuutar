@@ -781,5 +781,13 @@
 	"kopioitu": "Kopierad",
 	"hyvaksynnat": "Godkännanden",
 	"varaaminen": "Bokning",
-	"etsiVarauksiaJaTiloja": "Sök bokningar och lokaler"
+	"etsiVarauksiaJaTiloja": "Sök bokningar och lokaler",
+	"varaa": "Boka",
+	"haeResursseja": "Sök resurser",
+	"kaikkiKokoelmat": "Alla samlingar",
+	"eiResursseja": "Inga resurser.",
+	"eiHakuaVastaaviaResursseja": "Inga resurser matchar sökningen.",
+	"ilmanKokoelmaa": "Utan samling",
+	"eiKokoelmia": "Inga samlingar.",
+	"eiResurssejaKokoelmassa": "Den här samlingen har inga resurser."
 }
