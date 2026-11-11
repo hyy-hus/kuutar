@@ -51,6 +51,8 @@ UI strings live in `client/messages/` (`fi.json`, `sv.json`, `en.json`). Draft n
 - Work on feature branches. You may push them. Ask before opening a PR.
 - Once the user has said they reviewed a PR and asked for it to be merged, you may merge it (`gh pr merge --merge`), delete its remote and local branch, and update local `main`. Never merge on your own initiative or before that go-ahead.
 - Never push directly to `main` or run/modify the staging deploy. Merging a PR is the only way changes reach `main`; the deploy that follows is automatic, not yours to trigger.
+- Publishing a GitHub release deploys that tag to production (`deploy-production.yml`; staging and production share `deploy.yml`). Never publish a release or run the production workflow yourself.
+- A new required server setting (a `Config` field without a default) must be added to the staging and production containers in Scaleway before the change is merged, or the server exits at startup. The deploy workflow fails when the container does not come up.
 
 ## Don't touch
 

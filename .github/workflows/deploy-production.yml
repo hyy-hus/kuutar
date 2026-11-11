@@ -1,0 +1,26 @@
+name: Deploy to Production
+
+# Publishing a GitHub release deploys that tag to production. It can also be run by hand
+# (Actions -> Deploy to Production -> Run workflow) on a release tag to redeploy it.
+on:
+  release:
+    types:
+      - published
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    # A manual run must target a tag, never a branch
+    if: github.event_name == 'release' || github.ref_type == 'tag'
+    uses: ./.github/workflows/deploy.yml
+    with:
+      environment: production
+      # The production container runs :latest (as deploy.sh does); the release tag is pushed
+      # alongside it so every released image stays available in the registry.
+      image_tag: latest
+      extra_image_tag: ${{ github.event.release.tag_name || github.ref_name }}
+    secrets: inherit
