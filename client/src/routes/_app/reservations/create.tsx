@@ -2,6 +2,10 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { BackLink } from "#/components/BackLink";
+import { Button } from "#/components/Button";
+import { Callout } from "#/components/Callout";
+import { FormLayout } from "#/components/FormLayout";
+import { PageHeader } from "#/components/PageHeader";
 import {
 	ReservationForm,
 	type ReservationFormValues,
@@ -62,7 +66,7 @@ function CreateReservationPage() {
 	const { data: openRounds } = useOpenRounds();
 	const activeRounds =
 		openRounds?.filter((round) => roundPhase(round) === "open") ?? [];
-	const { formatDate } = useDateFormatter();
+	const { formatDateTime } = useDateFormatter();
 	// Rounds that cover the preselected resources; with none preselected, all of them
 	const shownRounds = (openRounds ?? []).filter(
 		(round) =>
@@ -108,17 +112,26 @@ function CreateReservationPage() {
 	};
 
 	return (
-		<div className="max-w-xl mx-auto p-2 sm:p-4 space-y-4 pb-12">
-			<BackLink to="/reservations">
-				{t("takaisinVarauksiin", "Takaisin varauksiin")}
-			</BackLink>
-			<h1 className="text-xl font-bold text-stone-900 dark:text-stone-100">
-				{t("uusiVaraus", "Uusi varaus")}
-			</h1>
+		<FormLayout width="default">
+			<PageHeader
+				back={
+					<BackLink to="/reservations">
+						{t("takaisinOmiinVarauksiin", "Takaisin omiin varauksiin")}
+					</BackLink>
+				}
+				title={t("uusiVaraus", "Uusi varaus")}
+			/>
 			{shownRounds.map((round) => (
-				<p
+				<Callout
 					key={round.id}
-					className="text-sm p-3 rounded-md border border-amber-300 bg-amber-50 dark:bg-amber-950/40 dark:border-amber-800"
+					variant="info"
+					action={
+						<Button variant="outline" size="sm" asChild>
+							<Link to="/reservations/rounds/$id" params={{ id: round.id }}>
+								{t("omatHakemukset", "Omat hakemukset")}
+							</Link>
+						</Button>
+					}
 				>
 					{roundPhase(round) === "open"
 						? t(
@@ -126,7 +139,7 @@ function CreateReservationPage() {
 								'Varauskierros "{{name}}" on käynnissä ja haku päättyy {{end}}. Varaus resurssille tehdään hakemuksena, ja se vahvistetaan vasta kierroksen päätyttyä.',
 								{
 									name: round.name,
-									end: formatDate(round.applications_close_at),
+									end: formatDateTime(round.applications_close_at),
 								},
 							)
 						: t(
@@ -134,18 +147,11 @@ function CreateReservationPage() {
 								'Varauskierros "{{name}}" alkaa {{start}} ja haku päättyy {{end}}. Resurssia voi varata vain kierroksen kautta.',
 								{
 									name: round.name,
-									start: formatDate(round.applications_open_at),
-									end: formatDate(round.applications_close_at),
+									start: formatDateTime(round.applications_open_at),
+									end: formatDateTime(round.applications_close_at),
 								},
-							)}{" "}
-					<Link
-						to="/reservations/rounds/$id"
-						params={{ id: round.id }}
-						className="underline font-medium"
-					>
-						{t("omatHakemukset", "Omat hakemukset")}
-					</Link>
-				</p>
+							)}
+				</Callout>
 			))}
 			<ReservationForm
 				defaultValues={{
@@ -155,10 +161,11 @@ function CreateReservationPage() {
 					resource_ids,
 				}}
 				onSubmit={handleSubmit}
+				onCancel={() => navigate({ to: "/reservations" })}
 				isSubmitting={createReservation.isPending}
 				submitLabel={t("luoVaraus", "Luo varaus")}
 				isCreate={true}
 			/>
-		</div>
+		</FormLayout>
 	);
 }

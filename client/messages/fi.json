@@ -789,5 +789,20 @@
 	"eiHakuaVastaaviaResursseja": "Ei hakua vastaavia resursseja.",
 	"ilmanKokoelmaa": "Ilman kokoelmaa",
 	"eiKokoelmia": "Ei kokoelmia.",
-	"eiResurssejaKokoelmassa": "Tässä kokoelmassa ei ole resursseja."
+	"eiResurssejaKokoelmassa": "Tässä kokoelmassa ei ole resursseja.",
+	"takaisinOmiinVarauksiin": "Takaisin omiin varauksiin",
+	"aikaJaResurssi": "Aika ja resurssi",
+	"yhteystiedotOhje": "Näkyvät vain sinulle ja ylläpidolle.",
+	"lahetysEstettyPaallekkaisyys": "Varausta ei voi lähettää, koska valittu aika on jo varattu.",
+	"lahetysEstettyRajoitus": "Varausta ei voi lähettää, koska valittu aika on rajoitettu.",
+	"lahetysEstettyEhdot": "Hyväksy sopimusehdot ennen lähettämistä.",
+	"naytaVahemman": "Näytä vähemmän",
+	"naytaKaikkiN": "Näytä kaikki {{count}}",
+	"ensimmainenAikaJaMuut": "{{first}} + {{count}} muuta",
+	"avaaKierros": "Avaa kierros",
+	"eiVarauksiaValitullaAikavalilla": "Ei varauksia valitulla aikavälillä",
+	"odottaaHyvaksyntaa": "Odottaa hyväksyntää",
+	"perututVaraukset": "Perutut varaukset",
+	"varauksenTiedotOsio": "Varauksen tiedot",
+	"vahvistetutVarauksetOsio": "Vahvistetut varaukset"
 }

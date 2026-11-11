@@ -19,7 +19,7 @@ export function DetachOccurrenceButton({
 			type="button"
 			variant="ghost"
 			size="sm"
-			className="h-6 px-1.5 gap-1 text-[10px] font-sans"
+			className="gap-1"
 			disabled={disabled}
 			onClick={async () => {
 				if (
@@ -34,7 +34,7 @@ export function DetachOccurrenceButton({
 				}
 			}}
 		>
-			<Scissors size={12} />
+			<Scissors size={14} aria-hidden="true" />
 			<span>{t("irrotaSarjasta", "Irrota sarjasta")}</span>
 		</Button>
 	);

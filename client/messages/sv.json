@@ -789,5 +789,20 @@
 	"eiHakuaVastaaviaResursseja": "Inga resurser matchar sökningen.",
 	"ilmanKokoelmaa": "Utan samling",
 	"eiKokoelmia": "Inga samlingar.",
-	"eiResurssejaKokoelmassa": "Den här samlingen har inga resurser."
+	"eiResurssejaKokoelmassa": "Den här samlingen har inga resurser.",
+	"takaisinOmiinVarauksiin": "Tillbaka till mina bokningar",
+	"aikaJaResurssi": "Tid och resurs",
+	"yhteystiedotOhje": "Syns endast för dig och administratörerna.",
+	"lahetysEstettyPaallekkaisyys": "Bokningen kan inte skickas eftersom den valda tiden redan är bokad.",
+	"lahetysEstettyRajoitus": "Bokningen kan inte skickas eftersom den valda tiden är begränsad.",
+	"lahetysEstettyEhdot": "Godkänn avtalsvillkoren innan du skickar.",
+	"naytaVahemman": "Visa färre",
+	"naytaKaikkiN": "Visa alla {{count}}",
+	"ensimmainenAikaJaMuut": "{{first}} + {{count}} till",
+	"avaaKierros": "Öppna omgången",
+	"eiVarauksiaValitullaAikavalilla": "Inga bokningar under den valda perioden",
+	"odottaaHyvaksyntaa": "Väntar på godkännande",
+	"perututVaraukset": "Avbokade bokningar",
+	"varauksenTiedotOsio": "Bokningens uppgifter",
+	"vahvistetutVarauksetOsio": "Bekräftade bokningar"
 }

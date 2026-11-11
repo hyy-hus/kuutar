@@ -1,23 +1,27 @@
 import { useForm, useSelector } from "@tanstack/react-form";
 import {
-	AlertTriangle,
 	CalendarCheck,
-	CheckCircle2,
 	FileText,
 	Globe,
 	Loader2,
 	RefreshCw,
 	Save,
 	ShieldAlert,
-	UserCheck,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "#/components/Button";
-import { Input, inputVariants } from "#/components/Input";
+import { Callout } from "#/components/Callout";
+import { ToggleChip } from "#/components/Chip";
+import { DateTimeInput } from "#/components/DateTimeInput";
+import { FormActions } from "#/components/FormActions";
+import { FormSection } from "#/components/FormSection";
+import { Input } from "#/components/Input";
 import { LocalizedRichTextEditor } from "#/components/LocalizedRichTextEditor";
 import { RecurrenceFields } from "#/components/RecurrenceFields";
 import { ResourceInfoDialog } from "#/components/ResourceInfoDialog";
+import { Select } from "#/components/Select";
+import { Textarea } from "#/components/Textarea";
 import { useAuth, useIsAdmin } from "#/hooks/useAuth";
 import {
 	type Contract,
@@ -36,7 +40,6 @@ import {
 import { useResources } from "#/hooks/useResorces";
 import { useRestrictions } from "#/hooks/useRestrictions";
 import { useUsers } from "#/hooks/useUsers";
-import { cn } from "#/utils/cn";
 import {
 	addDays,
 	formatDateTimeLocal,
@@ -60,6 +63,15 @@ import {
 	parseRRule,
 	type RRuleConfig,
 } from "#/utils/rruleUtils";
+
+/** Red asterisk after a label of a required field (the input carries `aria-required`) */
+function RequiredMark() {
+	return (
+		<span aria-hidden="true" className="ml-0.5 text-red-600 dark:text-red-400">
+			{"*"}
+		</span>
+	);
+}
 
 /** How far ahead a user can browse reservable blocks in the form */
 const BLOCK_LOOKAHEAD_DAYS = 90;
@@ -90,6 +102,8 @@ interface ReservationFormProps {
 	isSubmitting?: boolean;
 	submitLabel?: string;
 	isCreate?: boolean;
+	/** Shows a "Peruuta" button next to submit */
+	onCancel?: () => void;
 	/** Set when editing, so the reservation is not reported as conflicting with itself */
 	reservationId?: string;
 }
@@ -100,6 +114,7 @@ export function ReservationForm({
 	isSubmitting = false,
 	submitLabel,
 	isCreate = false,
+	onCancel,
 	reservationId,
 }: ReservationFormProps) {
 	const { t } = useTranslation();
@@ -300,7 +315,7 @@ export function ReservationForm({
 				e.stopPropagation();
 				form.handleSubmit();
 			}}
-			className="space-y-4 max-w-md"
+			className="space-y-6"
 		>
 			{/* Owner (admins can reserve on behalf of another user) */}
 			{isAdmin && isCreate && (
@@ -309,16 +324,15 @@ export function ReservationForm({
 						<div className="space-y-1">
 							<label
 								htmlFor={field.name}
-								className="text-xs font-medium text-stone-700 dark:text-stone-300"
+								className="text-sm font-medium text-stone-900 dark:text-stone-100"
 							>
 								{t("varauksenKayttaja", "Varaus käyttäjälle")}
 							</label>
-							<select
+							<Select
 								id={field.name}
 								value={field.state.value}
 								onChange={(e) => field.handleChange(e.target.value)}
 								onBlur={field.handleBlur}
-								className="w-full px-3 py-2 text-sm bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
 							>
 								<option value="">{t("minaItse", "Minä itse")}</option>
 								{users
@@ -328,8 +342,8 @@ export function ReservationForm({
 											{u.name ? `${u.name} (${u.email})` : u.email}
 										</option>
 									))}
-							</select>
-							<p className="text-[11px] text-stone-500">
+							</Select>
+							<p className="text-xs text-stone-600 dark:text-stone-400">
 								{t(
 									"varauksenKayttajaKuvaus",
 									"Varaus näkyy valitun käyttäjän varauksena, ja sähköpostiviestit lähetetään hänelle.",
@@ -340,307 +354,8 @@ export function ReservationForm({
 				</form.Field>
 			)}
 
-			{/* Title */}
-			<form.Field
-				name="title"
-				validators={{
-					onChange: ({ value }) =>
-						!value
-							? t("otsikkoOnPakollinen", "Otsikko on pakollinen")
-							: undefined,
-				}}
-			>
-				{(field) => {
-					const hasError = Boolean(field.state.meta.errors.length);
-					return (
-						<div className="space-y-1">
-							<label
-								htmlFor={field.name}
-								className="text-xs font-medium text-stone-700 dark:text-stone-300"
-							>
-								{t("otsikko", "Otsikko")}
-							</label>
-							<Input
-								id={field.name}
-								value={field.state.value}
-								onChange={(e) => field.handleChange(e.target.value)}
-								onBlur={field.handleBlur}
-								isError={hasError}
-								placeholder={t("esimViikkokokous", "esim. Viikkokokous")}
-							/>
-							{hasError && (
-								<p className="text-[11px] text-red-500">
-									{field.state.meta.errors.join(", ")}
-								</p>
-							)}
-						</div>
-					);
-				}}
-			</form.Field>
-
-			{/* Description */}
-			<form.Field name="description">
-				{(field) => (
-					<div className="space-y-1">
-						<span className="block text-xs font-medium text-stone-700 dark:text-stone-300">
-							{t("kuvaus", "Kuvaus")}
-						</span>
-						<p
-							role="note"
-							className="flex items-start gap-1.5 text-[11px] text-stone-600 dark:text-stone-400"
-						>
-							<Globe size={12} className="mt-0.5 shrink-0" />
-							<span>
-								{t(
-									"kuvausOnJulkinen",
-									"Kuvaus on julkinen ja näkyy kaikille. Älä kirjoita siihen yksityisiä tai henkilökohtaisia tietoja.",
-								)}
-							</span>
-						</p>
-						<LocalizedRichTextEditor
-							value={field.state.value}
-							onChange={field.handleChange}
-							label={t("kuvaus", "Kuvaus")}
-						/>
-					</div>
-				)}
-			</form.Field>
-
-			{/* Private message to admins */}
-			<form.Field name="message_to_admins">
-				{(field) => (
-					<div className="space-y-1">
-						<label
-							htmlFor={field.name}
-							className="text-xs font-medium text-stone-700 dark:text-stone-300"
-						>
-							{t("viestiYllapidolle", "Viesti ylläpidolle")}
-						</label>
-						<p className="text-[11px] text-stone-600 dark:text-stone-400">
-							{t(
-								"viestiYllapidolleOhje",
-								"Vain sinä ja ylläpito näette tämän. Käytä tätä lisätiedoille, jotka eivät kuulu julkiseen kuvaukseen.",
-							)}
-						</p>
-						<textarea
-							id={field.name}
-							rows={3}
-							maxLength={2000}
-							value={field.state.value}
-							onChange={(e) => field.handleChange(e.target.value)}
-							onBlur={field.handleBlur}
-							className={cn(inputVariants(), "h-auto min-h-20 py-2")}
-						/>
-					</div>
-				)}
-			</form.Field>
-
-			{/* Contact Details */}
-			<div className="space-y-4">
-				<div className="p-3 bg-stone-100 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-md space-y-3">
-					<div className="flex items-center gap-1.5 text-xs font-bold text-purple-700 dark:text-purple-400">
-						<UserCheck size={14} />
-						<span>{t("yhteystiedot", "Yhteystiedot")}</span>
-					</div>
-
-					<div className="space-y-2">
-						<form.Field
-							name="contact_person"
-							validators={{
-								onChange: ({ value }) =>
-									!isAdmin && !value.trim()
-										? t(
-												"yhteyshenkiloOnPakollinen",
-												"Yhteyshenkilö on pakollinen",
-											)
-										: undefined,
-							}}
-						>
-							{(field) => (
-								<div className="space-y-0.5">
-									<label
-										htmlFor={field.name}
-										className="text-[11px] text-stone-600 dark:text-stone-400"
-									>
-										{t("yhteyshenkilo", "Yhteyshenkilö")}
-									</label>
-									<Input
-										id={field.name}
-										value={field.state.value}
-										onChange={(e) => field.handleChange(e.target.value)}
-										placeholder={t("yhteyshenkilonNimi", "Yhteyshenkilön nimi")}
-										isError={Boolean(field.state.meta.errors.length)}
-										onBlur={field.handleBlur}
-									/>
-									{Boolean(field.state.meta.errors.length) && (
-										<p className="text-[11px] text-red-500">
-											{field.state.meta.errors.join(", ")}
-										</p>
-									)}
-								</div>
-							)}
-						</form.Field>
-
-						<div className="grid grid-cols-2 gap-2">
-							<form.Field
-								name="contact_email"
-								validators={{
-									onChange: ({ value }) =>
-										!isAdmin && !value.trim()
-											? t(
-													"yhteysSahkopostiOnPakollinen",
-													"Sähköposti on pakollinen",
-												)
-											: undefined,
-								}}
-							>
-								{(field) => (
-									<div className="space-y-0.5">
-										<label
-											htmlFor={field.name}
-											className="text-[11px] text-stone-600 dark:text-stone-400"
-										>
-											{t("yhteysSähköposti", "Sähköposti")}
-										</label>
-										<Input
-											id={field.name}
-											type="email"
-											value={field.state.value}
-											onChange={(e) => field.handleChange(e.target.value)}
-											placeholder={t(
-												"esimYhteysSahkoposti",
-												"yhteys@esimerkki.fi",
-											)}
-											isError={Boolean(field.state.meta.errors.length)}
-											onBlur={field.handleBlur}
-										/>
-										{Boolean(field.state.meta.errors.length) && (
-											<p className="text-[11px] text-red-500">
-												{field.state.meta.errors.join(", ")}
-											</p>
-										)}
-									</div>
-								)}
-							</form.Field>
-
-							<form.Field
-								name="contact_phone"
-								validators={{
-									onChange: ({ value }) =>
-										!isAdmin && !value.trim()
-											? t(
-													"puhelinnumeroOnPakollinen",
-													"Puhelinnumero on pakollinen",
-												)
-											: undefined,
-								}}
-							>
-								{(field) => (
-									<div className="space-y-0.5">
-										<label
-											htmlFor={field.name}
-											className="text-[11px] text-stone-600 dark:text-stone-400"
-										>
-											{t("puhelinnumero", "Puhelinnumero")}
-										</label>
-										<Input
-											id={field.name}
-											type="tel"
-											value={field.state.value}
-											onChange={(e) => field.handleChange(e.target.value)}
-											placeholder="+358..."
-											isError={Boolean(field.state.meta.errors.length)}
-											onBlur={field.handleBlur}
-										/>
-										{Boolean(field.state.meta.errors.length) && (
-											<p className="text-[11px] text-red-500">
-												{field.state.meta.errors.join(", ")}
-											</p>
-										)}
-									</div>
-								)}
-							</form.Field>
-						</div>
-					</div>
-				</div>
-
-				{isAdmin && (
-					<div className="p-3 bg-stone-100 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-md space-y-3">
-						<div className="flex items-center gap-1.5 text-xs font-bold text-purple-700 dark:text-purple-400">
-							<ShieldAlert size={14} />
-							<span>{t("vainYllapidolle", "Vain ylläpidolle")}</span>
-						</div>
-
-						<div className="space-y-2">
-							<form.Field name="admin_notes">
-								{(field) => (
-									<div className="space-y-0.5">
-										<label
-											htmlFor={field.name}
-											className="text-[11px] text-stone-600 dark:text-stone-400"
-										>
-											{t(
-												"yllpitjnMuistiinpanotEiOmistajalle",
-												"Ylläpitäjän muistiinpanot (varaaja ei näe näitä)",
-											)}
-										</label>
-										<textarea
-											id={field.name}
-											rows={3}
-											value={field.state.value}
-											onChange={(e) => field.handleChange(e.target.value)}
-											className={cn(inputVariants(), "h-auto min-h-20 py-2")}
-											placeholder={t(
-												"vainYllpidolleNkyvtMerkinnt",
-												"Vain ylläpidolle näkyvät merkinnät",
-											)}
-										/>
-									</div>
-								)}
-							</form.Field>
-
-							<form.Field name="status">
-								{(field) => (
-									<div className="space-y-0.5">
-										<label
-											htmlFor={field.name}
-											className="text-[11px] text-stone-600 dark:text-stone-400"
-										>
-											{t("tila", "Tila")}
-										</label>
-										<select
-											id={field.name}
-											value={field.state.value}
-											onChange={(e) =>
-												field.handleChange(e.target.value as ReservationStatus)
-											}
-											className="w-full px-2.5 py-1.5 text-xs bg-white dark:bg-stone-950 border border-stone-200 dark:border-stone-800 rounded focus:outline-none focus:ring-2 focus:ring-purple-500"
-										>
-											<option value="confirmed">
-												{t("vahvistettu", "Vahvistettu")}
-											</option>
-											<option value="pending">{t("odottaa", "Odottaa")}</option>
-											{/* Cancelling goes through the dedicated cancel action */}
-											{field.state.value === "cancelled" && (
-												<option value="cancelled">
-													{t("peruttu", "Peruttu")}
-												</option>
-											)}
-										</select>
-									</div>
-								)}
-							</form.Field>
-						</div>
-					</div>
-				)}
-			</div>
-
 			{/* Occurrence & Multi-Resource Selection Section */}
-			<div className="pt-3 border-t-2 border-stone-800 dark:border-stone-700 space-y-3">
-				<h3 className="text-xs font-bold text-stone-900 dark:text-stone-100 uppercase tracking-wider">
-					{t("ajanvarausJaResurssit", "Ajanvaraus ja Resurssit")}
-				</h3>
-
+			<FormSection title={t("aikaJaResurssi", "Aika ja resurssi")}>
 				<form.Field
 					name="resource_ids"
 					validators={{
@@ -657,11 +372,12 @@ export function ReservationForm({
 						const hasError = Boolean(field.state.meta.errors.length);
 						return (
 							<div className="space-y-1">
-								<span className="text-xs font-medium text-stone-700 dark:text-stone-300">
+								<span className="block text-sm font-medium text-stone-900 dark:text-stone-100">
 									{t(
 										"resurssitValitseYksiTaiUseampi",
 										"Resurssit (Valitse yksi tai useampi)",
 									)}
+									<RequiredMark />
 								</span>
 
 								{loadingResources ? (
@@ -669,9 +385,9 @@ export function ReservationForm({
 										{t("ladataanResursseja", "Ladataan resursseja...")}
 									</div>
 								) : (
-									<div className="flex flex-wrap gap-2 p-2 bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-md max-h-36 overflow-y-auto">
+									<div className="flex max-h-36 flex-wrap gap-2 overflow-y-auto">
 										{selectableResources(field.state.value).length === 0 && (
-											<p className="text-xs text-stone-500">
+											<p className="text-xs text-stone-600 dark:text-stone-400">
 												{t(
 													"eiVarattavissaOlevia",
 													"Ryhmälläsi ei ole oikeutta varata yhtään resurssia.",
@@ -681,9 +397,9 @@ export function ReservationForm({
 										{selectableResources(field.state.value).map((res) => {
 											const isChecked = field.state.value.includes(res.id);
 											return (
-												<button
+												<ToggleChip
 													key={res.id}
-													type="button"
+													selected={isChecked}
 													onClick={() => {
 														// A blocks-only resource has its own block times, so for
 														// non-admins it can't be combined with other resources
@@ -722,17 +438,9 @@ export function ReservationForm({
 															);
 														}
 													}}
-													className={`px-3 py-1.5 text-xs font-medium rounded-md border transition-colors flex items-center gap-1.5 ${
-														isChecked
-															? "bg-purple-600 text-white border-purple-600 dark:bg-purple-500 dark:border-purple-500"
-															: "bg-white dark:bg-stone-800 text-stone-700 dark:text-stone-300 border-stone-300 dark:border-stone-700 hover:bg-stone-100 dark:hover:bg-stone-700"
-													}`}
 												>
-													<span
-														className={`w-2 h-2 rounded-full ${isChecked ? "bg-white" : "bg-stone-400"}`}
-													/>
 													{res.name}
-												</button>
+												</ToggleChip>
 											);
 										})}
 									</div>
@@ -745,7 +453,7 @@ export function ReservationForm({
 									/>
 								)}
 								{hasError && (
-									<p className="text-[11px] text-red-500">
+									<p className="text-xs text-red-600 dark:text-red-400">
 										{field.state.meta.errors.join(", ")}
 									</p>
 								)}
@@ -765,7 +473,7 @@ export function ReservationForm({
 					/>
 				) : (
 					<>
-						<div className="grid grid-cols-2 gap-2">
+						<div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
 							<form.Field
 								name="start_time"
 								validators={{
@@ -792,13 +500,14 @@ export function ReservationForm({
 										<div className="space-y-1">
 											<label
 												htmlFor={field.name}
-												className="text-xs font-medium text-stone-700 dark:text-stone-300"
+												className="text-sm font-medium text-stone-900 dark:text-stone-100"
 											>
 												{t("alkamisaika", "Alkamisaika")}
+												<RequiredMark />
 											</label>
-											<Input
+											<DateTimeInput
 												id={field.name}
-												type="datetime-local"
+												aria-required="true"
 												value={field.state.value}
 												onChange={(e) => {
 													const nextStart = e.target.value;
@@ -831,7 +540,7 @@ export function ReservationForm({
 												isError={hasError}
 											/>
 											{hasError && (
-												<p className="text-[11px] text-red-500">
+												<p className="text-xs text-red-600 dark:text-red-400">
 													{field.state.meta.errors.join(", ")}
 												</p>
 											)}
@@ -915,20 +624,21 @@ export function ReservationForm({
 										<div className="space-y-1">
 											<label
 												htmlFor={field.name}
-												className="text-xs font-medium text-stone-700 dark:text-stone-300"
+												className="text-sm font-medium text-stone-900 dark:text-stone-100"
 											>
 												{t("pttymisaika", "Päättymisaika")}
+												<RequiredMark />
 											</label>
-											<Input
+											<DateTimeInput
 												id={field.name}
-												type="datetime-local"
+												aria-required="true"
 												value={field.state.value}
 												onChange={(e) => field.handleChange(e.target.value)}
 												onBlur={field.handleBlur}
 												isError={hasError}
 											/>
 											{hasError && (
-												<p className="text-[11px] text-red-500">
+												<p className="text-xs text-red-600 dark:text-red-400">
 													{field.state.meta.errors.join(", ")}
 												</p>
 											)}
@@ -938,18 +648,12 @@ export function ReservationForm({
 							</form.Field>
 						</div>
 						{adminOutsideBlocks && (
-							<p
-								role="note"
-								className="flex items-start gap-2 p-2.5 text-xs text-emerald-900 dark:text-emerald-200 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-800 rounded-md"
-							>
-								<CalendarCheck size={14} className="shrink-0 mt-0.5" />
-								<span>
-									{t(
-										"ajatVarausjaksojenUlkopuolella",
-										"Valitut ajat eivät ole varausjakso. Ylläpitäjänä voit silti tallentaa varauksen.",
-									)}
-								</span>
-							</p>
+							<Callout variant="info" icon={CalendarCheck}>
+								{t(
+									"ajatVarausjaksojenUlkopuolella",
+									"Valitut ajat eivät ole varausjakso. Ylläpitäjänä voit silti tallentaa varauksen.",
+								)}
+							</Callout>
 						)}
 					</>
 				)}
@@ -1007,6 +711,308 @@ export function ReservationForm({
 						/>
 					)}
 				</form.Subscribe>
+			</FormSection>
+
+			<FormSection title={t("varauksenTiedotOsio", "Varauksen tiedot")}>
+				{/* Title */}
+				<form.Field
+					name="title"
+					validators={{
+						onChange: ({ value }) =>
+							!value
+								? t("otsikkoOnPakollinen", "Otsikko on pakollinen")
+								: undefined,
+					}}
+				>
+					{(field) => {
+						const hasError = Boolean(field.state.meta.errors.length);
+						return (
+							<div className="space-y-1">
+								<label
+									htmlFor={field.name}
+									className="text-sm font-medium text-stone-900 dark:text-stone-100"
+								>
+									{t("otsikko", "Otsikko")}
+									<RequiredMark />
+								</label>
+								<Input
+									id={field.name}
+									aria-required="true"
+									value={field.state.value}
+									onChange={(e) => field.handleChange(e.target.value)}
+									onBlur={field.handleBlur}
+									isError={hasError}
+									placeholder={t("esimViikkokokous", "esim. Viikkokokous")}
+								/>
+								{hasError && (
+									<p className="text-xs text-red-600 dark:text-red-400">
+										{field.state.meta.errors.join(", ")}
+									</p>
+								)}
+							</div>
+						);
+					}}
+				</form.Field>
+
+				{/* Description */}
+				<form.Field name="description">
+					{(field) => (
+						<div className="space-y-1">
+							<span className="block text-sm font-medium text-stone-900 dark:text-stone-100">
+								{t("kuvaus", "Kuvaus")}
+							</span>
+							<p
+								role="note"
+								className="flex items-start gap-1.5 text-xs text-stone-600 dark:text-stone-400"
+							>
+								<Globe
+									size={12}
+									className="mt-0.5 shrink-0"
+									aria-hidden="true"
+								/>
+								<span>
+									{t(
+										"kuvausOnJulkinen",
+										"Kuvaus on julkinen ja näkyy kaikille. Älä kirjoita siihen yksityisiä tai henkilökohtaisia tietoja.",
+									)}
+								</span>
+							</p>
+							<LocalizedRichTextEditor
+								value={field.state.value}
+								onChange={field.handleChange}
+								label={t("kuvaus", "Kuvaus")}
+							/>
+						</div>
+					)}
+				</form.Field>
+
+				{/* Private message to admins */}
+				<form.Field name="message_to_admins">
+					{(field) => (
+						<div className="space-y-1">
+							<label
+								htmlFor={field.name}
+								className="text-sm font-medium text-stone-900 dark:text-stone-100"
+							>
+								{t("viestiYllapidolle", "Viesti ylläpidolle")}
+							</label>
+							<p className="text-xs text-stone-600 dark:text-stone-400">
+								{t(
+									"viestiYllapidolleOhje",
+									"Vain sinä ja ylläpito näette tämän. Käytä tätä lisätiedoille, jotka eivät kuulu julkiseen kuvaukseen.",
+								)}
+							</p>
+							<Textarea
+								id={field.name}
+								rows={3}
+								maxLength={2000}
+								value={field.state.value}
+								onChange={(e) => field.handleChange(e.target.value)}
+								onBlur={field.handleBlur}
+							/>
+						</div>
+					)}
+				</form.Field>
+			</FormSection>
+
+			{/* Contact Details */}
+			<div className="space-y-6">
+				<FormSection
+					title={t("yhteystiedot", "Yhteystiedot")}
+					description={t(
+						"yhteystiedotOhje",
+						"Näkyvät vain sinulle ja ylläpidolle.",
+					)}
+				>
+					<div className="space-y-3">
+						<form.Field
+							name="contact_person"
+							validators={{
+								onChange: ({ value }) =>
+									!isAdmin && !value.trim()
+										? t(
+												"yhteyshenkiloOnPakollinen",
+												"Yhteyshenkilö on pakollinen",
+											)
+										: undefined,
+							}}
+						>
+							{(field) => (
+								<div className="space-y-0.5">
+									<label
+										htmlFor={field.name}
+										className="text-sm font-medium text-stone-900 dark:text-stone-100"
+									>
+										{t("yhteyshenkilo", "Yhteyshenkilö")}
+										{!isAdmin && <RequiredMark />}
+									</label>
+									<Input
+										id={field.name}
+										value={field.state.value}
+										onChange={(e) => field.handleChange(e.target.value)}
+										placeholder={t("yhteyshenkilonNimi", "Yhteyshenkilön nimi")}
+										aria-required={!isAdmin}
+										isError={Boolean(field.state.meta.errors.length)}
+										onBlur={field.handleBlur}
+									/>
+									{Boolean(field.state.meta.errors.length) && (
+										<p className="text-xs text-red-600 dark:text-red-400">
+											{field.state.meta.errors.join(", ")}
+										</p>
+									)}
+								</div>
+							)}
+						</form.Field>
+
+						<div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+							<form.Field
+								name="contact_email"
+								validators={{
+									onChange: ({ value }) =>
+										!isAdmin && !value.trim()
+											? t(
+													"yhteysSahkopostiOnPakollinen",
+													"Sähköposti on pakollinen",
+												)
+											: undefined,
+								}}
+							>
+								{(field) => (
+									<div className="space-y-0.5">
+										<label
+											htmlFor={field.name}
+											className="text-xs text-stone-600 dark:text-stone-400"
+										>
+											{t("yhteysSähköposti", "Sähköposti")}
+											{!isAdmin && <RequiredMark />}
+										</label>
+										<Input
+											id={field.name}
+											type="email"
+											value={field.state.value}
+											onChange={(e) => field.handleChange(e.target.value)}
+											aria-required={!isAdmin}
+											placeholder={t(
+												"esimYhteysSahkoposti",
+												"yhteys@esimerkki.fi",
+											)}
+											isError={Boolean(field.state.meta.errors.length)}
+											onBlur={field.handleBlur}
+										/>
+										{Boolean(field.state.meta.errors.length) && (
+											<p className="text-xs text-red-600 dark:text-red-400">
+												{field.state.meta.errors.join(", ")}
+											</p>
+										)}
+									</div>
+								)}
+							</form.Field>
+
+							<form.Field
+								name="contact_phone"
+								validators={{
+									onChange: ({ value }) =>
+										!isAdmin && !value.trim()
+											? t(
+													"puhelinnumeroOnPakollinen",
+													"Puhelinnumero on pakollinen",
+												)
+											: undefined,
+								}}
+							>
+								{(field) => (
+									<div className="space-y-0.5">
+										<label
+											htmlFor={field.name}
+											className="text-xs text-stone-600 dark:text-stone-400"
+										>
+											{t("puhelinnumero", "Puhelinnumero")}
+											{!isAdmin && <RequiredMark />}
+										</label>
+										<Input
+											id={field.name}
+											type="tel"
+											value={field.state.value}
+											onChange={(e) => field.handleChange(e.target.value)}
+											placeholder="+358..."
+											aria-required={!isAdmin}
+											isError={Boolean(field.state.meta.errors.length)}
+											onBlur={field.handleBlur}
+										/>
+										{Boolean(field.state.meta.errors.length) && (
+											<p className="text-xs text-red-600 dark:text-red-400">
+												{field.state.meta.errors.join(", ")}
+											</p>
+										)}
+									</div>
+								)}
+							</form.Field>
+						</div>
+					</div>
+				</FormSection>
+
+				{isAdmin && (
+					<FormSection title={t("vainYllapidolle", "Vain ylläpidolle")}>
+						<div className="space-y-3">
+							<form.Field name="admin_notes">
+								{(field) => (
+									<div className="space-y-0.5">
+										<label
+											htmlFor={field.name}
+											className="text-xs text-stone-600 dark:text-stone-400"
+										>
+											{t(
+												"yllpitjnMuistiinpanotEiOmistajalle",
+												"Ylläpitäjän muistiinpanot (varaaja ei näe näitä)",
+											)}
+										</label>
+										<Textarea
+											id={field.name}
+											rows={3}
+											value={field.state.value}
+											onChange={(e) => field.handleChange(e.target.value)}
+											placeholder={t(
+												"vainYllpidolleNkyvtMerkinnt",
+												"Vain ylläpidolle näkyvät merkinnät",
+											)}
+										/>
+									</div>
+								)}
+							</form.Field>
+
+							<form.Field name="status">
+								{(field) => (
+									<div className="space-y-0.5">
+										<label
+											htmlFor={field.name}
+											className="text-xs text-stone-600 dark:text-stone-400"
+										>
+											{t("tila", "Tila")}
+										</label>
+										<Select
+											id={field.name}
+											value={field.state.value}
+											onChange={(e) =>
+												field.handleChange(e.target.value as ReservationStatus)
+											}
+										>
+											<option value="confirmed">
+												{t("vahvistettu", "Vahvistettu")}
+											</option>
+											<option value="pending">{t("odottaa", "Odottaa")}</option>
+											{/* Cancelling goes through the dedicated cancel action */}
+											{field.state.value === "cancelled" && (
+												<option value="cancelled">
+													{t("peruttu", "Peruttu")}
+												</option>
+											)}
+										</Select>
+									</div>
+								)}
+							</form.Field>
+						</div>
+					</FormSection>
+				)}
 			</div>
 
 			{/* Contract Approval Section */}
@@ -1021,20 +1027,13 @@ export function ReservationForm({
 
 			{/* Editing a reservation as a regular user needs a new approval */}
 			{!isAdmin && !isCreate && (
-				<p
-					role="note"
-					className="flex items-start gap-2 p-2.5 text-xs text-amber-900 dark:text-amber-200 bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 rounded-md"
-				>
-					<AlertTriangle size={14} className="shrink-0 mt-0.5" />
-					<span>
-						{t(
-							"muokkausPalauttaaOdottaa",
-							"Muutosten tallentaminen palauttaa varauksen tilaan Odottaa. Saat vahvistuksen sähköpostiin, kun muutokset on hyväksytty.",
-						)}
-					</span>
-				</p>
+				<Callout variant="warning">
+					{t(
+						"muokkausPalauttaaOdottaa",
+						"Muutosten tallentaminen palauttaa varauksen tilaan Odottaa. Saat vahvistuksen sähköpostiin, kun muutokset on hyväksytty.",
+					)}
+				</Callout>
 			)}
-
 			{/* Submit Button */}
 			<form.Subscribe
 				selector={(state) => [state.canSubmit, state.isSubmitting] as const}
@@ -1048,29 +1047,46 @@ export function ReservationForm({
 					const hasReservationConflict =
 						!isAdmin && conflicts !== null && conflicts.length > 0;
 
+					const submitting = isSubmitting || formSubmitting;
+					// Say why submit is blocked when the form itself looks valid
+					const blockedHint = hasReservationConflict
+						? t(
+								"lahetysEstettyPaallekkaisyys",
+								"Varausta ei voi lähettää, koska valittu aika on jo varattu.",
+							)
+						: hasRestrictionViolation
+							? t(
+									"lahetysEstettyRajoitus",
+									"Varausta ei voi lähettää, koska valittu aika on rajoitettu.",
+								)
+							: needsContractApproval
+								? t(
+										"lahetysEstettyEhdot",
+										"Hyväksy sopimusehdot ennen lähettämistä.",
+									)
+								: undefined;
+
 					return (
-						<Button
-							type="submit"
-							disabled={
-								!canSubmit ||
-								isSubmitting ||
-								formSubmitting ||
-								hasRestrictionViolation ||
-								hasReservationConflict ||
-								needsContractApproval ||
-								(blocksOnlyMode && !hasSelectedBlock)
-							}
-							className="w-full flex items-center justify-center gap-2 mt-4"
-						>
-							{isSubmitting || formSubmitting ? (
-								<Loader2 className="animate-spin" size={16} />
-							) : (
-								<>
+						<FormActions onCancel={onCancel} hint={blockedHint}>
+							<Button
+								type="submit"
+								disabled={
+									!canSubmit ||
+									submitting ||
+									hasRestrictionViolation ||
+									hasReservationConflict ||
+									needsContractApproval ||
+									(blocksOnlyMode && !hasSelectedBlock)
+								}
+							>
+								{submitting ? (
+									<Loader2 className="animate-spin" size={16} />
+								) : (
 									<Save size={16} />
-									<span>{submitLabel ?? t("tallenna", "Tallenna")}</span>
-								</>
-							)}
-						</Button>
+								)}
+								<span>{submitLabel ?? t("tallenna", "Tallenna")}</span>
+							</Button>
+						</FormActions>
 					);
 				}}
 			</form.Subscribe>
@@ -1098,9 +1114,9 @@ function BlockPicker({ options, isLoading, onSelect }: BlockPickerProps) {
 	const { formatDateRange } = useDateFormatter();
 
 	return (
-		<div className="p-3 bg-stone-100 dark:bg-stone-900 border-2 border-emerald-300 dark:border-emerald-800 rounded-sm space-y-2">
-			<div className="flex items-center gap-1.5 text-xs font-bold text-stone-800 dark:text-stone-200">
-				<CalendarCheck size={14} className="text-emerald-600" />
+		<div className="rounded-md border border-stone-300 bg-stone-50 p-4 dark:border-stone-700 dark:bg-stone-900 space-y-3">
+			<div className="flex items-center gap-1.5 text-base font-bold text-stone-900 dark:text-stone-100">
+				<CalendarCheck size={14} aria-hidden="true" />
 				<span>{t("valitseVarausjakso", "Valitse varausjakso")}</span>
 			</div>
 
@@ -1110,7 +1126,7 @@ function BlockPicker({ options, isLoading, onSelect }: BlockPickerProps) {
 					<span>{t("ladataanVarausjaksoja", "Ladataan varausjaksoja...")}</span>
 				</div>
 			) : options.length === 0 ? (
-				<p className="text-xs text-stone-500">
+				<p className="text-xs text-stone-600 dark:text-stone-400">
 					{t(
 						"eiVapaitaVarausjaksoja",
 						"Tälle resurssille ei ole vapaita varausjaksoja.",
@@ -1124,14 +1140,14 @@ function BlockPicker({ options, isLoading, onSelect }: BlockPickerProps) {
 								type="button"
 								aria-pressed={opt.selected}
 								onClick={() => onSelect(opt)}
-								className={`w-full text-left px-2.5 py-1.5 text-xs rounded-md border transition-colors ${
+								className={`focus-ring w-full text-left px-3 py-2 text-sm rounded-md border transition-colors ${
 									opt.selected
-										? "bg-emerald-600 text-white border-emerald-600"
-										: "bg-white dark:bg-stone-950 border-stone-300 dark:border-stone-700 hover:bg-stone-100 dark:hover:bg-stone-800"
+										? "bg-stone-900 text-stone-50 border-stone-900 dark:bg-stone-100 dark:text-stone-900 dark:border-stone-100"
+										: "bg-stone-50 dark:bg-stone-950 border-stone-300 dark:border-stone-700 hover:border-stone-800 dark:hover:border-stone-300"
 								}`}
 							>
 								<span className="font-semibold">{opt.title}</span>
-								<span className="block font-mono text-[11px] opacity-80">
+								<span className="block text-xs tabular-nums opacity-80">
 									{formatDateRange(opt.start, opt.end)}
 								</span>
 							</button>
@@ -1140,7 +1156,7 @@ function BlockPicker({ options, isLoading, onSelect }: BlockPickerProps) {
 				</ul>
 			)}
 
-			<p className="text-[11px] text-stone-500">
+			<p className="text-xs text-stone-600 dark:text-stone-400">
 				{t(
 					"varausjaksoOhje",
 					"Tämän resurssin voi varata vain kokonaisina varausjaksoina.",
@@ -1181,13 +1197,13 @@ function ContractApprovalSection({
 	}
 
 	return (
-		<div className="p-3 bg-stone-100 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-md space-y-2">
-			<div className="flex items-center gap-1.5 text-xs font-bold text-stone-900 dark:text-stone-100">
-				<FileText size={15} className="text-purple-600 dark:text-purple-400" />
+		<div className="rounded-md border border-stone-300 bg-stone-50 p-4 dark:border-stone-700 dark:bg-stone-900 space-y-3">
+			<div className="flex items-center gap-1.5 text-base font-bold text-stone-900 dark:text-stone-100">
+				<FileText size={16} aria-hidden="true" />
 				<span>{t("sopimuksetJaEhot", "Sopimukset ja ehdot")}</span>
 			</div>
 
-			<p className="text-[11px] text-stone-600 dark:text-stone-400">
+			<p className="text-xs text-stone-600 dark:text-stone-400">
 				{t(
 					"tutustuJaHyvksySeuraavatEhot",
 					"Tutustu ja hyväksy seuraavat varaukseen liittyvät ehdot ennen lähettämistä:",
@@ -1203,14 +1219,14 @@ function ContractApprovalSection({
 							key={contract.id}
 							className="flex items-center justify-between p-2 bg-white dark:bg-stone-950 border border-stone-200 dark:border-stone-800 rounded text-xs"
 						>
-							<span className="font-medium text-stone-800 dark:text-stone-200 truncate max-w-[200px]">
+							<span className="font-medium text-stone-800 dark:text-stone-200 truncate">
 								{getLocalizedText(contract.title, currentLocale)}
 							</span>
 							<a
 								href={hrefUrl}
 								target="_blank"
 								rel="noopener noreferrer"
-								className="text-[11px] font-semibold text-purple-600 hover:text-purple-700 dark:text-purple-400 hover:underline"
+								className="shrink-0 pl-2 text-xs font-semibold text-purple-700 dark:text-purple-400 hover:underline"
 							>
 								{t("lataaTaiLue", "Lue ehdot")}
 								{" →"}
@@ -1225,9 +1241,9 @@ function ContractApprovalSection({
 					type="checkbox"
 					checked={approved}
 					onChange={(e) => onApproveChange(e.target.checked)}
-					className="mt-0.5 h-4 w-4 rounded border-stone-300 text-purple-600 focus:ring-purple-500"
+					className="focus-ring mt-0.5 h-4 w-4 rounded border-stone-400 accent-purple-600"
 				/>
-				<span className="text-xs font-medium text-stone-800 dark:text-stone-200 leading-tight">
+				<span className="text-sm font-medium text-stone-900 dark:text-stone-100 leading-tight">
 					{t(
 						"hyvksynSopimusehdot",
 						"Olen lukenut ja hyväksyn sovellettavat sopimusehdot.",
@@ -1270,7 +1286,7 @@ function AutomaticConflictChecker({
 	reservationId,
 }: AutomaticConflictCheckerProps) {
 	const { t } = useTranslation();
-	const { formatDate } = useDateFormatter();
+	const { formatRange } = useDateFormatter();
 	const mutateAsync = checkConflicts.mutateAsync;
 
 	// Last day of the series, which bounds the restrictions worth fetching
@@ -1390,7 +1406,7 @@ function AutomaticConflictChecker({
 
 	if (checkConflicts.isPending) {
 		return (
-			<div className="flex items-center justify-center py-2 text-xs font-mono text-stone-500 gap-2">
+			<div className="flex items-center justify-center py-2 text-xs text-stone-600 dark:text-stone-400 gap-2">
 				<Loader2 className="animate-spin" size={14} />
 				<span>
 					{t("tarkistetaanPllekkisyyksi", "Tarkistetaan päällekkäisyyksiä...")}
@@ -1411,65 +1427,53 @@ function AutomaticConflictChecker({
 		conflicts !== null
 	) {
 		return (
-			<div className="p-2 bg-emerald-100 dark:bg-emerald-950/80 border-2 border-emerald-600 text-emerald-900 dark:text-emerald-200 rounded-sm flex items-center gap-2 text-xs font-medium">
-				<CheckCircle2 size={16} />
-				<span>{t("eiPllekkisiVarauksia", "Ei päällekkäisiä varauksia.")}</span>
-			</div>
+			<Callout variant="success">
+				{t("eiPllekkisiVarauksia", "Ei päällekkäisiä varauksia.")}
+			</Callout>
 		);
 	}
 
 	return (
 		<div className="space-y-2">
 			{hasRestrictionViolations && (
-				<div className="p-3 bg-amber-100 dark:bg-amber-950/80 border-2 border-amber-600 text-amber-900 dark:text-amber-200 rounded-sm space-y-2 text-xs">
-					<div className="flex items-center gap-2 font-bold">
-						<ShieldAlert size={16} className="text-amber-600 shrink-0" />
-						<span>
-							{t(
-								"varausOsuuRajoitetulleAjalle",
-								"Varaus osuu rajoitetulle ajanjaksolle! ({{length}})",
-								{ length: restrictionConflicts.length },
-							)}
-						</span>
-					</div>
-					<ul className="list-disc list-inside space-y-1 font-mono text-[11px]">
+				<Callout
+					variant="warning"
+					icon={ShieldAlert}
+					title={t(
+						"varausOsuuRajoitetulleAjalle",
+						"Varaus osuu rajoitetulle ajanjaksolle! ({{length}})",
+						{ length: restrictionConflicts.length },
+					)}
+				>
+					<ul className="list-inside list-disc tabular-nums">
 						{restrictionConflicts.map((item) => (
 							<li key={`${item.title}-${item.start_time}-${item.end_time}`}>
-								<span className="font-semibold font-sans">
+								<span className="font-medium">
 									{item.title}
 									{":"}
 								</span>{" "}
-								{formatDate(item.start_time)}
-								{" – "}
-								{formatDate(item.end_time)}
+								{formatRange(item.start_time, item.end_time)}
 							</li>
 						))}
 					</ul>
-				</div>
+				</Callout>
 			)}
 
 			{hasReservationConflicts && (
-				<div className="p-3 bg-rose-100 dark:bg-rose-950/80 border-2 border-rose-600 text-rose-900 dark:text-rose-200 rounded-sm space-y-2 text-xs">
-					<div className="flex items-center gap-2 font-bold">
-						<AlertTriangle size={16} />
-						<span>
-							{t(
-								"lytyiLengthPllekkistVarausta",
-								"Löytyi {{length}} päällekkäistä varausta!",
-								{ length: conflicts.length },
-							)}
-						</span>
-					</div>
-					<ul className="list-disc list-inside space-y-1 font-mono text-[11px]">
+				<Callout
+					variant="danger"
+					title={t(
+						"lytyiLengthPllekkistVarausta",
+						"Löytyi {{length}} päällekkäistä varausta!",
+						{ length: conflicts.length },
+					)}
+				>
+					<ul className="list-inside list-disc tabular-nums">
 						{conflicts.map((occ) => (
-							<li key={occ.id}>
-								{formatDate(occ.start_time)}
-								{" – "}
-								{formatDate(occ.end_time)}
-							</li>
+							<li key={occ.id}>{formatRange(occ.start_time, occ.end_time)}</li>
 						))}
 					</ul>
-				</div>
+				</Callout>
 			)}
 		</div>
 	);
@@ -1503,12 +1507,10 @@ function RecurrenceSection({
 	}
 
 	return (
-		<div className="p-3 bg-stone-100 dark:bg-stone-900 border-2 border-stone-800 dark:border-stone-700 rounded-sm space-y-2">
-			<div className="flex items-center justify-between text-xs font-mono font-bold text-stone-800 dark:text-stone-200">
-				<div className="flex items-center gap-1.5">
-					<RefreshCw size={14} />
-					<span>{t("toistuvuus", "Toistuvuus")}</span>
-				</div>
+		<div className="rounded-md border border-stone-300 bg-stone-50 p-4 dark:border-stone-700 dark:bg-stone-900 space-y-3">
+			<div className="flex items-center gap-1.5 text-base font-bold text-stone-900 dark:text-stone-100">
+				<RefreshCw size={16} aria-hidden="true" />
+				<span>{t("toistuvuus", "Toistuvuus")}</span>
 			</div>
 
 			<RecurrenceFields
