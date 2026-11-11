@@ -974,55 +974,78 @@ pub async fn seed(pool: &PgPool, opts: &MockOptions) -> Result<Summary> {
         .map(|(i, _)| i)
         .collect();
 
-    // Round applications. Completed round: allocated ones are confirmed, the rest cancelled.
-    let weekly =
-        |rng: &mut Rng, from: NaiveDate, r: usize, count: i64| -> Option<Vec<(Uuid, Dt, Dt)>> {
-            let first = from + Duration::days(rng.range(0, 7));
-            let h = rng.range(8, 19) as u32;
-            let len = rng.range(1, 3) as u32;
-            Some(
-                (0..count)
-                    .map(|k| {
-                        let day = first + Duration::days(7 * k);
-                        (resources[r].id, hel(day, h, 0), hel(day, h + len, 0))
-                    })
-                    .collect(),
-            )
-        };
+    // Round applications. Each application is its own reservation with a single occurrence (one
+    // slot) and a priority; applicants list 2-3 alternatives per resource, and different
+    // applicants compete for the same slots from a shared pool. In the completed round the
+    // allocation is already done: the first applicant to get a slot keeps it (confirmed), every
+    // other application is cancelled. In the active round everything is still pending.
     let mut all: Vec<NewResv> = vec![];
-    let apps = if prod { 14 } else { 6 };
+    let applicants_per_round = if prod { 10 } else { 5 };
     for (round_no, from) in [(0usize, round_defs[0].3), (1usize, round_defs[1].3)] {
-        for n in 0..apps {
+        let completed = round_no == 0;
+        let mut taken = std::collections::HashSet::new();
+        let mut granted = std::collections::HashSet::new();
+        let mut applicants = std::collections::HashSet::new();
+        while applicants.len() < applicants_per_round {
             let u = &users[*rng.pick(&org_users)];
-            let r = *rng.pick(&round_res);
-            let Some(occ) = weekly(&mut rng, from, r, 4) else {
+            if !applicants.insert(u.id) {
                 continue;
-            };
-            let mut resv = NewResv::simple(
-                u.id,
-                format!("Vakiovuoro: {}", rng.pick(TITLES)),
-                "pending",
-                hel(
-                    round_defs[round_no].1 + Duration::days(rng.range(0, 10)),
-                    12,
-                    0,
-                ),
-            );
-            resv.round = Some((round_ids[round_no], (n % 3) as i32 + 1));
-            resv.occurrences = occ;
-            if round_no == 0 {
-                if n % 3 == 2 {
-                    resv.status = "cancelled";
-                    resv.cancelled = Some((
-                        hel(round_defs[0].3, 10, 0),
-                        admin_id,
-                        "Ei saanut vuoroa.".into(),
-                    ));
-                } else {
-                    resv.status = "confirmed";
+            }
+            let r = *rng.pick(&round_res);
+            // Shared slot pool: weekday evenings plus two lunch slots
+            let pool: Vec<(i64, u32)> = vec![
+                (0, 17),
+                (1, 17),
+                (2, 17),
+                (3, 17),
+                (4, 17),
+                (1, 12),
+                (3, 12),
+            ];
+            let mut picks: Vec<(i64, u32)> = vec![];
+            let wanted = 2 + rng.below(2);
+            while picks.len() < wanted {
+                let s = *rng.pick(&pool);
+                if !picks.contains(&s) {
+                    picks.push(s);
                 }
             }
-            all.push(resv);
+            let title = format!("Vakiovuoro: {}", rng.pick(TITLES));
+            let applied_at = hel(
+                round_defs[round_no].1 + Duration::days(rng.range(0, 10)),
+                12,
+                0,
+            );
+            for (prio, (day, hour)) in picks.into_iter().enumerate() {
+                let date = from + Duration::days(day);
+                let (s, e) = (hel(date, hour, 0), hel(date, hour + 2, 0));
+                let mut resv = NewResv::simple(u.id, title.clone(), "pending", applied_at);
+                resv.round = Some((round_ids[round_no], prio as i32 + 1));
+                resv.occurrences = vec![(resources[r].id, s, e)];
+                if completed {
+                    if taken.contains(&(r, day, hour)) || granted.contains(&(u.id, r)) {
+                        resv.status = "cancelled";
+                        resv.cancelled = Some((
+                            hel(round_defs[0].3, 10, 0),
+                            admin_id,
+                            "Ei saanut vuoroa.".into(),
+                        ));
+                    } else {
+                        taken.insert((r, day, hour));
+                        granted.insert((u.id, r));
+                        resv.status = "confirmed";
+                    }
+                } else if applicants.len() == 2 && prio == 2 {
+                    // One alternative withdrawn by the applicant
+                    resv.status = "cancelled";
+                    resv.cancelled = Some((
+                        applied_at + Duration::days(1),
+                        u.id,
+                        "Peruttu hakijan toimesta.".into(),
+                    ));
+                }
+                all.push(resv);
+            }
         }
     }
 
