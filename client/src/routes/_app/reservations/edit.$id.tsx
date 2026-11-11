@@ -88,7 +88,7 @@ function EditReservationPage() {
 	};
 
 	return (
-		<FormLayout width="default">
+		<FormLayout width="guided">
 			<PageHeader
 				back={
 					<BackLink to="/reservations/$id" params={{ id }}>

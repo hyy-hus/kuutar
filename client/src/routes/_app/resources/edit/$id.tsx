@@ -88,7 +88,7 @@ function EditResourcePage() {
 	};
 
 	return (
-		<FormLayout>
+		<FormLayout width="guided">
 			<PageHeader
 				back={
 					<BackLink to="/resources/$id" params={{ id: resourceId }}>

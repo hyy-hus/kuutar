@@ -48,7 +48,7 @@ function CreateResourcePage() {
 	};
 
 	return (
-		<FormLayout>
+		<FormLayout width="guided">
 			<PageHeader
 				back={
 					<BackLink to="/resources">

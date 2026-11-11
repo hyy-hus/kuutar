@@ -25,11 +25,11 @@ test("admin creates a weekday series, excludes a date and detaches one occurrenc
 	await page.getByLabel("Number of occurrences").fill("5");
 
 	// Monday to Friday are listed; skip Wednesday
-	await page.getByText("Exceptions", { exact: true }).click();
+	await page.getByText("Exceptions (0 / 5 days)", { exact: true }).click();
 	const dates = page.locator('input[id^="recurrence_occ_"]');
 	await expect(dates).toHaveCount(5);
 	await dates.nth(2).uncheck();
-	await expect(page.getByText("Exceptions (1)")).toBeVisible();
+	await expect(page.getByText("Exceptions (1 / 5 days)")).toBeVisible();
 
 	await page.getByRole("button", { name: "Create time restriction" }).click();
 	await expect(page).toHaveURL(/\/restrictions\/[0-9a-f-]+$/);
