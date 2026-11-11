@@ -22,7 +22,7 @@ describe("OccurrenceListCollapsible", () => {
 		expect(screen.getAllByRole("listitem")).toHaveLength(5);
 		fireEvent.click(screen.getByRole("button", { name: /12/ }));
 		expect(screen.getAllByRole("listitem")).toHaveLength(12);
-		fireEvent.click(screen.getByRole("button", { name: /Show fewer/i }));
+		fireEvent.click(screen.getByRole("button", { name: /Show less/i }));
 		expect(screen.getAllByRole("listitem")).toHaveLength(5);
 	});
 

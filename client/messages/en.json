@@ -798,7 +798,7 @@
 	"lahetysEstettyPaallekkaisyys": "The booking cannot be submitted because the selected time is already booked.",
 	"lahetysEstettyRajoitus": "The booking cannot be submitted because the selected time is restricted.",
 	"lahetysEstettyEhdot": "Accept the terms before submitting.",
-	"naytaVahemman": "Show fewer",
+	"naytaVahemman": "Show less",
 	"naytaKaikkiN": "Show all {{count}}",
 	"ensimmainenAikaJaMuut": "{{first}} + {{count}} more",
 	"avaaKierros": "Open round",
