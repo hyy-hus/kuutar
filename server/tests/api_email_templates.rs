@@ -183,7 +183,7 @@ async fn test_welcome_template_previews_with_user_variables(pool: PgPool) {
     assert_eq!(status, StatusCode::OK);
     assert_eq!(
         template["variables"],
-        json!(["user_name", "email", "app_url"])
+        json!(["app_name", "user_name", "email", "app_url"])
     );
 
     let (status, preview) = call(
