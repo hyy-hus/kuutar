@@ -1,24 +1,14 @@
-import {
-	Activity,
-	Bookmark,
-	Box,
-	CalendarClock,
-	CalendarDays,
-	Clock,
-	Grid3x3,
-	Hourglass,
-	TrendingUp,
-	UserPlus,
-	Users,
-} from "lucide-react";
+import { Check, Clock, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { Chip } from "#/components/Chip";
 import type { AdminStats, MyStats, PublicStats } from "#/hooks/useStats";
+import { useDateFormatter } from "#/utils/date";
 import { formatHours } from "#/utils/statsUtils";
 import { MonthlyChart, TopResourcesChart, WeekdayHourHeatmap } from "./Charts";
 import { EmptyNote, Panel, SectionHeading, StatCard } from "./StatsPanel";
 
-const GRID = "grid grid-cols-2 md:grid-cols-4 gap-4";
-const ROW = "grid grid-cols-1 lg:grid-cols-2 gap-6";
+const GRID = "grid grid-cols-2 lg:grid-cols-4 gap-4";
+const ROW = "grid grid-cols-1 lg:grid-cols-2 gap-4";
 
 function useNoData() {
 	const { t } = useTranslation();
@@ -38,23 +28,19 @@ export function OverviewSection({ stats }: { stats: PublicStats }) {
 	const empty = stats.totals.occurrences === 0;
 
 	return (
-		<div className="space-y-6">
-			<SectionHeading>{t("yleiskatsaus", "Yleiskatsaus")}</SectionHeading>
+		<div className="space-y-4">
 			<div className={GRID}>
 				<StatCard
 					label={t("varaukset", "Varaukset")}
 					value={stats.totals.occurrences}
-					icon={Bookmark}
 				/>
 				<StatCard
 					label={t("tuntia", "Tuntia")}
 					value={formatHours(stats.totals.hours, i18n.language)}
-					icon={Clock}
 				/>
 				<StatCard
 					label={t("kytettyjResursseja", "Käytettyjä resursseja")}
 					value={`${stats.totals.resources_used} / ${stats.public_resources}`}
-					icon={Box}
 				/>
 				<StatCard
 					label={t("keskimrinKuukaudessa", "Keskim. kuukaudessa")}
@@ -63,33 +49,22 @@ export function OverviewSection({ stats }: { stats: PublicStats }) {
 							? Math.round(stats.totals.occurrences / stats.monthly.length)
 							: 0
 					}
-					icon={CalendarDays}
 				/>
 			</div>
 
-			<Panel
-				title={t("varauksiaKuukaudessa", "Varauksia kuukaudessa")}
-				icon={Activity}
-			>
+			<Panel title={t("varauksiaKuukaudessa", "Varauksia kuukaudessa")}>
 				{empty ? noData : <MonthlyChart data={stats.monthly} />}
 			</Panel>
 
 			<div className={ROW}>
-				<Panel
-					title={t("suosituimmatResurssit", "Suosituimmat resurssit")}
-					icon={TrendingUp}
-				>
+				<Panel title={t("suosituimmatResurssit", "Suosituimmat resurssit")}>
 					{stats.top_resources.length ? (
 						<TopResourcesChart data={stats.top_resources} />
 					) : (
 						noData
 					)}
 				</Panel>
-				<Panel
-					title={t("ruuhkaAjat", "Ruuhka-ajat")}
-					icon={Grid3x3}
-					iconClass="text-emerald-600 dark:text-emerald-400"
-				>
+				<Panel title={t("ruuhkaAjat", "Ruuhka-ajat")}>
 					{empty ? noData : <WeekdayHourHeatmap cells={stats.weekday_hour} />}
 				</Panel>
 			</div>
@@ -99,40 +74,34 @@ export function OverviewSection({ stats }: { stats: PublicStats }) {
 
 export function MySection({ stats }: { stats: MyStats }) {
 	const { t, i18n } = useTranslation();
+	const { formatDateTime } = useDateFormatter();
 	const noData = useNoData();
 
 	return (
-		<div className="space-y-6">
+		<div className="space-y-4">
 			<SectionHeading>{t("omatTilastot", "Omat tilastot")}</SectionHeading>
 			<div className={GRID}>
 				<StatCard
 					label={t("toteutuneet", "Toteutuneet")}
 					value={stats.totals.occurrences}
-					icon={Bookmark}
 				/>
 				<StatCard
 					label={t("tuntia", "Tuntia")}
 					value={formatHours(stats.totals.hours, i18n.language)}
-					icon={Clock}
 				/>
 				<StatCard
 					label={t("odottavat", "Odottavat")}
 					value={stats.statuses.pending}
-					icon={Hourglass}
-					accent="text-amber-600 dark:text-amber-400"
 				/>
 				<StatCard
 					label={t("vahvistetut", "Vahvistetut")}
 					value={stats.statuses.confirmed}
-					icon={Bookmark}
-					accent="text-emerald-600 dark:text-emerald-400"
 				/>
 			</div>
 
 			<div className={ROW}>
 				<Panel
 					title={t("omatVarauksetKuukaudessa", "Omat varaukset kuukaudessa")}
-					icon={Activity}
 				>
 					{stats.totals.occurrences ? (
 						<MonthlyChart data={stats.monthly} />
@@ -140,10 +109,7 @@ export function MySection({ stats }: { stats: MyStats }) {
 						noData
 					)}
 				</Panel>
-				<Panel
-					title={t("omatSuosikit", "Omat suosikkiresurssit")}
-					icon={TrendingUp}
-				>
+				<Panel title={t("omatSuosikit", "Omat suosikkiresurssit")}>
 					{stats.favourite_resources.length ? (
 						<TopResourcesChart data={stats.favourite_resources} />
 					) : (
@@ -152,26 +118,19 @@ export function MySection({ stats }: { stats: MyStats }) {
 				</Panel>
 			</div>
 
-			<Panel
-				title={t("tulevatVaraukset", "Tulevat varaukset")}
-				icon={CalendarClock}
-				iconClass="text-sky-600 dark:text-sky-400"
-			>
+			<Panel title={t("tulevatVaraukset", "Tulevat varaukset")}>
 				{stats.upcoming.length ? (
-					<ul className="divide-y divide-stone-200 dark:divide-stone-800 text-xs font-mono">
+					<ul className="divide-y divide-stone-300 dark:divide-stone-700 text-sm">
 						{stats.upcoming.map((u) => (
 							<li
 								key={`${u.reservation_id}-${u.start_time}`}
 								className="py-2 flex flex-wrap items-center justify-between gap-x-4"
 							>
-								<span className="font-bold text-stone-900 dark:text-stone-100">
+								<span className="font-medium text-stone-900 dark:text-stone-100">
 									{`${u.title} · ${u.resource_name}`}
 								</span>
-								<span className="text-stone-500">
-									{new Date(u.start_time).toLocaleString(i18n.language, {
-										dateStyle: "short",
-										timeStyle: "short",
-									})}
+								<span className="text-stone-600 dark:text-stone-400 tabular-nums">
+									{formatDateTime(u.start_time)}
 								</span>
 							</li>
 						))}
@@ -196,11 +155,11 @@ function BarList({
 		<ul className="space-y-3">
 			{rows.map((r) => (
 				<li key={r.key} className="space-y-1">
-					<div className="flex items-center justify-between gap-2 text-xs font-mono">
-						<span className="font-bold text-stone-900 dark:text-stone-100 truncate">
+					<div className="flex items-center justify-between gap-2 text-sm">
+						<span className="font-medium text-stone-900 dark:text-stone-100 truncate">
 							{r.label}
 						</span>
-						<span className="text-stone-500 shrink-0">
+						<span className="text-xs tabular-nums text-stone-600 dark:text-stone-400 shrink-0">
 							{`${r.count} ${t("kpl", "kpl")} · ${formatHours(r.hours, i18n.language)} h`}
 						</span>
 					</div>
@@ -224,25 +183,18 @@ export function AdminSection({ stats }: { stats: AdminStats }) {
 	const cancelRate = total ? Math.round((statuses.cancelled / total) * 100) : 0;
 
 	return (
-		<div className="space-y-6">
+		<div className="space-y-4">
 			<SectionHeading>{t("yllpito", "Ylläpito")}</SectionHeading>
 			<div className={GRID}>
-				<StatCard
-					label={t("kyttjt", "Käyttäjät")}
-					value={stats.total_users}
-					icon={Users}
-				/>
+				<StatCard label={t("kyttjt", "Käyttäjät")} value={stats.total_users} />
 				<StatCard
 					label={t("resurssit", "Resurssit")}
 					value={stats.total_resources}
-					icon={Box}
 					hint={`${t("ryhmt", "Ryhmät")}: ${stats.total_groups}`}
 				/>
 				<StatCard
 					label={t("odottavatNyt", "Odottavat nyt")}
 					value={stats.pending_now}
-					icon={Hourglass}
-					accent="text-amber-600 dark:text-amber-400"
 					hint={
 						stats.oldest_pending_hours != null
 							? t("vanhinPv", "vanhin {{days}} pv", {
@@ -254,7 +206,6 @@ export function AdminSection({ stats }: { stats: AdminStats }) {
 				<StatCard
 					label={t("peruutusaste", "Peruutusaste")}
 					value={`${cancelRate} %`}
-					icon={Activity}
 					hint={
 						stats.avg_lead_time_days != null
 							? t("keskimrinEnnakointiPv", "ennakointi keskim. {{days}} pv", {
@@ -271,7 +222,6 @@ export function AdminSection({ stats }: { stats: AdminStats }) {
 						"kaikkiVarauksetKuukaudessa",
 						"Kaikki varaukset kuukaudessa",
 					)}
-					icon={Activity}
 				>
 					{stats.totals.occurrences ? (
 						<MonthlyChart data={stats.monthly} />
@@ -279,46 +229,49 @@ export function AdminSection({ stats }: { stats: AdminStats }) {
 						noData
 					)}
 				</Panel>
-				<Panel
-					title={t("varaustenTilajakauma", "Varausten tilajakauma")}
-					icon={Bookmark}
-					iconClass="text-emerald-600 dark:text-emerald-400"
-				>
-					<div className="space-y-3 text-xs font-mono">
+				<Panel title={t("varaustenTilajakauma", "Varausten tilajakauma")}>
+					<ul className="space-y-2 text-sm">
 						{(
 							[
 								[
 									"confirmed",
 									t("vahvistetutVaraukset", "Vahvistetut varaukset"),
-									"bg-emerald-500",
+									Check,
+									"text-emerald-700 dark:text-emerald-400",
 								],
 								[
 									"pending",
 									t("odottavatPyynnt", "Odottavat pyynnöt"),
-									"bg-amber-500",
+									Clock,
+									"text-amber-700 dark:text-amber-400",
 								],
-								["cancelled", t("peruutetut", "Peruutetut"), "bg-rose-500"],
+								[
+									"cancelled",
+									t("peruutetut", "Peruutetut"),
+									X,
+									"text-red-700 dark:text-red-400",
+								],
 							] as const
-						).map(([key, label, dot]) => (
-							<div
+						).map(([key, label, Icon, tone]) => (
+							<li
 								key={key}
-								className="p-3 border border-stone-200 dark:border-stone-800 rounded bg-stone-100 dark:bg-stone-950 flex items-center justify-between"
+								className="px-3 py-2 rounded-md bg-stone-100 dark:bg-stone-950 flex items-center justify-between"
 							>
-								<span className="flex items-center gap-2 text-stone-700 dark:text-stone-300">
-									<span className={`w-2 h-2 rounded-full ${dot}`} />
+								<span className={`flex items-center gap-2 ${tone}`}>
+									<Icon size={16} aria-hidden="true" />
 									{label}
 								</span>
-								<span className="font-bold text-stone-900 dark:text-stone-100">
+								<span className="font-mono font-bold tabular-nums text-stone-900 dark:text-stone-100">
 									{statuses[key]}
 								</span>
-							</div>
+							</li>
 						))}
-					</div>
+					</ul>
 				</Panel>
 			</div>
 
 			<div className={ROW}>
-				<Panel title={t("ryhmienKaytto", "Ryhmien käyttö")} icon={Users}>
+				<Panel title={t("ryhmienKaytto", "Ryhmien käyttö")}>
 					{stats.groups.length ? (
 						<BarList
 							rows={stats.groups.map((g) => ({
@@ -332,10 +285,7 @@ export function AdminSection({ stats }: { stats: AdminStats }) {
 						noData
 					)}
 				</Panel>
-				<Panel
-					title={t("aktiivisimmatKyttjt", "Aktiivisimmat käyttäjät")}
-					icon={TrendingUp}
-				>
+				<Panel title={t("aktiivisimmatKyttjt", "Aktiivisimmat käyttäjät")}>
 					{stats.top_users.length ? (
 						<BarList
 							rows={stats.top_users.map((u) => ({
@@ -357,7 +307,6 @@ export function AdminSection({ stats }: { stats: AdminStats }) {
 						"kaikkiResurssitSuosio",
 						"Resurssien käyttö (myös yksityiset)",
 					)}
-					icon={Box}
 				>
 					{stats.top_resources.length ? (
 						<TopResourcesChart data={stats.top_resources} />
@@ -365,20 +314,13 @@ export function AdminSection({ stats }: { stats: AdminStats }) {
 						noData
 					)}
 				</Panel>
-				<div className="space-y-6 min-w-0">
-					<Panel
-						title={t("kyttmttmtResurssit", "Käyttämättömät resurssit")}
-						icon={Box}
-						iconClass="text-rose-600 dark:text-rose-400"
-					>
+				<div className="space-y-4 min-w-0">
+					<Panel title={t("kyttmttmtResurssit", "Käyttämättömät resurssit")}>
 						{stats.unused_resources.length ? (
-							<ul className="flex flex-wrap gap-2 text-xs font-mono">
+							<ul className="flex flex-wrap gap-2 text-sm">
 								{stats.unused_resources.map((r) => (
-									<li
-										key={r.resource_id}
-										className="px-2 py-1 border border-stone-300 dark:border-stone-700 rounded"
-									>
-										{r.resource_name}
+									<li key={r.resource_id}>
+										<Chip>{r.resource_name}</Chip>
 									</li>
 								))}
 							</ul>
@@ -388,13 +330,15 @@ export function AdminSection({ stats }: { stats: AdminStats }) {
 							</EmptyNote>
 						)}
 					</Panel>
-					<Panel title={t("uudetKyttjt", "Uudet käyttäjät")} icon={UserPlus}>
+					<Panel title={t("uudetKyttjt", "Uudet käyttäjät")}>
 						{stats.new_users.length ? (
-							<ul className="flex flex-wrap gap-x-6 gap-y-1 text-xs font-mono">
+							<ul className="flex flex-wrap gap-x-6 gap-y-1 text-sm">
 								{stats.new_users.map((m) => (
 									<li key={m.month}>
-										<span className="text-stone-500">{m.month}</span>{" "}
-										<span className="font-bold text-stone-900 dark:text-stone-100">
+										<span className="text-stone-600 dark:text-stone-400 tabular-nums">
+											{m.month}
+										</span>{" "}
+										<span className="font-mono font-bold tabular-nums text-stone-900 dark:text-stone-100">
 											{`+${m.count}`}
 										</span>
 									</li>

@@ -1,4 +1,5 @@
 import { useTranslation } from "react-i18next";
+import { SegmentedControl } from "#/components/SegmentedControl";
 import { STATS_RANGES, type StatsRange } from "#/utils/statsUtils";
 
 export function RangeSelect({
@@ -17,23 +18,11 @@ export function RangeSelect({
 	};
 
 	return (
-		<fieldset className="inline-flex border-2 border-stone-800 dark:border-stone-700 rounded-md overflow-hidden">
-			<legend className="sr-only">{t("aikavli", "Aikaväli")}</legend>
-			{STATS_RANGES.map((r) => (
-				<button
-					key={r}
-					type="button"
-					aria-pressed={value === r}
-					onClick={() => onChange(r)}
-					className={`px-3 py-1.5 text-xs font-mono font-bold cursor-pointer ${
-						value === r
-							? "bg-stone-800 text-stone-50 dark:bg-stone-200 dark:text-stone-900"
-							: "bg-stone-50 text-stone-700 hover:bg-stone-200 dark:bg-stone-900 dark:text-stone-300 dark:hover:bg-stone-800"
-					}`}
-				>
-					{labels[r]}
-				</button>
-			))}
-		</fieldset>
+		<SegmentedControl
+			aria-label={t("aikavli", "Aikaväli")}
+			value={value}
+			onChange={onChange}
+			options={STATS_RANGES.map((r) => ({ value: r, label: labels[r] }))}
+		/>
 	);
 }

@@ -3,34 +3,28 @@ import {
 	Bar,
 	BarChart,
 	CartesianGrid,
-	Cell,
 	ResponsiveContainer,
 	Tooltip,
 	XAxis,
 	YAxis,
 } from "recharts";
 import type { MonthlyStat, TopResourceStat } from "#/hooks/useStats";
-import { getResourceHex } from "#/utils/resourceColors";
 import { formatHours, formatMonth, heatLevel } from "#/utils/statsUtils";
 
 // Text and grid use currentColor so they follow the light/dark text color
-const TICK = { fill: "currentColor", fontSize: 11, fontFamily: "monospace" };
+const TICK = { fill: "currentColor", fontSize: 12 };
+// Single accent for bars (purple); dark mode uses a lighter step
+const BAR_COLOR_CLASS =
+	"[--bar:var(--color-purple-600)] dark:[--bar:var(--color-purple-400)]";
 const TOOLTIP_STYLE = {
 	background: "var(--color-stone-900, #1c1917)",
 	border: "1px solid var(--color-stone-700, #44403c)",
 	borderRadius: 6,
 	color: "#fafaf9",
 	fontSize: 12,
-	fontFamily: "monospace",
 };
 
-export function MonthlyChart({
-	data,
-	color = "#9333ea",
-}: {
-	data: MonthlyStat[];
-	color?: string;
-}) {
+export function MonthlyChart({ data }: { data: MonthlyStat[] }) {
 	const { t, i18n } = useTranslation();
 	const rows = data.map((d) => ({
 		...d,
@@ -39,7 +33,7 @@ export function MonthlyChart({
 
 	return (
 		<div
-			className="h-56 text-stone-500"
+			className={`h-56 text-stone-600 dark:text-stone-400 ${BAR_COLOR_CLASS}`}
 			role="img"
 			aria-label={t("varauksiaKuukaudessa", "Varauksia kuukaudessa")}
 		>
@@ -67,7 +61,7 @@ export function MonthlyChart({
 								: t("varaukset", "Varaukset"),
 						]}
 					/>
-					<Bar dataKey="count" fill={color} radius={[3, 3, 0, 0]} />
+					<Bar dataKey="count" fill="var(--bar)" radius={[3, 3, 0, 0]} />
 				</BarChart>
 			</ResponsiveContainer>
 		</div>
@@ -80,7 +74,7 @@ export function TopResourcesChart({ data }: { data: TopResourceStat[] }) {
 
 	return (
 		<div
-			className="text-stone-500"
+			className={`text-stone-600 dark:text-stone-400 ${BAR_COLOR_CLASS}`}
 			style={{ height }}
 			role="img"
 			aria-label={t("suosituimmatResurssit", "Suosituimmat resurssit")}
@@ -114,11 +108,7 @@ export function TopResourcesChart({ data }: { data: TopResourceStat[] }) {
 						cursor={{ fill: "currentColor", fillOpacity: 0.1 }}
 						formatter={(value) => [value, t("varaukset", "Varaukset")]}
 					/>
-					<Bar dataKey="count" radius={[0, 3, 3, 0]}>
-						{data.map((d) => (
-							<Cell key={d.resource_id} fill={getResourceHex(d.color)} />
-						))}
-					</Bar>
+					<Bar dataKey="count" fill="var(--bar)" radius={[0, 3, 3, 0]} />
 				</BarChart>
 			</ResponsiveContainer>
 		</div>
@@ -155,42 +145,56 @@ export function WeekdayHourHeatmap({
 		});
 
 	return (
-		<div className="overflow-x-auto">
-			<table
-				className="border-separate border-spacing-0.5 text-[10px] font-mono text-stone-500"
-				aria-label={t(
-					"varauksetViikonpivinJaTunneittain",
-					"Varaukset viikonpäivittäin ja tunneittain",
-				)}
-			>
-				<thead>
-					<tr>
-						<th />
-						{range.map((h) => (
-							<th key={h} className="font-normal w-6 text-center">
-								{h}
-							</th>
-						))}
-					</tr>
-				</thead>
-				<tbody>
-					{Array.from({ length: 7 }, (_, d) => d).map((d) => (
-						<tr key={d}>
-							<th className="font-normal pr-2 text-right">{weekdayName(d)}</th>
-							{range.map((h) => {
-								const count = counts.get(`${d}-${h}`) ?? 0;
-								return (
-									<td
-										key={h}
-										title={`${weekdayName(d)} ${h}:00 – ${count}`}
-										className={`h-6 w-6 rounded-sm ${HEAT_CLASSES[heatLevel(count, max)]}`}
-									/>
-								);
-							})}
+		<div className="space-y-3">
+			<div className="overflow-x-auto">
+				<table
+					className="border-separate border-spacing-0.5 text-xs tabular-nums text-stone-600 dark:text-stone-400"
+					aria-label={t(
+						"varauksetViikonpivinJaTunneittain",
+						"Varaukset viikonpäivittäin ja tunneittain",
+					)}
+				>
+					<thead>
+						<tr>
+							<th />
+							{range.map((h) => (
+								<th key={h} className="font-normal w-6 text-center">
+									{h}
+								</th>
+							))}
 						</tr>
-					))}
-				</tbody>
-			</table>
+					</thead>
+					<tbody>
+						{Array.from({ length: 7 }, (_, d) => d).map((d) => (
+							<tr key={d}>
+								<th className="font-normal pr-2 text-right">
+									{weekdayName(d)}
+								</th>
+								{range.map((h) => {
+									const count = counts.get(`${d}-${h}`) ?? 0;
+									return (
+										<td
+											key={h}
+											title={`${weekdayName(d)} ${h}:00 – ${count}`}
+											className={`h-6 w-6 rounded-sm ${HEAT_CLASSES[heatLevel(count, max)]}`}
+										/>
+									);
+								})}
+							</tr>
+						))}
+					</tbody>
+				</table>
+			</div>
+			<div
+				className="flex items-center gap-2 text-xs text-stone-600 dark:text-stone-400"
+				aria-hidden="true"
+			>
+				<span>{t("tilastotVahemman", "Vähemmän")}</span>
+				{HEAT_CLASSES.map((cls) => (
+					<span key={cls} className={`size-4 rounded-sm ${cls}`} />
+				))}
+				<span>{t("tilastotEnemman", "Enemmän")}</span>
+			</div>
 		</div>
 	);
 }
