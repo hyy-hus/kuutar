@@ -874,5 +874,11 @@
 	"rajoitus": "Restriction",
 	"istunnot": "Sessions",
 	"sahkopostipohja": "Email template",
-	"outlookHaeNytEiKaytettavissa": "The \"Check now\" action is disabled until the integration is enabled."
+	"outlookHaeNytEiKaytettavissa": "The \"Check now\" action is disabled until the integration is enabled.",
+	"teema": "Theme",
+	"teemaVaalea": "Light",
+	"teemaTumma": "Dark",
+	"laajennaValikko": "Expand menu",
+	"tiivistaValikko": "Collapse menu",
+	"paavalikko": "Main menu"
 }

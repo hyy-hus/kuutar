@@ -874,5 +874,11 @@
 	"rajoitus": "Begränsning",
 	"istunnot": "Sessioner",
 	"sahkopostipohja": "E-postmall",
-	"outlookHaeNytEiKaytettavissa": "Funktionen Kontrollera nu är avstängd tills integrationen har tagits i bruk."
+	"outlookHaeNytEiKaytettavissa": "Funktionen Kontrollera nu är avstängd tills integrationen har tagits i bruk.",
+	"teema": "Tema",
+	"teemaVaalea": "Ljust",
+	"teemaTumma": "Mörkt",
+	"laajennaValikko": "Expandera menyn",
+	"tiivistaValikko": "Förminska menyn",
+	"paavalikko": "Huvudmeny"
 }

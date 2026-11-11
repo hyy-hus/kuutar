@@ -1,12 +1,18 @@
 // src/routes/_app.tsx
-import { createFileRoute, Link, Outlet } from "@tanstack/react-router";
-import { Menu, X } from "lucide-react";
+import {
+	createFileRoute,
+	Link,
+	Outlet,
+	useRouterState,
+} from "@tanstack/react-router";
+import { Menu, PanelLeftClose, PanelLeftOpen, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { AuthDialog } from "#/components/AuthPopover";
 import { Button } from "#/components/Button";
 import { SearchBar } from "#/components/SearchBar";
 import { SideBar } from "#/components/SideBar";
+import type { Theme } from "#/components/ThemeSwitcher";
 import { authKeys, fetchMe } from "#/hooks/useAuth";
 import { cn } from "#/utils/cn";
 
@@ -26,43 +32,75 @@ export const Route = createFileRoute("/_app")({
 	component: AppLayout,
 });
 
+const COLLAPSED_KEY = "sidebar-collapsed";
+const DESKTOP_QUERY = "(min-width: 768px)";
+
+function readStorage(key: string): string | null {
+	try {
+		return localStorage.getItem(key);
+	} catch {
+		return null;
+	}
+}
+
+function writeStorage(key: string, value: string) {
+	try {
+		localStorage.setItem(key, value);
+	} catch {
+		// Not persisting is fine; the setting resets on reload
+	}
+}
+
+/** True at the `md` breakpoint and up, where the sidebar is a rail instead of a drawer */
+function useIsDesktop() {
+	const [isDesktop, setIsDesktop] = useState(
+		() => window.matchMedia(DESKTOP_QUERY).matches,
+	);
+	useEffect(() => {
+		const query = window.matchMedia(DESKTOP_QUERY);
+		const onChange = () => setIsDesktop(query.matches);
+		query.addEventListener("change", onChange);
+		return () => query.removeEventListener("change", onChange);
+	}, []);
+	return isDesktop;
+}
+
 function AppLayout() {
 	const { t } = useTranslation();
-	// Default open on desktop, closed on mobile
-	const [isSidebarOpen, setIsSidebarOpen] = useState(() => {
-		if (typeof window !== "undefined") {
-			return window.innerWidth >= 768;
-		}
-		return true;
-	});
+	const isDesktop = useIsDesktop();
+	// Mobile drawer: closed by default and after every navigation
+	const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+	// Desktop rail: persisted
+	const [isCollapsed, setIsCollapsed] = useState(
+		() => readStorage(COLLAPSED_KEY) === "true",
+	);
+	const pathname = useRouterState({ select: (s) => s.location.pathname });
 
-	// Auto-close mobile drawer when route changes
+	// biome-ignore lint/correctness/useExhaustiveDependencies: close the drawer on navigation
 	useEffect(() => {
-		if (window.innerWidth < 768) {
-			setIsSidebarOpen(false);
-		}
-	}, []);
+		setIsDrawerOpen(false);
+	}, [pathname]);
 
-	const [theme, setTheme] = useState<"light" | "dark">(() => {
-		if (typeof window !== "undefined") {
-			return (localStorage.getItem("theme") as "light" | "dark") || "light";
-		}
-		return "light";
-	});
-
-	useEffect(() => {
-		const root = document.documentElement;
-		if (theme === "dark") {
-			root.classList.add("dark");
+	const toggleMenu = () => {
+		if (isDesktop) {
+			setIsCollapsed((prev) => {
+				writeStorage(COLLAPSED_KEY, String(!prev));
+				return !prev;
+			});
 		} else {
-			root.classList.remove("dark");
+			setIsDrawerOpen((prev) => !prev);
 		}
-		localStorage.setItem("theme", theme);
-	}, [theme]);
-
-	const toggleTheme = () => {
-		setTheme((prev) => (prev === "light" ? "dark" : "light"));
 	};
+	const showRail = isDesktop && isCollapsed;
+
+	const [theme, setTheme] = useState<Theme>(() =>
+		readStorage("theme") === "dark" ? "dark" : "light",
+	);
+
+	useEffect(() => {
+		document.documentElement.classList.toggle("dark", theme === "dark");
+		writeStorage("theme", theme);
+	}, [theme]);
 
 	return (
 		<div className="h-screen w-screen overflow-hidden flex flex-col bg-stone-50 dark:bg-stone-950 text-stone-900 dark:text-stone-100">
@@ -71,7 +109,7 @@ function AppLayout() {
 				<Button
 					variant="ghost"
 					size="icon"
-					onClick={() => setIsSidebarOpen((prev) => !prev)}
+					onClick={toggleMenu}
 					aria-label={t("toggleMenu", "Toggle Menu")}
 				>
 					<Menu size={20} />
@@ -89,16 +127,17 @@ function AppLayout() {
 				<div className="hidden sm:block">
 					<SearchBar />
 				</div>
-
-				<AuthDialog />
 			</header>
 
+			<AuthDialog />
+
 			{/* Mobile Backdrop Overlay */}
-			{isSidebarOpen && (
+			{isDrawerOpen && (
 				<button
 					type="button"
 					className="md:hidden fixed inset-0 bg-stone-950/60 backdrop-blur-xs z-40 transition-opacity"
-					onClick={() => setIsSidebarOpen(false)}
+					onClick={() => setIsDrawerOpen(false)}
+					aria-label={t("closeDrawer", "Close Drawer")}
 				/>
 			)}
 
@@ -109,10 +148,11 @@ function AppLayout() {
 					className={cn(
 						"bg-stone-100 dark:bg-stone-900 transition-all duration-300 ease-in-out shrink-0 flex flex-col shadow-2xl md:shadow-none overflow-hidden",
 						// Mobile fixed drawer styling
-						"fixed md:static inset-y-0 left-0 z-50 h-full",
-						isSidebarOpen
-							? "w-72 md:w-60 translate-x-0 border-r-2 border-stone-800 dark:border-stone-600"
-							: "-translate-x-full md:translate-x-0 md:w-0 md:border-r-0",
+						"fixed md:static inset-y-0 left-0 z-50 h-full w-72 border-r-2 border-stone-800 dark:border-stone-600",
+						isDrawerOpen
+							? "translate-x-0"
+							: "-translate-x-full md:translate-x-0",
+						isCollapsed ? "md:w-16" : "md:w-60",
 					)}
 				>
 					{/* Drawer Header on Mobile */}
@@ -123,19 +163,48 @@ function AppLayout() {
 						<Button
 							variant="ghost"
 							size="icon"
-							onClick={() => setIsSidebarOpen(false)}
+							onClick={() => setIsDrawerOpen(false)}
 							aria-label={t("closeDrawer", "Close Drawer")}
 						>
 							<X size={18} />
 						</Button>
 					</div>
 
-					<div className="flex-1 overflow-y-auto p-2 min-w-60">
+					<div
+						className={cn(
+							"flex-1 overflow-y-auto overflow-x-hidden p-2",
+							!showRail && "md:min-w-60",
+						)}
+					>
 						<SideBar
-							isSidebarOpen={isSidebarOpen}
+							collapsed={showRail}
 							theme={theme}
-							toggleTheme={toggleTheme}
+							onThemeChange={setTheme}
 						/>
+					</div>
+
+					{/* Collapse toggle (desktop only) */}
+					<div className="hidden md:block border-t border-stone-300 dark:border-stone-700 p-2">
+						<Button
+							variant="ghost"
+							size={showRail ? "icon" : "sm"}
+							className={cn(showRail ? "mx-auto flex" : "w-full justify-start")}
+							onClick={toggleMenu}
+							aria-label={
+								isCollapsed
+									? t("laajennaValikko", "Laajenna valikko")
+									: t("tiivistaValikko", "Pienennä valikko")
+							}
+						>
+							{isCollapsed ? (
+								<PanelLeftOpen size={16} aria-hidden="true" />
+							) : (
+								<>
+									<PanelLeftClose size={16} aria-hidden="true" />
+									{t("tiivistaValikko", "Pienennä valikko")}
+								</>
+							)}
+						</Button>
 					</div>
 				</aside>
 
