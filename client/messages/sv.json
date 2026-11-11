@@ -827,5 +827,19 @@
 	"takaisinHyvaksynnat": "Tillbaka till godkännanden",
 	"kieliversioKuvaus": "Lägg till rubrik och PDF-fil för minst ett språk.",
 	"sopimuksiaMaara": "{{count}} avtalsdokument",
-	"asetukset": "Inställningar"
+	"asetukset": "Inställningar",
+	"kierroksiaMaara": "Omgångar: {{count}}",
+	"vainRistiriidat": "Endast konflikter",
+	"eiRistiriitoja": "Inga konflikter.",
+	"ristiriita": "Konflikt",
+	"hakijoitaJaRistiriitoja": "{{applicants}} sökande, {{conflicts}} konflikter",
+	"vahvistaPoistaKierros": "Ska omgången tas bort? Detta kan inte ångras.",
+	"haeVarausjaksoa": "Ansök om bokningsblock",
+	"kierrosOhjeOtsikko": "Så fungerar ansökan",
+	"kierrosEiAvoinna": "Ansökan pågår inte, så ansökningar kan inte lämnas in eller ändras.",
+	"kierroksenPerustiedot": "Grunduppgifter",
+	"kierroksenAjoitus": "Tidsplan",
+	"kierroksenAjoitusKuvaus": "Ansökningstiden är tiden då ansökningar kan lämnas in. Bokningsperioden är tiden som de sökta bokningarna ligger inom.",
+	"kierroksenKohderyhma": "Resurser och sökande",
+	"kierrosTayta": "Fyll i alla obligatoriska fält och välj minst en resurs och en grupp."
 }
