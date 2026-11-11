@@ -1,37 +1,43 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
-	ArrowUpRight,
-	Box,
 	Calendar,
+	CalendarX,
 	CheckCircle2,
 	ChevronRight,
 	Clock,
 	Loader2,
+	LogIn,
 	Plus,
-	Shield,
-	User as UserIcon,
 } from "lucide-react";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "#/components/Button";
-import { Chip } from "#/components/Chip";
+import { Callout } from "#/components/Callout";
+import { EmptyState } from "#/components/EmptyState";
 import { Footer } from "#/components/Footer";
+import { OutlookBadge } from "#/components/OutlookBadge";
+import { PageContainer } from "#/components/PageContainer";
+import { PageHeader } from "#/components/PageHeader";
+import { StatusChip } from "#/components/StatusChip";
 import { useAuth, useIsAdmin } from "#/hooks/useAuth";
 import { useMyReservations, useReservations } from "#/hooks/useReservations";
 import { useResources } from "#/hooks/useResorces";
 import { currentYearRange } from "#/utils/calendarUtils";
 import { addDays, startOfWeek, useDateFormatter } from "#/utils/date";
+import { stripOutlookPrefix } from "#/utils/reservationTitle";
 import { getLocalizedPlainText } from "#/utils/richText";
 import { upcomingReservations } from "#/utils/upcomingReservations";
-import { readable_uuid } from "#/utils/uuid";
 
 export const Route = createFileRoute("/_app/")({
 	component: HomePage,
 });
 
+const UPCOMING_LIMIT = 5;
+const RESOURCE_LIMIT = 5;
+
 function HomePage() {
 	const { t, i18n } = useTranslation();
-	const { formatDate } = useDateFormatter();
+	const { formatRange } = useDateFormatter();
 	const { user } = useAuth();
 	const { isAdmin } = useIsAdmin();
 	const { data: resources, isLoading: loadingResources } = useResources();
@@ -43,6 +49,7 @@ function HomePage() {
 		[currentWeekStart],
 	);
 
+	// Same query as the approvals dashboard's default (whole current year)
 	const yearRange = useMemo(() => currentYearRange(), []);
 
 	const { data: reservations, isLoading: loadingReservations } =
@@ -71,15 +78,25 @@ function HomePage() {
 		() => upcomingReservations(myReservations ?? [], new Date()),
 		[myReservations],
 	);
-	const pendingReservations = useMemo(
-		() => reservations?.filter((r) => r.status === "pending") || [],
+
+	// Round applications are handled on their round page, not on the dashboard, so they
+	// are left out here too to keep the count equal to the dashboard's pending list
+	const pendingCount = useMemo(
+		() =>
+			reservations?.filter((r) => r.status === "pending" && !r.round_id)
+				.length ?? 0,
 		[reservations],
+	);
+
+	const resourceNames = useMemo(
+		() => new Map(resources?.map((r) => [r.id, r.name]) ?? []),
+		[resources],
 	);
 
 	const popularResources = useMemo(() => {
 		if (!resources) return [];
 		if (!reservations || reservations.length === 0)
-			return resources.slice(0, 5);
+			return resources.slice(0, RESOURCE_LIMIT);
 
 		const counts = new Map<string, number>();
 
@@ -103,273 +120,223 @@ function HomePage() {
 			}))
 			.sort((a, b) => b.weeklyCount - a.weeklyCount)
 			.map((item) => item.resource)
-			.slice(0, 5);
+			.slice(0, RESOURCE_LIMIT);
 	}, [resources, reservations, currentWeekStart, nextWeekStart]);
 
-	return (
-		<div className="flex flex-col min-h-full -m-2 sm:-m-4">
-			<div className="flex-1 flex flex-col gap-6 p-2 sm:p-4 max-w-6xl mx-auto w-full min-h-0 min-w-0 pb-12">
-				{/* Hero Section */}
-				<section className="p-6 md:p-8 rounded-lg bg-stone-100 dark:bg-stone-900 border-2 border-stone-800 dark:border-stone-700 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-					<div className="space-y-2 max-w-2xl">
-						<h1 className="text-2xl sm:text-3xl md:text-4xl font-black tracking-tight text-stone-900 dark:text-stone-100">
-							{t(
-								"tervetuloaVaraamaanTilojaJaResursseja",
-								"Tervetuloa varaamaan tiloja ja resursseja",
-							)}
-						</h1>
-						<p className="text-sm text-stone-600 dark:text-stone-400">
-							{t(
-								"tarkasteleReaaliaikaistaKalenterivaraustilannettaTeeUusiaVarauksiaJaHallinnoiOmiaVarauksiasiHelposti",
-								"Tarkastele reaaliaikaista kalenterivaraustilannetta, tee uusia varauksia ja hallinnoi omia varauksiasi helposti.",
-							)}
-						</p>
-					</div>
-
-					<div className="flex flex-wrap sm:flex-col gap-2.5 w-full sm:w-auto shrink-0">
-						<Button asChild size="lg" className="gap-2 justify-center">
-							<Link to="/calendar">
-								<Calendar size={18} />
-								<span>{t("avaaKalenteri", "Avaa kalenteri")}</span>
-							</Link>
-						</Button>
-
-						{user && (
-							<Button
-								asChild
-								variant="outline"
-								size="lg"
-								className="gap-2 justify-center"
-							>
-								<Link to="/reservations/create">
-									<Plus size={18} />
-									<span>{t("uusiVaraus", "Uusi varaus")}</span>
-								</Link>
-							</Button>
-						)}
-					</div>
-				</section>
-
-				{/* Admin Notice Panel */}
-				{isAdmin && pendingReservations.length > 0 && (
-					<section className="p-4 rounded-md bg-amber-50 dark:bg-amber-950/40 border-2 border-amber-400 dark:border-amber-700 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-						<div className="flex items-center gap-3">
-							<div className="p-2 bg-amber-200 dark:bg-amber-900/60 rounded-md text-amber-800 dark:text-amber-200 shrink-0">
-								<Shield size={20} />
-							</div>
-							<div>
-								<h2 className="font-bold text-sm text-amber-900 dark:text-amber-200">
-									{t(
-										"odottaviaHyvksyntjLength",
-										"Odottavia hyväksyntöjä ({{length}})",
-										{ length: pendingReservations.length },
-									)}
-								</h2>
-								<p className="text-xs text-amber-700 dark:text-amber-400">
-									{t(
-										"jrjestelmssOnUusiaVarauspyyntjJotkaOdottavatYllpidonVahvistusta",
-										"Järjestelmässä on uusia varauspyyntöjä, jotka odottavat ylläpidon vahvistusta.",
-									)}
-								</p>
-							</div>
-						</div>
-
-						<Button
-							asChild
-							size="sm"
-							className="bg-amber-700 hover:bg-amber-800 text-white shrink-0 self-end sm:self-center"
-						>
-							<Link to="/admin/dashboard">
-								<span>{t("ksittelePyynnt", "Käsittele pyynnöt")}</span>
-								<ChevronRight size={16} />
-							</Link>
-						</Button>
-					</section>
+	const upcomingSection = (
+		<section className="space-y-3">
+			<div className="flex items-center justify-between gap-2">
+				<h2 className="text-lg font-semibold">
+					{t("tulevatVarauksesi", "Tulevat varauksesi")}
+				</h2>
+				{user && (
+					<Button variant="ghost" size="sm" asChild>
+						<Link to="/reservations">
+							<span>{t("kaikkiVaraukset", "Kaikki varaukset")}</span>
+							<ChevronRight size={14} />
+						</Link>
+					</Button>
 				)}
+			</div>
 
-				{/* Grid Layout */}
-				<div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-					<div className="lg:col-span-2 space-y-3">
-						<div className="flex items-center justify-between">
-							<h2 className="text-lg font-bold text-stone-900 dark:text-stone-100 flex items-center gap-2">
-								<Clock size={18} className="text-stone-500" />
-								<span>{t("tulevatVarauksesi", "Tulevat varauksesi")}</span>
-							</h2>
-
-							{user && (
-								<Button
-									variant="ghost"
-									size="sm"
-									asChild
-									className="text-xs gap-1"
-								>
-									<Link to="/reservations">
-										<span>{t("kaikkiVaraukset", "Kaikki varaukset")}</span>
-										<ChevronRight size={14} />
-									</Link>
-								</Button>
-							)}
-						</div>
-
-						{!user ? (
-							<div className="p-6 text-center border-2 border-dashed border-stone-300 dark:border-stone-800 rounded-md bg-stone-50 dark:bg-stone-900/40 space-y-3">
-								<p className="text-xs text-stone-500">
-									{t(
-										"kirjauduSisnNhdksesiOmatTulevatVarauksesiJaTehdksesiUusiaVarauksia",
-										"Kirjaudu sisään nähdäksesi omat tulevat varauksesi ja tehdäksesi uusia varauksia.",
-									)}
-								</p>
-							</div>
-						) : loadingMyReservations ? (
-							<div className="p-8 flex items-center justify-center gap-2 text-stone-500">
-								<Loader2 className="animate-spin" size={18} />
-								<span>{t("ladataanVarauksia", "Ladataan varauksia...")}</span>
-							</div>
-						) : userUpcoming.length > 0 ? (
-							<ul className="space-y-2.5">
-								{userUpcoming
-									.slice(0, 4)
-									.map(({ reservation: res, nextOccurrence }) => {
-										const isPending = res.status === "pending";
-										const isConfirmed = res.status === "confirmed";
-
-										return (
-											<li
-												key={res.id}
-												className="p-3 border-2 border-stone-800 dark:border-stone-700 rounded-md bg-stone-50 dark:bg-stone-900 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:border-purple-600 transition-colors"
-											>
-												<div className="space-y-1 min-w-0 flex-1">
-													<div className="flex items-center gap-2 min-w-0">
-														<Link
-															to="/reservations/$id"
-															params={{ id: res.id }}
-															className="font-bold text-sm hover:underline text-stone-900 dark:text-stone-100 truncate"
-														>
-															{res.title}
-														</Link>
-														<Chip>{readable_uuid(res.id)}</Chip>
-													</div>
-
-													{res.user_name && (
-														<p className="text-[11px] text-stone-500 dark:text-stone-400 flex items-center gap-1 font-medium">
-															<UserIcon
-																size={11}
-																className="text-purple-600 shrink-0"
-															/>
-															<span className="truncate">{res.user_name}</span>
-														</p>
-													)}
-
-													<p className="text-xs text-stone-500 font-mono">
-														{formatDate(nextOccurrence.start_time)}
-													</p>
-												</div>
-
-												<div className="flex items-center justify-between sm:justify-end gap-3 shrink-0">
-													{isPending && (
-														<span className="inline-flex items-center gap-1 text-[10px] font-mono text-amber-800 dark:text-amber-300 bg-amber-100 dark:bg-amber-950/60 px-2 py-0.5 rounded border border-amber-300 dark:border-amber-800">
-															<Clock size={11} />
-															<span>{t("odottaa", "Odottaa")}</span>
-														</span>
-													)}
-													{isConfirmed && (
-														<span className="inline-flex items-center gap-1 text-[10px] font-mono text-emerald-800 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-300 dark:border-emerald-800">
-															<CheckCircle2 size={11} />
-															<span>{t("vahvistettu", "Vahvistettu")}</span>
-														</span>
-													)}
-
-													<Button
-														variant="secondary"
-														size="sm"
-														asChild
-														className="text-xs gap-1"
-													>
-														<Link
-															to="/reservations/$id"
-															params={{ id: res.id }}
-														>
-															<span>{t("tiedot", "Tiedot")}</span>
-															<ArrowUpRight size={14} />
-														</Link>
-													</Button>
-												</div>
-											</li>
-										);
-									})}
-							</ul>
-						) : (
-							<div className="p-6 text-center border-2 border-stone-200 dark:border-stone-800 rounded-md bg-stone-50 dark:bg-stone-900/40">
-								<p className="text-xs text-stone-500">
-									{t(
-										"sinullaEiOleAktiivisiaVarauksiaLhitulevaisuudessa",
-										"Sinulla ei ole aktiivisia varauksia lähitulevaisuudessa.",
-									)}
-								</p>
-							</div>
-						)}
-					</div>
-
-					<div className="space-y-3">
-						<div className="flex items-center justify-between">
-							<h2 className="text-lg font-bold text-stone-900 dark:text-stone-100 flex items-center gap-2">
-								<Box size={18} className="text-stone-500" />
-								<span>{t("resurssit", "Resurssit")}</span>
-							</h2>
-
-							<Button
-								variant="ghost"
-								size="sm"
-								asChild
-								className="text-xs gap-1"
-							>
-								<Link to="/resources">
-									<span>{t("selaaKaikkia", "Selaa kaikkia")}</span>
-									<ChevronRight size={14} />
-								</Link>
-							</Button>
-						</div>
-
-						{loadingResources || loadingReservations ? (
-							<div className="p-8 flex items-center justify-center gap-2 text-stone-500">
-								<Loader2 className="animate-spin" size={18} />
-							</div>
-						) : (
-							<ul className="space-y-2">
-								{popularResources.map((res) => (
-									<li
-										key={res.id}
-										className="p-3 border border-stone-200 dark:border-stone-800 rounded-md bg-stone-50 dark:bg-stone-900 flex items-center justify-between gap-2 hover:bg-stone-100 dark:hover:bg-stone-800/60 transition-colors"
+			{!user ? (
+				<EmptyState
+					icon={LogIn}
+					title={t(
+						"kirjauduSisnNhdksesiOmatTulevatVarauksesiJaTehdksesiUusiaVarauksia",
+						"Kirjaudu sisään nähdäksesi omat tulevat varauksesi ja tehdäksesi uusia varauksia.",
+					)}
+				/>
+			) : loadingMyReservations ? (
+				<div className="flex items-center justify-center gap-2 p-8 text-stone-600 dark:text-stone-400">
+					<Loader2 className="animate-spin" size={18} />
+					<span className="text-sm">
+						{t("ladataanVarauksia", "Ladataan varauksia...")}
+					</span>
+				</div>
+			) : userUpcoming.length > 0 ? (
+				<ul className="space-y-2">
+					{userUpcoming
+						.slice(0, UPCOMING_LIMIT)
+						.map(({ reservation: res, nextOccurrence }) => {
+							const isOutlook = res.source === "outlook";
+							const resourceName = resourceNames.get(
+								nextOccurrence.resource_id,
+							);
+							return (
+								<li key={res.id}>
+									<Link
+										to="/reservations/$id"
+										params={{ id: res.id }}
+										className="focus-ring flex flex-col gap-2 rounded-md border border-stone-300 bg-stone-50 p-3 transition-colors hover:border-stone-800 hover:shadow-l1 sm:flex-row sm:items-center sm:justify-between dark:border-stone-700 dark:bg-stone-900 dark:hover:border-stone-300"
 									>
-										<div className="min-w-0 flex-1">
-											<h3 className="font-bold text-xs text-stone-900 dark:text-stone-100 truncate">
-												{res.name}
-											</h3>
-											<p className="text-[11px] text-stone-500 truncate">
-												{getLocalizedPlainText(
-													res.description,
-													i18n.language,
-												) ||
-													t("eiKuvaustaSaatavilla", "Ei kuvausta saatavilla.")}
+										<div className="min-w-0 space-y-0.5">
+											<div className="flex min-w-0 items-center gap-2">
+												<span className="truncate text-sm font-bold text-stone-900 dark:text-stone-100">
+													{isOutlook
+														? stripOutlookPrefix(res.title)
+														: res.title}
+												</span>
+												{isOutlook && <OutlookBadge />}
+											</div>
+											<p className="text-xs tabular-nums text-stone-600 dark:text-stone-400">
+												{resourceName && <span>{resourceName} · </span>}
+												{formatRange(
+													nextOccurrence.start_time,
+													nextOccurrence.end_time,
+												)}
 											</p>
 										</div>
+										{res.status === "pending" && (
+											<StatusChip variant="warning" icon={Clock}>
+												{t("odottaa", "Odottaa")}
+											</StatusChip>
+										)}
+										{res.status === "confirmed" && (
+											<StatusChip variant="success" icon={CheckCircle2}>
+												{t("vahvistettu", "Vahvistettu")}
+											</StatusChip>
+										)}
+									</Link>
+								</li>
+							);
+						})}
+				</ul>
+			) : (
+				<EmptyState
+					icon={CalendarX}
+					title={t(
+						"sinullaEiOleAktiivisiaVarauksiaLhitulevaisuudessa",
+						"Sinulla ei ole aktiivisia varauksia lähitulevaisuudessa.",
+					)}
+				/>
+			)}
+		</section>
+	);
 
-										<Button
-											variant="ghost"
-											size="icon"
-											asChild
-											className="shrink-0"
-										>
-											<Link to="/calendar" search={{ resources: [res.id] }}>
-												<Calendar size={14} />
-											</Link>
-										</Button>
-									</li>
-								))}
-							</ul>
-						)}
-					</div>
+	const resourcesSection = (
+		<section className="space-y-3">
+			<div className="flex items-center justify-between gap-2">
+				<h2 className="text-lg font-semibold">{t("resurssit", "Resurssit")}</h2>
+				<Button variant="ghost" size="sm" asChild>
+					<Link to="/resources">
+						<span>{t("selaaKaikkia", "Selaa kaikkia")}</span>
+						<ChevronRight size={14} />
+					</Link>
+				</Button>
+			</div>
+
+			{loadingResources || loadingReservations ? (
+				<div className="flex items-center justify-center p-8 text-stone-600 dark:text-stone-400">
+					<Loader2 className="animate-spin" size={18} />
 				</div>
+			) : (
+				<ul className="space-y-2">
+					{popularResources.map((res) => {
+						const description = getLocalizedPlainText(
+							res.description,
+							i18n.language,
+						);
+						return (
+							<li key={res.id}>
+								<Link
+									to="/resources/$id"
+									params={{ id: res.id }}
+									className="focus-ring block rounded-md border border-stone-300 bg-stone-50 p-3 transition-colors hover:border-stone-800 hover:shadow-l1 dark:border-stone-700 dark:bg-stone-900 dark:hover:border-stone-300"
+								>
+									<span className="block truncate text-sm font-bold text-stone-900 dark:text-stone-100">
+										{res.name}
+									</span>
+									{description && (
+										<span className="block truncate text-xs text-stone-600 dark:text-stone-400">
+											{description}
+										</span>
+									)}
+								</Link>
+							</li>
+						);
+					})}
+				</ul>
+			)}
+		</section>
+	);
+
+	// The footer bleeds out of the shell's padding to the edges of the content area
+	return (
+		<div className="-mx-4 -my-6 flex min-h-[calc(100%+3rem)] flex-col md:-mx-8">
+			<div className="flex-1 px-4 py-6 md:px-8">
+				{user ? (
+					<PageContainer>
+						<PageHeader
+							title={t("etusivu", "Etusivu")}
+							actions={
+								<Button asChild>
+									<Link to="/reservations/create">
+										<Plus size={18} />
+										<span>{t("uusiVaraus", "Uusi varaus")}</span>
+									</Link>
+								</Button>
+							}
+						/>
+
+						{isAdmin && pendingCount > 0 && (
+							<Callout
+								variant="warning"
+								title={t(
+									"odottaviaHyvksyntjLength",
+									"Odottavia hyväksyntöjä ({{length}})",
+									{ length: pendingCount },
+								)}
+								action={
+									<Button asChild variant="outline" size="sm">
+										<Link to="/admin/dashboard">
+											<span>{t("ksittelePyynnt", "Käsittele pyynnöt")}</span>
+											<ChevronRight size={16} />
+										</Link>
+									</Button>
+								}
+							>
+								{t(
+									"jrjestelmssOnUusiaVarauspyyntjJotkaOdottavatYllpidonVahvistusta",
+									"Järjestelmässä on uusia varauspyyntöjä, jotka odottavat ylläpidon vahvistusta.",
+								)}
+							</Callout>
+						)}
+
+						<div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+							<div className="lg:col-span-2">{upcomingSection}</div>
+							{resourcesSection}
+						</div>
+					</PageContainer>
+				) : (
+					<PageContainer>
+						<section className="space-y-4 rounded-md border border-stone-300 bg-stone-100 p-6 md:p-8 dark:border-stone-700 dark:bg-stone-900">
+							<h1 className="max-w-3xl text-4xl font-extrabold tracking-tight text-stone-900 dark:text-stone-100">
+								{t(
+									"tervetuloaVaraamaanTilojaJaResursseja",
+									"Tervetuloa varaamaan tiloja ja resursseja",
+								)}
+							</h1>
+							<p className="max-w-2xl text-sm text-stone-600 dark:text-stone-400">
+								{t(
+									"tarkasteleReaaliaikaistaKalenterivaraustilannettaTeeUusiaVarauksiaJaHallinnoiOmiaVarauksiasiHelposti",
+									"Tarkastele reaaliaikaista kalenterivaraustilannetta, tee uusia varauksia ja hallinnoi omia varauksiasi helposti.",
+								)}
+							</p>
+							<Button asChild size="lg">
+								<Link to="/calendar">
+									<Calendar size={18} />
+									<span>{t("avaaKalenteri", "Avaa kalenteri")}</span>
+								</Link>
+							</Button>
+						</section>
+
+						<div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+							<div className="lg:col-span-2">{upcomingSection}</div>
+							{resourcesSection}
+						</div>
+					</PageContainer>
+				)}
 			</div>
 
 			<Footer />

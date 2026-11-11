@@ -13,15 +13,15 @@ interface ReservationWithTimes<O extends TimedOccurrence> {
  * An occurrence in progress still counts as the next one.
  */
 export function upcomingReservations<
-	O extends TimedOccurrence,
-	R extends ReservationWithTimes<O>,
+	R extends ReservationWithTimes<TimedOccurrence>,
+	O extends TimedOccurrence = NonNullable<R["occurrences"]>[number],
 >(reservations: R[], now: Date): { reservation: R; nextOccurrence: O }[] {
 	const upcoming: { reservation: R; nextOccurrence: O; startMs: number }[] = [];
 
 	for (const reservation of reservations) {
 		if (reservation.status === "cancelled") continue;
 
-		const remaining = (reservation.occurrences ?? [])
+		const remaining = ((reservation.occurrences ?? []) as O[])
 			.filter((o) => new Date(o.end_time).getTime() > now.getTime())
 			.map((o) => ({
 				occurrence: o,

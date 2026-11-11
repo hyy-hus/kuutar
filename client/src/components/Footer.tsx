@@ -12,7 +12,7 @@ export function Footer() {
 
 	return (
 		<footer className="w-full border-t-2 border-stone-800 dark:border-stone-700 bg-stone-100 dark:bg-stone-900 text-stone-700 dark:text-stone-300 mt-auto shrink-0 text-xs">
-			<div className="max-w-6xl mx-auto p-6 md:p-8 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
+			<div className="max-w-7xl p-6 md:p-8 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
 				{/* Brand & Identity */}
 				<div className="space-y-3">
 					<div className="flex items-start gap-2 text-stone-900 dark:text-stone-100 font-bold text-sm">
