@@ -2,9 +2,11 @@
 
 import { Link, useNavigate } from "@tanstack/react-router";
 import {
+	AlertOctagon,
+	CalendarCheck,
 	ChevronLeft,
 	ChevronRight,
-	ListChecks,
+	Clock,
 	Loader2,
 	Plus,
 	Rows2,
@@ -15,6 +17,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "#/components/Button";
 import { useIsAdmin } from "#/hooks/useAuth";
+import { useCollections } from "#/hooks/useCollections";
 import { useReservableBlocks } from "#/hooks/useReservableBlocks";
 import { useReservations } from "#/hooks/useReservations";
 import { useResources } from "#/hooks/useResorces";
@@ -22,7 +25,6 @@ import { useRestrictions } from "#/hooks/useRestrictions";
 import type { CalendarSearch, CalendarViewMode } from "#/routes/_app/calendar";
 import type { CalendarEvent } from "#/utils/calendarUtils";
 import { cn } from "#/utils/cn";
-import { getCollectionIcon } from "#/utils/collectionIcons";
 import {
 	addDays,
 	formatYYYYMMDD,
@@ -34,8 +36,6 @@ import {
 	useDateFormatter,
 } from "#/utils/date";
 import { addMinutes, resolveDefaultDuration } from "#/utils/duration";
-import { getContrastColor, getResourceHex } from "#/utils/resourceColors";
-import { ToggleChip } from "../Chip";
 import { DateInput } from "../DateInput";
 import { FilterBar } from "../FilterBar";
 import { PageHeader } from "../PageHeader";
@@ -43,6 +43,7 @@ import { SegmentedControl } from "../SegmentedControl";
 import { Select } from "../Select";
 import { AgendaView } from "./AgendaView";
 import { MonthView } from "./MonthView";
+import { ResourceFilter } from "./ResourceFilter";
 import { useIsMobile } from "./useIsMobile";
 import { WeekView } from "./WeekView";
 
@@ -115,12 +116,12 @@ export function Calendar({
 	const hourHeightLabel = `${t("tuntirivinKorkeus", "Tuntirivin korkeus")}: ${hourHeightNames[hourHeight]}`;
 
 	const { data: resources, isLoading: loadingResources } = useResources();
+	const { data: collections } = useCollections();
 	const { isAdmin } = useIsAdmin();
 
 	const activeResourceIds = useMemo(() => {
-		if (selectedResourceIds && selectedResourceIds.length > 0) {
-			return selectedResourceIds;
-		}
+		// An explicit empty selection ("none") shows nothing; only a missing one means all
+		if (selectedResourceIds) return selectedResourceIds;
 		return resources?.map((r) => r.id) || [];
 	}, [selectedResourceIds, resources]);
 
@@ -203,22 +204,6 @@ export function Calendar({
 			),
 		});
 	};
-
-	const toggleResource = (id: string) => {
-		const nextResources = activeResourceIds.includes(id)
-			? activeResourceIds.filter((item) => item !== id)
-			: [...activeResourceIds, id];
-
-		onSearchChange({ resources: nextResources });
-	};
-
-	const allResourceIds = resources?.map((r) => r.id) ?? [];
-	const allSelected =
-		allResourceIds.length > 0 &&
-		allResourceIds.every((id) => activeResourceIds.includes(id));
-
-	/** Shows only this resource; the "All" chip brings the rest back */
-	const soloResource = (id: string) => onSearchChange({ resources: [id] });
 
 	const handleDayClick = (date: Date) => {
 		onSearchChange({ view: "days", days: 1, start: formatYYYYMMDD(date) });
@@ -437,9 +422,9 @@ export function Calendar({
 				}
 			/>
 
-			{/* Period navigation, then view and length, as on the other period pages */}
-			<FilterBar className="shrink-0">
-				<div className="flex items-center gap-1">
+			{/* Two logical groups: date navigation, then view / length / density. Each stays one row. */}
+			<FilterBar className="shrink-0 gap-x-3">
+				<div className="flex w-full items-center gap-1 md:w-auto">
 					<Button
 						variant="outline"
 						size="iconSm"
@@ -458,7 +443,7 @@ export function Calendar({
 						onChange={(e) =>
 							e.target.value && onSearchChange({ start: e.target.value })
 						}
-						className="w-auto tabular-nums"
+						className="w-auto min-w-0 tabular-nums"
 					/>
 
 					<Button
@@ -471,38 +456,38 @@ export function Calendar({
 						<ChevronRight size={16} />
 					</Button>
 
-					<Button variant="outline" size="sm" onClick={goToToday}>
+					<Button
+						variant="outline"
+						size="sm"
+						className="ml-auto md:ml-0"
+						onClick={goToToday}
+					>
 						{t("tnn", "Tänään")}
 					</Button>
 				</div>
 
-				<SegmentedControl
-					aria-label={t("nkym", "Näkymä")}
-					value={view}
-					onChange={handleViewChange}
-					options={[
-						{ value: "days", label: t("pivt", "Päivät") },
-						{ value: "month", label: t("kuukausi", "Kuukausi") },
-					]}
-				/>
+				<div className="flex w-full items-center gap-2 md:w-auto">
+					<SegmentedControl
+						aria-label={t("nkym", "Näkymä")}
+						value={view}
+						onChange={handleViewChange}
+						options={[
+							{ value: "days", label: t("pivt", "Päivät") },
+							{ value: "month", label: t("kuukausi", "Kuukausi") },
+						]}
+					/>
 
-				{isMonth ? (
-					<span className="text-sm font-semibold capitalize whitespace-nowrap">
-						{formatMonthYear(start)}
-					</span>
-				) : (
-					<>
-						<div className="flex items-center gap-2">
-							<label
-								htmlFor="calendar-days"
-								className="hidden md:inline text-xs font-medium"
-							>
-								{t("jaksonPituus", "Jakson pituus")}
-							</label>
+					{isMonth ? (
+						<span className="ml-1 truncate text-sm font-semibold capitalize">
+							{formatMonthYear(start)}
+						</span>
+					) : (
+						<>
 							<Select
 								id="calendar-days"
 								size="sm"
 								wrapperClassName="w-auto"
+								aria-label={t("jaksonPituus", "Jakson pituus")}
 								value={days}
 								onChange={(e) => handleDaysChange(Number(e.target.value))}
 							>
@@ -511,75 +496,33 @@ export function Calendar({
 								<option value={5}>{t("5Piv", "5 päivää")}</option>
 								<option value={7}>{t("1Viikko", "1 viikko")}</option>
 							</Select>
-						</div>
 
-						<Button
-							variant="outline"
-							size="sm"
-							className="gap-1.5"
-							onClick={cycleHourHeight}
-							aria-label={hourHeightLabel}
-							title={hourHeightLabel}
-						>
-							<HourHeightIcon size={16} />
-							<span className="hidden md:inline">
-								{hourHeightNames[hourHeight]}
-							</span>
-						</Button>
-					</>
-				)}
+							<Button
+								variant="outline"
+								size="sm"
+								className="gap-1.5"
+								onClick={cycleHourHeight}
+								aria-label={hourHeightLabel}
+								title={hourHeightLabel}
+							>
+								<HourHeightIcon size={16} />
+								<span className="hidden lg:inline">
+									{hourHeightNames[hourHeight]}
+								</span>
+							</Button>
+						</>
+					)}
+				</div>
 			</FilterBar>
 
-			{/* Resource filter: wraps instead of scrolling sideways, and scrolls within a capped height */}
-			<fieldset
-				aria-label={t("resurssit", "Resurssit")}
-				className="flex flex-wrap gap-1.5 shrink-0 max-h-24 overflow-y-auto"
-			>
-				<ToggleChip
-					selected={allSelected}
-					onClick={() => onSearchChange({ resources: allResourceIds })}
-				>
-					<ListChecks size={12} aria-hidden="true" />
-					{t("kaikki", "Kaikki")}
-				</ToggleChip>
-				{resources?.map((res) => {
-					const isSelected = activeResourceIds.includes(res.id);
-					const ResourceIcon = getCollectionIcon(res.collection_icon);
-					return (
-						<ToggleChip
-							key={res.id}
-							selected={isSelected}
-							title={t(
-								"vainTamaOhje",
-								"Kaksoisnapsauta tai Ctrl-napsauta näyttääksesi vain tämän",
-							)}
-							onClick={(e) =>
-								e.ctrlKey || e.metaKey || e.shiftKey
-									? soloResource(res.id)
-									: toggleResource(res.id)
-							}
-							onDoubleClick={() => soloResource(res.id)}
-						>
-							<span
-								aria-hidden="true"
-								className={cn(
-									"size-4 rounded-full inline-flex items-center justify-center shrink-0 ring-1",
-									isSelected
-										? "ring-stone-50 dark:ring-stone-900"
-										: "ring-stone-400 dark:ring-stone-600 opacity-70",
-								)}
-								style={{
-									backgroundColor: getResourceHex(res.color),
-									color: getContrastColor(getResourceHex(res.color)),
-								}}
-							>
-								<ResourceIcon size={10} />
-							</span>
-							{res.name}
-						</ToggleChip>
-					);
-				})}
-			</fieldset>
+			<ResourceFilter
+				className="shrink-0"
+				resources={resources ?? []}
+				collections={collections ?? []}
+				selectedIds={activeResourceIds}
+				onChange={(ids) => onSearchChange({ resources: ids })}
+				defaultOpen={!isMobile}
+			/>
 
 			{/* Main Calendar View */}
 			{isMonth ? (
@@ -607,33 +550,30 @@ export function Calendar({
 	);
 }
 
-/** Explains the look of pending reservations and, in the days view, free blocks and restrictions */
+/**
+ * Explains the states that differ by border style and icon: pending, free block, restriction.
+ * Resource colours are not in the legend: the chips above name them and every event shows its
+ * resource name (or its initial in short events, plus the tooltip).
+ */
 function CalendarLegend({ showSlots }: { showSlots: boolean }) {
 	const { t } = useTranslation();
-	const swatch = "inline-block h-3 w-5 rounded-xs border shrink-0";
+	const swatch =
+		"inline-flex h-4 w-6 shrink-0 items-center justify-center rounded-xs border";
 	return (
 		<ul
 			aria-label={t("selite", "Selite")}
-			className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-stone-600 dark:text-stone-400 shrink-0"
+			className="flex shrink-0 flex-wrap items-center gap-x-4 gap-y-1 text-xs text-stone-600 dark:text-stone-400"
 		>
 			<li className="flex items-center gap-1.5">
 				<span
 					aria-hidden="true"
 					className={cn(
 						swatch,
-						"border-stone-400 bg-stone-200 dark:border-stone-600 dark:bg-stone-800",
+						"border-dashed border-purple-500 bg-purple-50 text-purple-700 dark:bg-purple-950/40 dark:text-purple-300",
 					)}
-				/>
-				{t("vahvistettu", "Vahvistettu")}
-			</li>
-			<li className="flex items-center gap-1.5">
-				<span
-					aria-hidden="true"
-					className={cn(
-						swatch,
-						"border-dashed border-purple-500 bg-purple-50 dark:border-purple-500 dark:bg-purple-950/40",
-					)}
-				/>
+				>
+					<Clock size={10} />
+				</span>
 				{t("odottaaVahvistusta", "Odottaa vahvistusta")}
 			</li>
 			{showSlots && (
@@ -643,9 +583,11 @@ function CalendarLegend({ showSlots }: { showSlots: boolean }) {
 							aria-hidden="true"
 							className={cn(
 								swatch,
-								"border-dashed border-emerald-500 bg-emerald-50 dark:bg-emerald-950/50",
+								"border-dashed border-emerald-500 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300",
 							)}
-						/>
+						>
+							<CalendarCheck size={10} />
+						</span>
 						{t("vapaaVarausjakso", "Vapaa varausjakso")}
 					</li>
 					<li className="flex items-center gap-1.5">
@@ -653,9 +595,11 @@ function CalendarLegend({ showSlots }: { showSlots: boolean }) {
 							aria-hidden="true"
 							className={cn(
 								swatch,
-								"border-amber-500 bg-amber-100 dark:bg-amber-950/80",
+								"border-amber-500 bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300",
 							)}
-						/>
+						>
+							<AlertOctagon size={10} />
+						</span>
 						{t("rajoitus", "Rajoitus")}
 					</li>
 				</>

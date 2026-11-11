@@ -173,6 +173,15 @@ export function ReservationBlock({
 						/>
 					)
 				)}
+				{/* Short events have no resource line, so mark the resource by its initial (colour alone is not enough) */}
+				{isTitleOnly && !isBlock && !isRestriction && event.resourceName && (
+					<span
+						aria-hidden="true"
+						className="shrink-0 rounded-xs bg-stone-900/10 px-1 text-xs font-semibold dark:bg-stone-50/15"
+					>
+						{event.resourceName.charAt(0).toUpperCase()}
+					</span>
+				)}
 				{/* Short blocks have no room for a details line, so the start time goes in front of the title */}
 				{isTitleOnly && !isBlock && !isRestriction && (
 					<span className="tabular-nums font-normal text-stone-600 dark:text-stone-400 shrink-0">
