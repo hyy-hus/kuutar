@@ -115,12 +115,13 @@ export function SearchBar({ onSearch }: SearchBarProps) {
 								}
 							}}
 							placeholder={t(
-								"etsiVarauksiaTilojaCtrlk",
-								"Etsi varauksia & tiloja... [Ctrl+K]",
+								"etsiVarauksiaJaTiloja",
+								"Etsi varauksia ja tiloja",
 							)}
+							aria-keyshortcuts="Control+K Meta+K"
 							className={cn(
-								"w-full transition-all duration-150 text-xs font-mono",
-								query ? "pr-16" : "pr-9",
+								"w-full transition-all duration-150 text-sm",
+								query ? "pr-16" : "pr-20",
 								isOpen &&
 									"rounded-b-none border-stone-400 dark:border-stone-400 border-b-transparent focus-visible:outline-none",
 							)}
@@ -138,15 +139,17 @@ export function SearchBar({ onSearch }: SearchBarProps) {
 									<X size={14} />
 								</Button>
 							)}
-							<Button
-								type="button"
-								variant="ghost"
-								size="icon"
-								className="text-stone-500 hover:text-stone-900 dark:text-stone-400 dark:hover:text-stone-100 h-7 w-7 pointer-events-none"
-								aria-label={t("searchIcon", "Search icon")}
+							{!query && (
+								<kbd className="hidden md:inline-flex items-center h-5 px-1.5 rounded-sm border border-stone-300 dark:border-stone-700 bg-stone-100 dark:bg-stone-800 text-xs font-mono text-stone-600 dark:text-stone-400 pointer-events-none">
+									{"Ctrl K"}
+								</kbd>
+							)}
+							<span
+								className="inline-flex h-7 w-7 items-center justify-center text-stone-500 dark:text-stone-400 pointer-events-none"
+								aria-hidden="true"
 							>
 								<Search size={15} />
-							</Button>
+							</span>
 						</div>
 					</div>
 				</Popover.Anchor>
@@ -192,7 +195,7 @@ export function SearchBar({ onSearch }: SearchBarProps) {
 								{/* Matched Reservations */}
 								{reservations.length > 0 && (
 									<div className="space-y-1">
-										<div className="text-[10px] font-mono font-bold tracking-wider text-stone-400 dark:text-stone-500 uppercase px-1">
+										<div className="text-xs font-mono font-bold tracking-wider text-stone-400 dark:text-stone-500 uppercase px-1">
 											{t("varauksetLength", "Varaukset ({{length}})", {
 												length: reservations.length,
 											})}
@@ -213,7 +216,7 @@ export function SearchBar({ onSearch }: SearchBarProps) {
 														{res.title}
 													</div>
 													{res.description && (
-														<div className="text-[11px] text-stone-500 dark:text-stone-400 truncate font-mono">
+														<div className="text-xs text-stone-500 dark:text-stone-400 truncate font-mono">
 															{getLocalizedPlainText(
 																res.description,
 																i18n.language,
@@ -229,7 +232,7 @@ export function SearchBar({ onSearch }: SearchBarProps) {
 								{/* Matched Resources */}
 								{resources.length > 0 && (
 									<div className="space-y-1">
-										<div className="text-[10px] font-mono font-bold tracking-wider text-stone-400 dark:text-stone-500 uppercase px-1">
+										<div className="text-xs font-mono font-bold tracking-wider text-stone-400 dark:text-stone-500 uppercase px-1">
 											{t("resurssitLength", "Resurssit ({{length}})", {
 												length: resources.length,
 											})}

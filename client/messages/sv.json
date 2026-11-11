@@ -66,7 +66,6 @@
 	"esimYleisetEhdot": "t.ex. Allmänna bokningsvillkor 2026",
 	"esimYllpitjt": "t.ex. Administratörer",
 	"etsi": "Sök...",
-	"etsiVarauksiaTilojaCtrlk": "Sök bokningar & lokaler... [Ctrl+K]",
 	"etusivu": "Startsida",
 	"exportReservations": "Exportera bokningar som JSON",
 	"foundReservationsCount": "Hittade {{count}} bokningar",
@@ -475,8 +474,6 @@
 	"varaus": "Bokning:",
 	"varausOsuuRajoitetulleAjalle": "Bokningen överlappar en begränsad period! ({{length}})",
 	"varausajat": "Bokningstider:",
-	"varauskalenteri": "Bokningskalender",
-	"varauskalenteriKuutar": "Kuutar bokningskalender",
 	"varaustaEiLoytynyt": "Bokningen hittades inte.",
 	"varaustaEiLytynyt": "Bokningen hittades inte.",
 	"varaustenHakuEpaonnistui": "Det gick inte att hämta bokningar.",
@@ -781,5 +778,8 @@
 	"teknisetTiedot": "Tekniska uppgifter",
 	"tunniste": "Identifierare",
 	"kopioiTunniste": "Kopiera identifierare",
-	"kopioitu": "Kopierad"
+	"kopioitu": "Kopierad",
+	"hyvaksynnat": "Godkännanden",
+	"varaaminen": "Bokning",
+	"etsiVarauksiaJaTiloja": "Sök bokningar och lokaler"
 }
