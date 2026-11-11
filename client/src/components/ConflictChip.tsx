@@ -14,14 +14,15 @@ export interface ConflictItem {
 
 export interface ConflictChipProps {
 	conflicts: ConflictItem[];
-	/** Called when the chip is hovered, focused or opened, so the caller can highlight the clashing rows */
+	/** Called when the list opens or closes, so the caller can highlight the clashing rows */
 	onActiveChange?: (active: boolean) => void;
 	className?: string;
 }
 
 /**
- * Always-visible "Ristiriita (n)" chip. Hover, focus or click lists what the reservation clashes with.
- * Keyboard accessible (it is a button; Escape closes).
+ * Always-visible "Ristiriita (n)" chip. Clicking it lists what the reservation clashes with
+ * (Enter/Space too; Escape or a click elsewhere closes). Deliberately not hover-driven, so it
+ * doesn't compete with the other hover effects of the page.
  */
 export function ConflictChip({
 	conflicts,
@@ -29,41 +30,23 @@ export function ConflictChip({
 	className,
 }: ConflictChipProps) {
 	const { t } = useTranslation();
-	const [hover, setHover] = useState(false);
-	const [pinned, setPinned] = useState(false);
-	const open = hover || pinned;
+	const [open, setOpen] = useState(false);
 
-	const update = (nextHover: boolean, nextPinned: boolean) => {
-		setHover(nextHover);
-		setPinned(nextPinned);
-		onActiveChange?.(nextHover || nextPinned);
+	const update = (next: boolean) => {
+		setOpen(next);
+		onActiveChange?.(next);
 	};
 
 	return (
-		<Popover.Root
-			open={open}
-			onOpenChange={(next) => {
-				// Escape / outside click
-				if (!next) update(false, false);
-			}}
-		>
+		<Popover.Root open={open} onOpenChange={update}>
 			<Popover.Trigger asChild>
 				<button
 					type="button"
 					className={cn(
 						statusChipVariants({ variant: "danger" }),
-						"focus-ring cursor-pointer hover:brightness-95",
+						"focus-ring cursor-pointer",
 						className,
 					)}
-					onPointerEnter={() => update(true, pinned)}
-					onPointerLeave={() => update(false, pinned)}
-					onFocus={() => update(true, pinned)}
-					onBlur={() => update(false, pinned)}
-					onClick={(e) => {
-						// Radix would toggle; we pin instead so touch users can keep it open
-						e.preventDefault();
-						update(hover, !pinned);
-					}}
 				>
 					<AlertTriangle size={12} aria-hidden="true" className="shrink-0" />
 					{t("ristiriitaMaara", "Ristiriita ({{count}})", {

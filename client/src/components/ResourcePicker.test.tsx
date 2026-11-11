@@ -9,18 +9,18 @@ const collections = [
 	{ id: "c2", name: "Gear" },
 ];
 const resources = [
-	{ id: "a", name: "Alpha", collection_id: "c1", auto_confirm: true },
-	{ id: "b", name: "Beta", collection_id: "c1" },
 	{
 		id: "c",
 		name: "Camera",
 		collection_id: "c2",
 		reservation_restricted: true,
 	},
+	{ id: "a", name: "Alpha", collection_id: "c1", auto_confirm: true },
+	{ id: "b", name: "Beta", collection_id: "c1" },
 ];
 
 describe("ResourcePicker", () => {
-	it("groups by collection, shows hints and toggles", async () => {
+	it("shows one chip per resource, ordered by collection, and toggles", async () => {
 		const onToggle = vi.fn();
 		renderWithProviders(
 			<ResourcePicker
@@ -30,30 +30,50 @@ describe("ResourcePicker", () => {
 				onToggle={onToggle}
 			/>,
 		);
-		expect(screen.getByRole("group", { name: "Rooms" })).toBeInTheDocument();
-		expect(screen.getByRole("group", { name: "Gear" })).toBeInTheDocument();
-		expect(screen.getByText(/Confirmed automatically/)).toBeInTheDocument();
+		const names = screen
+			.getAllByRole("button")
+			.map((b) => b.textContent?.trim());
+		expect(names).toEqual(["Alpha", "Beta", "Camera"]);
 		expect(screen.queryByRole("searchbox")).not.toBeInTheDocument();
-		await userEvent.click(screen.getByRole("checkbox", { name: /Beta/ }));
+		await userEvent.click(screen.getByRole("button", { name: "Beta" }));
 		expect(onToggle).toHaveBeenCalledWith("b");
 	});
 
-	it("shows selected resources as removable chips", async () => {
-		const onToggle = vi.fn();
+	it("marks selected chips and puts hints in the tooltip", () => {
 		renderWithProviders(
 			<ResourcePicker
 				resources={resources}
 				collections={collections}
 				value={["a"]}
-				onToggle={onToggle}
+				onToggle={() => {}}
 			/>,
 		);
-		expect(screen.getByRole("checkbox", { name: /Alpha/ })).toBeChecked();
-		await userEvent.click(screen.getByRole("button", { name: /Alpha/ }));
-		expect(onToggle).toHaveBeenCalledWith("a");
+		const alpha = screen.getByRole("button", { name: "Alpha" });
+		expect(alpha).toHaveAttribute("aria-pressed", "true");
+		expect(alpha).toHaveAttribute("title", "Confirmed automatically");
+		expect(screen.getByRole("button", { name: "Beta" })).toHaveAttribute(
+			"aria-pressed",
+			"false",
+		);
 	});
 
-	it("shows an empty hint and filters with the search above the threshold", async () => {
+	it("filters with the search above the threshold but keeps selected chips", async () => {
+		renderWithProviders(
+			<ResourcePicker
+				resources={resources}
+				collections={collections}
+				value={["a"]}
+				onToggle={() => {}}
+				searchThreshold={2}
+			/>,
+		);
+		await userEvent.type(screen.getByRole("searchbox"), "cam");
+		expect(screen.getByRole("button", { name: "Camera" })).toBeInTheDocument();
+		expect(screen.getByRole("button", { name: "Alpha" })).toBeInTheDocument();
+		expect(screen.queryByRole("button", { name: "Beta" })).toBeNull();
+	});
+
+	it("says so when nothing matches", async () => {
 		renderWithProviders(
 			<ResourcePicker
 				resources={resources}
@@ -63,11 +83,7 @@ describe("ResourcePicker", () => {
 				searchThreshold={2}
 			/>,
 		);
-		expect(screen.getByText("No resources selected")).toBeInTheDocument();
-		await userEvent.type(screen.getByRole("searchbox"), "cam");
-		expect(screen.queryByRole("checkbox", { name: /Alpha/ })).toBeNull();
-		expect(
-			screen.getByRole("checkbox", { name: /Camera/ }),
-		).toBeInTheDocument();
+		await userEvent.type(screen.getByRole("searchbox"), "zzz");
+		expect(screen.getByText("No results")).toBeInTheDocument();
 	});
 });

@@ -104,8 +104,8 @@ function AdminReservationRow({
 	onStatusChange,
 	onMarkPrinted,
 	isUpdating,
-	hoveredReservation,
-	onHoverReservation,
+	conflictSource,
+	onConflictSourceChange,
 	selectable,
 	selected,
 	onToggleSelected,
@@ -116,8 +116,8 @@ function AdminReservationRow({
 	onStatusChange: (status: ReservationStatus) => void;
 	onMarkPrinted: (id: string) => Promise<void>;
 	isUpdating: boolean;
-	hoveredReservation: ReservationWithOccurrences | null;
-	onHoverReservation: (res: ReservationWithOccurrences | null) => void;
+	conflictSource: ReservationWithOccurrences | null;
+	onConflictSourceChange: (res: ReservationWithOccurrences | null) => void;
 	/** Shows the checkbox column; the checkbox itself is only enabled for decidable rows */
 	selectable: boolean;
 	selected: boolean;
@@ -135,7 +135,7 @@ function AdminReservationRow({
 	const isRoundApplication = isPending && Boolean(reservationWithOcc.round_id);
 	const canSelect = isDecidableHere(reservationWithOcc);
 
-	const isHoveredSource = hoveredReservation?.id === reservationWithOcc.id;
+	const isConflictSource = conflictSource?.id === reservationWithOcc.id;
 
 	// Gather resource names reserved by this item
 	const resourceNames = useMemo(() => {
@@ -145,11 +145,11 @@ function AdminReservationRow({
 		return Array.from(new Set(names)).join(", ");
 	}, [occurrences, resourceMap]);
 
-	// Highlighted while another row's time or conflict chip is hovered/focused
+	// Highlighted while another row's conflict chip is open
 	const isConflict =
-		hoveredReservation !== null &&
-		!isHoveredSource &&
-		reservationsOverlap(hoveredReservation, reservationWithOcc);
+		conflictSource !== null &&
+		!isConflictSource &&
+		reservationsOverlap(conflictSource, reservationWithOcc);
 
 	const handlePrintSingle = async () => {
 		await onMarkPrinted(reservationWithOcc.id);
@@ -166,16 +166,16 @@ function AdminReservationRow({
 	return (
 		<tr
 			className={cn(
-				"relative flex flex-col gap-1 border-b border-stone-200 p-3 text-sm transition-colors last:border-b-0 hover:bg-stone-100 md:table-row md:p-0 dark:border-stone-800 dark:hover:bg-stone-800/60",
-				// Conflicting target rows: soft red background while hovering a time
+				"relative flex flex-col gap-1 border-b border-stone-200 p-3 text-sm transition-colors last:border-b-0 @4xl:table-row @4xl:p-0 dark:border-stone-800",
+				// Conflicting target rows: soft red background while a conflict chip is open
 				isConflict &&
 					"bg-red-100 shadow-[inset_0_0_0_1px_var(--color-red-500)] dark:bg-red-950/60",
-				isHoveredSource &&
+				isConflictSource &&
 					"bg-amber-100 shadow-[inset_0_0_0_1px_var(--color-amber-500)] dark:bg-amber-900/40",
 			)}
 		>
 			{selectable && (
-				<td className="absolute right-3 top-3 md:static md:table-cell md:w-10 md:px-3 md:py-2 md:align-top">
+				<td className="absolute right-3 top-3 @4xl:static @4xl:table-cell @4xl:w-10 @4xl:px-3 @4xl:py-2 @4xl:align-top">
 					{canSelect && (
 						<input
 							type="checkbox"
@@ -191,7 +191,7 @@ function AdminReservationRow({
 			)}
 
 			{/* Reservation title, requester and meta */}
-			<td className="block min-w-0 pr-8 md:table-cell md:min-w-[220px] md:max-w-xl md:px-3 md:py-2 md:pr-3 md:align-top">
+			<td className="block min-w-0 pr-8 @4xl:table-cell @4xl:min-w-[220px] @4xl:max-w-xl @4xl:px-3 @4xl:py-2 @4xl:pr-3 @4xl:align-top">
 				<div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
 					<Link
 						to="/reservations/$id"
@@ -240,7 +240,7 @@ function AdminReservationRow({
 			</td>
 
 			{/* Resource */}
-			<td className="block md:table-cell md:min-w-[120px] md:px-3 md:py-2 md:align-top">
+			<td className="block @4xl:table-cell @4xl:min-w-[120px] @4xl:px-3 @4xl:py-2 @4xl:align-top">
 				{resourceNames ? (
 					<span className="line-clamp-2">{resourceNames}</span>
 				) : (
@@ -248,17 +248,13 @@ function AdminReservationRow({
 				)}
 			</td>
 
-			{/* Time; hovering it highlights overlapping reservations on the same resource */}
-			<td
-				className="block md:table-cell md:px-3 md:py-2 md:align-top"
-				onMouseEnter={() => onHoverReservation(reservationWithOcc)}
-				onMouseLeave={() => onHoverReservation(null)}
-			>
+			{/* Time; the conflict chip highlights overlapping reservations on the same resource */}
+			<td className="block @4xl:table-cell @4xl:px-3 @4xl:py-2 @4xl:align-top">
 				{timeSpan ? (
 					<div className="space-y-1">
 						<span
 							className={cn(
-								"inline-flex items-center gap-1 tabular-nums md:whitespace-nowrap",
+								"inline-flex items-center gap-1 tabular-nums @4xl:whitespace-nowrap",
 								isConflict && "font-bold text-red-800 dark:text-red-300",
 							)}
 						>
@@ -283,7 +279,7 @@ function AdminReservationRow({
 								<ConflictChip
 									conflicts={conflictItems}
 									onActiveChange={(active) =>
-										onHoverReservation(active ? reservationWithOcc : null)
+										onConflictSourceChange(active ? reservationWithOcc : null)
 									}
 								/>
 							</div>
@@ -297,7 +293,7 @@ function AdminReservationRow({
 			</td>
 
 			{/* Actions */}
-			<td className="block md:table-cell md:whitespace-nowrap md:px-3 md:py-2 md:text-right md:align-top">
+			<td className="block @4xl:table-cell @4xl:whitespace-nowrap @4xl:px-3 @4xl:py-2 @4xl:text-right @4xl:align-top">
 				<div className="flex items-center justify-end gap-2">
 					<Button
 						variant="ghost"
@@ -363,8 +359,8 @@ interface ReservationTableProps {
 	onStatusChange: (id: string, status: ReservationStatus) => void;
 	onMarkPrinted: (id: string) => Promise<void>;
 	isUpdating: boolean;
-	hoveredReservation: ReservationWithOccurrences | null;
-	onHoverReservation: (res: ReservationWithOccurrences | null) => void;
+	conflictSource: ReservationWithOccurrences | null;
+	onConflictSourceChange: (res: ReservationWithOccurrences | null) => void;
 	/** Shows the checkbox column */
 	selectable: boolean;
 	selectedIds?: Set<string>;
@@ -403,8 +399,8 @@ function ReservationTable({
 	const { formatWeekday, formatDayMonth } = useDateFormatter();
 	const columns = selectable ? 5 : 4;
 	return (
-		<table className="block w-full border-collapse text-left md:table">
-			<thead className="hidden md:table-header-group">
+		<table className="block w-full border-collapse text-left @4xl:table">
+			<thead className="hidden @4xl:table-header-group">
 				<tr className="font-mono text-xs uppercase tracking-wider text-stone-600 dark:text-stone-400 [&>th]:sticky [&>th]:top-0 [&>th]:z-20 [&>th]:border-y [&>th]:border-stone-300 [&>th]:bg-stone-100 dark:[&>th]:border-stone-700 dark:[&>th]:bg-stone-800">
 					{selectable && (
 						<th className="h-8 w-10 px-3 py-2 font-normal">{selectAll}</th>
@@ -421,7 +417,7 @@ function ReservationTable({
 					</th>
 				</tr>
 			</thead>
-			<tbody className="block md:table-row-group">
+			<tbody className="block @4xl:table-row-group">
 				{rows.map((res, i) => {
 					const key = dayKey(res);
 					const showDay =
@@ -430,11 +426,11 @@ function ReservationTable({
 					return (
 						<Fragment key={res.id}>
 							{showDay && (
-								<tr className="block md:table-row">
+								<tr className="block @4xl:table-row">
 									<th
 										colSpan={columns}
 										scope="colgroup"
-										className="sticky top-0 z-10 block border-b border-stone-300 bg-stone-200 px-3 py-1 text-left text-xs font-semibold text-stone-800 first-letter:uppercase md:top-8 md:table-cell dark:border-stone-700 dark:bg-stone-800 dark:text-stone-200"
+										className="sticky top-0 z-10 block border-b border-stone-300 bg-stone-200 px-3 py-1 text-left text-xs font-semibold text-stone-800 first-letter:uppercase @4xl:top-8 @4xl:table-cell dark:border-stone-700 dark:bg-stone-800 dark:text-stone-200"
 									>
 										{start
 											? `${formatWeekday(start)} ${formatDayMonth(start)}`
@@ -575,7 +571,7 @@ function AdminDashboardPage() {
 	const search = Route.useSearch();
 	const navigate = Route.useNavigate();
 
-	const [hoveredReservation, setHoveredReservation] =
+	const [conflictSource, setConflictSource] =
 		useState<ReservationWithOccurrences | null>(null);
 	const [pendingSort, setPendingSort] = useState<PendingSort>("time");
 	const [onlyConflicts, setOnlyConflicts] = useState(false);
@@ -790,8 +786,8 @@ function AdminDashboardPage() {
 		onStatusChange: handleStatusChange,
 		onMarkPrinted: handleMarkPrinted,
 		isUpdating: updateReservation.isPending || bulkBusy,
-		hoveredReservation,
-		onHoverReservation: setHoveredReservation,
+		conflictSource,
+		onConflictSourceChange: setConflictSource,
 	};
 
 	return (
@@ -918,7 +914,7 @@ function AdminDashboardPage() {
 					{/* L1: the pending approvals. No overflow clipping, so the sticky header works. */}
 					<section
 						aria-labelledby="pending-heading"
-						className="rounded-md border-2 border-line-strong bg-surface-raised"
+						className="@container rounded-md border-2 border-line-strong bg-surface-raised"
 					>
 						<div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
 							<h2
