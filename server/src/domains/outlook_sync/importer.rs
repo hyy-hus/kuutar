@@ -228,22 +228,25 @@ pub async fn import_invite(
         }
     };
 
+    // Every time on every resource, inserted in one statement
+    let mut occ_resources = Vec::with_capacity(resource_ids.len() * occurrences.len());
+    let mut occ_starts = Vec::with_capacity(occ_resources.capacity());
+    let mut occ_ends = Vec::with_capacity(occ_resources.capacity());
     for resource_id in &resource_ids {
         for (start, end) in &occurrences {
-            sqlx::query!(
-                r#"
-                INSERT INTO occurrences (reservation_id, resource_id, start_time, end_time)
-                VALUES ($1, $2, $3, $4)
-                "#,
-                reservation_id,
-                resource_id,
-                start,
-                end
-            )
-            .execute(&mut *tx)
-            .await?;
+            occ_resources.push(*resource_id);
+            occ_starts.push(*start);
+            occ_ends.push(*end);
         }
     }
+    crate::domains::reservations::db::insert_occurrences(
+        &mut tx,
+        reservation_id,
+        &occ_resources,
+        &occ_starts,
+        &occ_ends,
+    )
+    .await?;
 
     tx.commit().await?;
 

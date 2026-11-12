@@ -302,20 +302,8 @@ pub async fn create(
     .fetch_one(&mut *tx)
     .await?;
 
-    for occ in dto.occurrences {
-        sqlx::query!(
-            r#"
-            INSERT INTO occurrences (reservation_id, resource_id, start_time, end_time)
-            VALUES ($1, $2, $3, $4)
-            "#,
-            reservation_id,
-            occ.resource_id,
-            occ.start_time,
-            occ.end_time
-        )
-        .execute(&mut *tx)
-        .await?;
-    }
+    let (resource_ids, starts, ends) = occurrence_columns(&dto.occurrences);
+    insert_occurrences(&mut tx, reservation_id, &resource_ids, &starts, &ends).await?;
 
     tx.commit().await?;
 
@@ -401,20 +389,8 @@ pub async fn update(
             .execute(&mut *tx)
             .await?;
 
-        for occ in new_occurrences {
-            sqlx::query!(
-                r#"
-                INSERT INTO occurrences (reservation_id, resource_id, start_time, end_time)
-                VALUES ($1, $2, $3, $4)
-                "#,
-                id,
-                occ.resource_id,
-                occ.start_time,
-                occ.end_time
-            )
-            .execute(&mut *tx)
-            .await?;
-        }
+        let (resource_ids, starts, ends) = occurrence_columns(&new_occurrences);
+        insert_occurrences(&mut tx, id, &resource_ids, &starts, &ends).await?;
     }
 
     tx.commit().await?;
@@ -625,6 +601,35 @@ pub async fn check_conflicts(
     .await?;
 
     Ok(conflicts)
+}
+
+/// Inserts all occurrences of a reservation in one statement (parallel arrays, same length)
+pub(crate) async fn insert_occurrences(
+    conn: &mut sqlx::PgConnection,
+    reservation_id: Uuid,
+    resource_ids: &[Uuid],
+    starts: &[DateTime<Utc>],
+    ends: &[DateTime<Utc>],
+) -> Result<(), AppError> {
+    if resource_ids.is_empty() {
+        return Ok(());
+    }
+    sqlx::query!(
+        r#"
+        INSERT INTO occurrences (reservation_id, resource_id, start_time, end_time)
+        SELECT $1, p.resource_id, p.start_time, p.end_time
+        FROM UNNEST($2::uuid[], $3::timestamptz[], $4::timestamptz[])
+            WITH ORDINALITY AS p(resource_id, start_time, end_time, idx)
+        ORDER BY p.idx
+        "#,
+        reservation_id,
+        resource_ids,
+        starts,
+        ends
+    )
+    .execute(&mut *conn)
+    .await?;
+    Ok(())
 }
 
 /// Splits occurrences into parallel arrays for `UNNEST($1::uuid[], $2::timestamptz[], $3::timestamptz[])`
@@ -1118,6 +1123,9 @@ pub async fn batch_import(
         .await?;
 
         // Insert occurrences
+        let mut resource_ids = Vec::with_capacity(item.occurrences.len());
+        let mut starts = Vec::with_capacity(item.occurrences.len());
+        let mut ends = Vec::with_capacity(item.occurrences.len());
         for occ in item.occurrences {
             let resource_id = resource_map
                 .get(&occ.resource_name.to_lowercase())
@@ -1127,20 +1135,11 @@ pub async fn batch_import(
                         occ.resource_name
                     ))
                 })?;
-
-            sqlx::query!(
-                r#"
-                INSERT INTO occurrences (reservation_id, resource_id, start_time, end_time)
-                VALUES ($1, $2, $3, $4)
-                "#,
-                res_id,
-                *resource_id,
-                occ.start_time,
-                occ.end_time
-            )
-            .execute(&mut *tx)
-            .await?;
+            resource_ids.push(*resource_id);
+            starts.push(occ.start_time);
+            ends.push(occ.end_time);
         }
+        insert_occurrences(&mut tx, res_id, &resource_ids, &starts, &ends).await?;
 
         created_ids.push(res_id);
     }

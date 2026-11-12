@@ -193,3 +193,101 @@ async fn test_list_restrictions_with_occurrences_and_exemptions(pool: PgPool) {
         .is_empty()
     );
 }
+
+async fn send(
+    app: &axum::Router,
+    method: &str,
+    uri: &str,
+    token: &str,
+    body: Value,
+) -> (StatusCode, Value) {
+    let response = app
+        .clone()
+        .oneshot(
+            Request::builder()
+                .method(method)
+                .uri(uri)
+                .header("authorization", token)
+                .header("content-type", "application/json")
+                .body(Body::from(body.to_string()))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    let status = response.status();
+    let body = to_bytes(response.into_body(), usize::MAX).await.unwrap();
+    (status, serde_json::from_slice(&body).unwrap_or(Value::Null))
+}
+
+#[sqlx::test]
+async fn test_create_and_update_restriction_occurrences_and_exemptions(pool: PgPool) {
+    let admin = common::setup_admin_token(&pool).await;
+    let collection_id: Uuid =
+        sqlx::query_scalar("INSERT INTO collections (name) VALUES ('C') RETURNING id")
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+    let hall: Uuid = sqlx::query_scalar(
+        "INSERT INTO resources (collection_id, name) VALUES ($1, 'Hall') RETURNING id",
+    )
+    .bind(collection_id)
+    .fetch_one(&pool)
+    .await
+    .unwrap();
+    let (g1, g2, g3) = (
+        create_group(&pool).await,
+        create_group(&pool).await,
+        create_group(&pool).await,
+    );
+    let base = Utc::now() + Duration::days(10);
+    let occ = |resource: Option<Uuid>, h: i64| {
+        serde_json::json!({
+            "resource_id": resource,
+            "start_time": base + Duration::hours(h),
+            "end_time": base + Duration::hours(h + 2),
+        })
+    };
+    let app = app(pool, test_config());
+
+    let (status, created) = send(
+        &app,
+        "POST",
+        "/restrictions",
+        &admin,
+        serde_json::json!({
+            "title": "Exams",
+            "exempt_group_ids": [g1, g2],
+            "occurrences": [occ(Some(hall), 24), occ(None, 0), occ(Some(hall), 48)],
+        }),
+    )
+    .await;
+    assert_eq!(status, StatusCode::CREATED, "{created}");
+    let occurrences = created["occurrences"].as_array().unwrap();
+    assert_eq!(occurrences.len(), 3);
+    // Returned in time order, the global one without a resource
+    assert!(occurrences[0]["resource_id"].is_null());
+    assert_eq!(occurrences[1]["resource_id"], hall.to_string());
+    let mut expected = vec![g1.to_string(), g2.to_string()];
+    expected.sort();
+    assert_eq!(sorted_strings(&created["exempt_group_ids"]), expected);
+
+    let id = created["id"].as_str().unwrap();
+    let (status, updated) = send(
+        &app,
+        "PATCH",
+        &format!("/restrictions/{id}"),
+        &admin,
+        serde_json::json!({
+            "exempt_group_ids": [g3],
+            "occurrences": [occ(None, 72), occ(Some(hall), 96)],
+        }),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{updated}");
+    assert_eq!(updated["occurrences"].as_array().unwrap().len(), 2);
+    assert!(updated["occurrences"][0]["resource_id"].is_null());
+    assert_eq!(
+        sorted_strings(&updated["exempt_group_ids"]),
+        vec![g3.to_string()]
+    );
+}

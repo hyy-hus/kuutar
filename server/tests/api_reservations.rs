@@ -1260,3 +1260,77 @@ async fn test_create_reports_violation_of_a_later_occurrence(pool: PgPool) {
     assert_eq!(status, StatusCode::CREATED, "{json}");
     assert_eq!(json["occurrences"].as_array().unwrap().len(), 3);
 }
+
+#[sqlx::test]
+async fn test_batch_import_with_many_occurrences(pool: PgPool) {
+    let (admin_token, _admin_id, _) = setup_user_token(&pool, Role::Admin).await;
+    let collection_id: Uuid =
+        sqlx::query_scalar("INSERT INTO collections (name) VALUES ('Import') RETURNING id")
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+    for name in ["Hall", "Sauna"] {
+        sqlx::query("INSERT INTO resources (collection_id, name) VALUES ($1, $2)")
+            .bind(collection_id)
+            .bind(name)
+            .execute(&pool)
+            .await
+            .unwrap();
+    }
+    let base = Utc::now() + Duration::days(3);
+    let occ = |name: &str, h: i64| {
+        json!({
+            "resource_name": name,
+            "start_time": base + Duration::hours(h),
+            "end_time": base + Duration::hours(h + 1),
+        })
+    };
+    let app = app(pool.clone(), test_config());
+
+    // An unknown resource on the second item rolls the whole import back
+    let (status, json) = post_json(
+        &app,
+        "/reservations/batch-import",
+        &admin_token,
+        json!([
+            { "title": "First", "occurrences": [occ("Hall", 0)] },
+            { "title": "Second", "occurrences": [occ("Hall", 2), occ("Nowhere", 3)] },
+        ]),
+    )
+    .await;
+    assert_eq!(status, StatusCode::BAD_REQUEST);
+    assert!(json["error"].as_str().unwrap().contains("Rivi 2"), "{json}");
+    let count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM occurrences")
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+    assert_eq!(count, 0);
+
+    let (status, json) = post_json(
+        &app,
+        "/reservations/batch-import",
+        &admin_token,
+        json!([
+            { "title": "First", "occurrences": [occ("hall", 5), occ("Sauna", 1), occ("Hall", 3)] },
+            { "title": "Second", "occurrences": [occ("Sauna", 7)] },
+        ]),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{json}");
+    assert_eq!(json["imported_count"], 2);
+    let first: Uuid = json["reservation_ids"][0]
+        .as_str()
+        .unwrap()
+        .parse()
+        .unwrap();
+    let rows: Vec<(String, chrono::DateTime<Utc>)> = sqlx::query_as(
+        "SELECT rs.name, o.start_time FROM occurrences o JOIN resources rs ON rs.id = o.resource_id
+         WHERE o.reservation_id = $1 ORDER BY o.start_time",
+    )
+    .bind(first)
+    .fetch_all(&pool)
+    .await
+    .unwrap();
+    let names: Vec<&str> = rows.iter().map(|(n, _)| n.as_str()).collect();
+    assert_eq!(names, vec!["Sauna", "Hall", "Hall"]);
+}
