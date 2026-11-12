@@ -108,6 +108,45 @@ pub async fn list_filtered(
     .fetch_all(pool)
     .await?;
 
+    // All occurrences of the listed reservations in one query, grouped in Rust
+    let occurrence_rows = sqlx::query_as!(
+        Occurrence,
+        r#"
+        SELECT o.id, o.reservation_id, o.resource_id, o.start_time, o.end_time, o.created_at
+        FROM occurrences o
+        WHERE o.reservation_id = ANY($1)
+          AND o.start_time < $3
+          AND o.end_time > $2
+          AND ($4::uuid IS NULL OR o.resource_id = $4)
+          AND ($5 OR EXISTS (
+              SELECT 1 FROM resources rs
+              WHERE rs.id = o.resource_id
+                AND (rs.is_public
+                     OR EXISTS (SELECT 1 FROM resource_visibility_groups vg WHERE vg.resource_id = rs.id AND vg.group_id = $6)
+                     OR (rs.reservation_restricted AND EXISTS (
+                         SELECT 1 FROM resource_groups rg WHERE rg.resource_id = rs.id AND rg.group_id = $6
+                     )))
+          ))
+        ORDER BY o.start_time ASC, o.id
+        "#,
+        &reservation_ids,
+        start_date,
+        end_date,
+        resource_id,
+        sees_all,
+        viewer_group_id
+    )
+    .fetch_all(pool)
+    .await?;
+
+    let mut occurrences_by_reservation: HashMap<Uuid, Vec<Occurrence>> = HashMap::new();
+    for occurrence in occurrence_rows {
+        occurrences_by_reservation
+            .entry(occurrence.reservation_id)
+            .or_default()
+            .push(occurrence);
+    }
+
     let mut result = Vec::with_capacity(reservations.len());
 
     for mut reservation in reservations {
@@ -124,16 +163,9 @@ pub async fn list_filtered(
             }
         }
 
-        let occurrences = fetch_occurrences_for_reservation_filtered(
-            pool,
-            reservation.id,
-            start_date,
-            end_date,
-            resource_id,
-            sees_all,
-            viewer_group_id,
-        )
-        .await?;
+        let occurrences = occurrences_by_reservation
+            .remove(&reservation.id)
+            .unwrap_or_default();
 
         result.push(ReservationWithOccurrences {
             reservation,
@@ -542,48 +574,6 @@ async fn fetch_occurrences_for_reservation(
         ORDER BY start_time ASC
         "#,
         reservation_id
-    )
-    .fetch_all(pool)
-    .await?;
-
-    Ok(occurrences)
-}
-
-async fn fetch_occurrences_for_reservation_filtered(
-    pool: &PgPool,
-    reservation_id: Uuid,
-    start_date: DateTime<Utc>,
-    end_date: DateTime<Utc>,
-    resource_id: Option<Uuid>,
-    sees_all: bool,
-    viewer_group_id: Option<Uuid>,
-) -> Result<Vec<Occurrence>, AppError> {
-    let occurrences = sqlx::query_as!(
-        Occurrence,
-        r#"
-        SELECT o.id, o.reservation_id, o.resource_id, o.start_time, o.end_time, o.created_at
-        FROM occurrences o
-        WHERE o.reservation_id = $1
-          AND o.start_time < $3
-          AND o.end_time > $2
-          AND ($4::uuid IS NULL OR o.resource_id = $4)
-          AND ($5 OR EXISTS (
-              SELECT 1 FROM resources rs
-              WHERE rs.id = o.resource_id
-                AND (rs.is_public
-                     OR EXISTS (SELECT 1 FROM resource_visibility_groups vg WHERE vg.resource_id = rs.id AND vg.group_id = $6)
-                     OR (rs.reservation_restricted AND EXISTS (
-                         SELECT 1 FROM resource_groups rg WHERE rg.resource_id = rs.id AND rg.group_id = $6
-                     )))
-          ))
-        ORDER BY o.start_time ASC
-        "#,
-        reservation_id,
-        start_date,
-        end_date,
-        resource_id,
-        sees_all,
-        viewer_group_id
     )
     .fetch_all(pool)
     .await?;

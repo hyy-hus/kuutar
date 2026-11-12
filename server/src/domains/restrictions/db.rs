@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use chrono::{DateTime, Utc};
 use sqlx::PgPool;
 use uuid::Uuid;
@@ -36,14 +38,73 @@ pub async fn list_filtered(
         return Ok(Vec::new());
     }
 
-    let mut result = Vec::with_capacity(restriction_ids.len());
-    for id in restriction_ids {
-        if let Ok(res) = find_by_id(pool, id).await {
-            result.push(res);
-        }
+    // Rows, occurrences and exemptions of every listed restriction in three queries
+    let bases = sqlx::query!(
+        r#"
+        SELECT id, title, description, rrule, created_at, updated_at
+        FROM restrictions
+        WHERE id = ANY($1) AND deleted_at IS NULL
+        ORDER BY id
+        "#,
+        &restriction_ids
+    )
+    .fetch_all(pool)
+    .await?;
+
+    let occurrence_rows = sqlx::query_as!(
+        RestrictionOccurrence,
+        r#"
+        SELECT id, restriction_id, resource_id, start_time, end_time, created_at
+        FROM restriction_occurrences
+        WHERE restriction_id = ANY($1)
+        ORDER BY start_time ASC, id
+        "#,
+        &restriction_ids
+    )
+    .fetch_all(pool)
+    .await?;
+
+    let exemption_rows = sqlx::query!(
+        r#"SELECT restriction_id, group_id FROM restriction_exemptions WHERE restriction_id = ANY($1)"#,
+        &restriction_ids
+    )
+    .fetch_all(pool)
+    .await?;
+
+    let mut occurrences_by_restriction: HashMap<Uuid, Vec<RestrictionOccurrence>> = HashMap::new();
+    for occurrence in occurrence_rows {
+        occurrences_by_restriction
+            .entry(occurrence.restriction_id)
+            .or_default()
+            .push(occurrence);
+    }
+    let mut exemptions_by_restriction: HashMap<Uuid, Vec<Uuid>> = HashMap::new();
+    for row in exemption_rows {
+        exemptions_by_restriction
+            .entry(row.restriction_id)
+            .or_default()
+            .push(row.group_id);
     }
 
-    Ok(result)
+    Ok(bases
+        .into_iter()
+        .map(|base| RestrictionWithOccurrences {
+            occurrences: occurrences_by_restriction
+                .remove(&base.id)
+                .unwrap_or_default(),
+            restriction: Restriction {
+                exempt_group_ids: exemptions_by_restriction
+                    .remove(&base.id)
+                    .unwrap_or_default(),
+                id: base.id,
+                title: base.title,
+                description: base.description,
+                rrule: base.rrule,
+                created_at: base.created_at,
+                updated_at: base.updated_at,
+            },
+        })
+        .collect())
 }
 
 pub async fn find_by_id(pool: &PgPool, id: Uuid) -> Result<RestrictionWithOccurrences, AppError> {
