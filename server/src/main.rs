@@ -21,6 +21,8 @@ async fn main() -> anyhow::Result<()> {
 
     let db_pool = PgPoolOptions::new()
         .max_connections(config.max_db_connections)
+        .min_connections(0)
+        .idle_timeout(std::time::Duration::from_secs(config.db_idle_timeout_seconds))
         .connect(&config.database_url)
         .await
         .context("Failed to connect to database")?;

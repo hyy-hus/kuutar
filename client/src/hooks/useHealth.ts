@@ -37,8 +37,9 @@ export function useHealth() {
 				throw err;
 			}
 		},
-		refetchInterval: 1000 * 60,
-		staleTime: 1000 * 30,
+		// No polling: an open tab would keep the scale-to-zero API container awake. The
+		// status refreshes when the page is opened again or the window regains focus.
+		staleTime: 1000 * 60 * 5,
 		retry: 1,
 	});
 }

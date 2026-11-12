@@ -23,6 +23,11 @@ pub struct Config {
     #[arg(long, env = "MAX_DB_CONNECTIONS", default_value_t = 5)]
     pub max_db_connections: u32,
 
+    /// Seconds an unused pooled connection stays open. Open connections can keep a
+    /// Serverless SQL database from scaling to zero, so keep this short.
+    #[arg(long, env = "DB_IDLE_TIMEOUT_SECONDS", default_value_t = 30)]
+    pub db_idle_timeout_seconds: u64,
+
     #[arg(long, env = "JWT_SECRET")]
     pub jwt_secret: String,
 
