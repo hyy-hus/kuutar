@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        INSERT INTO restriction_exemptions (restriction_id, group_id)\n        SELECT $1, group_id FROM UNNEST($2::uuid[]) AS g(group_id)\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "UuidArray"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "76c80c0fecd57234f990a175d1b57bd607e527083f2d548811493be7ce868290"
+}

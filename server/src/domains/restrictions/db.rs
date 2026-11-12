@@ -1,10 +1,12 @@
+use std::collections::HashMap;
+
 use chrono::{DateTime, Utc};
 use sqlx::PgPool;
 use uuid::Uuid;
 
 use super::models::{
-    CreateRestrictionPayload, Restriction, RestrictionOccurrence, RestrictionWithOccurrences,
-    UpdateRestrictionPayload,
+    CreateRestrictionOccurrencePayload, CreateRestrictionPayload, Restriction,
+    RestrictionOccurrence, RestrictionWithOccurrences, UpdateRestrictionPayload,
 };
 use crate::errors::AppError;
 
@@ -36,14 +38,73 @@ pub async fn list_filtered(
         return Ok(Vec::new());
     }
 
-    let mut result = Vec::with_capacity(restriction_ids.len());
-    for id in restriction_ids {
-        if let Ok(res) = find_by_id(pool, id).await {
-            result.push(res);
-        }
+    // Rows, occurrences and exemptions of every listed restriction in three queries
+    let bases = sqlx::query!(
+        r#"
+        SELECT id, title, description, rrule, created_at, updated_at
+        FROM restrictions
+        WHERE id = ANY($1) AND deleted_at IS NULL
+        ORDER BY id
+        "#,
+        &restriction_ids
+    )
+    .fetch_all(pool)
+    .await?;
+
+    let occurrence_rows = sqlx::query_as!(
+        RestrictionOccurrence,
+        r#"
+        SELECT id, restriction_id, resource_id, start_time, end_time, created_at
+        FROM restriction_occurrences
+        WHERE restriction_id = ANY($1)
+        ORDER BY start_time ASC, id
+        "#,
+        &restriction_ids
+    )
+    .fetch_all(pool)
+    .await?;
+
+    let exemption_rows = sqlx::query!(
+        r#"SELECT restriction_id, group_id FROM restriction_exemptions WHERE restriction_id = ANY($1)"#,
+        &restriction_ids
+    )
+    .fetch_all(pool)
+    .await?;
+
+    let mut occurrences_by_restriction: HashMap<Uuid, Vec<RestrictionOccurrence>> = HashMap::new();
+    for occurrence in occurrence_rows {
+        occurrences_by_restriction
+            .entry(occurrence.restriction_id)
+            .or_default()
+            .push(occurrence);
+    }
+    let mut exemptions_by_restriction: HashMap<Uuid, Vec<Uuid>> = HashMap::new();
+    for row in exemption_rows {
+        exemptions_by_restriction
+            .entry(row.restriction_id)
+            .or_default()
+            .push(row.group_id);
     }
 
-    Ok(result)
+    Ok(bases
+        .into_iter()
+        .map(|base| RestrictionWithOccurrences {
+            occurrences: occurrences_by_restriction
+                .remove(&base.id)
+                .unwrap_or_default(),
+            restriction: Restriction {
+                exempt_group_ids: exemptions_by_restriction
+                    .remove(&base.id)
+                    .unwrap_or_default(),
+                id: base.id,
+                title: base.title,
+                description: base.description,
+                rrule: base.rrule,
+                created_at: base.created_at,
+                updated_at: base.updated_at,
+            },
+        })
+        .collect())
 }
 
 pub async fn find_by_id(pool: &PgPool, id: Uuid) -> Result<RestrictionWithOccurrences, AppError> {
@@ -114,31 +175,10 @@ pub async fn create(
     .fetch_one(&mut *tx)
     .await?;
 
-    for occ in dto.occurrences {
-        sqlx::query!(
-            r#"
-            INSERT INTO restriction_occurrences (restriction_id, resource_id, start_time, end_time)
-            VALUES ($1, $2, $3, $4)
-            "#,
-            restriction_id,
-            occ.resource_id,
-            occ.start_time,
-            occ.end_time
-        )
-        .execute(&mut *tx)
-        .await?;
-    }
+    insert_occurrences(&mut tx, restriction_id, &dto.occurrences).await?;
 
     if let Some(group_ids) = dto.exempt_group_ids {
-        for group_id in group_ids {
-            sqlx::query!(
-                r#"INSERT INTO restriction_exemptions (restriction_id, group_id) VALUES ($1, $2)"#,
-                restriction_id,
-                group_id
-            )
-            .execute(&mut *tx)
-            .await?;
-        }
+        insert_exemptions(&mut tx, restriction_id, &group_ids).await?;
     }
 
     tx.commit().await?;
@@ -180,20 +220,7 @@ pub async fn update(
         .execute(&mut *tx)
         .await?;
 
-        for occ in new_occurrences {
-            sqlx::query!(
-                r#"
-                INSERT INTO restriction_occurrences (restriction_id, resource_id, start_time, end_time)
-                VALUES ($1, $2, $3, $4)
-                "#,
-                id,
-                occ.resource_id,
-                occ.start_time,
-                occ.end_time
-            )
-            .execute(&mut *tx)
-            .await?;
-        }
+        insert_occurrences(&mut tx, id, &new_occurrences).await?;
     }
 
     if let Some(group_ids) = dto.exempt_group_ids {
@@ -204,15 +231,7 @@ pub async fn update(
         .execute(&mut *tx)
         .await?;
 
-        for group_id in group_ids {
-            sqlx::query!(
-                r#"INSERT INTO restriction_exemptions (restriction_id, group_id) VALUES ($1, $2)"#,
-                id,
-                group_id
-            )
-            .execute(&mut *tx)
-            .await?;
-        }
+        insert_exemptions(&mut tx, id, &group_ids).await?;
     }
 
     tx.commit().await?;
@@ -321,5 +340,57 @@ pub async fn soft_delete(pool: &PgPool, id: Uuid) -> Result<(), AppError> {
         return Err(AppError::NotFound);
     }
 
+    Ok(())
+}
+
+/// Inserts all occurrences of a restriction in one statement
+async fn insert_occurrences(
+    conn: &mut sqlx::PgConnection,
+    restriction_id: Uuid,
+    occurrences: &[CreateRestrictionOccurrencePayload],
+) -> Result<(), AppError> {
+    if occurrences.is_empty() {
+        return Ok(());
+    }
+    let resource_ids: Vec<Option<Uuid>> = occurrences.iter().map(|o| o.resource_id).collect();
+    let starts: Vec<DateTime<Utc>> = occurrences.iter().map(|o| o.start_time).collect();
+    let ends: Vec<DateTime<Utc>> = occurrences.iter().map(|o| o.end_time).collect();
+    sqlx::query!(
+        r#"
+        INSERT INTO restriction_occurrences (restriction_id, resource_id, start_time, end_time)
+        SELECT $1, p.resource_id, p.start_time, p.end_time
+        FROM UNNEST($2::uuid[], $3::timestamptz[], $4::timestamptz[])
+            WITH ORDINALITY AS p(resource_id, start_time, end_time, idx)
+        ORDER BY p.idx
+        "#,
+        restriction_id,
+        &resource_ids as &[Option<Uuid>],
+        &starts,
+        &ends
+    )
+    .execute(&mut *conn)
+    .await?;
+    Ok(())
+}
+
+/// Inserts the exempt groups of a restriction in one statement
+async fn insert_exemptions(
+    conn: &mut sqlx::PgConnection,
+    restriction_id: Uuid,
+    group_ids: &[Uuid],
+) -> Result<(), AppError> {
+    if group_ids.is_empty() {
+        return Ok(());
+    }
+    sqlx::query!(
+        r#"
+        INSERT INTO restriction_exemptions (restriction_id, group_id)
+        SELECT $1, group_id FROM UNNEST($2::uuid[]) AS g(group_id)
+        "#,
+        restriction_id,
+        group_ids
+    )
+    .execute(&mut *conn)
+    .await?;
     Ok(())
 }

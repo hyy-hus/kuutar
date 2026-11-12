@@ -1,0 +1,30 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT r.name\n        FROM UNNEST($1::uuid[], $2::timestamptz[], $3::timestamptz[])\n            WITH ORDINALITY AS p(resource_id, start_time, end_time, idx)\n        JOIN reservation_round_resources x ON x.resource_id = p.resource_id\n        JOIN reservation_rounds r ON r.id = x.round_id\n        WHERE r.deleted_at IS NULL\n          AND r.status = 'active'\n          AND r.period_start < p.end_time\n          AND r.period_end > p.start_time\n        ORDER BY p.idx, r.id\n        LIMIT 1\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "name",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "reservation_rounds",
+            "name": "name"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "UuidArray",
+        "TimestamptzArray",
+        "TimestamptzArray"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "5161dce89ba94345f59db30be191af00cf15cf9d5b8488ee2b4e57c189f43618"
+}

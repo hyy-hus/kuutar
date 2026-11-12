@@ -427,30 +427,35 @@ pub async fn ensure_not_under_round(
     conn: &mut PgConnection,
     occurrences: &[CreateOccurrencePayload],
 ) -> Result<(), AppError> {
-    for occ in occurrences {
-        let round = sqlx::query_scalar!(
-            r#"
-            SELECT r.name
-            FROM reservation_rounds r
-            JOIN reservation_round_resources x ON x.round_id = r.id
-            WHERE r.deleted_at IS NULL
-              AND r.status = 'active'
-              AND x.resource_id = $1
-              AND r.period_start < $3
-              AND r.period_end > $2
-            LIMIT 1
-            "#,
-            occ.resource_id,
-            occ.start_time,
-            occ.end_time
-        )
-        .fetch_optional(&mut *conn)
-        .await?;
-        if let Some(name) = round {
-            return Err(AppError::Forbidden(format!(
-                "Resurssille on käynnissä varauskierros '{name}'. Varausjakso on haettavissa vain kierroksen kautta."
-            )));
-        }
+    if occurrences.is_empty() {
+        return Ok(());
+    }
+    let (resource_ids, starts, ends) =
+        crate::domains::reservations::db::occurrence_columns(occurrences);
+    let round = sqlx::query_scalar!(
+        r#"
+        SELECT r.name
+        FROM UNNEST($1::uuid[], $2::timestamptz[], $3::timestamptz[])
+            WITH ORDINALITY AS p(resource_id, start_time, end_time, idx)
+        JOIN reservation_round_resources x ON x.resource_id = p.resource_id
+        JOIN reservation_rounds r ON r.id = x.round_id
+        WHERE r.deleted_at IS NULL
+          AND r.status = 'active'
+          AND r.period_start < p.end_time
+          AND r.period_end > p.start_time
+        ORDER BY p.idx, r.id
+        LIMIT 1
+        "#,
+        &resource_ids,
+        &starts,
+        &ends
+    )
+    .fetch_optional(&mut *conn)
+    .await?;
+    if let Some(name) = round {
+        return Err(AppError::Forbidden(format!(
+            "Resurssille on käynnissä varauskierros '{name}'. Varausjakso on haettavissa vain kierroksen kautta."
+        )));
     }
     Ok(())
 }

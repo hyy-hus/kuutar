@@ -108,6 +108,45 @@ pub async fn list_filtered(
     .fetch_all(pool)
     .await?;
 
+    // All occurrences of the listed reservations in one query, grouped in Rust
+    let occurrence_rows = sqlx::query_as!(
+        Occurrence,
+        r#"
+        SELECT o.id, o.reservation_id, o.resource_id, o.start_time, o.end_time, o.created_at
+        FROM occurrences o
+        WHERE o.reservation_id = ANY($1)
+          AND o.start_time < $3
+          AND o.end_time > $2
+          AND ($4::uuid IS NULL OR o.resource_id = $4)
+          AND ($5 OR EXISTS (
+              SELECT 1 FROM resources rs
+              WHERE rs.id = o.resource_id
+                AND (rs.is_public
+                     OR EXISTS (SELECT 1 FROM resource_visibility_groups vg WHERE vg.resource_id = rs.id AND vg.group_id = $6)
+                     OR (rs.reservation_restricted AND EXISTS (
+                         SELECT 1 FROM resource_groups rg WHERE rg.resource_id = rs.id AND rg.group_id = $6
+                     )))
+          ))
+        ORDER BY o.start_time ASC, o.id
+        "#,
+        &reservation_ids,
+        start_date,
+        end_date,
+        resource_id,
+        sees_all,
+        viewer_group_id
+    )
+    .fetch_all(pool)
+    .await?;
+
+    let mut occurrences_by_reservation: HashMap<Uuid, Vec<Occurrence>> = HashMap::new();
+    for occurrence in occurrence_rows {
+        occurrences_by_reservation
+            .entry(occurrence.reservation_id)
+            .or_default()
+            .push(occurrence);
+    }
+
     let mut result = Vec::with_capacity(reservations.len());
 
     for mut reservation in reservations {
@@ -124,16 +163,9 @@ pub async fn list_filtered(
             }
         }
 
-        let occurrences = fetch_occurrences_for_reservation_filtered(
-            pool,
-            reservation.id,
-            start_date,
-            end_date,
-            resource_id,
-            sees_all,
-            viewer_group_id,
-        )
-        .await?;
+        let occurrences = occurrences_by_reservation
+            .remove(&reservation.id)
+            .unwrap_or_default();
 
         result.push(ReservationWithOccurrences {
             reservation,
@@ -270,20 +302,8 @@ pub async fn create(
     .fetch_one(&mut *tx)
     .await?;
 
-    for occ in dto.occurrences {
-        sqlx::query!(
-            r#"
-            INSERT INTO occurrences (reservation_id, resource_id, start_time, end_time)
-            VALUES ($1, $2, $3, $4)
-            "#,
-            reservation_id,
-            occ.resource_id,
-            occ.start_time,
-            occ.end_time
-        )
-        .execute(&mut *tx)
-        .await?;
-    }
+    let (resource_ids, starts, ends) = occurrence_columns(&dto.occurrences);
+    insert_occurrences(&mut tx, reservation_id, &resource_ids, &starts, &ends).await?;
 
     tx.commit().await?;
 
@@ -369,20 +389,8 @@ pub async fn update(
             .execute(&mut *tx)
             .await?;
 
-        for occ in new_occurrences {
-            sqlx::query!(
-                r#"
-                INSERT INTO occurrences (reservation_id, resource_id, start_time, end_time)
-                VALUES ($1, $2, $3, $4)
-                "#,
-                id,
-                occ.resource_id,
-                occ.start_time,
-                occ.end_time
-            )
-            .execute(&mut *tx)
-            .await?;
-        }
+        let (resource_ids, starts, ends) = occurrence_columns(&new_occurrences);
+        insert_occurrences(&mut tx, id, &resource_ids, &starts, &ends).await?;
     }
 
     tx.commit().await?;
@@ -549,88 +557,96 @@ async fn fetch_occurrences_for_reservation(
     Ok(occurrences)
 }
 
-async fn fetch_occurrences_for_reservation_filtered(
-    pool: &PgPool,
-    reservation_id: Uuid,
-    start_date: DateTime<Utc>,
-    end_date: DateTime<Utc>,
-    resource_id: Option<Uuid>,
-    sees_all: bool,
-    viewer_group_id: Option<Uuid>,
-) -> Result<Vec<Occurrence>, AppError> {
-    let occurrences = sqlx::query_as!(
-        Occurrence,
-        r#"
-        SELECT o.id, o.reservation_id, o.resource_id, o.start_time, o.end_time, o.created_at
-        FROM occurrences o
-        WHERE o.reservation_id = $1
-          AND o.start_time < $3
-          AND o.end_time > $2
-          AND ($4::uuid IS NULL OR o.resource_id = $4)
-          AND ($5 OR EXISTS (
-              SELECT 1 FROM resources rs
-              WHERE rs.id = o.resource_id
-                AND (rs.is_public
-                     OR EXISTS (SELECT 1 FROM resource_visibility_groups vg WHERE vg.resource_id = rs.id AND vg.group_id = $6)
-                     OR (rs.reservation_restricted AND EXISTS (
-                         SELECT 1 FROM resource_groups rg WHERE rg.resource_id = rs.id AND rg.group_id = $6
-                     )))
-          ))
-        ORDER BY o.start_time ASC
-        "#,
-        reservation_id,
-        start_date,
-        end_date,
-        resource_id,
-        sees_all,
-        viewer_group_id
-    )
-    .fetch_all(pool)
-    .await?;
-
-    Ok(occurrences)
-}
-
 pub async fn check_conflicts(
     pool: &PgPool,
     proposed_occurrences: &[CreateOccurrencePayload],
     exclude_reservation_id: Option<Uuid>,
     include_pending: bool,
 ) -> Result<Vec<Occurrence>, AppError> {
-    let mut conflicting_occurrences = Vec::new();
-
-    for proposed in proposed_occurrences {
-        let conflicts = sqlx::query_as!(
-            Occurrence,
-            r#"
-            SELECT o.id, o.reservation_id, o.resource_id, o.start_time, o.end_time, o.created_at
-            FROM occurrences o
-            JOIN reservations r ON r.id = o.reservation_id
-            WHERE o.resource_id = $1
-              AND r.deleted_at IS NULL
-              AND (r.status = 'confirmed' OR ($5 AND r.status = 'pending'))
-              AND ($4::uuid IS NULL OR r.id <> $4)
-              AND o.start_time < $3 
-              AND o.end_time > $2
-            "#,
-            proposed.resource_id,
-            proposed.start_time,
-            proposed.end_time,
-            exclude_reservation_id,
-            include_pending
-        )
-        .fetch_all(pool)
-        .await?;
-
-        conflicting_occurrences.extend(conflicts);
+    if proposed_occurrences.is_empty() {
+        return Ok(Vec::new());
     }
+    let (resource_ids, starts, ends) = occurrence_columns(proposed_occurrences);
 
-    Ok(conflicting_occurrences)
+    // One row per (proposed, existing) overlap, in the order of the proposed occurrences
+    let conflicts = sqlx::query_as!(
+        Occurrence,
+        r#"
+        SELECT
+            o.id AS "id!",
+            o.reservation_id AS "reservation_id!",
+            o.resource_id AS "resource_id!",
+            o.start_time AS "start_time!",
+            o.end_time AS "end_time!",
+            o.created_at AS "created_at!"
+        FROM UNNEST($1::uuid[], $2::timestamptz[], $3::timestamptz[])
+            WITH ORDINALITY AS p(resource_id, start_time, end_time, idx)
+        JOIN occurrences o
+          ON o.resource_id = p.resource_id
+         AND o.start_time < p.end_time
+         AND o.end_time > p.start_time
+        JOIN reservations r ON r.id = o.reservation_id
+        WHERE r.deleted_at IS NULL
+          AND (r.status = 'confirmed' OR ($5 AND r.status = 'pending'))
+          AND ($4::uuid IS NULL OR r.id <> $4)
+        ORDER BY p.idx, o.start_time, o.id
+        "#,
+        &resource_ids,
+        &starts,
+        &ends,
+        exclude_reservation_id,
+        include_pending
+    )
+    .fetch_all(pool)
+    .await?;
+
+    Ok(conflicts)
 }
 
-/// Validates proposed occurrences against active restrictions.
-/// Admins bypass all restrictions. Non-admin users are blocked unless
-/// their user group is explicitly listed in `restriction_exemptions`.
+/// Inserts all occurrences of a reservation in one statement (parallel arrays, same length)
+pub(crate) async fn insert_occurrences(
+    conn: &mut sqlx::PgConnection,
+    reservation_id: Uuid,
+    resource_ids: &[Uuid],
+    starts: &[DateTime<Utc>],
+    ends: &[DateTime<Utc>],
+) -> Result<(), AppError> {
+    if resource_ids.is_empty() {
+        return Ok(());
+    }
+    sqlx::query!(
+        r#"
+        INSERT INTO occurrences (reservation_id, resource_id, start_time, end_time)
+        SELECT $1, p.resource_id, p.start_time, p.end_time
+        FROM UNNEST($2::uuid[], $3::timestamptz[], $4::timestamptz[])
+            WITH ORDINALITY AS p(resource_id, start_time, end_time, idx)
+        ORDER BY p.idx
+        "#,
+        reservation_id,
+        resource_ids,
+        starts,
+        ends
+    )
+    .execute(&mut *conn)
+    .await?;
+    Ok(())
+}
+
+/// Splits occurrences into parallel arrays for `UNNEST($1::uuid[], $2::timestamptz[], $3::timestamptz[])`
+pub(crate) fn occurrence_columns(
+    occurrences: &[CreateOccurrencePayload],
+) -> (Vec<Uuid>, Vec<DateTime<Utc>>, Vec<DateTime<Utc>>) {
+    let mut resource_ids = Vec::with_capacity(occurrences.len());
+    let mut starts = Vec::with_capacity(occurrences.len());
+    let mut ends = Vec::with_capacity(occurrences.len());
+    for occ in occurrences {
+        resource_ids.push(occ.resource_id);
+        starts.push(occ.start_time);
+        ends.push(occ.end_time);
+    }
+    (resource_ids, starts, ends)
+}
+
 pub async fn validate_occurrence_restrictions(
     pool: &PgPool,
     user_id: Uuid,
@@ -649,37 +665,40 @@ pub async fn validate_occurrence_restrictions(
     .await?
     .ok_or_else(|| AppError::Unauthorized("Käyttäjää ei löytynyt.".to_string()))?;
 
-    for occ in occurrences {
-        let violation = sqlx::query!(
-            r#"
-            SELECT r.title
-            FROM restrictions r
-            JOIN restriction_occurrences ro ON ro.restriction_id = r.id
-            WHERE r.deleted_at IS NULL
-              AND ro.start_time < $2
-              AND ro.end_time > $1
-              AND (ro.resource_id IS NULL OR ro.resource_id = $3)
-              AND NOT EXISTS (
-                  SELECT 1 
-                  FROM restriction_exemptions re 
-                  WHERE re.restriction_id = r.id AND re.group_id = $4
-              )
-            LIMIT 1
-            "#,
-            occ.start_time,
-            occ.end_time,
-            occ.resource_id,
-            user_group_id
-        )
-        .fetch_optional(pool)
-        .await?;
+    let (resource_ids, starts, ends) = occurrence_columns(occurrences);
 
-        if let Some(blocked) = violation {
-            return Err(AppError::Forbidden(format!(
-                "Varaus osuu rajoitetulle ajanjaksolle: '{}'",
-                blocked.title
-            )));
-        }
+    // The first restriction hit, in the order of the proposed occurrences
+    let violation = sqlx::query_scalar!(
+        r#"
+        SELECT r.title
+        FROM UNNEST($1::uuid[], $2::timestamptz[], $3::timestamptz[])
+            WITH ORDINALITY AS p(resource_id, start_time, end_time, idx)
+        JOIN restriction_occurrences ro
+          ON ro.start_time < p.end_time
+         AND ro.end_time > p.start_time
+         AND (ro.resource_id IS NULL OR ro.resource_id = p.resource_id)
+        JOIN restrictions r ON r.id = ro.restriction_id
+        WHERE r.deleted_at IS NULL
+          AND NOT EXISTS (
+              SELECT 1
+              FROM restriction_exemptions re
+              WHERE re.restriction_id = r.id AND re.group_id = $4
+          )
+        ORDER BY p.idx, ro.start_time, r.id
+        LIMIT 1
+        "#,
+        &resource_ids,
+        &starts,
+        &ends,
+        user_group_id
+    )
+    .fetch_optional(pool)
+    .await?;
+
+    if let Some(title) = violation {
+        return Err(AppError::Forbidden(format!(
+            "Varaus osuu rajoitetulle ajanjaksolle: '{title}'"
+        )));
     }
 
     Ok(())
@@ -832,9 +851,9 @@ pub async fn should_auto_confirm(
     Ok(blocking == 0)
 }
 
-/// Validates each occurrence's length against the resource's min/max duration.
-/// Admins bypass this check.
-pub async fn validate_resource_durations(
+/// Checks each occurrence against its resource's minimum and maximum duration, then against
+/// its `reservable_until` boundary. Admins bypass both. Resources are loaded in one query.
+pub async fn validate_resource_limits(
     pool: &PgPool,
     is_admin: bool,
     occurrences: &[CreateOccurrencePayload],
@@ -843,19 +862,26 @@ pub async fn validate_resource_durations(
         return Ok(());
     }
 
-    for occ in occurrences {
-        let limits = sqlx::query!(
-            r#"
-            SELECT name, min_duration_minutes, max_duration_minutes
-            FROM resources
-            WHERE id = $1 AND deleted_at IS NULL
-            "#,
-            occ.resource_id
-        )
-        .fetch_optional(pool)
-        .await?;
+    let resource_ids: Vec<Uuid> = occurrences.iter().map(|o| o.resource_id).collect();
+    let limits: HashMap<Uuid, _> = sqlx::query!(
+        r#"
+        SELECT id, name, min_duration_minutes, max_duration_minutes, reservable_until
+        FROM resources
+        WHERE id = ANY($1) AND deleted_at IS NULL
+        "#,
+        &resource_ids
+    )
+    .fetch_all(pool)
+    .await?
+    .into_iter()
+    .map(|row| (row.id, row))
+    .collect();
 
-        let Some(res) = limits else { continue };
+    // Durations first for every occurrence, then the date boundary
+    for occ in occurrences {
+        let Some(res) = limits.get(&occ.resource_id) else {
+            continue;
+        };
         let minutes = (occ.end_time - occ.start_time).num_minutes();
 
         if let Some(min) = res.min_duration_minutes
@@ -878,6 +904,19 @@ pub async fn validate_resource_durations(
         }
     }
 
+    for occ in occurrences {
+        if let Some(res) = limits.get(&occ.resource_id)
+            && let Some(until) = res.reservable_until
+            && occ.end_time > until
+        {
+            return Err(AppError::BadRequest(format!(
+                "Resurssia '{}' voi varata vain kuupäivään {} asti.",
+                res.name,
+                until.format("%d.%m.%Y")
+            )));
+        }
+    }
+
     Ok(())
 }
 
@@ -888,45 +927,6 @@ fn format_duration(minutes: i32) -> String {
         (h, 0) => format!("{h} h"),
         (h, m) => format!("{h} h {m} min"),
     }
-}
-
-/// Validates proposed occurrences against the resource's `reservable_until` boundary.
-/// Admins bypass this check.
-pub async fn validate_resource_reservable_until(
-    pool: &PgPool,
-    is_admin: bool,
-    occurrences: &[CreateOccurrencePayload],
-) -> Result<(), AppError> {
-    if is_admin || occurrences.is_empty() {
-        return Ok(());
-    }
-
-    for occ in occurrences {
-        let resource_limit = sqlx::query!(
-            r#"
-            SELECT name, reservable_until
-            FROM resources
-            WHERE id = $1 AND deleted_at IS NULL
-            "#,
-            occ.resource_id
-        )
-        .fetch_optional(pool)
-        .await?;
-
-        if let Some(res) = resource_limit {
-            if let Some(until) = res.reservable_until {
-                if occ.end_time > until {
-                    return Err(AppError::BadRequest(format!(
-                        "Resurssia '{}' voi varata vain kuupäivään {} asti.",
-                        res.name,
-                        until.format("%d.%m.%Y")
-                    )));
-                }
-            }
-        }
-    }
-
-    Ok(())
 }
 
 /// Enforces `blocks_only` resources: every occurrence on such a resource must match a
@@ -1123,6 +1123,9 @@ pub async fn batch_import(
         .await?;
 
         // Insert occurrences
+        let mut resource_ids = Vec::with_capacity(item.occurrences.len());
+        let mut starts = Vec::with_capacity(item.occurrences.len());
+        let mut ends = Vec::with_capacity(item.occurrences.len());
         for occ in item.occurrences {
             let resource_id = resource_map
                 .get(&occ.resource_name.to_lowercase())
@@ -1132,20 +1135,11 @@ pub async fn batch_import(
                         occ.resource_name
                     ))
                 })?;
-
-            sqlx::query!(
-                r#"
-                INSERT INTO occurrences (reservation_id, resource_id, start_time, end_time)
-                VALUES ($1, $2, $3, $4)
-                "#,
-                res_id,
-                *resource_id,
-                occ.start_time,
-                occ.end_time
-            )
-            .execute(&mut *tx)
-            .await?;
+            resource_ids.push(*resource_id);
+            starts.push(occ.start_time);
+            ends.push(occ.end_time);
         }
+        insert_occurrences(&mut tx, res_id, &resource_ids, &starts, &ends).await?;
 
         created_ids.push(res_id);
     }

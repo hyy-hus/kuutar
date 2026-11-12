@@ -157,20 +157,27 @@ async fn insert_occurrences(
     block_id: Uuid,
     occurrences: Vec<CreateReservableBlockOccurrencePayload>,
 ) -> Result<(), AppError> {
-    for occ in occurrences {
-        sqlx::query!(
-            r#"
-            INSERT INTO reservable_block_occurrences (block_id, resource_id, start_time, end_time)
-            VALUES ($1, $2, $3, $4)
-            "#,
-            block_id,
-            occ.resource_id,
-            occ.start_time,
-            occ.end_time
-        )
-        .execute(&mut *tx)
-        .await?;
+    if occurrences.is_empty() {
+        return Ok(());
     }
+    let resource_ids: Vec<Uuid> = occurrences.iter().map(|o| o.resource_id).collect();
+    let starts: Vec<DateTime<Utc>> = occurrences.iter().map(|o| o.start_time).collect();
+    let ends: Vec<DateTime<Utc>> = occurrences.iter().map(|o| o.end_time).collect();
+    sqlx::query!(
+        r#"
+        INSERT INTO reservable_block_occurrences (block_id, resource_id, start_time, end_time)
+        SELECT $1, p.resource_id, p.start_time, p.end_time
+        FROM UNNEST($2::uuid[], $3::timestamptz[], $4::timestamptz[])
+            WITH ORDINALITY AS p(resource_id, start_time, end_time, idx)
+        ORDER BY p.idx
+        "#,
+        block_id,
+        &resource_ids,
+        &starts,
+        &ends
+    )
+    .execute(&mut *tx)
+    .await?;
     Ok(())
 }
 

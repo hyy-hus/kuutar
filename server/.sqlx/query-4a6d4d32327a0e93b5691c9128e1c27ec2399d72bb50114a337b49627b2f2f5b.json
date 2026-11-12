@@ -1,0 +1,40 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT restriction_id, group_id FROM restriction_exemptions WHERE restriction_id = ANY($1)",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "restriction_id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "restriction_exemptions",
+            "name": "restriction_id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "group_id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "restriction_exemptions",
+            "name": "group_id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "UuidArray"
+      ]
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "4a6d4d32327a0e93b5691c9128e1c27ec2399d72bb50114a337b49627b2f2f5b"
+}
