@@ -283,10 +283,8 @@ pub async fn create_reservation(
     )
     .await?;
 
-    // 2. Validate occurrences against resource's reservable_until date boundary
-    db::validate_resource_durations(&auth_state.pool, is_admin, &payload.occurrences).await?;
-    db::validate_resource_reservable_until(&auth_state.pool, is_admin, &payload.occurrences)
-        .await?;
+    // 2. Validate occurrences against the resources' durations and reservable_until boundary
+    db::validate_resource_limits(&auth_state.pool, is_admin, &payload.occurrences).await?;
 
     // 3. Validate that the owner's group may see and reserve the chosen resources
     db::validate_resource_visibility(
@@ -533,8 +531,7 @@ pub async fn update_reservation(
             auth_user.role,
         )
         .await?;
-        db::validate_resource_durations(&auth_state.pool, is_admin, new_occurrences).await?;
-        db::validate_resource_reservable_until(&auth_state.pool, is_admin, new_occurrences).await?;
+        db::validate_resource_limits(&auth_state.pool, is_admin, new_occurrences).await?;
 
         // Only resources newly added to the reservation need visibility and group access
         let existing_resource_ids: Vec<Uuid> =
