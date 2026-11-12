@@ -846,3 +846,417 @@ async fn test_patch_cannot_cancel_or_restore_for_owner(pool: PgPool) {
     assert!(restored["cancelled_at"].is_null());
     assert!(restored["cancel_reason"].is_null());
 }
+
+// --- Listings and checks over many rows (pin the behaviour of the batched queries) ---
+
+async fn insert_resource(pool: &PgPool, collection_id: Uuid, is_public: bool) -> Uuid {
+    sqlx::query_scalar(
+        "INSERT INTO resources (collection_id, name, allow_recurring, is_public)
+         VALUES ($1, $2, TRUE, $3) RETURNING id",
+    )
+    .bind(collection_id)
+    .bind(format!("Resource {}", Uuid::new_v4()))
+    .bind(is_public)
+    .fetch_one(pool)
+    .await
+    .unwrap()
+}
+
+/// Inserts a reservation with the given occurrences (resource, start offset in hours, length in hours)
+async fn insert_reservation(
+    pool: &PgPool,
+    user_id: Uuid,
+    title: &str,
+    status: &str,
+    created_at: chrono::DateTime<Utc>,
+    occurrences: &[(Uuid, i64, i64)],
+    base: chrono::DateTime<Utc>,
+) -> Uuid {
+    let id: Uuid = sqlx::query_scalar(
+        "INSERT INTO reservations (user_id, title, status, created_at)
+         VALUES ($1, $2, $3::reservation_status, $4) RETURNING id",
+    )
+    .bind(user_id)
+    .bind(title)
+    .bind(status)
+    .bind(created_at)
+    .fetch_one(pool)
+    .await
+    .unwrap();
+    for (resource_id, start_h, len_h) in occurrences {
+        sqlx::query(
+            "INSERT INTO occurrences (reservation_id, resource_id, start_time, end_time)
+             VALUES ($1, $2, $3, $4)",
+        )
+        .bind(id)
+        .bind(resource_id)
+        .bind(base + Duration::hours(*start_h))
+        .bind(base + Duration::hours(start_h + len_h))
+        .execute(pool)
+        .await
+        .unwrap();
+    }
+    id
+}
+
+async fn get_json(app: &axum::Router, uri: &str, token: Option<&str>) -> (StatusCode, Value) {
+    let mut req = Request::builder().method("GET").uri(uri);
+    if let Some(token) = token {
+        req = req.header(header::AUTHORIZATION, token);
+    }
+    let response = app
+        .clone()
+        .oneshot(req.body(Body::empty()).unwrap())
+        .await
+        .unwrap();
+    let status = response.status();
+    let body = to_bytes(response.into_body(), usize::MAX).await.unwrap();
+    (status, serde_json::from_slice(&body).unwrap_or(Value::Null))
+}
+
+async fn post_json(
+    app: &axum::Router,
+    uri: &str,
+    token: &str,
+    payload: Value,
+) -> (StatusCode, Value) {
+    let response = app
+        .clone()
+        .oneshot(
+            Request::builder()
+                .method("POST")
+                .uri(uri)
+                .header(header::AUTHORIZATION, token)
+                .header(header::CONTENT_TYPE, "application/json")
+                .body(Body::from(payload.to_string()))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    let status = response.status();
+    let body = to_bytes(response.into_body(), usize::MAX).await.unwrap();
+    (status, serde_json::from_slice(&body).unwrap_or(Value::Null))
+}
+
+/// (title, [occurrence start times]) for each listed reservation, in response order
+fn listing(json: &Value) -> Vec<(String, Vec<String>)> {
+    json.as_array()
+        .unwrap()
+        .iter()
+        .map(|r| {
+            (
+                r["title"].as_str().unwrap().to_string(),
+                r["occurrences"]
+                    .as_array()
+                    .unwrap()
+                    .iter()
+                    .map(|o| o["start_time"].as_str().unwrap().to_string())
+                    .collect(),
+            )
+        })
+        .collect()
+}
+
+fn ts(base: chrono::DateTime<Utc>, hours: i64) -> String {
+    (base + Duration::hours(hours)).to_rfc3339_opts(chrono::SecondsFormat::AutoSi, true)
+}
+
+#[sqlx::test]
+async fn test_list_groups_and_filters_occurrences_per_reservation(pool: PgPool) {
+    let (user_token, user_id, _group_id) = setup_user_token(&pool, Role::User).await;
+    let (admin_token, admin_id, _) = setup_user_token(&pool, Role::Admin).await;
+    let collection_id: Uuid =
+        sqlx::query_scalar("INSERT INTO collections (name) VALUES ('Lists') RETURNING id")
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+    let public = insert_resource(&pool, collection_id, true).await;
+    let hidden = insert_resource(&pool, collection_id, false).await;
+    let other = insert_resource(&pool, collection_id, true).await;
+
+    let base = chrono::DateTime::parse_from_rfc3339("2030-03-01T00:00:00Z")
+        .unwrap()
+        .with_timezone(&Utc);
+    let created = base - Duration::days(10);
+
+    // Occurrences inserted out of order, one outside the window and one on a hidden resource
+    insert_reservation(
+        &pool,
+        user_id,
+        "Mine",
+        "confirmed",
+        created,
+        &[
+            (public, 30, 1),
+            (hidden, 20, 1),
+            (public, 10, 1),
+            (public, 24 * 40, 1),
+        ],
+        base,
+    )
+    .await;
+    insert_reservation(
+        &pool,
+        admin_id,
+        "Theirs",
+        "confirmed",
+        created + Duration::hours(1),
+        &[(other, 40, 2), (public, 15, 1)],
+        base,
+    )
+    .await;
+    insert_reservation(
+        &pool,
+        user_id,
+        "Pending",
+        "pending",
+        created + Duration::hours(2),
+        &[(public, 50, 1)],
+        base,
+    )
+    .await;
+    insert_reservation(
+        &pool,
+        admin_id,
+        "Hidden only",
+        "confirmed",
+        created + Duration::hours(3),
+        &[(hidden, 60, 1)],
+        base,
+    )
+    .await;
+
+    let app = app(pool, test_config());
+    let window = format!(
+        "start_date={}&end_date={}",
+        ts(base, 0).replace('+', "%2B"),
+        ts(base, 24 * 30).replace('+', "%2B")
+    );
+
+    // Guests: confirmed only, hidden occurrences and reservations left out, newest first
+    let (status, json) = get_json(&app, &format!("/reservations?{window}"), None).await;
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(
+        listing(&json),
+        vec![
+            ("Theirs".to_string(), vec![ts(base, 15), ts(base, 40)]),
+            ("Mine".to_string(), vec![ts(base, 10), ts(base, 30)]),
+        ]
+    );
+    assert!(json[0]["user_email"].is_null());
+
+    // Admins: every status and every resource, still only the window
+    let (status, json) =
+        get_json(&app, &format!("/reservations?{window}"), Some(&admin_token)).await;
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(
+        listing(&json),
+        vec![
+            ("Hidden only".to_string(), vec![ts(base, 60)]),
+            ("Pending".to_string(), vec![ts(base, 50)]),
+            ("Theirs".to_string(), vec![ts(base, 15), ts(base, 40)]),
+            (
+                "Mine".to_string(),
+                vec![ts(base, 10), ts(base, 20), ts(base, 30)]
+            ),
+        ]
+    );
+
+    // Owners see all their own occurrences in the window, hidden resource included
+    let (status, json) = get_json(
+        &app,
+        &format!("/reservations/me?{window}"),
+        Some(&user_token),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(
+        listing(&json),
+        vec![
+            ("Pending".to_string(), vec![ts(base, 50)]),
+            (
+                "Mine".to_string(),
+                vec![ts(base, 10), ts(base, 20), ts(base, 30)]
+            ),
+        ]
+    );
+}
+
+#[sqlx::test]
+async fn test_check_conflicts_with_many_occurrences(pool: PgPool) {
+    let (_group_id, user_id, resource_id, _collection_id, token) =
+        setup_test_environment(&pool, Role::User).await;
+    let base = Utc::now() + Duration::days(5);
+    let existing = insert_reservation(
+        &pool,
+        user_id,
+        "Existing",
+        "confirmed",
+        Utc::now(),
+        &[(resource_id, 0, 2), (resource_id, 10, 2)],
+        base,
+    )
+    .await;
+    let occ_ids: Vec<(Uuid, chrono::DateTime<Utc>)> = sqlx::query_as(
+        "SELECT id, start_time FROM occurrences WHERE reservation_id = $1 ORDER BY start_time",
+    )
+    .bind(existing)
+    .fetch_all(&pool)
+    .await
+    .unwrap();
+    let (first, second) = (occ_ids[0].0.to_string(), occ_ids[1].0.to_string());
+
+    let occ = |start_h: i64, len_h: i64| {
+        json!({
+            "resource_id": resource_id,
+            "start_time": base + Duration::hours(start_h),
+            "end_time": base + Duration::hours(start_h + len_h),
+        })
+    };
+    let app = app(pool, test_config());
+    // Overlaps the second, nothing, the first, and the first again
+    let payload = json!([occ(11, 1), occ(5, 1), occ(1, 1), occ(0, 3)]);
+    let (status, json) = post_json(
+        &app,
+        "/reservations/check-conflicts",
+        &format!("Bearer {token}"),
+        payload.clone(),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK);
+    let ids: Vec<&str> = json
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|o| o["id"].as_str().unwrap())
+        .collect();
+    assert_eq!(ids, vec![second.as_str(), first.as_str(), first.as_str()]);
+
+    // The reservation being edited is ignored
+    let (status, json) = post_json(
+        &app,
+        &format!("/reservations/check-conflicts?exclude_reservation_id={existing}"),
+        &format!("Bearer {token}"),
+        payload,
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(json.as_array().unwrap().len(), 0);
+}
+
+#[sqlx::test]
+async fn test_create_reports_violation_of_a_later_occurrence(pool: PgPool) {
+    let (_group_id, _user_id, resource_id, collection_id, token) =
+        setup_test_environment(&pool, Role::User).await;
+    let token = format!("Bearer {token}");
+    let base = Utc::now() + Duration::days(5);
+    let limited = insert_resource(&pool, collection_id, true).await;
+    sqlx::query(
+        "UPDATE resources SET name = 'Limited room', max_duration_minutes = 120, reservable_until = $2
+         WHERE id = $1",
+    )
+    .bind(limited)
+    .bind(base + Duration::days(3))
+    .execute(&pool)
+    .await
+    .unwrap();
+
+    let restriction_id: Uuid =
+        sqlx::query_scalar("INSERT INTO restrictions (title) VALUES ('Exam week') RETURNING id")
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+    sqlx::query(
+        "INSERT INTO restriction_occurrences (restriction_id, resource_id, start_time, end_time)
+         VALUES ($1, $2, $3, $4)",
+    )
+    .bind(restriction_id)
+    .bind(resource_id)
+    .bind(base + Duration::hours(48))
+    .bind(base + Duration::hours(72))
+    .execute(&pool)
+    .await
+    .unwrap();
+
+    let occ = |res: Uuid, start_h: i64, len_h: i64| {
+        json!({
+            "resource_id": res,
+            "start_time": base + Duration::hours(start_h),
+            "end_time": base + Duration::hours(start_h + len_h),
+        })
+    };
+    let create = |occurrences: Vec<Value>| json!({ "title": "Many", "occurrences": occurrences });
+    let app = app(pool, test_config());
+
+    // The restriction hits only the third occurrence
+    let (status, json) = post_json(
+        &app,
+        "/reservations",
+        &token,
+        create(vec![
+            occ(resource_id, 0, 1),
+            occ(resource_id, 24, 1),
+            occ(resource_id, 50, 1),
+        ]),
+    )
+    .await;
+    assert_eq!(status, StatusCode::FORBIDDEN);
+    assert!(
+        json["error"].as_str().unwrap().contains("Exam week"),
+        "{json}"
+    );
+
+    // Too long on the second occurrence
+    let (status, json) = post_json(
+        &app,
+        "/reservations",
+        &token,
+        create(vec![occ(limited, 0, 1), occ(limited, 5, 3)]),
+    )
+    .await;
+    assert_eq!(status, StatusCode::BAD_REQUEST);
+    assert!(
+        json["error"].as_str().unwrap().contains("enimmäiskesto"),
+        "{json}"
+    );
+
+    // Past reservable_until on the second occurrence
+    let (status, json) = post_json(
+        &app,
+        "/reservations",
+        &token,
+        create(vec![occ(limited, 0, 1), occ(limited, 24 * 4, 1)]),
+    )
+    .await;
+    assert_eq!(status, StatusCode::BAD_REQUEST);
+    assert!(json["error"].as_str().unwrap().contains("asti"), "{json}");
+
+    // Durations are checked before reservable_until, whatever the occurrence order
+    let (status, json) = post_json(
+        &app,
+        "/reservations",
+        &token,
+        create(vec![occ(limited, 24 * 4, 1), occ(limited, 5, 3)]),
+    )
+    .await;
+    assert_eq!(status, StatusCode::BAD_REQUEST);
+    assert!(
+        json["error"].as_str().unwrap().contains("enimmäiskesto"),
+        "{json}"
+    );
+
+    // Everything valid across both resources goes through
+    let (status, json) = post_json(
+        &app,
+        "/reservations",
+        &token,
+        create(vec![
+            occ(limited, 0, 2),
+            occ(resource_id, 1, 1),
+            occ(limited, 24, 1),
+        ]),
+    )
+    .await;
+    assert_eq!(status, StatusCode::CREATED, "{json}");
+    assert_eq!(json["occurrences"].as_array().unwrap().len(), 3);
+}
