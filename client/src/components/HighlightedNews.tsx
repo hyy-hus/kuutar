@@ -52,9 +52,12 @@ export function HighlightedNews({ items, onDismiss }: HighlightedNewsProps) {
 									</p>
 								)}
 								<Button variant="ghost" size="sm" asChild className="-ml-3">
-									<Link to="/news/$id" params={{ id: item.id }}>
+									<Link
+										to="/news/$id"
+										params={{ id: item.id }}
+										aria-label={`${t("lueLisaa", "Lue lisää")}: ${title}`}
+									>
 										<span>{t("lueLisaa", "Lue lisää")}</span>
-										<span className="sr-only">: {title}</span>
 										<ChevronRight size={14} aria-hidden="true" />
 									</Link>
 								</Button>
