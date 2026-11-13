@@ -54,6 +54,70 @@ const CONTRACTS: &[&str] = &[
     "Vanha sopimus",
 ];
 
+/// News titles (fi, sv, en). The Finnish title identifies seeded items for [`reset`].
+const NEWS: &[(&str, &str, &str)] = &[
+    (
+        "Joulun aukioloajat",
+        "Öppettider under julen",
+        "Opening hours over Christmas",
+    ),
+    (
+        "Kevään varauskierros avautuu",
+        "Vårens bokningsomgång öppnar",
+        "Spring reservation round opens",
+    ),
+    (
+        "Kristallisalin remontti",
+        "Renovering av Kristallsalen",
+        "Kristallisali renovation",
+    ),
+    (
+        "Kameroiden lainausohjeet päivitetty",
+        "Nya anvisningar för kameralån",
+        "Camera loan instructions updated",
+    ),
+    (
+        "Kokoustilat järjestöille",
+        "Mötesrum för föreningar",
+        "Meeting rooms for organisations",
+    ),
+    (
+        "Henkilökunnan tiedote",
+        "Meddelande till personalen",
+        "Notice to staff",
+    ),
+    (
+        "Kirjautuminen sähköpostikoodilla",
+        "Inloggning med e-postkod",
+        "Signing in with an email code",
+    ),
+    (
+        "Grillin käyttöohjeet",
+        "Anvisningar för grillen",
+        "How to use the grill",
+    ),
+    (
+        "Peruutusehdot tarkentuvat",
+        "Förtydligade avbokningsvillkor",
+        "Clearer cancellation terms",
+    ),
+    (
+        "Tervetuloa käyttämään varausjärjestelmää",
+        "Välkommen till bokningssystemet",
+        "Welcome to the booking system",
+    ),
+    (
+        "Kesän aukioloajat",
+        "Öppettider under sommaren",
+        "Summer opening hours",
+    ),
+    (
+        "Joulutauon varaukset",
+        "Bokningar under jullovet",
+        "Reservations over the holiday break",
+    ),
+];
+
 const FIRST: &[&str] = &[
     "Aino", "Eemeli", "Siiri", "Oskar", "Helmi", "Veeti", "Aada", "Leo", "Ella", "Elias", "Venla",
     "Onni", "Emma", "Matias", "Ilona", "Niklas", "Linnea", "Aleksi", "Sofia", "Juho", "Alma",
@@ -201,6 +265,7 @@ pub struct Summary {
     pub reservations: usize,
     pub occurrences: usize,
     pub rounds: usize,
+    pub news: usize,
 }
 
 /// SplitMix64. Small, deterministic and independent of the `rand` crate's API.
@@ -382,6 +447,11 @@ pub async fn reset(pool: &PgPool) -> Result<()> {
         }
         q.execute(&mut *tx).await?;
     }
+    let news_titles: Vec<String> = NEWS.iter().map(|(fi, _, _)| fi.to_string()).collect();
+    sqlx::query("DELETE FROM news WHERE title->>'fi' = ANY($1)")
+        .bind(news_titles)
+        .execute(&mut *tx)
+        .await?;
     let by_names: &[(&str, &[&str])] = &[
         (
             "DELETE FROM reservation_rounds WHERE name = ANY($1)",
@@ -513,8 +583,8 @@ pub async fn seed(pool: &PgPool, opts: &MockOptions) -> Result<Summary> {
         });
         let id: Uuid = sqlx::query_scalar(
             "INSERT INTO users (group_id, email, password_hash, role, name, default_contact_person, \
-             default_contact_email, default_contact_phone, language) \
-             VALUES ($1, $2, $3, $4::text::user_role, $5, $6, $7, $8, $9) RETURNING id",
+             default_contact_email, default_contact_phone, language, created_at) \
+             VALUES ($1, $2, $3, $4::text::user_role, $5, $6, $7, $8, $9, $10) RETURNING id",
         )
         .bind(group_id)
         .bind(&email)
@@ -525,6 +595,8 @@ pub async fn seed(pool: &PgPool, opts: &MockOptions) -> Result<Summary> {
         .bind(contact.as_ref().map(|c| c.1.clone()))
         .bind(contact.as_ref().map(|c| c.2.clone()))
         .bind(language)
+        // Accounts predate the seeded news, so news counts as unread for them
+        .bind(now - Duration::days(400 - i as i64 % 300))
         .fetch_one(&mut *tx)
         .await?;
         users.push(UserRec {
@@ -1301,8 +1373,154 @@ pub async fn seed(pool: &PgPool, opts: &MockOptions) -> Result<Summary> {
             .await?;
     }
 
+    summary.news = seed_news(&mut tx, &mut rng, &users, now, org_groups[0], staff_group).await?;
+
     tx.commit().await.context("commit mock data")?;
     Ok(summary)
+}
+
+/// News items: every visibility level, a draft, a scheduled item, current and expired highlights,
+/// and read rows. `user@example.test` (in `member_group`) is left with a few unread items.
+async fn seed_news(
+    tx: &mut Transaction<'_, Postgres>,
+    rng: &mut Rng,
+    users: &[UserRec],
+    now: Dt,
+    member_group: Uuid,
+    staff_group: Uuid,
+) -> Result<usize> {
+    struct Item {
+        visibility: &'static str,
+        groups: Vec<Uuid>,
+        /// Days before `now`; None = draft, negative = scheduled
+        published_days_ago: Option<i64>,
+        /// None = not highlighted; Some(None) = highlighted until removed
+        highlight_until_days: Option<Option<i64>>,
+        rich_body: bool,
+    }
+    let item = |visibility, published_days_ago, highlight_until_days| Item {
+        visibility,
+        groups: vec![],
+        published_days_ago,
+        highlight_until_days,
+        rich_body: false,
+    };
+    let items = [
+        Item {
+            rich_body: true,
+            ..item("public", Some(1), Some(Some(40)))
+        },
+        Item {
+            rich_body: true,
+            ..item("users", Some(3), Some(None))
+        },
+        item("public", Some(20), Some(Some(-2))),
+        item("users", Some(6), None),
+        Item {
+            groups: vec![member_group],
+            ..item("groups", Some(4), None)
+        },
+        Item {
+            groups: vec![staff_group],
+            ..item("groups", Some(8), None)
+        },
+        item("public", Some(30), None),
+        Item {
+            rich_body: true,
+            ..item("public", Some(45), None)
+        },
+        item("users", Some(60), None),
+        item("public", Some(90), None),
+        item("users", None, None),
+        item("users", Some(-5), Some(Some(30))),
+    ];
+    let author = users[0].id;
+    let mut ids = vec![];
+    for ((fi, sv, en), it) in NEWS.iter().zip(items.iter()) {
+        let title = json!({"fi": fi, "sv": sv, "en": en});
+        let blurb = json!({
+            "fi": format!("{fi}: lyhyt kuvaus, joka näkyy listassa ja etusivulla."),
+            "sv": format!("{sv}: en kort beskrivning som visas i listan och på startsidan."),
+            "en": format!("{en}: a short summary shown in the list and on the home page."),
+        });
+        let body_doc = |heading: &str, text: &str, items: [&str; 2]| {
+            if it.rich_body {
+                let item = |t: &str| json!({"type": "listItem", "content": [{"type": "paragraph", "content": [{"type": "text", "text": t}]}]});
+                json!({"type": "doc", "content": [
+                    {"type": "paragraph", "content": [{"type": "text", "text": text}]},
+                    {"type": "heading", "attrs": {"level": 2}, "content": [{"type": "text", "text": heading}]},
+                    {"type": "bulletList", "content": [item(items[0]), item(items[1])]},
+                ]})
+            } else {
+                doc(text)
+            }
+        };
+        let body = json!({
+            "fi": body_doc(
+                "Muistettavaa",
+                "Esimerkkitiedote. Tähän kirjoitetaan tiedotteen koko teksti.",
+                ["Tarkista vapaat ajat kalenterista.", "Kysy lisää ylläpidolta."],
+            ),
+            "sv": body_doc(
+                "Att komma ihåg",
+                "Exempelmeddelande. Här skrivs hela texten.",
+                ["Kolla lediga tider i kalendern.", "Fråga administratörerna om mer."],
+            ),
+            "en": body_doc(
+                "Good to know",
+                "Example news item. The full text goes here.",
+                ["Check free times in the calendar.", "Ask the admins for more."],
+            ),
+        });
+        let published_at = it.published_days_ago.map(|d| now - Duration::days(d));
+        let id: Uuid = sqlx::query_scalar(
+            "INSERT INTO news (title, blurb, body, visibility, published_at, highlighted, highlight_until, created_by, created_at) \
+             VALUES ($1, $2, $3, $4::text::news_visibility, $5, $6, $7, $8, $9) RETURNING id",
+        )
+        .bind(title)
+        .bind(blurb)
+        .bind(body)
+        .bind(it.visibility)
+        .bind(published_at)
+        .bind(it.highlight_until_days.is_some())
+        .bind(it.highlight_until_days.flatten().map(|d| now + Duration::days(d)))
+        .bind(author)
+        .bind(published_at.unwrap_or(now) - Duration::hours(2))
+        .fetch_one(&mut **tx)
+        .await?;
+        for group_id in &it.groups {
+            sqlx::query("INSERT INTO news_visibility_groups (news_id, group_id) VALUES ($1, $2)")
+                .bind(id)
+                .bind(group_id)
+                .execute(&mut **tx)
+                .await?;
+        }
+        ids.push((id, it.published_days_ago));
+    }
+
+    // Older items (a week or more) are read by some users; admin and user@example.test have
+    // read all of them, so their newest items stay unread.
+    for (index, user) in users.iter().enumerate() {
+        for (id, days_ago) in &ids {
+            let Some(days_ago) = *days_ago else { continue };
+            let old = days_ago >= 7;
+            let read = if index < 2 {
+                old
+            } else {
+                old && rng.chance(40)
+            };
+            if read {
+                sqlx::query("INSERT INTO news_reads (user_id, news_id, read_at) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING")
+                    .bind(user.id)
+                    .bind(id)
+                    .bind(now - Duration::days(days_ago - 1))
+                    .execute(&mut **tx)
+                    .await?;
+            }
+        }
+    }
+
+    Ok(ids.len())
 }
 
 fn base_clone<'a, T: Clone>(t: &'a T) -> T {

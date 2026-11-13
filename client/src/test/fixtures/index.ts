@@ -7,6 +7,7 @@ import type { components } from "#/api/schema";
  */
 type Resource = components["schemas"]["Resource"];
 type Reservation = components["schemas"]["Reservation"];
+type News = components["schemas"]["News"];
 
 const NOW = "2026-11-11T09:00:00.000Z";
 
@@ -51,6 +52,30 @@ export function makeReservation(
 		]),
 		status: "confirmed",
 		source: "kuutar",
+		created_at: NOW,
+		updated_at: NOW,
+		...overrides,
+	};
+}
+
+/** A published news item; `NewsSummary` fields are a subset, so it works for lists too */
+export function makeNews(overrides: Partial<News> = {}): News {
+	const title = faker.helpers.arrayElement([
+		"Joulun aukioloajat",
+		"Kevään varauskierros avautuu",
+		"Grillin käyttöohjeet",
+	]);
+	return {
+		id: faker.string.uuid(),
+		title: { fi: title, en: `${title} (en)` },
+		blurb: { fi: `${title}: lyhyt kuvaus.` },
+		body: null,
+		visibility: "public",
+		visible_group_ids: [],
+		published_at: "2026-11-10T09:00:00.000Z",
+		highlighted: false,
+		highlight_until: null,
+		is_read: false,
 		created_at: NOW,
 		updated_at: NOW,
 		...overrides,

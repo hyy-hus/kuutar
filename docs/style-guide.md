@@ -133,7 +133,7 @@ and summary on wide screens, and `StickyFormActions`.
 
 - **Labels:** `text-sm font-medium` above the field. Mark required fields with `*` (`aria-hidden`) and give the input `aria-required`.
 - **Errors:** `text-xs text-red-600 dark:text-red-400` under the field; pass `isError` to `Input`.
-- **Localized fields:** `LocalizedRichTextEditor` puts FI/SV/EN `LocaleTabs` above the editor. A dot marks the languages that have content.
+- **Localized fields:** `LocalizedRichTextEditor` (rich text) and `LocalizedTextField` (plain text, single line or `multiline`) put FI/SV/EN `LocaleTabs` above the field. A dot marks the languages that have content. Require one language, not all three; readers fall back fi → en → sv (`getLocalizedDoc`, `getLocalizedString`).
 - **Actions:** `FormActions` puts the primary button first ("Tallenna muutokset" / "Luo …", with an icon) and a ghost "Peruuta" after it. Never put the primary button on the right.
 
 ## Components to reach for
@@ -149,6 +149,8 @@ and summary on wide screens, and `StickyFormActions`.
 | Pick groups | `GroupChecklist` |
 | Date / time | `DateInput`, `DateTimeInput` |
 | Rich text | `LocalizedRichTextEditor` to edit, `RichTextContent` to render (with locale fallback) |
+| Localized plain text | `LocalizedTextField` to edit, `getLocalizedString` to read |
+| Announcement on the home page | `HighlightedNews`: card with a 4px accent left edge (`border-l-4 border-l-accent`), small meta line, bold title, muted text and a ghost "Lue lisää" link; optional dismiss ✕ |
 | Tooltip | `Tooltip` (the collapsed sidebar uses it for labels) |
 
 Before writing a new component, check `client/src/components/` and the Storybook stories. A new
@@ -161,6 +163,18 @@ label. Items are `text-sm font-medium` with a 16px icon. The active item is inve
 (`bg-stone-800 text-stone-100`, light in dark mode). When collapsed, the sidebar becomes an icon rail
 with tooltips. Each nav item has an access level (`public` / `auth` / `admin`). A 2px dark border
 (`border-stone-800 dark:border-stone-600`) separates the header and sidebar from the content.
+
+A nav item can carry a `badge` count, e.g. unread news: an accent pill on the right
+(`bg-accent text-surface rounded-full`, capped at `99+`) when expanded, an accent dot on the icon
+when collapsed. The count always goes into the link's accessible name ("Tiedotteet, 3 lukematonta"),
+since the pill is `aria-hidden`. Badge counts are cached queries without polling; refresh them by
+invalidating after the action that changes them.
+
+### Unread state
+
+Unread items in a list get a small accent dot before the title (`size-2 rounded-full bg-accent`,
+plus an `sr-only` "Lukematon") and a bold title; read titles are `font-semibold`. Don't use colour
+or weight alone.
 
 ## Dark mode and locales
 

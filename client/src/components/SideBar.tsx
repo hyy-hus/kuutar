@@ -12,6 +12,7 @@ import {
 	Home,
 	type LucideIcon,
 	Mail,
+	Newspaper,
 	Repeat,
 	Shield,
 	ShieldAlert,
@@ -23,7 +24,9 @@ import { AccountArea } from "#/components/AccountArea";
 import type { Theme } from "#/components/ThemeSwitcher";
 import { Tooltip } from "#/components/Tooltip";
 import { useAuth, useIsAdmin } from "#/hooks/useAuth";
+import { useUnreadNewsCount } from "#/hooks/useNews";
 import { cn } from "#/utils/cn";
+import { formatUnreadCount } from "#/utils/news";
 
 interface SideBarProps {
 	/** Icon-only rail (desktop); labels move into tooltips */
@@ -40,6 +43,9 @@ export function SideBar({
 	const { t } = useTranslation();
 	const { user } = useAuth();
 	const { isAdmin } = useIsAdmin();
+	const { data: unreadNews = 0 } = useUnreadNewsCount({
+		enabled: Boolean(user),
+	});
 
 	type Access = "public" | "auth" | "admin";
 	interface NavItem {
@@ -47,6 +53,8 @@ export function SideBar({
 		label: string;
 		icon: LucideIcon;
 		access: Access;
+		/** Unread count; shown as a pill, or a dot when collapsed */
+		badge?: number;
 	}
 	interface NavGroup {
 		key: string;
@@ -64,6 +72,13 @@ export function SideBar({
 					label: t("etusivu", "Etusivu"),
 					icon: Home,
 					access: "public",
+				},
+				{
+					to: "/news",
+					label: t("tiedotteet", "Tiedotteet"),
+					icon: Newspaper,
+					access: "public",
+					badge: user ? unreadNews : undefined,
 				},
 				{
 					to: "/calendar",
@@ -171,11 +186,16 @@ export function SideBar({
 
 	const renderLink = (item: NavItem) => {
 		const Icon = item.icon;
+		const badge = item.badge ? formatUnreadCount(item.badge) : null;
+		const unreadText = badge
+			? t("lukemattomiaCount", "{{count}} lukematonta", { count: item.badge })
+			: null;
+		const fullLabel = unreadText ? `${item.label}, ${unreadText}` : item.label;
 		const link = (
 			<Link
 				key={item.to}
 				to={item.to}
-				aria-label={collapsed ? item.label : undefined}
+				aria-label={collapsed || unreadText ? fullLabel : undefined}
 				activeProps={{
 					className:
 						"bg-stone-800 text-stone-100 dark:bg-stone-200 dark:text-stone-900",
@@ -185,16 +205,30 @@ export function SideBar({
 						"text-stone-800 dark:text-stone-200 hover:bg-stone-200 dark:hover:bg-stone-800",
 				}}
 				className={cn(
-					"focus-ring flex items-center rounded-md text-sm font-medium transition-colors",
+					"focus-ring relative flex items-center rounded-md text-sm font-medium transition-colors",
 					collapsed ? "mx-auto size-10 justify-center" : "gap-3 px-3 py-2",
 				)}
 			>
 				<Icon size={collapsed ? 18 : 16} className="shrink-0" />
 				{!collapsed && <span className="truncate">{item.label}</span>}
+				{badge &&
+					(collapsed ? (
+						<span
+							aria-hidden="true"
+							className="absolute top-1.5 right-1.5 size-2 rounded-full bg-accent ring-2 ring-stone-100 dark:ring-stone-900"
+						/>
+					) : (
+						<span
+							aria-hidden="true"
+							className="ml-auto min-w-5 rounded-full bg-accent px-1.5 text-center text-xs leading-5 font-semibold tabular-nums text-surface"
+						>
+							{badge}
+						</span>
+					))}
 			</Link>
 		);
 		return collapsed ? (
-			<Tooltip key={item.to} content={item.label}>
+			<Tooltip key={item.to} content={fullLabel}>
 				{link}
 			</Tooltip>
 		) : (

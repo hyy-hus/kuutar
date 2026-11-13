@@ -1,0 +1,25 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT COUNT(*) AS \"count!\"\n        FROM news n\n        WHERE n.deleted_at IS NULL\n          AND n.published_at IS NOT NULL AND n.published_at <= NOW()\n          AND n.published_at >= COALESCE((SELECT u.created_at FROM users u WHERE u.id = $2), '-infinity')\n          AND ($1 OR n.visibility IN ('public', 'users')\n              OR (n.visibility = 'groups' AND EXISTS (\n                  SELECT 1 FROM news_visibility_groups g WHERE g.news_id = n.id AND g.group_id = $3\n              )))\n          AND NOT EXISTS (SELECT 1 FROM news_reads r WHERE r.news_id = n.id AND r.user_id = $2)\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "count!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Bool",
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "b6e487e0fbf9cede2f304a4cb4ba299879a5e89ac55b088079ff1557bfeb6fc4"
+}

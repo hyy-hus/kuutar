@@ -24,6 +24,9 @@ import { Route as AppCollectionsIndexRouteImport } from './routes/_app/collectio
 import { Route as AppCollectionsIdRouteImport } from './routes/_app/collections/$id'
 import { Route as AppCollectionsCreateRouteImport } from './routes/_app/collections/create'
 import { Route as AppContractsIndexRouteImport } from './routes/_app/contracts/index'
+import { Route as AppNewsIndexRouteImport } from './routes/_app/news/index'
+import { Route as AppNewsIdRouteImport } from './routes/_app/news/$id'
+import { Route as AppNewsCreateRouteImport } from './routes/_app/news/create'
 import { Route as AppReservableBlocksIndexRouteImport } from './routes/_app/reservable-blocks/index'
 import { Route as AppReservableBlocksIdRouteImport } from './routes/_app/reservable-blocks/$id'
 import { Route as AppReservableBlocksCreateRouteImport } from './routes/_app/reservable-blocks/create'
@@ -49,6 +52,7 @@ import { Route as AppAdminUsersIdRouteImport } from './routes/_app/admin/users/$
 import { Route as AppAdminUsersBatchRegisterRouteImport } from './routes/_app/admin/users/batch-register'
 import { Route as AppAdminUsersCreateRouteImport } from './routes/_app/admin/users/create'
 import { Route as AppCollectionsEditIdRouteImport } from './routes/_app/collections/edit.$id'
+import { Route as AppNewsEditIdRouteImport } from './routes/_app/news/edit.$id'
 import { Route as AppReservableBlocksEditIdRouteImport } from './routes/_app/reservable-blocks/edit.$id'
 import { Route as AppReservationsEditIdRouteImport } from './routes/_app/reservations/edit.$id'
 import { Route as AppReservationsRoundsIdRouteImport } from './routes/_app/reservations/rounds/$id'
@@ -130,6 +134,21 @@ const AppCollectionsCreateRoute = AppCollectionsCreateRouteImport.update({
 const AppContractsIndexRoute = AppContractsIndexRouteImport.update({
   id: '/contracts/',
   path: '/contracts/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppNewsIndexRoute = AppNewsIndexRouteImport.update({
+  id: '/news/',
+  path: '/news/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppNewsIdRoute = AppNewsIdRouteImport.update({
+  id: '/news/$id',
+  path: '/news/$id',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppNewsCreateRoute = AppNewsCreateRouteImport.update({
+  id: '/news/create',
+  path: '/news/create',
   getParentRoute: () => AppRoute,
 } as any)
 const AppReservableBlocksIndexRoute =
@@ -260,6 +279,11 @@ const AppCollectionsEditIdRoute = AppCollectionsEditIdRouteImport.update({
   path: '/collections/edit/$id',
   getParentRoute: () => AppRoute,
 } as any)
+const AppNewsEditIdRoute = AppNewsEditIdRouteImport.update({
+  id: '/news/edit/$id',
+  path: '/news/edit/$id',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppReservableBlocksEditIdRoute =
   AppReservableBlocksEditIdRouteImport.update({
     id: '/reservable-blocks/edit/$id',
@@ -313,6 +337,8 @@ export interface FileRoutesByFullPath {
   '/admin/reservations': typeof AppAdminReservationsRoute
   '/collections/$id': typeof AppCollectionsIdRoute
   '/collections/create': typeof AppCollectionsCreateRoute
+  '/news/$id': typeof AppNewsIdRoute
+  '/news/create': typeof AppNewsCreateRoute
   '/reservable-blocks/$id': typeof AppReservableBlocksIdRoute
   '/reservable-blocks/create': typeof AppReservableBlocksCreateRoute
   '/reservations/$id': typeof AppReservationsIdRoute
@@ -325,6 +351,7 @@ export interface FileRoutesByFullPath {
   '/calendar/': typeof AppCalendarIndexRoute
   '/collections/': typeof AppCollectionsIndexRoute
   '/contracts/': typeof AppContractsIndexRoute
+  '/news/': typeof AppNewsIndexRoute
   '/reservable-blocks/': typeof AppReservableBlocksIndexRoute
   '/reservations/': typeof AppReservationsIndexRoute
   '/resources/': typeof AppResourcesIndexRoute
@@ -338,6 +365,7 @@ export interface FileRoutesByFullPath {
   '/admin/users/batch-register': typeof AppAdminUsersBatchRegisterRoute
   '/admin/users/create': typeof AppAdminUsersCreateRoute
   '/collections/edit/$id': typeof AppCollectionsEditIdRoute
+  '/news/edit/$id': typeof AppNewsEditIdRoute
   '/reservable-blocks/edit/$id': typeof AppReservableBlocksEditIdRoute
   '/reservations/edit/$id': typeof AppReservationsEditIdRoute
   '/reservations/rounds/$id': typeof AppReservationsRoundsIdRoute
@@ -361,6 +389,8 @@ export interface FileRoutesByTo {
   '/admin/reservations': typeof AppAdminReservationsRoute
   '/collections/$id': typeof AppCollectionsIdRoute
   '/collections/create': typeof AppCollectionsCreateRoute
+  '/news/$id': typeof AppNewsIdRoute
+  '/news/create': typeof AppNewsCreateRoute
   '/reservable-blocks/$id': typeof AppReservableBlocksIdRoute
   '/reservable-blocks/create': typeof AppReservableBlocksCreateRoute
   '/reservations/$id': typeof AppReservationsIdRoute
@@ -373,6 +403,7 @@ export interface FileRoutesByTo {
   '/calendar': typeof AppCalendarIndexRoute
   '/collections': typeof AppCollectionsIndexRoute
   '/contracts': typeof AppContractsIndexRoute
+  '/news': typeof AppNewsIndexRoute
   '/reservable-blocks': typeof AppReservableBlocksIndexRoute
   '/reservations': typeof AppReservationsIndexRoute
   '/resources': typeof AppResourcesIndexRoute
@@ -386,6 +417,7 @@ export interface FileRoutesByTo {
   '/admin/users/batch-register': typeof AppAdminUsersBatchRegisterRoute
   '/admin/users/create': typeof AppAdminUsersCreateRoute
   '/collections/edit/$id': typeof AppCollectionsEditIdRoute
+  '/news/edit/$id': typeof AppNewsEditIdRoute
   '/reservable-blocks/edit/$id': typeof AppReservableBlocksEditIdRoute
   '/reservations/edit/$id': typeof AppReservationsEditIdRoute
   '/reservations/rounds/$id': typeof AppReservationsRoundsIdRoute
@@ -412,6 +444,8 @@ export interface FileRoutesById {
   '/_app/admin/reservations': typeof AppAdminReservationsRoute
   '/_app/collections/$id': typeof AppCollectionsIdRoute
   '/_app/collections/create': typeof AppCollectionsCreateRoute
+  '/_app/news/$id': typeof AppNewsIdRoute
+  '/_app/news/create': typeof AppNewsCreateRoute
   '/_app/reservable-blocks/$id': typeof AppReservableBlocksIdRoute
   '/_app/reservable-blocks/create': typeof AppReservableBlocksCreateRoute
   '/_app/reservations/$id': typeof AppReservationsIdRoute
@@ -424,6 +458,7 @@ export interface FileRoutesById {
   '/_app/calendar/': typeof AppCalendarIndexRoute
   '/_app/collections/': typeof AppCollectionsIndexRoute
   '/_app/contracts/': typeof AppContractsIndexRoute
+  '/_app/news/': typeof AppNewsIndexRoute
   '/_app/reservable-blocks/': typeof AppReservableBlocksIndexRoute
   '/_app/reservations/': typeof AppReservationsIndexRoute
   '/_app/resources/': typeof AppResourcesIndexRoute
@@ -437,6 +472,7 @@ export interface FileRoutesById {
   '/_app/admin/users/batch-register': typeof AppAdminUsersBatchRegisterRoute
   '/_app/admin/users/create': typeof AppAdminUsersCreateRoute
   '/_app/collections/edit/$id': typeof AppCollectionsEditIdRoute
+  '/_app/news/edit/$id': typeof AppNewsEditIdRoute
   '/_app/reservable-blocks/edit/$id': typeof AppReservableBlocksEditIdRoute
   '/_app/reservations/edit/$id': typeof AppReservationsEditIdRoute
   '/_app/reservations/rounds/$id': typeof AppReservationsRoundsIdRoute
@@ -463,6 +499,8 @@ export interface FileRouteTypes {
     | '/admin/reservations'
     | '/collections/$id'
     | '/collections/create'
+    | '/news/$id'
+    | '/news/create'
     | '/reservable-blocks/$id'
     | '/reservable-blocks/create'
     | '/reservations/$id'
@@ -475,6 +513,7 @@ export interface FileRouteTypes {
     | '/calendar/'
     | '/collections/'
     | '/contracts/'
+    | '/news/'
     | '/reservable-blocks/'
     | '/reservations/'
     | '/resources/'
@@ -488,6 +527,7 @@ export interface FileRouteTypes {
     | '/admin/users/batch-register'
     | '/admin/users/create'
     | '/collections/edit/$id'
+    | '/news/edit/$id'
     | '/reservable-blocks/edit/$id'
     | '/reservations/edit/$id'
     | '/reservations/rounds/$id'
@@ -511,6 +551,8 @@ export interface FileRouteTypes {
     | '/admin/reservations'
     | '/collections/$id'
     | '/collections/create'
+    | '/news/$id'
+    | '/news/create'
     | '/reservable-blocks/$id'
     | '/reservable-blocks/create'
     | '/reservations/$id'
@@ -523,6 +565,7 @@ export interface FileRouteTypes {
     | '/calendar'
     | '/collections'
     | '/contracts'
+    | '/news'
     | '/reservable-blocks'
     | '/reservations'
     | '/resources'
@@ -536,6 +579,7 @@ export interface FileRouteTypes {
     | '/admin/users/batch-register'
     | '/admin/users/create'
     | '/collections/edit/$id'
+    | '/news/edit/$id'
     | '/reservable-blocks/edit/$id'
     | '/reservations/edit/$id'
     | '/reservations/rounds/$id'
@@ -561,6 +605,8 @@ export interface FileRouteTypes {
     | '/_app/admin/reservations'
     | '/_app/collections/$id'
     | '/_app/collections/create'
+    | '/_app/news/$id'
+    | '/_app/news/create'
     | '/_app/reservable-blocks/$id'
     | '/_app/reservable-blocks/create'
     | '/_app/reservations/$id'
@@ -573,6 +619,7 @@ export interface FileRouteTypes {
     | '/_app/calendar/'
     | '/_app/collections/'
     | '/_app/contracts/'
+    | '/_app/news/'
     | '/_app/reservable-blocks/'
     | '/_app/reservations/'
     | '/_app/resources/'
@@ -586,6 +633,7 @@ export interface FileRouteTypes {
     | '/_app/admin/users/batch-register'
     | '/_app/admin/users/create'
     | '/_app/collections/edit/$id'
+    | '/_app/news/edit/$id'
     | '/_app/reservable-blocks/edit/$id'
     | '/_app/reservations/edit/$id'
     | '/_app/reservations/rounds/$id'
@@ -710,6 +758,27 @@ declare module '@tanstack/react-router' {
       path: '/contracts'
       fullPath: '/contracts/'
       preLoaderRoute: typeof AppContractsIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/news/': {
+      id: '/_app/news/'
+      path: '/news'
+      fullPath: '/news/'
+      preLoaderRoute: typeof AppNewsIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/news/$id': {
+      id: '/_app/news/$id'
+      path: '/news/$id'
+      fullPath: '/news/$id'
+      preLoaderRoute: typeof AppNewsIdRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/news/create': {
+      id: '/_app/news/create'
+      path: '/news/create'
+      fullPath: '/news/create'
+      preLoaderRoute: typeof AppNewsCreateRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/reservable-blocks/': {
@@ -887,6 +956,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppCollectionsEditIdRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/news/edit/$id': {
+      id: '/_app/news/edit/$id'
+      path: '/news/edit/$id'
+      fullPath: '/news/edit/$id'
+      preLoaderRoute: typeof AppNewsEditIdRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/reservable-blocks/edit/$id': {
       id: '/_app/reservable-blocks/edit/$id'
       path: '/reservable-blocks/edit/$id'
@@ -999,6 +1075,8 @@ interface AppRouteChildren {
   AppIndexRoute: typeof AppIndexRoute
   AppCollectionsIdRoute: typeof AppCollectionsIdRoute
   AppCollectionsCreateRoute: typeof AppCollectionsCreateRoute
+  AppNewsIdRoute: typeof AppNewsIdRoute
+  AppNewsCreateRoute: typeof AppNewsCreateRoute
   AppReservableBlocksIdRoute: typeof AppReservableBlocksIdRoute
   AppReservableBlocksCreateRoute: typeof AppReservableBlocksCreateRoute
   AppReservationsIdRoute: typeof AppReservationsIdRoute
@@ -1010,12 +1088,14 @@ interface AppRouteChildren {
   AppCalendarIndexRoute: typeof AppCalendarIndexRoute
   AppCollectionsIndexRoute: typeof AppCollectionsIndexRoute
   AppContractsIndexRoute: typeof AppContractsIndexRoute
+  AppNewsIndexRoute: typeof AppNewsIndexRoute
   AppReservableBlocksIndexRoute: typeof AppReservableBlocksIndexRoute
   AppReservationsIndexRoute: typeof AppReservationsIndexRoute
   AppResourcesIndexRoute: typeof AppResourcesIndexRoute
   AppRestrictionsIndexRoute: typeof AppRestrictionsIndexRoute
   AppStatsIndexRoute: typeof AppStatsIndexRoute
   AppCollectionsEditIdRoute: typeof AppCollectionsEditIdRoute
+  AppNewsEditIdRoute: typeof AppNewsEditIdRoute
   AppReservableBlocksEditIdRoute: typeof AppReservableBlocksEditIdRoute
   AppReservationsEditIdRoute: typeof AppReservationsEditIdRoute
   AppReservationsRoundsIdRoute: typeof AppReservationsRoundsIdRoute
@@ -1030,6 +1110,8 @@ const AppRouteChildren: AppRouteChildren = {
   AppIndexRoute: AppIndexRoute,
   AppCollectionsIdRoute: AppCollectionsIdRoute,
   AppCollectionsCreateRoute: AppCollectionsCreateRoute,
+  AppNewsIdRoute: AppNewsIdRoute,
+  AppNewsCreateRoute: AppNewsCreateRoute,
   AppReservableBlocksIdRoute: AppReservableBlocksIdRoute,
   AppReservableBlocksCreateRoute: AppReservableBlocksCreateRoute,
   AppReservationsIdRoute: AppReservationsIdRoute,
@@ -1041,12 +1123,14 @@ const AppRouteChildren: AppRouteChildren = {
   AppCalendarIndexRoute: AppCalendarIndexRoute,
   AppCollectionsIndexRoute: AppCollectionsIndexRoute,
   AppContractsIndexRoute: AppContractsIndexRoute,
+  AppNewsIndexRoute: AppNewsIndexRoute,
   AppReservableBlocksIndexRoute: AppReservableBlocksIndexRoute,
   AppReservationsIndexRoute: AppReservationsIndexRoute,
   AppResourcesIndexRoute: AppResourcesIndexRoute,
   AppRestrictionsIndexRoute: AppRestrictionsIndexRoute,
   AppStatsIndexRoute: AppStatsIndexRoute,
   AppCollectionsEditIdRoute: AppCollectionsEditIdRoute,
+  AppNewsEditIdRoute: AppNewsEditIdRoute,
   AppReservableBlocksEditIdRoute: AppReservableBlocksEditIdRoute,
   AppReservationsEditIdRoute: AppReservationsEditIdRoute,
   AppReservationsRoundsIdRoute: AppReservationsRoundsIdRoute,
