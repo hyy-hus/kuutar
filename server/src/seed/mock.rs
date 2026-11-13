@@ -1443,24 +1443,34 @@ async fn seed_news(
             "sv": format!("{sv}: en kort beskrivning som visas i listan och på startsidan."),
             "en": format!("{en}: a short summary shown in the list and on the home page."),
         });
-        let body_doc = |heading: &str, text: &str| {
+        let body_doc = |heading: &str, text: &str, items: [&str; 2]| {
             if it.rich_body {
+                let item = |t: &str| json!({"type": "listItem", "content": [{"type": "paragraph", "content": [{"type": "text", "text": t}]}]});
                 json!({"type": "doc", "content": [
                     {"type": "paragraph", "content": [{"type": "text", "text": text}]},
                     {"type": "heading", "attrs": {"level": 2}, "content": [{"type": "text", "text": heading}]},
-                    {"type": "bulletList", "content": [
-                        {"type": "listItem", "content": [{"type": "paragraph", "content": [{"type": "text", "text": "1."}]}]},
-                        {"type": "listItem", "content": [{"type": "paragraph", "content": [{"type": "text", "marks": [{"type": "bold"}], "text": "2."}]}]},
-                    ]},
+                    {"type": "bulletList", "content": [item(items[0]), item(items[1])]},
                 ]})
             } else {
                 doc(text)
             }
         };
         let body = json!({
-            "fi": body_doc("Muistettavaa", "Esimerkkitiedote. Tähän kirjoitetaan tiedotteen koko teksti."),
-            "sv": body_doc("Att komma ihåg", "Exempelmeddelande. Här skrivs hela texten."),
-            "en": body_doc("Good to know", "Example news item. The full text goes here."),
+            "fi": body_doc(
+                "Muistettavaa",
+                "Esimerkkitiedote. Tähän kirjoitetaan tiedotteen koko teksti.",
+                ["Tarkista vapaat ajat kalenterista.", "Kysy lisää ylläpidolta."],
+            ),
+            "sv": body_doc(
+                "Att komma ihåg",
+                "Exempelmeddelande. Här skrivs hela texten.",
+                ["Kolla lediga tider i kalendern.", "Fråga administratörerna om mer."],
+            ),
+            "en": body_doc(
+                "Good to know",
+                "Example news item. The full text goes here.",
+                ["Check free times in the calendar.", "Ask the admins for more."],
+            ),
         });
         let published_at = it.published_days_ago.map(|d| now - Duration::days(d));
         let id: Uuid = sqlx::query_scalar(
