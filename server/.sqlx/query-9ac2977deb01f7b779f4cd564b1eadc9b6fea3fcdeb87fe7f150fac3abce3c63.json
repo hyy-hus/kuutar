@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE news SET published_at = NOW() - INTERVAL '1 minute' WHERE id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "9ac2977deb01f7b779f4cd564b1eadc9b6fea3fcdeb87fe7f150fac3abce3c63"
+}

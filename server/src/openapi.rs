@@ -6,6 +6,7 @@ use crate::domains::collections;
 use crate::domains::contracts;
 use crate::domains::email_templates;
 use crate::domains::groups;
+use crate::domains::news;
 use crate::domains::outlook_sync;
 use crate::domains::reservable_blocks;
 use crate::domains::reservations;
@@ -69,6 +70,17 @@ impl Modify for SecurityAddon {
         collections::routes::create_collection,
         collections::routes::update_collection,
         collections::routes::delete_collection,
+
+        // News
+        news::routes::list_news,
+        news::routes::list_highlights,
+        news::routes::unread_count,
+        news::routes::mark_all_read,
+        news::routes::get_news,
+        news::routes::mark_read,
+        news::routes::create_news,
+        news::routes::update_news,
+        news::routes::delete_news,
 
         // Resources
         resources::routes::list_resources,
@@ -164,6 +176,11 @@ impl Modify for SecurityAddon {
             collections::models::Collection,
             collections::models::CreateCollection,
             collections::models::UpdateCollection,
+            news::models::News,
+            news::models::NewsSummary,
+            news::models::NewsInput,
+            news::models::NewsVisibility,
+            news::models::UnreadNewsCount,
             resources::models::Resource,
             resources::models::CreateResource,
             resources::models::UpdateResource,
@@ -240,6 +257,7 @@ impl Modify for SecurityAddon {
         (name = "Auth", description = "Authentication & session management endpoints"),
         (name = "Users", description = "User management endpoints"),
         (name = "Collections", description = "Collection management endpoints"),
+        (name = "News", description = "News items with visibility, scheduling, highlights and read tracking"),
         (name = "Resources", description = "Resource management endpoints"),
         (name = "Groups", description = "Group management endpoints"),
         (name = "Outlook sync", description = "Outlook calendar integration via Microsoft Graph"),

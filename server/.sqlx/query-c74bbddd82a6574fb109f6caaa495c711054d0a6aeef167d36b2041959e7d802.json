@@ -1,0 +1,144 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT n.id, n.title, n.blurb, n.visibility AS \"visibility: NewsVisibility\",\n               n.published_at, n.highlighted, n.highlight_until,\n               CASE WHEN $2::uuid IS NULL THEN NULL ELSE NOT (\n                   n.published_at IS NOT NULL AND n.published_at <= NOW()\n                   AND n.published_at >= COALESCE((SELECT u.created_at FROM users u WHERE u.id = $2), '-infinity')\n                   AND NOT EXISTS (SELECT 1 FROM news_reads r WHERE r.news_id = n.id AND r.user_id = $2)\n               ) END AS is_read,\n               n.created_at, n.updated_at\n        FROM news n\n        WHERE n.deleted_at IS NULL\n          AND ($1 OR (n.published_at IS NOT NULL AND n.published_at <= NOW() AND (\n              n.visibility = 'public'\n              OR ($2::uuid IS NOT NULL AND (\n                  n.visibility = 'users'\n                  OR (n.visibility = 'groups' AND EXISTS (\n                      SELECT 1 FROM news_visibility_groups g WHERE g.news_id = n.id AND g.group_id = $3\n                  ))\n              ))\n          )))\n        ORDER BY n.published_at DESC NULLS FIRST, n.created_at DESC\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "news",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "title",
+        "type_info": "Jsonb",
+        "origin": {
+          "Table": {
+            "table": "news",
+            "name": "title"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "blurb",
+        "type_info": "Jsonb",
+        "origin": {
+          "Table": {
+            "table": "news",
+            "name": "blurb"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "visibility: NewsVisibility",
+        "type_info": {
+          "Custom": {
+            "name": "news_visibility",
+            "kind": {
+              "Enum": [
+                "public",
+                "users",
+                "groups"
+              ]
+            }
+          }
+        },
+        "origin": {
+          "Table": {
+            "table": "news",
+            "name": "visibility"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "published_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "news",
+            "name": "published_at"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "highlighted",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "news",
+            "name": "highlighted"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "highlight_until",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "news",
+            "name": "highlight_until"
+          }
+        }
+      },
+      {
+        "ordinal": 7,
+        "name": "is_read",
+        "type_info": "Bool",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 8,
+        "name": "created_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "news",
+            "name": "created_at"
+          }
+        }
+      },
+      {
+        "ordinal": 9,
+        "name": "updated_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "news",
+            "name": "updated_at"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Bool",
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      true,
+      false,
+      true,
+      null,
+      false,
+      false
+    ]
+  },
+  "hash": "c74bbddd82a6574fb109f6caaa495c711054d0a6aeef167d36b2041959e7d802"
+}

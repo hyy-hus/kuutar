@@ -1,0 +1,12 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE users SET created_at = NOW() - INTERVAL '1 year'",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": []
+  },
+  "hash": "f690b23cf9e0b349b74d01a552033fe90db04c2656eb2a4c33fd8a16f3c09304"
+}

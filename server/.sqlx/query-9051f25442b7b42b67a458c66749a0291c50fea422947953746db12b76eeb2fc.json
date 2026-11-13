@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        INSERT INTO news_visibility_groups (news_id, group_id)\n        SELECT $1, UNNEST($2::uuid[])\n        ON CONFLICT DO NOTHING\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "UuidArray"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "9051f25442b7b42b67a458c66749a0291c50fea422947953746db12b76eeb2fc"
+}
