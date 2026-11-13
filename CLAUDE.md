@@ -41,6 +41,10 @@ New or changed logic in `client/src/utils/` gets a `*.test.ts` next to it. Compo
 - Migrations must never destroy existing data (no dropping columns/tables with data, no lossy type changes, no unguarded deletes). They also run automatically on the staging deploy, which is the reason. If a change would need data loss, stop and ask.
 - After changing API endpoints or schemas, regenerate client types with `pnpm generate:api` in `client/` (needs the server running on :3000). It writes `client/src/api/schema.d.ts`.
 
+## UI style
+
+Read `docs/style-guide.md` before UI work: tokens, page anatomy (list, detail, form), and which component to use for what. New pages must follow it. When a change introduces a new reusable pattern or component, update the guide in the same PR.
+
 ## Client i18n
 
 UI strings live in `client/messages/` (`fi.json`, `sv.json`, `en.json`). Draft new strings in Finnish, but a feature is not mergeable until Finnish, Swedish and English are all present. Add all three, and flag any translation you are unsure of.
