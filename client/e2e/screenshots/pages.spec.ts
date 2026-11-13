@@ -16,6 +16,7 @@ interface Ids {
 	round: string;
 	block: string;
 	restriction: string;
+	news: string;
 }
 
 interface Shot {
@@ -60,6 +61,13 @@ const SHOTS: Shot[] = [
 		mobile: true,
 	},
 	{ name: "me", path: "/me" },
+
+	// News
+	{ name: "news-guest", path: "/news", guest: true },
+	{ name: "news", path: "/news", variants: EXTRA },
+	{ name: "news-new", path: "/news/create" },
+	{ name: "news-detail", path: (i) => `/news/${i.news}` },
+	{ name: "news-edit", path: (i) => `/news/edit/${i.news}` },
 	{ name: "stats", path: "/stats" },
 	{ name: "sandbox", path: "/sandbox" },
 
@@ -211,6 +219,13 @@ test.beforeAll(async ({ playwright }) => {
 			await get<Named[]>(`/restrictions?${range}`),
 			(r) => r.title === "Joulusulku",
 			"restriction",
+		),
+		news: first(
+			(await get<{ id: string; title: Record<string, string> }[]>("/news")).map(
+				(n) => ({ id: n.id, name: n.title.fi }),
+			),
+			(n) => n.name === "Joulun aukioloajat",
+			"news item",
 		),
 	};
 	await request.dispose();

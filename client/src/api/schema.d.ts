@@ -382,6 +382,111 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/news": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** GET /news */
+        get: operations["list_news"];
+        put?: never;
+        /** POST /news */
+        post: operations["create_news"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/news/highlights": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** GET /news/highlights */
+        get: operations["list_highlights"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/news/read-all": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** POST /news/read-all */
+        post: operations["mark_all_read"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/news/unread-count": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** GET /news/unread-count */
+        get: operations["unread_count"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/news/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** GET /news/{id} */
+        get: operations["get_news"];
+        /** PUT /news/{id} */
+        put: operations["update_news"];
+        post?: never;
+        /** DELETE /news/{id} */
+        delete: operations["delete_news"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/news/{id}/read": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** POST /news/{id}/read */
+        post: operations["mark_read"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/outlook-sync/run": {
         parameters: {
             query?: never;
@@ -1194,9 +1299,9 @@ export interface components {
             [key: string]: string;
         };
         HealthStatus: {
-            status: string;
-            /** Instance name (APP_NAME) */
+            /** @description Instance name (`APP_NAME`), so one built client can serve every instance. */
             app_name: string;
+            status: string;
             version: string;
         };
         HeatCell: {
@@ -1236,6 +1341,89 @@ export interface components {
             count: number;
             month: string;
         };
+        /** @description A full news item. */
+        News: {
+            blurb: {
+                [key: string]: string;
+            };
+            /** @description Localized Tiptap documents, e.g. {"fi": {"type": "doc", ...}} */
+            body?: {
+                [key: string]: unknown;
+            } | null;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            highlight_until?: string | null;
+            highlighted: boolean;
+            /** Format: uuid */
+            id: string;
+            is_read?: boolean | null;
+            /** Format: date-time */
+            published_at?: string | null;
+            title: {
+                [key: string]: string;
+            };
+            /** Format: date-time */
+            updated_at: string;
+            visibility: components["schemas"]["NewsVisibility"];
+            /** @description Groups that see a `groups` item; only returned to admins (empty otherwise) */
+            visible_group_ids: string[];
+        };
+        /** @description Body for creating or replacing a news item. Updates send the whole item. */
+        NewsInput: {
+            blurb?: components["schemas"]["HashMap"];
+            /** @description Localized Tiptap documents, e.g. {"fi": {"type": "doc", ...}} */
+            body?: {
+                [key: string]: unknown;
+            } | null;
+            /** Format: date-time */
+            highlight_until?: string | null;
+            highlighted?: boolean;
+            /**
+             * Format: date-time
+             * @description Null keeps the item as a draft
+             */
+            published_at?: string | null;
+            /** @description At least one language is required */
+            title: components["schemas"]["HashMap"];
+            visibility: components["schemas"]["NewsVisibility"];
+            /** @description Required (non-empty) when `visibility` is `groups`; ignored otherwise */
+            visible_group_ids?: string[];
+        };
+        /** @description A news item in a list: everything but the body. */
+        NewsSummary: {
+            blurb: {
+                [key: string]: string;
+            };
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            highlight_until?: string | null;
+            highlighted: boolean;
+            /** Format: uuid */
+            id: string;
+            /**
+             * @description Whether the signed-in user has read the item; null for guests. Items published before the
+             *     account was created count as read.
+             */
+            is_read?: boolean | null;
+            /**
+             * Format: date-time
+             * @description Null for drafts; a future time means scheduled. Only admins see either.
+             */
+            published_at?: string | null;
+            title: {
+                [key: string]: string;
+            };
+            /** Format: date-time */
+            updated_at: string;
+            visibility: components["schemas"]["NewsVisibility"];
+        };
+        /**
+         * @description Who can read a published news item. Admins always see everything.
+         * @enum {string}
+         */
+        NewsVisibility: "public" | "users" | "groups";
         Occurrence: {
             /** Format: date-time */
             created_at: string;
@@ -1660,6 +1848,10 @@ export interface components {
             /** Format: uuid */
             resource_id: string;
             resource_name: string;
+        };
+        UnreadNewsCount: {
+            /** Format: int64 */
+            count: number;
         };
         UnusedResource: {
             /** Format: uuid */
@@ -2993,6 +3185,319 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["HealthStatus"];
                 };
+            };
+        };
+    };
+    list_news: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description News visible to the requester, newest first; admins also get drafts and scheduled items */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NewsSummary"][];
+                };
+            };
+        };
+    };
+    create_news: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NewsInput"];
+            };
+        };
+        responses: {
+            /** @description News item created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["News"];
+                };
+            };
+            /** @description Unknown group */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden - Admin access required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    list_highlights: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Published, highlighted news for the home page (unread only for signed-in users) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NewsSummary"][];
+                };
+            };
+        };
+    };
+    mark_all_read: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description All visible news marked read */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    unread_count: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Number of unread news items */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UnreadNewsCount"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_news: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description News item UUID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description News item */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["News"];
+                };
+            };
+            /** @description Not found or not visible to the requester */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    update_news: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description News item UUID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NewsInput"];
+            };
+        };
+        responses: {
+            /** @description News item replaced */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["News"];
+                };
+            };
+            /** @description Unknown group */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden - Admin access required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    delete_news: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description News item UUID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description News item soft-deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden - Admin access required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    mark_read: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description News item UUID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Marked read */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not found or not visible to the requester */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

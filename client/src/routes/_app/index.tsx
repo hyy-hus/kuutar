@@ -15,12 +15,14 @@ import { Button } from "#/components/Button";
 import { Callout } from "#/components/Callout";
 import { EmptyState } from "#/components/EmptyState";
 import { Footer } from "#/components/Footer";
+import { HighlightedNews } from "#/components/HighlightedNews";
 import { HowToReserve } from "#/components/HowToReserve";
 import { OutlookBadge } from "#/components/OutlookBadge";
 import { PageContainer } from "#/components/PageContainer";
 import { PageHeader } from "#/components/PageHeader";
 import { StatusChip } from "#/components/StatusChip";
 import { useAuth, useIsAdmin } from "#/hooks/useAuth";
+import { useMarkNewsRead, useNewsHighlights } from "#/hooks/useNews";
 import { useMyReservations, useReservations } from "#/hooks/useReservations";
 import { useResources } from "#/hooks/useResorces";
 import { currentYearRange } from "#/utils/calendarUtils";
@@ -42,6 +44,8 @@ function HomePage() {
 	const { user } = useAuth();
 	const { isAdmin } = useIsAdmin();
 	const { data: resources, isLoading: loadingResources } = useResources();
+	const { data: highlights = [] } = useNewsHighlights();
+	const markNewsRead = useMarkNewsRead();
 
 	// Monday 00:00 up to (not including) next Monday 00:00
 	const currentWeekStart = useMemo(() => startOfWeek(), []);
@@ -304,6 +308,11 @@ function HomePage() {
 							</Callout>
 						)}
 
+						<HighlightedNews
+							items={highlights}
+							onDismiss={(id) => markNewsRead.mutate(id)}
+						/>
+
 						<HowToReserve dismissible />
 
 						<div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
@@ -333,6 +342,8 @@ function HomePage() {
 								</Link>
 							</Button>
 						</section>
+
+						<HighlightedNews items={highlights} />
 
 						<HowToReserve />
 
