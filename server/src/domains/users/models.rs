@@ -22,6 +22,22 @@ pub struct User {
     pub updated_at: DateTime<Utc>,
 }
 
+/// The admin acting as the current user (impersonation)
+#[derive(Debug, Serialize, ToSchema)]
+pub struct Impersonator {
+    pub id: Uuid,
+    pub name: String,
+    pub email: String,
+}
+
+/// The current user, plus the admin behind the session when an admin is acting as them
+#[derive(Debug, Serialize, ToSchema)]
+pub struct MeResponse {
+    #[serde(flatten)]
+    pub user: User,
+    pub impersonator: Option<Impersonator>,
+}
+
 #[derive(Debug, Deserialize, Validate, ToSchema)]
 pub struct CreateUser {
     pub group_id: Uuid,

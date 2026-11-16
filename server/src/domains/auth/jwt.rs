@@ -17,6 +17,9 @@ pub struct Claims {
     /// before session management existed.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub sid: Option<Uuid>,
+    /// Admin acting as this user (impersonation). Absent in normal sessions.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub act: Option<Uuid>,
 }
 
 /// Encodes a JWT token with user_id, group_id, role, and an expiration TTL in seconds.
@@ -27,15 +30,25 @@ pub fn encode_jwt(
     secret: &str,
     expiration_seconds: u64,
 ) -> Result<String, AppError> {
-    encode_jwt_for_session(user_id, group_id, role, None, secret, expiration_seconds)
+    encode_jwt_for_session(
+        user_id,
+        group_id,
+        role,
+        None,
+        None,
+        secret,
+        expiration_seconds,
+    )
 }
 
-/// Like `encode_jwt`, but ties the token to a session so clients can tell which one is current.
+/// Like `encode_jwt`, but ties the token to a session so clients can tell which one is current,
+/// and records the admin behind an impersonation session.
 pub fn encode_jwt_for_session(
     user_id: Uuid,
     group_id: Uuid,
     role: Role,
     session_id: Option<Uuid>,
+    impersonator_id: Option<Uuid>,
     secret: &str,
     expiration_seconds: u64,
 ) -> Result<String, AppError> {
@@ -45,10 +58,11 @@ pub fn encode_jwt_for_session(
     let claims = Claims {
         sub: user_id,
         group_id,
-        role, // Added missing role field
+        role,
         exp: expire.timestamp() as usize,
         iat: now.timestamp() as usize,
         sid: session_id,
+        act: impersonator_id,
     };
 
     encode(
@@ -101,6 +115,7 @@ mod tests {
             Uuid::new_v4(),
             Role::User,
             Some(sid),
+            None,
             TEST_SECRET,
             900,
         )
@@ -110,7 +125,25 @@ mod tests {
         // A token without a session claim still decodes
         let legacy =
             encode_jwt(Uuid::new_v4(), Uuid::new_v4(), Role::User, TEST_SECRET, 900).unwrap();
-        assert_eq!(decode_jwt(&legacy, TEST_SECRET).unwrap().sid, None);
+        let claims = decode_jwt(&legacy, TEST_SECRET).unwrap();
+        assert_eq!(claims.sid, None);
+        assert_eq!(claims.act, None);
+    }
+
+    #[test]
+    fn test_jwt_impersonator_claim_roundtrip() {
+        let admin = Uuid::new_v4();
+        let token = encode_jwt_for_session(
+            Uuid::new_v4(),
+            Uuid::new_v4(),
+            Role::User,
+            Some(Uuid::new_v4()),
+            Some(admin),
+            TEST_SECRET,
+            900,
+        )
+        .unwrap();
+        assert_eq!(decode_jwt(&token, TEST_SECRET).unwrap().act, Some(admin));
     }
 
     #[test]
@@ -148,6 +181,7 @@ mod tests {
             exp: expired_time.timestamp() as usize,
             iat: (now - Duration::seconds(300)).timestamp() as usize,
             sid: None,
+            act: None,
         };
 
         let token = encode(

@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        UPDATE refresh_tokens rt\n        SET revoked_at = NOW(), revoked_reason = 'rotated'\n        FROM users u\n        WHERE rt.token_hash = $1\n          AND rt.revoked_at IS NULL\n          AND rt.expires_at > NOW()\n          AND u.id = rt.user_id\n          AND u.deleted_at IS NULL\n        RETURNING\n            rt.session_id,\n            rt.session_started_at,\n            rt.user_agent,\n            rt.ip,\n            u.id AS user_id,\n            u.group_id,\n            u.email,\n            u.password_hash,\n            u.role AS \"role: Role\"\n        ",
+  "query": "\n        UPDATE refresh_tokens rt\n        SET revoked_at = NOW(), revoked_reason = 'rotated'\n        FROM users u\n        WHERE rt.token_hash = $1\n          AND rt.revoked_at IS NULL\n          AND rt.expires_at > NOW()\n          AND u.id = rt.user_id\n          AND u.deleted_at IS NULL\n          AND (\n              rt.impersonator_id IS NULL\n              OR (\n                  u.role = 'user'\n                  AND EXISTS (\n                      SELECT 1 FROM users a\n                      WHERE a.id = rt.impersonator_id\n                        AND a.role = 'admin'\n                        AND a.deleted_at IS NULL\n                  )\n              )\n          )\n        RETURNING\n            rt.session_id,\n            rt.session_started_at,\n            rt.impersonator_id,\n            rt.user_agent,\n            rt.ip,\n            u.id AS user_id,\n            u.group_id,\n            u.email,\n            u.password_hash,\n            u.role AS \"role: Role\"\n        ",
   "describe": {
     "columns": [
       {
@@ -27,6 +27,17 @@
       },
       {
         "ordinal": 2,
+        "name": "impersonator_id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "refresh_tokens",
+            "name": "impersonator_id"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
         "name": "user_agent",
         "type_info": "Text",
         "origin": {
@@ -37,7 +48,7 @@
         }
       },
       {
-        "ordinal": 3,
+        "ordinal": 4,
         "name": "ip",
         "type_info": "Text",
         "origin": {
@@ -48,7 +59,7 @@
         }
       },
       {
-        "ordinal": 4,
+        "ordinal": 5,
         "name": "user_id",
         "type_info": "Uuid",
         "origin": {
@@ -59,7 +70,7 @@
         }
       },
       {
-        "ordinal": 5,
+        "ordinal": 6,
         "name": "group_id",
         "type_info": "Uuid",
         "origin": {
@@ -70,7 +81,7 @@
         }
       },
       {
-        "ordinal": 6,
+        "ordinal": 7,
         "name": "email",
         "type_info": "Text",
         "origin": {
@@ -81,7 +92,7 @@
         }
       },
       {
-        "ordinal": 7,
+        "ordinal": 8,
         "name": "password_hash",
         "type_info": "Text",
         "origin": {
@@ -92,7 +103,7 @@
         }
       },
       {
-        "ordinal": 8,
+        "ordinal": 9,
         "name": "role: Role",
         "type_info": {
           "Custom": {
@@ -123,6 +134,7 @@
       false,
       true,
       true,
+      true,
       false,
       false,
       false,
@@ -130,5 +142,5 @@
       false
     ]
   },
-  "hash": "482f313a95de7000ff22b847f5e5c1cddcba7fbff544a2d2e9aa5ff59f198f80"
+  "hash": "c98f01a93eeac37505e69f854dfac1fa45426377b613d3c96afdc6e31fe8d136"
 }

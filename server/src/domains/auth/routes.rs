@@ -10,7 +10,7 @@ use validator::Validate;
 
 use super::{
     db,
-    extractor::AuthUser,
+    extractor::{RequireAdmin, RequireOwnAccount},
     jwt,
     models::{AuthTokens, LoginPayload, RefreshPayload, RegisterPayload, SessionInfo},
     password,
@@ -20,6 +20,7 @@ use crate::{
     domains::{
         auth::models::{RequestOtpPayload, VerifyOtpPayload},
         email_templates::notify,
+        users::models::Role,
     },
     errors::AppError,
 };
@@ -168,6 +169,7 @@ async fn issue_token_pair(
         user.group_id,
         user.role,
         Some(session.id),
+        session.impersonator_id,
         &state.config.jwt_secret,
         state.config.jwt_expiration_seconds,
     )?;
@@ -214,6 +216,7 @@ pub fn to_session_info(
             user_agent: s.user_agent,
             ip: s.ip,
             current: current == Some(s.session_id),
+            impersonated_by: s.impersonator_id,
         })
         .collect()
 }
@@ -224,11 +227,14 @@ pub fn to_session_info(
     path = "/auth/sessions",
     tag = "Auth",
     security(("bearer_auth" = [])),
-    responses((status = 200, description = "Active sessions", body = [SessionInfo]))
+    responses(
+        (status = 200, description = "Active sessions", body = [SessionInfo]),
+        (status = 403, description = "Not allowed while acting as another user")
+    )
 )]
 pub async fn list_my_sessions(
     State(state): State<AuthState>,
-    auth_user: AuthUser,
+    RequireOwnAccount(auth_user): RequireOwnAccount,
 ) -> Result<Json<Vec<SessionInfo>>, AppError> {
     let sessions = db::list_sessions(&state.pool, auth_user.id).await?;
     Ok(Json(to_session_info(sessions, auth_user.session_id)))
@@ -248,7 +254,7 @@ pub async fn list_my_sessions(
 )]
 pub async fn revoke_my_session(
     State(state): State<AuthState>,
-    auth_user: AuthUser,
+    RequireOwnAccount(auth_user): RequireOwnAccount,
     Path(session_id): Path<Uuid>,
 ) -> Result<StatusCode, AppError> {
     db::revoke_session(&state.pool, auth_user.id, session_id, "logout").await?;
@@ -265,9 +271,76 @@ pub async fn revoke_my_session(
 )]
 pub async fn logout_other_sessions(
     State(state): State<AuthState>,
-    auth_user: AuthUser,
+    RequireOwnAccount(auth_user): RequireOwnAccount,
 ) -> Result<StatusCode, AppError> {
     db::revoke_all_sessions(&state.pool, auth_user.id, "logout", auth_user.session_id).await?;
+    Ok(StatusCode::NO_CONTENT)
+}
+
+/// Start acting as another user (admin only). Returns tokens for a session as that user,
+/// marked with the admin's id and capped at one hour.
+#[utoipa::path(
+    post,
+    path = "/auth/impersonate/{user_id}",
+    tag = "Auth",
+    security(("bearer_auth" = [])),
+    params(("user_id" = Uuid, Path, description = "User to act as")),
+    responses(
+        (status = 200, description = "Impersonation session started", body = AuthTokens),
+        (status = 403, description = "Not an admin, or the target is an admin or yourself"),
+        (status = 404, description = "User not found")
+    )
+)]
+#[tracing::instrument(skip(state, headers))]
+pub async fn start_impersonation(
+    State(state): State<AuthState>,
+    RequireAdmin(admin): RequireAdmin,
+    headers: HeaderMap,
+    Path(user_id): Path<Uuid>,
+) -> Result<Json<AuthTokens>, AppError> {
+    if user_id == admin.id {
+        return Err(AppError::Forbidden(
+            "You cannot act as yourself".to_string(),
+        ));
+    }
+    let target = db::find_user_by_id(&state.pool, user_id)
+        .await?
+        .ok_or(AppError::NotFound)?;
+    if target.role != Role::User {
+        return Err(AppError::Forbidden(
+            "Admins cannot act as other admins".to_string(),
+        ));
+    }
+
+    let tokens = issue_token_pair(
+        &state,
+        &target,
+        db::SessionRef::impersonation(admin.id),
+        &session_meta(&headers),
+    )
+    .await?;
+    tracing::info!(admin_id = %admin.id, user_id = %target.id, "Impersonation started");
+    Ok(Json(tokens))
+}
+
+/// End an impersonation session. The client then switches back to the admin's own tokens.
+#[utoipa::path(
+    post,
+    path = "/auth/impersonate/end",
+    tag = "Auth",
+    request_body = RefreshPayload,
+    responses(
+        (status = 204, description = "Impersonation session ended"),
+        (status = 404, description = "Not an active impersonation session")
+    )
+)]
+#[tracing::instrument(skip(state, payload))]
+pub async fn end_impersonation(
+    State(state): State<AuthState>,
+    Json(payload): Json<RefreshPayload>,
+) -> Result<StatusCode, AppError> {
+    db::end_impersonation(&state.pool, &payload.refresh_token).await?;
+    tracing::info!("Impersonation ended");
     Ok(StatusCode::NO_CONTENT)
 }
 

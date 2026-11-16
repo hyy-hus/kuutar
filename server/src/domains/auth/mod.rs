@@ -25,5 +25,7 @@ pub fn router(state: AuthState) -> Router {
         .route("/logout-others", post(routes::logout_other_sessions))
         .route("/sessions", get(routes::list_my_sessions))
         .route("/sessions/{session_id}", delete(routes::revoke_my_session))
+        .route("/impersonate/end", post(routes::end_impersonation))
+        .route("/impersonate/{user_id}", post(routes::start_impersonation))
         .with_state(state)
 }

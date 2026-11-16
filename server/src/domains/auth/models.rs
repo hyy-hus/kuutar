@@ -35,6 +35,8 @@ pub struct SessionInfo {
     pub ip: Option<String>,
     /// True for the session making this request (only known for the user's own list)
     pub current: bool,
+    /// Admin acting as the user in this session (impersonation)
+    pub impersonated_by: Option<Uuid>,
 }
 
 #[derive(Debug, Deserialize, Validate, ToSchema)]
