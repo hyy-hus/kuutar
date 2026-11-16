@@ -218,7 +218,8 @@ pub async fn update(
         UPDATE reservable_blocks
         SET
             title = COALESCE($1, title),
-            description = COALESCE($2, description),
+            -- Null keeps the value, an empty string clears it
+            description = CASE WHEN $2::text IS NULL THEN description WHEN btrim($2) = '' THEN NULL ELSE $2 END,
             -- Occurrences are replaced together with their rule, so a missing rule clears it
             rrule = CASE WHEN $5 THEN $3 ELSE COALESCE($3, rrule) END,
             updated_at = NOW()

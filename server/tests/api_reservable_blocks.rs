@@ -387,3 +387,41 @@ async fn user_can_edit_own_block_reservation_without_self_conflict(pool: PgPool)
     .await;
     assert_eq!(status, StatusCode::FORBIDDEN);
 }
+
+#[sqlx::test]
+async fn empty_description_clears_it_and_omitted_keeps_it(pool: PgPool) {
+    let env = setup(pool).await;
+    let mut payload = block_payload(env.resource_id, env.start, env.end);
+    payload["description"] = json!("Bring your own key");
+    let (status, created) = request(
+        &env.app,
+        "POST",
+        "/reservable-blocks",
+        Some(&env.admin),
+        Some(payload),
+    )
+    .await;
+    assert_eq!(status, StatusCode::CREATED);
+    let uri = format!("/reservable-blocks/{}", created["id"].as_str().unwrap());
+
+    let (_, updated) = request(
+        &env.app,
+        "PATCH",
+        &uri,
+        Some(&env.admin),
+        Some(json!({ "title": "Renamed" })),
+    )
+    .await;
+    assert_eq!(updated["description"], "Bring your own key");
+
+    let (status, updated) = request(
+        &env.app,
+        "PATCH",
+        &uri,
+        Some(&env.admin),
+        Some(json!({ "description": "  " })),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK);
+    assert!(updated["description"].is_null(), "{updated}");
+}

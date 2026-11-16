@@ -1334,3 +1334,78 @@ async fn test_batch_import_with_many_occurrences(pool: PgPool) {
     let names: Vec<&str> = rows.iter().map(|(n, _)| n.as_str()).collect();
     assert_eq!(names, vec!["Sauna", "Hall", "Hall"]);
 }
+
+#[sqlx::test]
+async fn test_empty_strings_clear_optional_reservation_fields(pool: PgPool) {
+    let (_group_id, _user_id, resource_id, _collection_id, token) =
+        setup_test_environment(&pool, Role::Admin).await;
+    let app = app(pool, test_config());
+    let now = Utc::now();
+
+    let send = |method: &'static str, uri: String, body: Value| {
+        let app = app.clone();
+        let token = token.clone();
+        async move {
+            let res = app
+                .oneshot(
+                    Request::builder()
+                        .method(method)
+                        .uri(uri)
+                        .header(header::AUTHORIZATION, format!("Bearer {token}"))
+                        .header(header::CONTENT_TYPE, "application/json")
+                        .body(Body::from(body.to_string()))
+                        .unwrap(),
+                )
+                .await
+                .unwrap();
+            let status = res.status();
+            let body = to_bytes(res.into_body(), usize::MAX).await.unwrap();
+            (status, serde_json::from_slice::<Value>(&body).unwrap())
+        }
+    };
+
+    let (status, created) = send(
+        "POST",
+        "/reservations".to_string(),
+        json!({
+            "title": "Board meeting",
+            "admin_notes": "Key at the desk",
+            "contact_person": "Example Person",
+            "contact_email": "person@example.test",
+            "contact_phone": "040 000 0000",
+            "occurrences": [{
+                "resource_id": resource_id,
+                "start_time": now + Duration::hours(1),
+                "end_time": now + Duration::hours(2)
+            }]
+        }),
+    )
+    .await;
+    assert_eq!(status, StatusCode::CREATED, "{created}");
+    let uri = format!("/reservations/{}", created["id"].as_str().unwrap());
+    let fields = [
+        "admin_notes",
+        "contact_person",
+        "contact_email",
+        "contact_phone",
+    ];
+
+    // Omitted fields keep their values
+    let (status, updated) = send("PATCH", uri.clone(), json!({ "title": "Renamed" })).await;
+    assert_eq!(status, StatusCode::OK, "{updated}");
+    for field in fields {
+        assert!(updated[field].is_string(), "{field} was cleared: {updated}");
+    }
+
+    // Empty strings clear them
+    let (status, updated) = send(
+        "PATCH",
+        uri,
+        json!({ "admin_notes": "", "contact_person": " ", "contact_email": "", "contact_phone": "" }),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{updated}");
+    for field in fields {
+        assert!(updated[field].is_null(), "{field} was kept: {updated}");
+    }
+}

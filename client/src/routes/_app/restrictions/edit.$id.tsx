@@ -48,7 +48,8 @@ function EditRestrictionPage() {
 			id,
 			payload: {
 				title: values.title,
-				description: values.description || null,
+				// An empty string clears the description; null would keep it
+				description: values.description?.trim() ?? "",
 				exempt_group_ids: values.exempt_group_ids,
 				rrule: values.rrule ?? null,
 				occurrences: values.occurrences.map((occ) => ({

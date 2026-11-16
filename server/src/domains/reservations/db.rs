@@ -344,10 +344,11 @@ pub async fn update(
                 WHEN $13::text IS NULL THEN message_to_admins
                 ELSE NULLIF(btrim($13), '')
             END,
-            admin_notes = COALESCE($3, admin_notes),
-            contact_person = COALESCE($4, contact_person),
-            contact_email = COALESCE($5, contact_email),
-            contact_phone = COALESCE($6, contact_phone),
+            -- Null keeps the value, an empty string clears it
+            admin_notes = CASE WHEN $3::text IS NULL THEN admin_notes WHEN btrim($3) = '' THEN NULL ELSE $3 END,
+            contact_person = CASE WHEN $4::text IS NULL THEN contact_person WHEN btrim($4) = '' THEN NULL ELSE $4 END,
+            contact_email = CASE WHEN $5::text IS NULL THEN contact_email WHEN btrim($5) = '' THEN NULL ELSE $5 END,
+            contact_phone = CASE WHEN $6::text IS NULL THEN contact_phone WHEN btrim($6) = '' THEN NULL ELSE $6 END,
             -- Occurrences are replaced together with their rule, so a missing rule clears it
             rrule = CASE WHEN $12 THEN $7 ELSE COALESCE($7, rrule) END,
             status = COALESCE($8, status),

@@ -595,3 +595,41 @@ async fn open_rounds_list_hides_rounds_before_their_window(pool: PgPool) {
         .collect();
     assert_eq!(ids, vec![env.round_id.to_string().as_str()]);
 }
+
+#[sqlx::test]
+async fn empty_description_clears_round_description(pool: PgPool) {
+    let env = setup(pool).await;
+    let uri = format!("/rounds/{}", env.round_id);
+
+    let (status, round) = request(
+        &env.app,
+        "PATCH",
+        &uri,
+        Some(&env.admin),
+        Some(json!({ "description": "Spring allocation" })),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{round}");
+    assert_eq!(round["description"], "Spring allocation");
+
+    let (_, round) = request(
+        &env.app,
+        "PATCH",
+        &uri,
+        Some(&env.admin),
+        Some(json!({ "name": "Renamed" })),
+    )
+    .await;
+    assert_eq!(round["description"], "Spring allocation");
+
+    let (status, round) = request(
+        &env.app,
+        "PATCH",
+        &uri,
+        Some(&env.admin),
+        Some(json!({ "description": "" })),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{round}");
+    assert!(round["description"].is_null(), "{round}");
+}

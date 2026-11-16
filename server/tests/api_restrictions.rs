@@ -291,3 +291,46 @@ async fn test_create_and_update_restriction_occurrences_and_exemptions(pool: PgP
         vec![g3.to_string()]
     );
 }
+
+#[sqlx::test]
+async fn test_empty_description_clears_restriction_description(pool: PgPool) {
+    let admin = common::setup_admin_token(&pool).await;
+    let start = Utc::now() + Duration::days(10);
+    let app = app(pool, test_config());
+
+    let (status, created) = send(
+        &app,
+        "POST",
+        "/restrictions",
+        &admin,
+        serde_json::json!({
+            "title": "Exams",
+            "description": "Quiet hours",
+            "occurrences": [{ "resource_id": null, "start_time": start, "end_time": start + Duration::hours(2) }],
+        }),
+    )
+    .await;
+    assert_eq!(status, StatusCode::CREATED, "{created}");
+    let uri = format!("/restrictions/{}", created["id"].as_str().unwrap());
+
+    let (_, updated) = send(
+        &app,
+        "PATCH",
+        &uri,
+        &admin,
+        serde_json::json!({ "title": "Exam week" }),
+    )
+    .await;
+    assert_eq!(updated["description"], "Quiet hours");
+
+    let (status, updated) = send(
+        &app,
+        "PATCH",
+        &uri,
+        &admin,
+        serde_json::json!({ "description": "" }),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{updated}");
+    assert!(updated["description"].is_null(), "{updated}");
+}

@@ -72,7 +72,8 @@ export function RoundForm({
 		e.preventDefault();
 		await onSubmit({
 			name,
-			description: description || null,
+			// An empty string clears the description on update
+			description: description.trim(),
 			applications_open_at: new Date(opensAt).toISOString(),
 			applications_close_at: new Date(closesAt).toISOString(),
 			period_start: new Date(periodStart).toISOString(),

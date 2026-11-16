@@ -1,0 +1,37 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        UPDATE reservations\n        SET \n            title = COALESCE($1, title),\n            -- An empty document clears the description, null keeps it\n            description_rich = CASE\n                WHEN $2::jsonb IS NULL THEN description_rich\n                WHEN $2::jsonb = '{}'::jsonb THEN NULL\n                ELSE $2::jsonb\n            END,\n            message_to_admins = CASE\n                WHEN $13::text IS NULL THEN message_to_admins\n                ELSE NULLIF(btrim($13), '')\n            END,\n            -- Null keeps the value, an empty string clears it\n            admin_notes = CASE WHEN $3::text IS NULL THEN admin_notes WHEN btrim($3) = '' THEN NULL ELSE $3 END,\n            contact_person = CASE WHEN $4::text IS NULL THEN contact_person WHEN btrim($4) = '' THEN NULL ELSE $4 END,\n            contact_email = CASE WHEN $5::text IS NULL THEN contact_email WHEN btrim($5) = '' THEN NULL ELSE $5 END,\n            contact_phone = CASE WHEN $6::text IS NULL THEN contact_phone WHEN btrim($6) = '' THEN NULL ELSE $6 END,\n            -- Occurrences are replaced together with their rule, so a missing rule clears it\n            rrule = CASE WHEN $12 THEN $7 ELSE COALESCE($7, rrule) END,\n            status = COALESCE($8, status),\n            cancelled_at = CASE WHEN $8 IS NOT NULL AND $8 <> 'cancelled'::reservation_status THEN NULL ELSE cancelled_at END,\n            cancelled_by = CASE WHEN $8 IS NOT NULL AND $8 <> 'cancelled'::reservation_status THEN NULL ELSE cancelled_by END,\n            cancel_reason = CASE WHEN $8 IS NOT NULL AND $8 <> 'cancelled'::reservation_status THEN NULL ELSE cancel_reason END,\n            contract_id = COALESCE($9, contract_id),\n            contract_printed_at = CASE \n                WHEN $10 = TRUE THEN NOW() \n                WHEN $10 = FALSE THEN NULL\n                ELSE contract_printed_at \n            END,\n            updated_at = NOW()\n        WHERE id = $11 AND deleted_at IS NULL\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Jsonb",
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        {
+          "Custom": {
+            "name": "reservation_status",
+            "kind": {
+              "Enum": [
+                "pending",
+                "confirmed",
+                "cancelled"
+              ]
+            }
+          }
+        },
+        "Uuid",
+        "Bool",
+        "Uuid",
+        "Bool",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "d7f752f1e81646695f78a3ce5803f4a2c6cb7a585750fe88d10d69caf4a9692e"
+}

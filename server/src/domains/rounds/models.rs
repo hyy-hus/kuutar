@@ -89,6 +89,7 @@ pub struct UpdateRoundPayload {
     #[validate(length(min = 1, max = 255))]
     pub name: Option<String>,
     #[validate(length(max = 2000))]
+    /// Null or omitted keeps the current value; an empty string clears it.
     pub description: Option<String>,
     pub applications_open_at: Option<DateTime<Utc>>,
     pub applications_close_at: Option<DateTime<Utc>>,

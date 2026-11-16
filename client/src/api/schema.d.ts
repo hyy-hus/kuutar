@@ -1955,6 +1955,7 @@ export interface components {
             name: string;
         };
         UpdateReservableBlockPayload: {
+            /** @description Null or omitted keeps the current value; an empty string clears it. */
             description?: string | null;
             /** @description Replaces all occurrences when provided */
             occurrences?: components["schemas"]["CreateReservableBlockOccurrencePayload"][] | null;
@@ -1962,9 +1963,13 @@ export interface components {
             title?: string | null;
         };
         UpdateReservationPayload: {
+            /** @description Null or omitted keeps the current value; an empty string clears it. */
             admin_notes?: string | null;
+            /** @description Null or omitted keeps the current value; an empty string clears it. */
             contact_email?: string | null;
+            /** @description Null or omitted keeps the current value; an empty string clears it. */
             contact_person?: string | null;
+            /** @description Null or omitted keeps the current value; an empty string clears it. */
             contact_phone?: string | null;
             /** Format: uuid */
             contract_id?: string | null;
@@ -2021,6 +2026,7 @@ export interface components {
             visibility_group_ids?: string[] | null;
         };
         UpdateRestrictionPayload: {
+            /** @description Null or omitted keeps the current value; an empty string clears it. */
             description?: string | null;
             exempt_group_ids?: string[] | null;
             occurrences?: components["schemas"]["CreateRestrictionOccurrencePayload"][] | null;
@@ -2032,6 +2038,7 @@ export interface components {
             applications_close_at?: string | null;
             /** Format: date-time */
             applications_open_at?: string | null;
+            /** @description Null or omitted keeps the current value; an empty string clears it. */
             description?: string | null;
             group_ids?: string[] | null;
             /** Format: int32 */
