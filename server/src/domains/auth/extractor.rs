@@ -1,6 +1,6 @@
 use axum::{
     extract::{FromRef, FromRequestParts},
-    http::{header::AUTHORIZATION, request::Parts},
+    http::{Method, header::AUTHORIZATION, request::Parts},
 };
 use uuid::Uuid;
 
@@ -14,6 +14,8 @@ pub struct AuthUser {
     pub role: Role,
     /// Session this access token belongs to (None for tokens issued before sessions existed)
     pub session_id: Option<Uuid>,
+    /// Admin acting as this user, when the session is an impersonation session
+    pub impersonator_id: Option<Uuid>,
 }
 
 impl<S> FromRequestParts<S> for AuthUser
@@ -38,12 +40,56 @@ where
 
         let claims = jwt::decode_jwt(token, &auth_state.config.jwt_secret)?;
 
+        // Until the audit log lands, every change made while impersonating is logged here
+        if let Some(admin_id) = claims.act
+            && parts.method != Method::GET
+        {
+            tracing::info!(
+                admin_id = %admin_id,
+                user_id = %claims.sub,
+                method = %parts.method,
+                path = %parts.uri.path(),
+                "Impersonated request"
+            );
+        }
+
         Ok(AuthUser {
             id: claims.sub,
             group_id: claims.group_id,
             role: claims.role,
             session_id: claims.sid,
+            impersonator_id: claims.act,
         })
+    }
+}
+
+/// Requires the user to act on their own account, i.e. not be an admin impersonating them.
+/// Used for account-level actions (sessions, deleting the account).
+#[derive(Debug, Clone)]
+pub struct RequireOwnAccount(pub AuthUser);
+
+impl AuthUser {
+    pub fn ensure_own_account(&self) -> Result<(), AppError> {
+        if self.impersonator_id.is_some() {
+            return Err(AppError::Forbidden(
+                "Not allowed while acting as another user".to_string(),
+            ));
+        }
+        Ok(())
+    }
+}
+
+impl<S> FromRequestParts<S> for RequireOwnAccount
+where
+    S: Send + Sync,
+    AuthState: FromRef<S>,
+{
+    type Rejection = AppError;
+
+    async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
+        let user = AuthUser::from_request_parts(parts, state).await?;
+        user.ensure_own_account()?;
+        Ok(RequireOwnAccount(user))
     }
 }
 

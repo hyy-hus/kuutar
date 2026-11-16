@@ -48,6 +48,8 @@ impl Modify for SecurityAddon {
         auth::routes::list_my_sessions,
         auth::routes::revoke_my_session,
         auth::routes::logout_other_sessions,
+        auth::routes::start_impersonation,
+        auth::routes::end_impersonation,
         auth::routes::request_otp,
     auth::routes::verify_otp,
 
@@ -173,6 +175,8 @@ impl Modify for SecurityAddon {
             users::models::User,
             users::models::CreateUser,
             users::models::UpdateUser,
+            users::models::MeResponse,
+            users::models::Impersonator,
             collections::models::Collection,
             collections::models::CreateCollection,
             collections::models::UpdateCollection,

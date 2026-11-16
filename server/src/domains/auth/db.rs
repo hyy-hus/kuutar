@@ -38,6 +38,23 @@ pub async fn create_user(
     Ok(user)
 }
 
+/// Lookup active user by id
+pub async fn find_user_by_id(pool: &PgPool, id: Uuid) -> Result<Option<UserAuthInfo>, AppError> {
+    let user = sqlx::query_as!(
+        UserAuthInfo,
+        r#"
+        SELECT id, group_id, email, password_hash, role AS "role: Role"
+        FROM users
+        WHERE id = $1 AND deleted_at IS NULL
+        "#,
+        id
+    )
+    .fetch_optional(pool)
+    .await?;
+
+    Ok(user)
+}
+
 /// Lookup active user by email for login
 pub async fn find_user_by_email(
     pool: &PgPool,
@@ -62,6 +79,8 @@ pub async fn find_user_by_email(
 const REFRESH_TOKEN_TTL_DAYS: i64 = 7;
 /// Absolute lifetime of a session, however often it is refreshed
 const SESSION_MAX_DAYS: i64 = 30;
+/// Absolute lifetime of an impersonation session (an admin acting as a user)
+const IMPERSONATION_MAX_MINUTES: i64 = 60;
 /// A rotated token replayed within this window is treated as a refresh race (e.g. two
 /// tabs sharing one stored token), not theft
 const REUSE_GRACE_SECONDS: i64 = 30;
@@ -78,6 +97,8 @@ pub struct SessionMeta {
 pub struct SessionRef {
     pub id: Uuid,
     pub started_at: DateTime<Utc>,
+    /// Admin behind an impersonation session
+    pub impersonator_id: Option<Uuid>,
 }
 
 impl SessionRef {
@@ -85,6 +106,23 @@ impl SessionRef {
         Self {
             id: Uuid::new_v4(),
             started_at: Utc::now(),
+            impersonator_id: None,
+        }
+    }
+
+    /// A new session in which `admin_id` acts as another user
+    pub fn impersonation(admin_id: Uuid) -> Self {
+        Self {
+            impersonator_id: Some(admin_id),
+            ..Self::new()
+        }
+    }
+
+    /// When the session ends at the latest, however often it is refreshed
+    pub fn max_expires_at(&self) -> DateTime<Utc> {
+        match self.impersonator_id {
+            Some(_) => self.started_at + Duration::minutes(IMPERSONATION_MAX_MINUTES),
+            None => self.started_at + Duration::days(SESSION_MAX_DAYS),
         }
     }
 }
@@ -104,6 +142,7 @@ pub struct ActiveSession {
     pub expires_at: DateTime<Utc>,
     pub user_agent: Option<String>,
     pub ip: Option<String>,
+    pub impersonator_id: Option<Uuid>,
 }
 
 /// Insert a new refresh token (hashed) belonging to `session`
@@ -116,13 +155,13 @@ pub async fn create_refresh_token(
 ) -> Result<(), AppError> {
     let token_hash = sha256_hash(raw_refresh_token);
     // Sliding idle window, capped by the session's absolute lifetime
-    let expires_at = (Utc::now() + Duration::days(REFRESH_TOKEN_TTL_DAYS))
-        .min(session.started_at + Duration::days(SESSION_MAX_DAYS));
+    let expires_at =
+        (Utc::now() + Duration::days(REFRESH_TOKEN_TTL_DAYS)).min(session.max_expires_at());
 
     sqlx::query!(
         r#"
-        INSERT INTO refresh_tokens (user_id, token_hash, expires_at, session_id, session_started_at, user_agent, ip)
-        VALUES ($1, $2, $3, $4, $5, $6, $7)
+        INSERT INTO refresh_tokens (user_id, token_hash, expires_at, session_id, session_started_at, user_agent, ip, impersonator_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
         "#,
         user_id,
         token_hash,
@@ -130,7 +169,8 @@ pub async fn create_refresh_token(
         session.id,
         session.started_at,
         meta.user_agent,
-        meta.ip
+        meta.ip,
+        session.impersonator_id
     )
     .execute(pool)
     .await?;
@@ -142,6 +182,9 @@ pub async fn create_refresh_token(
 ///
 /// A token that was already rotated and is replayed after the grace window means two
 /// parties hold the same chain, so the whole session is revoked.
+///
+/// An impersonation session only refreshes while its admin is still an active admin and
+/// the target is still a regular user.
 pub async fn verify_and_consume_refresh_token(
     pool: &PgPool,
     raw_refresh_token: &str,
@@ -158,9 +201,22 @@ pub async fn verify_and_consume_refresh_token(
           AND rt.expires_at > NOW()
           AND u.id = rt.user_id
           AND u.deleted_at IS NULL
+          AND (
+              rt.impersonator_id IS NULL
+              OR (
+                  u.role = 'user'
+                  AND EXISTS (
+                      SELECT 1 FROM users a
+                      WHERE a.id = rt.impersonator_id
+                        AND a.role = 'admin'
+                        AND a.deleted_at IS NULL
+                  )
+              )
+          )
         RETURNING
             rt.session_id,
             rt.session_started_at,
+            rt.impersonator_id,
             rt.user_agent,
             rt.ip,
             u.id AS user_id,
@@ -192,6 +248,7 @@ pub async fn verify_and_consume_refresh_token(
         SessionRef {
             id: row.session_id,
             started_at: row.session_started_at,
+            impersonator_id: row.impersonator_id,
         },
         SessionMeta {
             user_agent: row.user_agent,
@@ -242,6 +299,30 @@ pub async fn revoke_refresh_token(pool: &PgPool, raw_refresh_token: &str) -> Res
     .execute(pool)
     .await?;
 
+    Ok(())
+}
+
+/// End the impersonation session a refresh token belongs to. Normal sessions are left alone
+/// (NotFound), so this endpoint can't be used as a second logout.
+pub async fn end_impersonation(pool: &PgPool, raw_refresh_token: &str) -> Result<(), AppError> {
+    let token_hash = sha256_hash(raw_refresh_token);
+
+    let result = sqlx::query!(
+        r#"
+        UPDATE refresh_tokens
+        SET revoked_at = NOW(), revoked_reason = 'impersonation_end'
+        WHERE revoked_at IS NULL
+          AND impersonator_id IS NOT NULL
+          AND session_id = (SELECT session_id FROM refresh_tokens WHERE token_hash = $1)
+        "#,
+        token_hash
+    )
+    .execute(pool)
+    .await?;
+
+    if result.rows_affected() == 0 {
+        return Err(AppError::NotFound);
+    }
     Ok(())
 }
 
@@ -308,7 +389,8 @@ pub async fn list_sessions(pool: &PgPool, user_id: Uuid) -> Result<Vec<ActiveSes
             created_at AS last_active_at,
             expires_at,
             user_agent,
-            ip
+            ip,
+            impersonator_id
         FROM refresh_tokens
         WHERE user_id = $1 AND revoked_at IS NULL AND expires_at > NOW()
         ORDER BY created_at DESC

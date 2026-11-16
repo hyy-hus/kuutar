@@ -8,13 +8,13 @@ use validator::Validate;
 
 use super::{
     db,
-    models::{CreateUser, UpdateUser, User},
+    models::{CreateUser, Impersonator, MeResponse, UpdateUser, User},
 };
 use crate::{
     domains::{
         auth::{
             AuthState, db as auth_db,
-            extractor::{AuthUser, RequireAdmin},
+            extractor::{AuthUser, RequireAdmin, RequireOwnAccount},
             models::SessionInfo,
             password,
             routes::to_session_info,
@@ -45,16 +45,44 @@ pub async fn list_users(
     tag = "Users",
     security(("bearer_auth" = [])),
     responses(
-        (status = 200, description = "Current authenticated user profile", body = User),
+        (status = 200, description = "Current authenticated user profile", body = MeResponse),
         (status = 401, description = "Unauthorized")
     )
 )]
 pub async fn get_me(
     State(state): State<AuthState>,
     auth_user: AuthUser,
-) -> Result<Json<User>, AppError> {
+) -> Result<Json<MeResponse>, AppError> {
     let user = db::get_user(&state.pool, auth_user.id).await?;
-    Ok(Json(user))
+    Ok(Json(me_response(&state, &auth_user, user).await?))
+}
+
+/// Wraps the current user with the admin acting as them, if any
+async fn me_response(
+    state: &AuthState,
+    auth_user: &AuthUser,
+    user: User,
+) -> Result<MeResponse, AppError> {
+    let impersonator = match auth_user.impersonator_id {
+        Some(admin_id) => {
+            // A deleted admin's impersonation sessions end with them
+            let admin = db::get_user(&state.pool, admin_id)
+                .await
+                .map_err(|e| match e {
+                    AppError::NotFound => {
+                        AppError::Unauthorized("Impersonation session has ended".to_string())
+                    }
+                    e => e,
+                })?;
+            Some(Impersonator {
+                id: admin.id,
+                name: admin.name,
+                email: admin.email,
+            })
+        }
+        None => None,
+    };
+    Ok(MeResponse { user, impersonator })
 }
 
 #[utoipa::path(
@@ -108,7 +136,8 @@ pub async fn create_user(
     security(("bearer_auth" = [])),
     request_body = UpdateUser,
     responses(
-        (status = 200, description = "Current user updated (group_id is ignored)", body = User),
+        (status = 200, description = "Current user updated (group_id is ignored)", body = MeResponse),
+        (status = 403, description = "Email or password change while acting as another user"),
         (status = 409, description = "Email already in use")
     )
 )]
@@ -116,8 +145,23 @@ pub async fn update_me(
     State(state): State<AuthState>,
     auth_user: AuthUser,
     Json(mut payload): Json<UpdateUser>,
-) -> Result<Json<User>, AppError> {
+) -> Result<Json<MeResponse>, AppError> {
     payload.validate()?;
+
+    // An admin acting as the user may edit the profile, but not the login credentials.
+    // The profile form always sends the email, so only an actual change counts.
+    if auth_user.impersonator_id.is_some() {
+        let email_changes = match &payload.email {
+            Some(email) => {
+                let current = db::get_user(&state.pool, auth_user.id).await?;
+                !email.eq_ignore_ascii_case(&current.email)
+            }
+            None => false,
+        };
+        if email_changes || payload.password.is_some() {
+            auth_user.ensure_own_account()?;
+        }
+    }
 
     // Users cannot move themselves between groups; that is an admin action
     payload.group_id = None;
@@ -140,7 +184,7 @@ pub async fn update_me(
         auth_db::revoke_all_sessions(&state.pool, auth_user.id, "password", auth_user.session_id)
             .await?;
     }
-    Ok(Json(user))
+    Ok(Json(me_response(&state, &auth_user, user).await?))
 }
 
 #[utoipa::path(
@@ -182,11 +226,14 @@ pub async fn update_user(
     path = "/users/me",
     tag = "Users",
     security(("bearer_auth" = [])),
-    responses((status = 204, description = "Current user account deleted"))
+    responses(
+        (status = 204, description = "Current user account deleted"),
+        (status = 403, description = "Not allowed while acting as another user")
+    )
 )]
 pub async fn delete_me(
     State(state): State<AuthState>,
-    auth_user: AuthUser,
+    RequireOwnAccount(auth_user): RequireOwnAccount,
 ) -> Result<StatusCode, AppError> {
     db::delete_user(&state.pool, auth_user.id).await?;
     Ok(StatusCode::NO_CONTENT)

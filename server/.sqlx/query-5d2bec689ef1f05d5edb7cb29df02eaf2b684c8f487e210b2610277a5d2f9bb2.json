@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE refresh_tokens SET expires_at = NOW() - INTERVAL '1 minute' WHERE impersonator_id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "5d2bec689ef1f05d5edb7cb29df02eaf2b684c8f487e210b2610277a5d2f9bb2"
+}

@@ -1025,5 +1025,12 @@
 	"yhteenvetoHakemus": "Application in {{name}}",
 	"tamaOnHakemus": "This is an application, not yet a reservation",
 	"tamaOnHakemusKuvaus": "The block belongs to the round {{name}}. Your application will be listed on the round's page, where you can order your applications. You will get the decision by email after applications close on {{end}}.",
-	"lahetaHakemus": "Send application"
+	"lahetaHakemus": "Send application",
+	"toimiKayttajana": "Act as user",
+	"vahvistaKayttajanaToimiminen": "You will enter the session of {{name}} for up to one hour. Everything you do, such as reservations and cancellations, really happens in this user's name, and email notifications go to them. Continue?",
+	"kayttajanaToimiminenEpaonnistui": "Could not act as this user.",
+	"toimitKayttajana": "You are acting as {{name}}.",
+	"toimitKayttajanaSelite": "Everything you do really happens in this user's name.",
+	"palaaOmaanIstuntoon": "Return to your own session",
+	"yllapitajanTukiistunto": "Admin support session"
 }

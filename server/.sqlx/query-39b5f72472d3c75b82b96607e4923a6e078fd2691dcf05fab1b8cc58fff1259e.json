@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        SELECT\n            session_id,\n            session_started_at AS started_at,\n            created_at AS last_active_at,\n            expires_at,\n            user_agent,\n            ip\n        FROM refresh_tokens\n        WHERE user_id = $1 AND revoked_at IS NULL AND expires_at > NOW()\n        ORDER BY created_at DESC\n        ",
+  "query": "\n        SELECT\n            session_id,\n            session_started_at AS started_at,\n            created_at AS last_active_at,\n            expires_at,\n            user_agent,\n            ip,\n            impersonator_id\n        FROM refresh_tokens\n        WHERE user_id = $1 AND revoked_at IS NULL AND expires_at > NOW()\n        ORDER BY created_at DESC\n        ",
   "describe": {
     "columns": [
       {
@@ -68,6 +68,17 @@
             "name": "ip"
           }
         }
+      },
+      {
+        "ordinal": 6,
+        "name": "impersonator_id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "refresh_tokens",
+            "name": "impersonator_id"
+          }
+        }
       }
     ],
     "parameters": {
@@ -81,8 +92,9 @@
       false,
       false,
       true,
+      true,
       true
     ]
   },
-  "hash": "0100b7c2818f8d74edaca69ba4f0acee3be141f7c34a84bdf04d2d09ae4e0cca"
+  "hash": "39b5f72472d3c75b82b96607e4923a6e078fd2691dcf05fab1b8cc58fff1259e"
 }

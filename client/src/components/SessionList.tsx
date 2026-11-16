@@ -47,6 +47,11 @@ export function SessionList({
 									{t("tamaLaite", "Tämä laite")}
 								</span>
 							)}
+							{session.impersonated_by && (
+								<span className="ml-2 font-normal text-status-warning-ink">
+									{t("yllapitajanTukiistunto", "Ylläpitäjän tukiistunto")}
+								</span>
+							)}
 						</p>
 						<p className="tabular-nums text-stone-600 dark:text-stone-400">
 							{`${t("viimeksiAktiivinen", "Viimeksi aktiivinen")}: ${formatDateTime(session.last_active_at)}`}
