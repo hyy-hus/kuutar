@@ -737,7 +737,6 @@
 	"kierrosIlmoitusAlkaa": "Kierroksen \"{{name}}\" haku alkaa {{start}}. Sen resursseja voi varata vain haun kautta.",
 	"kierrosIlmoitusPaattyy": "Kierroksen \"{{name}}\" haku päättyy {{end}}. Sen resursseja haetaan hakemuksella, ja päätös tulee haun jälkeen.",
 	"kierrosJaossa": "Odottaa jakoa",
-	"kierrosOhje": "Voit hakea enintään {{max}} aikaa kutakin resurssia kohden. Aseta toivotuin ensimmäiseksi. Päätös tulee sähköpostiin haun päätyttyä.",
 	"kierrosPaatetty": "Kierros päätettiin: {{confirmed}} vahvistettu, {{cancelled}} peruttu.",
 	"kierrosPttynyt": "Päättynyt",
 	"kierrostenHakuEpaonnistui": "Varauskierrosten lataus epäonnistui.",
@@ -1015,5 +1014,16 @@
 	"nostaEtusivulle": "Nosta etusivulle",
 	"nostaEtusivulleOhje": "Tiivistelmä näkyy etusivulla, kunnes käyttäjä lukee tai piilottaa sen.",
 	"nostoPaattyy": "Nosto päättyy",
-	"nostoPaattyyOhje": "Viimeinen päivä etusivulla. Jätä tyhjäksi, jos nosto on voimassa toistaiseksi."
+	"nostoPaattyyOhje": "Viimeinen päivä etusivulla. Jätä tyhjäksi, jos nosto on voimassa toistaiseksi.",
+	"kierrosIlmoitusAuki": "Haku on käynnissä {{end}} asti. Valitse resurssi ja haluamasi varausjakso ajalta {{period}}: jokainen valittu jakso on yksi hakemus, ja voit hakea enintään {{max}} jaksoa kutakin resurssia kohden. Päätös tulee sähköpostiin haun päätyttyä.",
+	"kierrosIlmoitusTulossa": "Haku on auki {{start}} – {{end}}. Kierroksen resursseja ajalle {{period}} haetaan silloin valitsemalla haluamasi varausjaksot.",
+	"kierrosIlmoitusJaossa": "Haku on päättynyt. Hakemukset jaetaan, ja päätös tulee sähköpostiin.",
+	"kierrosVaihe1": "Paina Hae varausjaksoa ja valitse resurssi ja varausjakso ajalta {{period}}. Jokainen valittu jakso on yksi hakemus.",
+	"kierrosVaihe2": "Toista tarvittaessa. Voit hakea enintään {{max}} jaksoa kutakin resurssia kohden.",
+	"kierrosVaihe3": "Järjestä hakemuksesi alla toivotuin ylimmäksi. Kustakin resurssista voi saada enintään yhden jakson.",
+	"kierrosVaihe4": "Voit muuttaa järjestystä ja perua hakemuksia {{end}} asti. Päätös tulee sähköpostiin haun päätyttyä.",
+	"yhteenvetoHakemus": "Hakemus kierrokseen {{name}}",
+	"tamaOnHakemus": "Tämä on hakemus, ei vielä varaus",
+	"tamaOnHakemusKuvaus": "Jakso kuuluu kierrokseen {{name}}. Lähetetty hakemus näkyy kierroksen sivulla, jossa voit järjestää hakemuksesi. Päätös tulee sähköpostiin haun päätyttyä {{end}}.",
+	"lahetaHakemus": "Lähetä hakemus"
 }

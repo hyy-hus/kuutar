@@ -737,7 +737,6 @@
 	"kierrosIlmoitusAlkaa": "Ansökan för omgången \"{{name}}\" börjar {{start}}. Dess resurser kan bara bokas genom ansökan.",
 	"kierrosIlmoitusPaattyy": "Ansökan för omgången \"{{name}}\" slutar {{end}}. Dess resurser bokas genom ansökan, och beslutet kommer efter att ansökningstiden har gått ut.",
 	"kierrosJaossa": "Väntar på fördelning",
-	"kierrosOhje": "Du kan ansöka om högst {{max}} tider per resurs. Sätt den du helst vill ha först. Beslutet kommer med e-post när ansökningstiden har gått ut.",
 	"kierrosPaatetty": "Omgången avslutades: {{confirmed}} bekräftade, {{cancelled}} avbokade.",
 	"kierrosPttynyt": "Avslutad",
 	"kierrostenHakuEpaonnistui": "Det gick inte att ladda bokningsomgångar.",
@@ -1015,5 +1014,16 @@
 	"nostaEtusivulle": "Lyft fram på startsidan",
 	"nostaEtusivulleOhje": "Sammanfattningen visas på startsidan tills användaren läser eller döljer den.",
 	"nostoPaattyy": "Lyftet upphör",
-	"nostoPaattyyOhje": "Sista dagen på startsidan. Lämna tomt om lyftet gäller tills vidare."
+	"nostoPaattyyOhje": "Sista dagen på startsidan. Lämna tomt om lyftet gäller tills vidare.",
+	"kierrosIlmoitusAuki": "Ansökan pågår till {{end}}. Välj en resurs och det bokningsblock du vill ha under perioden {{period}}: varje valt block är en ansökan, och du kan ansöka om högst {{max}} block per resurs. Beslutet kommer med e-post när ansökningstiden har gått ut.",
+	"kierrosIlmoitusTulossa": "Ansökan är öppen {{start}} – {{end}}. Omgångens resurser för perioden {{period}} söks då genom att välja de bokningsblock du vill ha.",
+	"kierrosIlmoitusJaossa": "Ansökningstiden har gått ut. Ansökningarna fördelas, och beslutet kommer med e-post.",
+	"kierrosVaihe1": "Tryck på Ansök om bokningsblock och välj en resurs och ett block under perioden {{period}}. Varje valt block är en ansökan.",
+	"kierrosVaihe2": "Upprepa vid behov. Du kan ansöka om högst {{max}} block per resurs.",
+	"kierrosVaihe3": "Ordna dina ansökningar nedan med den du helst vill ha överst. Du kan få högst ett block per resurs.",
+	"kierrosVaihe4": "Du kan ändra ordningen och återkalla ansökningar till {{end}}. Beslutet kommer med e-post när ansökningstiden har gått ut.",
+	"yhteenvetoHakemus": "Ansökan i omgången {{name}}",
+	"tamaOnHakemus": "Det här är en ansökan, ännu inte en bokning",
+	"tamaOnHakemusKuvaus": "Blocket hör till omgången {{name}}. Den skickade ansökan syns på omgångens sida, där du kan ordna dina ansökningar. Beslutet kommer med e-post när ansökningstiden har gått ut {{end}}.",
+	"lahetaHakemus": "Skicka ansökan"
 }

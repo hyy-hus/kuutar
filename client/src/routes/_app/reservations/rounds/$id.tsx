@@ -17,7 +17,12 @@ import { useResources } from "#/hooks/useResorces";
 import { useRound, useSetPriorities } from "#/hooks/useRounds";
 import { requireAuthGuard } from "#/utils/authGuard";
 import { useDateFormatter } from "#/utils/date";
-import { moveItem, remainingApplications, roundPhase } from "#/utils/rounds";
+import {
+	moveItem,
+	remainingApplications,
+	roundPhase,
+	roundPreselection,
+} from "#/utils/rounds";
 
 export const Route = createFileRoute("/_app/reservations/rounds/$id")({
 	beforeLoad: async ({ context }) => {
@@ -57,6 +62,7 @@ function RoundApplicationsPage() {
 	if (!round) return <Loader2 className="animate-spin" />;
 
 	const isOpen = roundPhase(round) === "open";
+	const period = `${formatDateOnly(round.period_start)} – ${formatDateOnly(round.period_end)}`;
 	const applications = (mine ?? []).filter((r) => r.status !== "cancelled");
 	const byResource = new Map<string, ReservationWithOccurrences[]>();
 	for (const app of applications) {
@@ -95,7 +101,7 @@ function RoundApplicationsPage() {
 					<Button asChild>
 						<Link
 							to="/reservations/create"
-							search={{ resource_ids: round.resource_ids }}
+							search={{ resource_ids: roundPreselection(round) }}
 						>
 							{t("haeVarausjaksoa", "Hae varausjaksoa")}
 						</Link>
@@ -110,11 +116,35 @@ function RoundApplicationsPage() {
 					variant="info"
 					title={t("kierrosOhjeOtsikko", "Näin haku toimii")}
 				>
-					{t(
-						"kierrosOhje",
-						"Voit hakea enintään {{max}} aikaa kutakin resurssia kohden. Aseta toivotuin ensimmäiseksi. Päätös tulee sähköpostiin haun päätyttyä.",
-						{ max: round.max_pending_per_resource },
-					)}
+					<ol className="mt-1 list-decimal space-y-1 pl-5">
+						<li>
+							{t(
+								"kierrosVaihe1",
+								"Paina Hae varausjaksoa ja valitse resurssi ja varausjakso ajalta {{period}}. Jokainen valittu jakso on yksi hakemus.",
+								{ period },
+							)}
+						</li>
+						<li>
+							{t(
+								"kierrosVaihe2",
+								"Toista tarvittaessa. Voit hakea enintään {{max}} jaksoa kutakin resurssia kohden.",
+								{ max: round.max_pending_per_resource },
+							)}
+						</li>
+						<li>
+							{t(
+								"kierrosVaihe3",
+								"Järjestä hakemuksesi alla toivotuin ylimmäksi. Kustakin resurssista voi saada enintään yhden jakson.",
+							)}
+						</li>
+						<li>
+							{t(
+								"kierrosVaihe4",
+								"Voit muuttaa järjestystä ja perua hakemuksia {{end}} asti. Päätös tulee sähköpostiin haun päätyttyä.",
+								{ end: formatDateTime(round.applications_close_at) },
+							)}
+						</li>
+					</ol>
 				</Callout>
 			) : (
 				<Callout variant="info">
@@ -133,7 +163,7 @@ function RoundApplicationsPage() {
 					{formatDateTime(round.applications_close_at)}
 				</DateItem>
 				<DateItem label={t("kierroksenAjanjakso", "Varattava ajanjakso")}>
-					{`${formatDateOnly(round.period_start)} – ${formatDateOnly(round.period_end)}`}
+					{period}
 				</DateItem>
 				<DateItem label={t("resurssit", "Resurssit")}>
 					{round.resource_ids.map(resourceName).join(", ")}

@@ -8,6 +8,7 @@ import type { components } from "#/api/schema";
 type Resource = components["schemas"]["Resource"];
 type Reservation = components["schemas"]["Reservation"];
 type News = components["schemas"]["News"];
+type Round = components["schemas"]["Round"];
 
 const NOW = "2026-11-11T09:00:00.000Z";
 
@@ -78,6 +79,30 @@ export function makeNews(overrides: Partial<News> = {}): News {
 		is_read: false,
 		created_at: NOW,
 		updated_at: NOW,
+		...overrides,
+	};
+}
+
+/** A reservation round whose application window is open at the fixtures' NOW */
+export function makeRound(overrides: Partial<Round> = {}): Round {
+	return {
+		id: faker.string.uuid(),
+		name: faker.helpers.arrayElement([
+			"Kevään varauskierros",
+			"Salin ennakkovarauskierros",
+		]),
+		description: null,
+		applications_open_at: "2026-11-09T22:00:00.000Z",
+		applications_close_at: "2026-11-15T21:59:00.000Z",
+		period_start: "2027-01-10T22:00:00.000Z",
+		period_end: "2027-06-21T20:59:00.000Z",
+		max_pending_per_resource: 3,
+		resource_ids: [faker.string.uuid()],
+		group_ids: [faker.string.uuid()],
+		status: "active",
+		phase: "open",
+		completed_at: null,
+		created_at: NOW,
 		...overrides,
 	};
 }

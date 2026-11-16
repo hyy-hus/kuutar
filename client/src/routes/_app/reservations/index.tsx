@@ -13,6 +13,7 @@ import { PeriodEmptyState } from "#/components/PeriodEmptyState";
 import { PeriodNavigator } from "#/components/PeriodNavigator";
 import { ReservationStatusChip } from "#/components/ReservationStatusChip";
 import { ResourceFilterField } from "#/components/ResourceFilterField";
+import { RoundNotice } from "#/components/RoundNotice";
 import {
 	type ReservationWithOccurrences,
 	useMyReservations,
@@ -140,7 +141,6 @@ function UserDashboardPage() {
 	const { t } = useTranslation();
 	const search = Route.useSearch();
 	const navigate = Route.useNavigate();
-	const { formatDateTime } = useDateFormatter();
 
 	const { data: resources } = useResources();
 	const { data: openRounds } = useOpenRounds();
@@ -201,24 +201,7 @@ function UserDashboardPage() {
 			{openRounds && openRounds.length > 0 && (
 				<div className="space-y-2">
 					{openRounds.map((round) => (
-						<Callout
-							key={round.id}
-							variant="info"
-							action={
-								<Button variant="outline" size="sm" asChild>
-									<Link to="/reservations/rounds/$id" params={{ id: round.id }}>
-										{t("avaaKierros", "Avaa kierros")}
-									</Link>
-								</Button>
-							}
-						>
-							<strong>{round.name}</strong>
-							{" – "}
-							{t("hakuaikaPttyy", "Haku päättyy")}{" "}
-							<span className="tabular-nums">
-								{formatDateTime(round.applications_close_at)}
-							</span>
-						</Callout>
+						<RoundNotice key={round.id} round={round} />
 					))}
 				</div>
 			)}

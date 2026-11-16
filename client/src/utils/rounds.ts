@@ -17,6 +17,61 @@ export function roundPhase(
 	return "allocating";
 }
 
+type RoundSlotFields = RoundTimes & {
+	resource_ids: readonly string[];
+	period_start: string;
+	period_end: string;
+};
+
+/**
+ * The round a booking of one slot becomes an application in: an open round that covers the
+ * resource and whose booking period holds the whole slot. Mirrors the server's rules.
+ */
+export function roundForSlot<T extends RoundSlotFields>(
+	rounds: readonly T[],
+	slot: { resource_id: string; start_time: string; end_time: string },
+	now: Date = new Date(),
+): T | undefined {
+	const start = new Date(slot.start_time).getTime();
+	const end = new Date(slot.end_time).getTime();
+	if (Number.isNaN(start) || Number.isNaN(end)) return undefined;
+	return rounds.find(
+		(r) =>
+			roundPhase(r, now) === "open" &&
+			r.resource_ids.includes(slot.resource_id) &&
+			start >= new Date(r.period_start).getTime() &&
+			end <= new Date(r.period_end).getTime(),
+	);
+}
+
+/**
+ * The latest booking-period end among open rounds covering a resource, so a block picker can
+ * reach every block the user may apply for. Undefined when no open round covers it.
+ */
+export function openRoundPeriodEnd(
+	rounds: readonly RoundSlotFields[],
+	resourceId: string,
+	now: Date = new Date(),
+): Date | undefined {
+	const ends = rounds
+		.filter(
+			(r) =>
+				roundPhase(r, now) === "open" && r.resource_ids.includes(resourceId),
+		)
+		.map((r) => new Date(r.period_end).getTime());
+	return ends.length > 0 ? new Date(Math.max(...ends)) : undefined;
+}
+
+/**
+ * Resources to preselect when applying in a round. A blocks-only application holds exactly
+ * one slot on one resource, so several resources are left for the user to choose from.
+ */
+export function roundPreselection(round: {
+	resource_ids: readonly string[];
+}): string[] | undefined {
+	return round.resource_ids.length === 1 ? [...round.resource_ids] : undefined;
+}
+
 /** How many more applications the user may still make for one resource. */
 export function remainingApplications(
 	max: number,

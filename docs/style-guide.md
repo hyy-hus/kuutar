@@ -151,6 +151,7 @@ and summary on wide screens, and `StickyFormActions`.
 | Rich text | `LocalizedRichTextEditor` to edit, `RichTextContent` to render (with locale fallback) |
 | Localized plain text | `LocalizedTextField` to edit, `getLocalizedString` to read |
 | Announcement on the home page | `HighlightedNews`: card with a 4px accent left edge (`border-l-4 border-l-accent`), small meta line, bold title, muted text and a ghost "Lue lisää" link; optional dismiss ✕ |
+| Reservation round the user can take part in | `RoundNotice`: an info `Callout` per round that says, for its phase, what to do (open: "Hae varausjaksoa" + "Avaa kierros"; upcoming: dates only). Shown on the home page and in Omat varaukset |
 | Tooltip | `Tooltip` (the collapsed sidebar uses it for labels) |
 
 Before writing a new component, check `client/src/components/` and the Storybook stories. A new
