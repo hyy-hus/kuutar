@@ -4,8 +4,16 @@ const API_PORT = process.env.E2E_API_PORT ?? "3100";
 const CLIENT_PORT = process.env.E2E_CLIENT_PORT ?? "5174";
 export const API_URL = `http://127.0.0.1:${API_PORT}`;
 
-/** The dataset's "today". The seeder gets it as --anchor and the browser clock is pinned to it. */
-export const ANCHOR_DATE = "2026-11-11";
+/**
+ * The moment the run starts. The browser clock is pinned to it, and its Helsinki date is the
+ * dataset's "today" (the seeder's --anchor). It has to be the real date: the API checks times
+ * against its own clock (scheduled news, round windows, ...), so data anchored to a fixed past
+ * date drifts out of step with it as time passes.
+ */
+export const PINNED_NOW = new Date();
+export const ANCHOR_DATE = new Intl.DateTimeFormat("en-CA", {
+	timeZone: "Europe/Helsinki",
+}).format(PINNED_NOW);
 
 // Generates the showcase screenshots in docs/screenshots from the synthetic mock dataset. Uses
 // its own throwaway database and ports, like the e2e tests. Run with `pnpm screenshots`.

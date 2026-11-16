@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { ANCHOR_DATE, API_URL } from "../../playwright.screenshots.config";
+import { API_URL, PINNED_NOW } from "../../playwright.screenshots.config";
 import { freshDir } from "./output";
 
 type Theme = "light" | "dark";
@@ -134,8 +134,6 @@ const SHOTS: Shot[] = [
 
 const ADMIN = { email: "admin@example.test", password: "dev-password" };
 
-const PINNED_NOW = new Date(`${ANCHOR_DATE}T12:00:00+02:00`);
-
 interface Named {
 	id: string;
 	name?: string;
@@ -245,7 +243,7 @@ for (const shot of SHOTS) {
 			const expiresAt = Date.now() + (tokens?.expires_in ?? 0) * 1000;
 			const path = typeof shot.path === "function" ? shot.path(ids) : shot.path;
 
-			// Same "today" as the seeded data, so the calendar and its relative dates are stable
+			// Same "today" as the seeded data and the API, and one fixed time for every page
 			await page.clock.setFixedTime(PINNED_NOW);
 			await page.addInitScript(
 				([l, t, access, refresh, exp]) => {
