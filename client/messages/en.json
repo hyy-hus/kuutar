@@ -1016,7 +1016,6 @@
 	"nostoPaattyy": "Highlight ends",
 	"nostoPaattyyOhje": "Last day on the home page. Leave empty to keep it until you remove it.",
 	"kierrosIlmoitusAuki": "Applications are open until {{end}}. Pick a resource and the block you want in {{period}}: each block you pick is one application, and you can apply for up to {{max}} blocks per resource. You will get the decision by email after applications close.",
-	"kierrosIlmoitusTulossa": "Applications are open {{start}} – {{end}}. The round's resources for {{period}} are then applied for by picking the blocks you want.",
 	"kierrosIlmoitusJaossa": "Applications have closed. They are being allocated, and the decision will come by email.",
 	"kierrosVaihe1": "Press Apply for a block, then pick a resource and a block in {{period}}. Each block you pick is one application.",
 	"kierrosVaihe2": "Repeat as needed. You can apply for up to {{max}} blocks per resource.",

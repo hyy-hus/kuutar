@@ -43,7 +43,7 @@ pub async fn list_rounds(
     path = "/rounds/open",
     tag = "Rounds",
     security(("bearer_auth" = [])),
-    responses((status = 200, description = "Upcoming and open rounds the caller's group can apply to", body = [Round]))
+    responses((status = 200, description = "Rounds the caller's group can apply to right now (application window open)", body = [Round]))
 )]
 pub async fn list_open_rounds(
     State(auth_state): State<AuthState>,

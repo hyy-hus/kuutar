@@ -4821,7 +4821,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Upcoming and open rounds the caller's group can apply to */
+            /** @description Rounds the caller's group can apply to right now (application window open) */
             200: {
                 headers: {
                     [name: string]: unknown;

@@ -14,14 +14,15 @@ interface RoundNoticeProps {
 }
 
 /**
- * Tells a member that a round they can take part in is coming or open, and what to do: a
- * booking of a round resource in the round's period is an application, not a reservation.
+ * Tells a member that a round they can take part in is open, and what to do: a booking of a
+ * round resource in the round's period is an application, not a reservation. Upcoming rounds
+ * render nothing; admins announce them separately.
  */
 export function RoundNotice({ round, now }: RoundNoticeProps) {
 	const { t } = useTranslation();
 	const { formatDateTime, formatDateOnly } = useDateFormatter();
 	const phase = roundPhase(round, now);
-	if (phase === "completed") return null;
+	if (phase === "completed" || phase === "upcoming") return null;
 
 	const period = `${formatDateOnly(round.period_start)} – ${formatDateOnly(round.period_end)}`;
 	const openRound = (
@@ -59,22 +60,6 @@ export function RoundNotice({ round, now }: RoundNoticeProps) {
 						end: formatDateTime(round.applications_close_at),
 						period,
 						max: round.max_pending_per_resource,
-					},
-				)}
-			</Callout>
-		);
-	}
-
-	if (phase === "upcoming") {
-		return (
-			<Callout variant="info" title={round.name} action={openRound}>
-				{t(
-					"kierrosIlmoitusTulossa",
-					"Haku on auki {{start}} – {{end}}. Kierroksen resursseja ajalle {{period}} haetaan silloin valitsemalla haluamasi varausjaksot.",
-					{
-						start: formatDateTime(round.applications_open_at),
-						end: formatDateTime(round.applications_close_at),
-						period,
 					},
 				)}
 			</Callout>

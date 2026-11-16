@@ -80,7 +80,8 @@ pub async fn list(pool: &PgPool) -> Result<Vec<Round>, AppError> {
     Ok(rows.into_iter().map(Round::from).collect())
 }
 
-/// Active rounds the group may still apply to (upcoming or open).
+/// Rounds the group can apply to right now: active, with the application window open.
+/// Upcoming rounds stay hidden from members until their window opens.
 pub async fn list_open_for_group(pool: &PgPool, group_id: Uuid) -> Result<Vec<Round>, AppError> {
     let rows = sqlx::query_as!(
         RoundRow,
@@ -94,6 +95,7 @@ pub async fn list_open_for_group(pool: &PgPool, group_id: Uuid) -> Result<Vec<Ro
         FROM reservation_rounds r
         WHERE r.deleted_at IS NULL
           AND r.status = 'active'
+          AND r.applications_open_at <= NOW()
           AND r.applications_close_at > NOW()
           AND EXISTS (SELECT 1 FROM reservation_round_groups g WHERE g.round_id = r.id AND g.group_id = $1)
         ORDER BY r.applications_open_at
