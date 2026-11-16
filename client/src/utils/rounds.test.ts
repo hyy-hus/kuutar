@@ -3,8 +3,11 @@ import {
 	competingApplications,
 	findConflicts,
 	moveItem,
+	openRoundPeriodEnd,
 	remainingApplications,
+	roundForSlot,
 	roundPhase,
+	roundPreselection,
 	selectApplication,
 } from "./rounds";
 
@@ -108,5 +111,77 @@ describe("allocation helpers", () => {
 			competingApplications(apps[0], apps).map((a) => a.reservation_id),
 		).toEqual(["r2"]);
 		expect(competingApplications(apps[2], apps)).toEqual([]);
+	});
+});
+
+const slotRound = {
+	...round,
+	id: "r1",
+	resource_ids: ["hall"],
+	period_start: "2027-01-11T00:00:00Z",
+	period_end: "2027-06-21T00:00:00Z",
+};
+const during = new Date("2026-11-11T10:00:00Z");
+
+describe("roundForSlot", () => {
+	const slot = {
+		resource_id: "hall",
+		start_time: "2027-04-01T15:00:00Z",
+		end_time: "2027-04-01T18:00:00Z",
+	};
+
+	it("finds the open round covering the resource and slot", () => {
+		expect(roundForSlot([slotRound], slot, during)?.id).toBe("r1");
+	});
+
+	it("ignores other resources, slots outside the period and closed windows", () => {
+		expect(
+			roundForSlot([slotRound], { ...slot, resource_id: "other" }, during),
+		).toBeUndefined();
+		expect(
+			roundForSlot(
+				[slotRound],
+				{ ...slot, end_time: "2027-06-22T10:00:00Z" },
+				during,
+			),
+		).toBeUndefined();
+		expect(
+			roundForSlot([slotRound], slot, new Date("2026-11-09T10:00:00Z")),
+		).toBeUndefined();
+	});
+
+	it("returns nothing for an unset time", () => {
+		expect(
+			roundForSlot([slotRound], { ...slot, start_time: "" }, during),
+		).toBeUndefined();
+	});
+});
+
+describe("openRoundPeriodEnd", () => {
+	it("is the latest period end of the open rounds covering the resource", () => {
+		const later = {
+			...slotRound,
+			period_end: "2027-08-01T00:00:00Z",
+		};
+		expect(openRoundPeriodEnd([slotRound, later], "hall", during)).toEqual(
+			new Date("2027-08-01T00:00:00Z"),
+		);
+	});
+
+	it("is undefined without an open round for the resource", () => {
+		expect(openRoundPeriodEnd([slotRound], "other", during)).toBeUndefined();
+		expect(
+			openRoundPeriodEnd([slotRound], "hall", new Date("2026-11-13T10:00:00Z")),
+		).toBeUndefined();
+	});
+});
+
+describe("roundPreselection", () => {
+	it("preselects a round's only resource", () => {
+		expect(roundPreselection({ resource_ids: ["hall"] })).toEqual(["hall"]);
+	});
+
+	it("leaves several resources for the user to pick", () => {
+		expect(roundPreselection({ resource_ids: ["a", "b"] })).toBeUndefined();
 	});
 });

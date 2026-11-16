@@ -20,11 +20,13 @@ import { HowToReserve } from "#/components/HowToReserve";
 import { OutlookBadge } from "#/components/OutlookBadge";
 import { PageContainer } from "#/components/PageContainer";
 import { PageHeader } from "#/components/PageHeader";
+import { RoundNotice } from "#/components/RoundNotice";
 import { StatusChip } from "#/components/StatusChip";
 import { useAuth, useIsAdmin } from "#/hooks/useAuth";
 import { useMarkNewsRead, useNewsHighlights } from "#/hooks/useNews";
 import { useMyReservations, useReservations } from "#/hooks/useReservations";
 import { useResources } from "#/hooks/useResorces";
+import { useOpenRounds } from "#/hooks/useRounds";
 import { currentYearRange } from "#/utils/calendarUtils";
 import { addDays, startOfWeek, useDateFormatter } from "#/utils/date";
 import { stripOutlookPrefix } from "#/utils/reservationTitle";
@@ -46,6 +48,8 @@ function HomePage() {
 	const { data: resources, isLoading: loadingResources } = useResources();
 	const { data: highlights = [] } = useNewsHighlights();
 	const markNewsRead = useMarkNewsRead();
+	// Rounds the user's group can take part in; a booking there is an application
+	const { data: openRounds = [] } = useOpenRounds({ enabled: Boolean(user) });
 
 	// Monday 00:00 up to (not including) next Monday 00:00
 	const currentWeekStart = useMemo(() => startOfWeek(), []);
@@ -307,6 +311,10 @@ function HomePage() {
 								)}
 							</Callout>
 						)}
+
+						{openRounds.map((round) => (
+							<RoundNotice key={round.id} round={round} />
+						))}
 
 						<HighlightedNews
 							items={highlights}

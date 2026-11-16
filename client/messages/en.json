@@ -737,7 +737,6 @@
 	"kierrosIlmoitusAlkaa": "Applications for the round \"{{name}}\" open on {{start}}. Its resources can only be booked by applying.",
 	"kierrosIlmoitusPaattyy": "Applications for the round \"{{name}}\" close on {{end}}. Its resources are booked by applying, and the decision comes after that.",
 	"kierrosJaossa": "Awaiting allocation",
-	"kierrosOhje": "You can apply for up to {{max}} slots per resource. Put your first choice at the top. You will get the decision by email after applications close.",
 	"kierrosPaatetty": "Round completed: {{confirmed}} confirmed, {{cancelled}} cancelled.",
 	"kierrosPttynyt": "Completed",
 	"kierrostenHakuEpaonnistui": "Failed to load reservation rounds.",
@@ -1015,5 +1014,16 @@
 	"nostaEtusivulle": "Highlight on the home page",
 	"nostaEtusivulleOhje": "The summary is shown on the home page until the user reads or hides it.",
 	"nostoPaattyy": "Highlight ends",
-	"nostoPaattyyOhje": "Last day on the home page. Leave empty to keep it until you remove it."
+	"nostoPaattyyOhje": "Last day on the home page. Leave empty to keep it until you remove it.",
+	"kierrosIlmoitusAuki": "Applications are open until {{end}}. Pick a resource and the block you want in {{period}}: each block you pick is one application, and you can apply for up to {{max}} blocks per resource. You will get the decision by email after applications close.",
+	"kierrosIlmoitusTulossa": "Applications are open {{start}} – {{end}}. The round's resources for {{period}} are then applied for by picking the blocks you want.",
+	"kierrosIlmoitusJaossa": "Applications have closed. They are being allocated, and the decision will come by email.",
+	"kierrosVaihe1": "Press Apply for a block, then pick a resource and a block in {{period}}. Each block you pick is one application.",
+	"kierrosVaihe2": "Repeat as needed. You can apply for up to {{max}} blocks per resource.",
+	"kierrosVaihe3": "Order your applications below with your first choice at the top. You can get at most one block per resource.",
+	"kierrosVaihe4": "You can reorder and withdraw applications until {{end}}. You will get the decision by email after applications close.",
+	"yhteenvetoHakemus": "Application in {{name}}",
+	"tamaOnHakemus": "This is an application, not yet a reservation",
+	"tamaOnHakemusKuvaus": "The block belongs to the round {{name}}. Your application will be listed on the round's page, where you can order your applications. You will get the decision by email after applications close on {{end}}.",
+	"lahetaHakemus": "Send application"
 }

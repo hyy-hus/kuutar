@@ -41,6 +41,7 @@ import {
 } from "#/hooks/useReservations";
 import { useResources } from "#/hooks/useResorces";
 import { useRestrictions } from "#/hooks/useRestrictions";
+import type { Round } from "#/hooks/useRounds";
 import { useUsers } from "#/hooks/useUsers";
 import {
 	addDays,
@@ -59,6 +60,7 @@ import {
 	compactLocalizedRichText,
 	type LocalizedRichText,
 } from "#/utils/richText";
+import { openRoundPeriodEnd, roundForSlot } from "#/utils/rounds";
 import {
 	generateOccurrences,
 	listSeriesStarts,
@@ -78,6 +80,8 @@ function RequiredMark() {
 
 /** How far ahead a user can browse reservable blocks in the form */
 const BLOCK_LOOKAHEAD_DAYS = 90;
+/** The widest window the form asks blocks for */
+const BLOCK_MAX_RANGE_DAYS = 364;
 
 export interface ReservationFormValues {
 	/** Admins only: the user the reservation is made for; empty means the admin themselves */
@@ -109,6 +113,8 @@ interface ReservationFormProps {
 	onCancel?: () => void;
 	/** Set when editing, so the reservation is not reported as conflicting with itself */
 	reservationId?: string;
+	/** Rounds the user can apply in; a slot inside an open one is sent as an application */
+	rounds?: readonly Round[];
 }
 
 export function ReservationForm({
@@ -119,9 +125,10 @@ export function ReservationForm({
 	isCreate = false,
 	onCancel,
 	reservationId,
+	rounds = [],
 }: ReservationFormProps) {
 	const { t } = useTranslation();
-	const { formatDate, formatRange } = useDateFormatter();
+	const { formatDate, formatRange, formatDateTime } = useDateFormatter();
 	const { data: resources, isLoading: loadingResources } = useResources();
 	const { data: collections } = useCollections();
 	const { data: activeContracts, isLoading: loadingContracts } = useContracts({
@@ -244,15 +251,22 @@ export function ReservationForm({
 
 	// Reaches past the default lookahead when a block further ahead was preselected
 	// (e.g. from the calendar), so it can still be found and shown as selected
+	// and to the end of an open round's period, so every block that can be applied for is listed
+	const roundEnd = blocksOnlyResourceId
+		? openRoundPeriodEnd(rounds, blocksOnlyResourceId)?.getTime()
+		: undefined;
 	const blockRange = useMemo(() => {
 		const today = new Date();
-		const lookaheadEnd = addDays(today, BLOCK_LOOKAHEAD_DAYS);
-		const selectedEnd = endTime ? addDays(new Date(endTime), 1) : lookaheadEnd;
-		return localDayRangeISO(
-			today,
-			selectedEnd > lookaheadEnd ? selectedEnd : lookaheadEnd,
+		const ends = [addDays(today, BLOCK_LOOKAHEAD_DAYS).getTime()];
+		if (endTime) ends.push(addDays(new Date(endTime), 1).getTime());
+		if (roundEnd !== undefined) ends.push(roundEnd);
+		// Keeps the query bounded, like the other listings' one-year windows
+		const end = Math.min(
+			Math.max(...ends),
+			addDays(today, BLOCK_MAX_RANGE_DAYS).getTime(),
 		);
-	}, [endTime]);
+		return localDayRangeISO(today, new Date(end));
+	}, [endTime, roundEnd]);
 	const { data: blocks, isLoading: loadingBlocks } = useReservableBlocks(
 		{
 			start_date: blockRange.startISO,
@@ -343,8 +357,20 @@ export function ReservationForm({
 					(currentUser?.group_id !== undefined &&
 						r.auto_confirm_group_ids.includes(currentUser.group_id))),
 		);
-	const outcome =
-		isAdmin || selectedResources.length === 0
+	// A new booking of one slot inside an open round becomes an application in it
+	const applicationRound =
+		isCreate && selectedResourceIds.length === 1
+			? roundForSlot(rounds, {
+					resource_id: selectedResourceIds[0],
+					start_time: startTime,
+					end_time: endTime,
+				})
+			: undefined;
+	const outcome = applicationRound
+		? t("yhteenvetoHakemus", "Hakemus kierrokseen {{name}}", {
+				name: applicationRound.name,
+			})
+		: isAdmin || selectedResources.length === 0
 			? null
 			: confirmsImmediately
 				? t("yhteenvetoVahvistuuHeti", "Vahvistuu heti")
@@ -1142,6 +1168,21 @@ export function ReservationForm({
 						)}
 					</Callout>
 				)}
+				{applicationRound && (
+					<Callout
+						variant="info"
+						title={t("tamaOnHakemus", "Tämä on hakemus, ei vielä varaus")}
+					>
+						{t(
+							"tamaOnHakemusKuvaus",
+							"Jakso kuuluu kierrokseen {{name}}. Lähetetty hakemus näkyy kierroksen sivulla, jossa voit järjestää hakemuksesi. Päätös tulee sähköpostiin haun päätyttyä {{end}}.",
+							{
+								name: applicationRound.name,
+								end: formatDateTime(applicationRound.applications_close_at),
+							},
+						)}
+					</Callout>
+				)}
 				{/* Submit Button */}
 				<form.Subscribe
 					selector={(state) => [state.canSubmit, state.isSubmitting] as const}
@@ -1196,7 +1237,11 @@ export function ReservationForm({
 									) : (
 										<Save size={16} />
 									)}
-									<span>{submitLabel ?? t("tallenna", "Tallenna")}</span>
+									<span>
+										{applicationRound
+											? t("lahetaHakemus", "Lähetä hakemus")
+											: (submitLabel ?? t("tallenna", "Tallenna"))}
+									</span>
 								</Button>
 							</StickyFormActions>
 						);

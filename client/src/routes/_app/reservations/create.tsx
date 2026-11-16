@@ -16,7 +16,7 @@ import { useOpenRounds } from "#/hooks/useRounds";
 import { requireAuthGuard } from "#/utils/authGuard";
 import { formatDateTimeLocal, useDateFormatter } from "#/utils/date";
 import { compactLocalizedRichText } from "#/utils/richText";
-import { roundPhase } from "#/utils/rounds";
+import { roundForSlot, roundPhase } from "#/utils/rounds";
 
 export interface CreateReservationSearch {
 	start_time?: string;
@@ -64,8 +64,6 @@ function CreateReservationPage() {
 	const { user } = useAuth();
 	const { start_time, end_time, resource_ids } = Route.useSearch();
 	const { data: openRounds } = useOpenRounds();
-	const activeRounds =
-		openRounds?.filter((round) => roundPhase(round) === "open") ?? [];
 	const { formatDateTime } = useDateFormatter();
 	// Rounds that cover the preselected resources; with none preselected, all of them
 	const shownRounds = (openRounds ?? []).filter(
@@ -80,14 +78,10 @@ function CreateReservationPage() {
 	const handleSubmit = async (values: ReservationFormValues) => {
 		// A block on a resource in an open round is an application in that round
 		const occurrence = values.occurrences?.[0];
-		const round = occurrence
-			? activeRounds.find(
-					(r) =>
-						r.resource_ids.includes(occurrence.resource_id) &&
-						new Date(occurrence.start_time) >= new Date(r.period_start) &&
-						new Date(occurrence.end_time) <= new Date(r.period_end),
-				)
-			: undefined;
+		const round =
+			occurrence && values.occurrences?.length === 1
+				? roundForSlot(openRounds ?? [], occurrence)
+				: undefined;
 
 		const created = await createReservation.mutateAsync({
 			user_id: values.user_id || null,
@@ -165,6 +159,7 @@ function CreateReservationPage() {
 				isSubmitting={createReservation.isPending}
 				submitLabel={t("luoVaraus", "Luo varaus")}
 				isCreate={true}
+				rounds={openRounds}
 			/>
 		</FormLayout>
 	);
