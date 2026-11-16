@@ -1016,7 +1016,6 @@
 	"nostoPaattyy": "Lyftet upphör",
 	"nostoPaattyyOhje": "Sista dagen på startsidan. Lämna tomt om lyftet gäller tills vidare.",
 	"kierrosIlmoitusAuki": "Ansökan pågår till {{end}}. Välj en resurs och det bokningsblock du vill ha under perioden {{period}}: varje valt block är en ansökan, och du kan ansöka om högst {{max}} block per resurs. Beslutet kommer med e-post när ansökningstiden har gått ut.",
-	"kierrosIlmoitusTulossa": "Ansökan är öppen {{start}} – {{end}}. Omgångens resurser för perioden {{period}} söks då genom att välja de bokningsblock du vill ha.",
 	"kierrosIlmoitusJaossa": "Ansökningstiden har gått ut. Ansökningarna fördelas, och beslutet kommer med e-post.",
 	"kierrosVaihe1": "Tryck på Ansök om bokningsblock och välj en resurs och ett block under perioden {{period}}. Varje valt block är en ansökan.",
 	"kierrosVaihe2": "Upprepa vid behov. Du kan ansöka om högst {{max}} block per resurs.",

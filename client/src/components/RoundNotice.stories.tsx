@@ -23,11 +23,6 @@ export const Open: Story = {
 	},
 };
 
-/** Before the window opens: dates only, no apply button */
-export const Upcoming: Story = {
-	args: { now: new Date("2026-11-01T09:00:00Z") },
-};
-
 /** Window closed, allocation not yet done */
 export const Allocating: Story = {
 	args: { now: new Date("2026-11-20T09:00:00Z") },

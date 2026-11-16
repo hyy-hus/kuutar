@@ -29,15 +29,11 @@ describe("RoundNotice", () => {
 		).not.toHaveAttribute("href", expect.stringContaining("resource_ids"));
 	});
 
-	it("announces an upcoming round without an apply button", () => {
-		renderWithProviders(
+	it("renders nothing before the window opens", () => {
+		const { container } = renderWithProviders(
 			<RoundNotice round={round} now={new Date("2026-11-01T09:00:00Z")} />,
 		);
-		expect(screen.getByText(/Applications are open/));
-		expect(
-			screen.queryByRole("link", { name: "Apply for a block" }),
-		).toBeNull();
-		expect(screen.getByRole("link", { name: "Open round" }));
+		expect(container).toBeEmptyDOMElement();
 	});
 
 	it("renders nothing for a completed round", () => {

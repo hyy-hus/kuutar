@@ -1016,7 +1016,6 @@
 	"nostoPaattyy": "Nosto päättyy",
 	"nostoPaattyyOhje": "Viimeinen päivä etusivulla. Jätä tyhjäksi, jos nosto on voimassa toistaiseksi.",
 	"kierrosIlmoitusAuki": "Haku on käynnissä {{end}} asti. Valitse resurssi ja haluamasi varausjakso ajalta {{period}}: jokainen valittu jakso on yksi hakemus, ja voit hakea enintään {{max}} jaksoa kutakin resurssia kohden. Päätös tulee sähköpostiin haun päätyttyä.",
-	"kierrosIlmoitusTulossa": "Haku on auki {{start}} – {{end}}. Kierroksen resursseja ajalle {{period}} haetaan silloin valitsemalla haluamasi varausjaksot.",
 	"kierrosIlmoitusJaossa": "Haku on päättynyt. Hakemukset jaetaan, ja päätös tulee sähköpostiin.",
 	"kierrosVaihe1": "Paina Hae varausjaksoa ja valitse resurssi ja varausjakso ajalta {{period}}. Jokainen valittu jakso on yksi hakemus.",
 	"kierrosVaihe2": "Toista tarvittaessa. Voit hakea enintään {{max}} jaksoa kutakin resurssia kohden.",

@@ -557,3 +557,41 @@ async fn round_applications_cannot_be_approved_by_hand(pool: PgPool) {
     .await;
     assert_eq!(status, StatusCode::OK);
 }
+
+#[sqlx::test]
+async fn open_rounds_list_hides_rounds_before_their_window(pool: PgPool) {
+    let env = setup(pool).await;
+    let (alice, _) = setup_user_in_group(&env.pool, Role::User, env.group_id).await;
+    let other_resource = create_resource(&env.pool, true).await;
+    let later = Utc::now() + Duration::days(30);
+
+    let (status, upcoming) = request(
+        &env.app,
+        "POST",
+        "/rounds",
+        Some(&env.admin),
+        Some(json!({
+            "name": "Spring round",
+            "applications_open_at": Utc::now() + Duration::days(7),
+            "applications_close_at": Utc::now() + Duration::days(14),
+            "period_start": later,
+            "period_end": later + Duration::days(10),
+            "max_pending_per_resource": 2,
+            "resource_ids": [other_resource],
+            "group_ids": [env.group_id]
+        })),
+    )
+    .await;
+    assert_eq!(status, StatusCode::CREATED, "{upcoming}");
+    assert_eq!(upcoming["phase"], "upcoming");
+
+    let (status, open) = request(&env.app, "GET", "/rounds/open", Some(&alice), None).await;
+    assert_eq!(status, StatusCode::OK);
+    let ids: Vec<&str> = open
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|r| r["id"].as_str().unwrap())
+        .collect();
+    assert_eq!(ids, vec![env.round_id.to_string().as_str()]);
+}
