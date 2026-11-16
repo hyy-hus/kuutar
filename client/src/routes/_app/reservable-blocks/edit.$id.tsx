@@ -51,7 +51,8 @@ function EditReservableBlockPage() {
 			id,
 			payload: {
 				title: values.title,
-				description: values.description || null,
+				// An empty string clears the description; null would keep it
+				description: values.description?.trim() ?? "",
 				rrule: values.rrule ?? null,
 				occurrences: values.occurrences.map((occ) => ({
 					resource_id: occ.resource_id,

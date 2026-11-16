@@ -223,7 +223,7 @@ pub async fn create(pool: &PgPool, dto: CreateRoundPayload) -> Result<Round, App
             name, description, applications_open_at, applications_close_at,
             period_start, period_end, max_pending_per_resource
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7)
+        VALUES ($1, NULLIF(btrim($2), ''), $3, $4, $5, $6, $7)
         RETURNING id
         "#,
         dto.name,
@@ -365,7 +365,8 @@ pub async fn update(pool: &PgPool, id: Uuid, dto: UpdateRoundPayload) -> Result<
         r#"
         UPDATE reservation_rounds
         SET name = COALESCE($2, name),
-            description = COALESCE($3, description),
+            -- Null keeps the value, an empty string clears it
+            description = CASE WHEN $3::text IS NULL THEN description WHEN btrim($3) = '' THEN NULL ELSE $3 END,
             applications_open_at = $4,
             applications_close_at = $5,
             period_start = COALESCE($6, period_start),

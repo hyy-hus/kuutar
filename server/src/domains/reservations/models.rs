@@ -151,10 +151,14 @@ pub struct UpdateReservationPayload {
     /// Plain text for the admins. Send an empty string to clear.
     #[validate(length(max = 2000))]
     pub message_to_admins: Option<String>,
+    /// Null or omitted keeps the current value; an empty string clears it.
     pub admin_notes: Option<String>,
 
+    /// Null or omitted keeps the current value; an empty string clears it.
     pub contact_person: Option<String>,
+    /// Null or omitted keeps the current value; an empty string clears it.
     pub contact_email: Option<String>,
+    /// Null or omitted keeps the current value; an empty string clears it.
     pub contact_phone: Option<String>,
 
     pub rrule: Option<String>,

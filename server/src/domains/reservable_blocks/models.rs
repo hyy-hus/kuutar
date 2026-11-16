@@ -64,6 +64,7 @@ impl CreateReservableBlockPayload {
 pub struct UpdateReservableBlockPayload {
     #[validate(length(min = 1, max = 255))]
     pub title: Option<String>,
+    /// Null or omitted keeps the current value; an empty string clears it.
     pub description: Option<String>,
     pub rrule: Option<String>,
 
