@@ -58,6 +58,10 @@ UI strings live in `client/messages/` (`fi.json`, `sv.json`, `en.json`). Draft n
 - Publishing a GitHub release deploys that tag to production (`deploy-production.yml`; staging and production share `deploy.yml`). Never publish a release or run the production workflow yourself.
 - A new required server setting (a `Config` field without a default) must be added to the staging and production containers in Scaleway before the change is merged, or the server exits at startup. The deploy workflow fails when the container does not come up.
 
+## Release notes
+
+Release notes are written in Finnish. When a merged change is worth mentioning to users or admins, add it to `docs/next-release.md` under the matching heading, with the PR number. When a release is made, that file's content becomes the release description and the file is emptied back to its headings.
+
 ## Don't touch
 
 `server/reservations_backup.json`, `.env*` files and `deploy.sh` (all gitignored).
