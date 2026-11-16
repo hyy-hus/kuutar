@@ -153,6 +153,7 @@ and summary on wide screens, and `StickyFormActions`.
 | Announcement on the home page | `HighlightedNews`: card with a 4px accent left edge (`border-l-4 border-l-accent`), small meta line, bold title, muted text and a ghost "Lue lisää" link; optional dismiss ✕ |
 | Reservation round the user can take part in | `RoundNotice`: an info `Callout` per round that says, for its phase, what to do (open: "Hae varausjaksoa" + "Avaa kierros"; upcoming: dates only). Shown on the home page and in Omat varaukset |
 | Tooltip | `Tooltip` (the collapsed sidebar uses it for labels) |
+| Admin acting as a user | `ImpersonationBanner`: a full-width warning-tinted strip above the header (icon, "Toimit käyttäjänä …", "Palaa omaan istuntoon"). The only use of the status tokens outside `StatusChip` and `Callout`, because it describes the whole session, not page content. Don't add other global banners next to it |
 
 Before writing a new component, check `client/src/components/` and the Storybook stories. A new
 reusable component gets a `*.stories.tsx` and, if it has logic, a `*.test.tsx`.

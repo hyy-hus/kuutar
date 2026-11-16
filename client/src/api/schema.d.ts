@@ -4,6 +4,43 @@
  */
 
 export interface paths {
+    "/auth/impersonate/end": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** End an impersonation session. The client then switches back to the admin's own tokens. */
+        post: operations["end_impersonation"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/impersonate/{user_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Start acting as another user (admin only). Returns tokens for a session as that user,
+         *     marked with the admin's id and capped at one hour.
+         */
+        post: operations["start_impersonation"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/auth/login": {
         parameters: {
             query?: never;
@@ -1315,9 +1352,20 @@ export interface components {
              */
             weekday: number;
         };
+        /** @description The admin acting as the current user (impersonation) */
+        Impersonator: {
+            email: string;
+            /** Format: uuid */
+            id: string;
+            name: string;
+        };
         LoginPayload: {
             email: string;
             password: string;
+        };
+        /** @description The current user, plus the admin behind the session when an admin is acting as them */
+        MeResponse: components["schemas"]["User"] & {
+            impersonator?: null | components["schemas"]["Impersonator"];
         };
         MonthlyStat: {
             /** Format: int64 */
@@ -1749,6 +1797,11 @@ export interface components {
             current: boolean;
             /** Format: date-time */
             expires_at: string;
+            /**
+             * Format: uuid
+             * @description Admin acting as the user in this session (impersonation)
+             */
+            impersonated_by?: string | null;
             ip?: string | null;
             /** Format: date-time */
             last_active_at: string;
@@ -2056,6 +2109,72 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    end_impersonation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RefreshPayload"];
+            };
+        };
+        responses: {
+            /** @description Impersonation session ended */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not an active impersonation session */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    start_impersonation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User to act as */
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Impersonation session started */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuthTokens"];
+                };
+            };
+            /** @description Not an admin, or the target is an admin or yourself */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description User not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     login: {
         parameters: {
             query?: never;
@@ -2287,6 +2406,13 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["SessionInfo"][];
                 };
+            };
+            /** @description Not allowed while acting as another user */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
@@ -5080,7 +5206,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["User"];
+                    "application/json": components["schemas"]["MeResponse"];
                 };
             };
             /** @description Unauthorized */
@@ -5108,6 +5234,13 @@ export interface operations {
                 };
                 content?: never;
             };
+            /** @description Not allowed while acting as another user */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
         };
     };
     update_me: {
@@ -5129,8 +5262,15 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["User"];
+                    "application/json": components["schemas"]["MeResponse"];
                 };
+            };
+            /** @description Email or password change while acting as another user */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Email already in use */
             409: {

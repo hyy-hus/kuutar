@@ -1,4 +1,9 @@
 import createClient, { type Middleware } from "openapi-fetch";
+import {
+	clearTokens,
+	endImpersonation,
+	storeTokens,
+} from "#/utils/impersonation";
 import type { paths } from "./schema";
 
 const getBaseUrl = () => {
@@ -45,10 +50,7 @@ export async function refreshAuthToken(): Promise<boolean> {
 		if (res.ok) {
 			const data = await res.json();
 			if (data.access_token) {
-				localStorage.setItem("access_token", data.access_token);
-				localStorage.setItem("refresh_token", data.refresh_token);
-				const expiresAt = Date.now() + (data.expires_in ?? 900) * 1000;
-				localStorage.setItem("token_expires_at", String(expiresAt));
+				storeTokens(data);
 				window.dispatchEvent(new CustomEvent("kuutar:token-refreshed"));
 				return true;
 			}
@@ -65,9 +67,18 @@ export async function refreshAuthToken(): Promise<boolean> {
 		return true;
 	}
 
-	localStorage.removeItem("access_token");
-	localStorage.removeItem("refresh_token");
-	localStorage.removeItem("token_expires_at");
+	// An admin acting as a user whose session ran out (one-hour cap, or the admin lost their
+	// role) goes back to their own session. The failed request is not retried, so nothing
+	// meant for the user is sent as the admin.
+	const userId = endImpersonation();
+	if (userId) {
+		window.dispatchEvent(
+			new CustomEvent("kuutar:impersonation-ended", { detail: { userId } }),
+		);
+		return false;
+	}
+
+	clearTokens();
 	return false;
 }
 

@@ -1,8 +1,15 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import i18next from "i18next";
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
 import { api, refreshAuthToken } from "#/api/client";
 import type { components } from "#/api/schema";
+import {
+	beginImpersonation,
+	clearTokens,
+	endImpersonation,
+	isImpersonating,
+	storeTokens,
+} from "#/utils/impersonation";
 
 type LoginPayload = components["schemas"]["LoginPayload"];
 type RegisterPayload = components["schemas"]["RegisterPayload"];
@@ -95,9 +102,7 @@ export async function fetchMe() {
 		}
 		// 3. Clear invalid/expired token so subsequent checks short-circuit
 		if (typeof window !== "undefined") {
-			localStorage.removeItem("access_token");
-			localStorage.removeItem("refresh_token");
-			localStorage.removeItem("token_expires_at");
+			clearTokens();
 		}
 		return null;
 	}
@@ -147,12 +152,11 @@ export function useAuth() {
 	// Run silent background refresh
 	useSilentRefresh();
 
+	const { stop: stopImpersonation } = useImpersonation();
+
 	const handleTokenSuccess = (tokens?: components["schemas"]["AuthTokens"]) => {
 		if (tokens?.access_token) {
-			localStorage.setItem("access_token", tokens.access_token);
-			localStorage.setItem("refresh_token", tokens.refresh_token);
-			const expiresAt = Date.now() + (tokens.expires_in ?? 900) * 1000;
-			localStorage.setItem("token_expires_at", String(expiresAt));
+			storeTokens(tokens);
 		}
 		// Logging in changes what the API returns (e.g. resources cached as a guest)
 		queryClient.invalidateQueries();
@@ -230,16 +234,20 @@ export function useAuth() {
 
 	const logoutMutation = useMutation({
 		mutationFn: async () => {
+			// Signing out while acting as a user returns to the admin's own session instead
+			if (isImpersonating()) {
+				await stopImpersonation();
+				return "returned" as const;
+			}
 			const refreshToken = localStorage.getItem("refresh_token") || "";
 			if (refreshToken) {
 				const payload: RefreshPayload = { refresh_token: refreshToken };
 				await api.POST("/auth/logout", { body: payload });
 			}
 		},
-		onSettled: () => {
-			localStorage.removeItem("access_token");
-			localStorage.removeItem("refresh_token");
-			localStorage.removeItem("token_expires_at");
+		onSettled: (result) => {
+			if (result === "returned") return;
+			clearTokens();
 			queryClient.setQueryData(authKeys.me(), null);
 			queryClient.clear();
 		},
@@ -267,4 +275,52 @@ export function useAuth() {
 		verifyOtpError: verifyOtpMutation.error?.message,
 		registerError: registerMutation.error?.message,
 	};
+}
+
+/**
+ * Lets an admin act as another user and return to their own session. The admin's tokens
+ * are kept aside in the browser (see `utils/impersonation`); the server caps the user's
+ * session at one hour and refuses account-level changes in it.
+ *
+ * Switching identity reloads the page, so no query cached for the other identity survives.
+ */
+export function useImpersonation() {
+	const start = useCallback(async (userId: string) => {
+		const { data, error } = await api.POST("/auth/impersonate/{user_id}", {
+			params: { path: { user_id: userId } },
+		});
+		if (error || !data) {
+			throw new Error(
+				(error as { error?: string } | undefined)?.error ||
+					i18next.t(
+						"kayttajanaToimiminenEpaonnistui",
+						"Käyttäjänä toimiminen epäonnistui.",
+					),
+			);
+		}
+		beginImpersonation(userId, data);
+		window.location.assign("/");
+	}, []);
+
+	/** Back to the admin's own session, on the page of the user they acted as */
+	const returnToAdmin = useCallback((userId: string | null) => {
+		window.location.assign(
+			userId ? `/admin/users/${encodeURIComponent(userId)}` : "/",
+		);
+	}, []);
+
+	const stop = useCallback(async () => {
+		const refreshToken = localStorage.getItem("refresh_token");
+		if (refreshToken) {
+			// Best effort: the session ends on its own within the hour anyway
+			await api
+				.POST("/auth/impersonate/end", {
+					body: { refresh_token: refreshToken },
+				})
+				.catch(() => undefined);
+		}
+		returnToAdmin(endImpersonation());
+	}, [returnToAdmin]);
+
+	return { start, stop, returnToAdmin };
 }

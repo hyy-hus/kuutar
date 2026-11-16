@@ -39,8 +39,10 @@ function FieldError({ errors }: { errors: unknown[] }) {
 function MePage() {
 	const { t } = useTranslation();
 	const { user } = useAuth();
+	// An admin acting as this user can't change the login credentials or sessions
+	const ownAccount = !user?.impersonator;
 	const updateMe = useUpdateMe();
-	const { data: sessions } = useMySessions();
+	const { data: sessions } = useMySessions({ enabled: ownAccount });
 	const revokeSession = useRevokeMySession();
 	const logoutOthers = useLogoutOtherSessions();
 	const [saved, setSaved] = useState(false);
@@ -133,6 +135,7 @@ function MePage() {
 								<Input
 									id={field.name}
 									type="email"
+									disabled={!ownAccount}
 									value={field.state.value}
 									onChange={(e) => field.handleChange(e.target.value)}
 									onBlur={field.handleBlur}
@@ -243,42 +246,44 @@ function MePage() {
 					</div>
 				</FormSection>
 
-				<FormSection title={t("salasana", "Salasana")}>
-					<form.Field
-						name="password"
-						validators={{
-							onChange: ({ value }) =>
-								value && value.length < 8
-									? t(
-											"salasananOnOltavaVhintn8Merkki",
-											"Salasanan on oltava vähintään 8 merkkiä",
-										)
-									: undefined,
-						}}
-					>
-						{(field) => (
-							<div className="space-y-1">
-								<label htmlFor={field.name} className={labelClass}>
-									{t(
-										"uusiSalasanaJtTyhjksiJosEiMuuteta",
-										"Uusi salasana (jätä tyhjäksi jos ei muuteta)",
-									)}
-								</label>
-								<Input
-									id={field.name}
-									type="password"
-									autoComplete="new-password"
-									value={field.state.value}
-									onChange={(e) => field.handleChange(e.target.value)}
-									onBlur={field.handleBlur}
-									isError={field.state.meta.errors.length > 0}
-									placeholder="••••••••"
-								/>
-								<FieldError errors={field.state.meta.errors} />
-							</div>
-						)}
-					</form.Field>
-				</FormSection>
+				{ownAccount && (
+					<FormSection title={t("salasana", "Salasana")}>
+						<form.Field
+							name="password"
+							validators={{
+								onChange: ({ value }) =>
+									value && value.length < 8
+										? t(
+												"salasananOnOltavaVhintn8Merkki",
+												"Salasanan on oltava vähintään 8 merkkiä",
+											)
+										: undefined,
+							}}
+						>
+							{(field) => (
+								<div className="space-y-1">
+									<label htmlFor={field.name} className={labelClass}>
+										{t(
+											"uusiSalasanaJtTyhjksiJosEiMuuteta",
+											"Uusi salasana (jätä tyhjäksi jos ei muuteta)",
+										)}
+									</label>
+									<Input
+										id={field.name}
+										type="password"
+										autoComplete="new-password"
+										value={field.state.value}
+										onChange={(e) => field.handleChange(e.target.value)}
+										onBlur={field.handleBlur}
+										isError={field.state.meta.errors.length > 0}
+										placeholder="••••••••"
+									/>
+									<FieldError errors={field.state.meta.errors} />
+								</div>
+							)}
+						</form.Field>
+					</FormSection>
+				)}
 
 				{updateMe.isError && (
 					<p className="text-xs text-red-600 dark:text-red-400">
@@ -316,23 +321,25 @@ function MePage() {
 				</form.Subscribe>
 			</form>
 
-			<FormSection title={t("istunnot", "Istunnot")}>
-				<SessionList
-					sessions={sessions ?? []}
-					onRevoke={(sessionId) => revokeSession.mutate(sessionId)}
-					disabled={revokeSession.isPending}
-				/>
-				{(sessions?.length ?? 0) > 1 && (
-					<Button
-						variant="outline"
-						size="sm"
-						disabled={logoutOthers.isPending}
-						onClick={() => logoutOthers.mutate()}
-					>
-						{t("kirjauduUlosMuualta", "Kirjaudu ulos muilta laitteilta")}
-					</Button>
-				)}
-			</FormSection>
+			{ownAccount && (
+				<FormSection title={t("istunnot", "Istunnot")}>
+					<SessionList
+						sessions={sessions ?? []}
+						onRevoke={(sessionId) => revokeSession.mutate(sessionId)}
+						disabled={revokeSession.isPending}
+					/>
+					{(sessions?.length ?? 0) > 1 && (
+						<Button
+							variant="outline"
+							size="sm"
+							disabled={logoutOthers.isPending}
+							onClick={() => logoutOthers.mutate()}
+						>
+							{t("kirjauduUlosMuualta", "Kirjaudu ulos muilta laitteilta")}
+						</Button>
+					)}
+				</FormSection>
+			)}
 		</FormLayout>
 	);
 }

@@ -10,6 +10,7 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { AuthDialog } from "#/components/AuthPopover";
 import { Button } from "#/components/Button";
+import { ImpersonationArea } from "#/components/ImpersonationBanner";
 import { SearchBar } from "#/components/SearchBar";
 import { SideBar } from "#/components/SideBar";
 import type { Theme } from "#/components/ThemeSwitcher";
@@ -112,6 +113,8 @@ function AppLayout() {
 
 	return (
 		<div className="h-screen w-screen overflow-hidden flex flex-col bg-stone-50 dark:bg-stone-950 text-stone-900 dark:text-stone-100">
+			<ImpersonationArea />
+
 			{/* Header */}
 			<header className="h-16 flex gap-2 items-center px-3 border-b-2 border-stone-800 dark:border-stone-600 bg-stone-100 dark:bg-stone-900 shrink-0 z-40">
 				<Tooltip content={menuLabel} side="bottom">

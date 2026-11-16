@@ -1025,5 +1025,12 @@
 	"yhteenvetoHakemus": "Hakemus kierrokseen {{name}}",
 	"tamaOnHakemus": "Tämä on hakemus, ei vielä varaus",
 	"tamaOnHakemusKuvaus": "Jakso kuuluu kierrokseen {{name}}. Lähetetty hakemus näkyy kierroksen sivulla, jossa voit järjestää hakemuksesi. Päätös tulee sähköpostiin haun päätyttyä {{end}}.",
-	"lahetaHakemus": "Lähetä hakemus"
+	"lahetaHakemus": "Lähetä hakemus",
+	"toimiKayttajana": "Toimi käyttäjänä",
+	"vahvistaKayttajanaToimiminen": "Siirryt käyttäjän {{name}} istuntoon enintään tunniksi. Kaikki mitä teet, kuten varaukset ja peruutukset, tehdään oikeasti hänen nimissään, ja sähköposti-ilmoitukset menevät hänelle. Jatketaanko?",
+	"kayttajanaToimiminenEpaonnistui": "Käyttäjänä toimiminen epäonnistui.",
+	"toimitKayttajana": "Toimit käyttäjänä {{name}}.",
+	"toimitKayttajanaSelite": "Kaikki toimet tehdään oikeasti tämän käyttäjän nimissä.",
+	"palaaOmaanIstuntoon": "Palaa omaan istuntoon",
+	"yllapitajanTukiistunto": "Ylläpitäjän tukiistunto"
 }

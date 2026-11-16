@@ -18,9 +18,10 @@ const revokeError = () =>
 		),
 	);
 
-/** Active sessions of the signed-in user */
-export function useMySessions() {
+/** Active sessions of the signed-in user (not available while acting as another user) */
+export function useMySessions({ enabled = true }: { enabled?: boolean } = {}) {
 	return useQuery({
+		enabled,
 		queryKey: sessionKeys.mine,
 		queryFn: async () => {
 			const { data, error } = await api.GET("/auth/sessions");

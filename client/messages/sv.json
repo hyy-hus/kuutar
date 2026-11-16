@@ -1025,5 +1025,12 @@
 	"yhteenvetoHakemus": "Ansökan i omgången {{name}}",
 	"tamaOnHakemus": "Det här är en ansökan, ännu inte en bokning",
 	"tamaOnHakemusKuvaus": "Blocket hör till omgången {{name}}. Den skickade ansökan syns på omgångens sida, där du kan ordna dina ansökningar. Beslutet kommer med e-post när ansökningstiden har gått ut {{end}}.",
-	"lahetaHakemus": "Skicka ansökan"
+	"lahetaHakemus": "Skicka ansökan",
+	"toimiKayttajana": "Agera som användaren",
+	"vahvistaKayttajanaToimiminen": "Du går in i sessionen för {{name}} i högst en timme. Allt du gör, till exempel bokningar och avbokningar, görs på riktigt i användarens namn, och e-postaviseringar skickas till användaren. Vill du fortsätta?",
+	"kayttajanaToimiminenEpaonnistui": "Det gick inte att agera som användaren.",
+	"toimitKayttajana": "Du agerar som {{name}}.",
+	"toimitKayttajanaSelite": "Allt du gör görs på riktigt i den här användarens namn.",
+	"palaaOmaanIstuntoon": "Återgå till din egen session",
+	"yllapitajanTukiistunto": "Administratörens supportsession"
 }
