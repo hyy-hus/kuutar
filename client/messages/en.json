@@ -490,6 +490,7 @@
 	"virheellinenSahkoposti": "Invalid email",
 	"virheellinenSahkopostiTaiSalasana": "Invalid email or password.",
 	"virheellinenTaiVanhentunutKoodi": "Invalid or expired code.",
+	"liianMontaYritystaYritaUudelleen": "Too many attempts. Try again in {{minutes}} min.",
 	"vlj": "Spacious",
 	"voimassaOlevatRajoitukset": "Active restrictions ({{count}})",
 	"vuokralainen": "Tenant",

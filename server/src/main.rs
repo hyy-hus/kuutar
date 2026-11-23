@@ -25,7 +25,9 @@ async fn main() -> anyhow::Result<()> {
     let db_pool = PgPoolOptions::new()
         .max_connections(config.max_db_connections)
         .min_connections(0)
-        .idle_timeout(std::time::Duration::from_secs(config.db_idle_timeout_seconds))
+        .idle_timeout(std::time::Duration::from_secs(
+            config.db_idle_timeout_seconds,
+        ))
         .connect(&config.database_url)
         .await
         .context("Failed to connect to database")?;
@@ -53,9 +55,13 @@ async fn main() -> anyhow::Result<()> {
         .await
         .context("Failed to bind to local socket address")?;
 
-    axum::serve(listener, app)
-        .await
-        .context("An unrecoverable error occurred while running the Axum web server")?;
+    // ConnectInfo gives the peer address, the client IP when no proxy sets X-Forwarded-For
+    axum::serve(
+        listener,
+        app.into_make_service_with_connect_info::<std::net::SocketAddr>(),
+    )
+    .await
+    .context("An unrecoverable error occurred while running the Axum web server")?;
 
     Ok(())
 }

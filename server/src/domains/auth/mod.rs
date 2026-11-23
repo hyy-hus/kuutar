@@ -4,6 +4,7 @@ pub mod jwt;
 pub mod models;
 pub mod password;
 pub mod purge;
+pub mod rate_limit;
 pub mod routes;
 
 use axum::{

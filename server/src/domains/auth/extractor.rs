@@ -136,3 +136,29 @@ where
             .map(|user| OptionalAuthUser(Some(user)))
     }
 }
+
+/// Client IP address of the request (see `utils::client_ip`); None when it is unknown.
+#[derive(Debug, Clone)]
+pub struct ClientIp(pub Option<String>);
+
+impl<S> FromRequestParts<S> for ClientIp
+where
+    S: Send + Sync,
+    AuthState: FromRef<S>,
+{
+    type Rejection = std::convert::Infallible;
+
+    async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
+        let hops = AuthState::from_ref(state).config.trusted_proxy_hops;
+        // Absent in tests that call the router directly, without `ConnectInfo`
+        let peer = parts
+            .extensions
+            .get::<axum::extract::ConnectInfo<std::net::SocketAddr>>()
+            .map(|c| c.0);
+        Ok(ClientIp(crate::utils::client_ip::client_ip(
+            &parts.headers,
+            peer,
+            hops,
+        )))
+    }
+}

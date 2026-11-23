@@ -490,6 +490,7 @@
 	"virheellinenSahkoposti": "Virheellinen sähköposti",
 	"virheellinenSahkopostiTaiSalasana": "Virheellinen sähköposti tai salasana.",
 	"virheellinenTaiVanhentunutKoodi": "Virheellinen tai vanhentunut koodi.",
+	"liianMontaYritystaYritaUudelleen": "Liian monta yritystä. Yritä uudelleen {{minutes}} minuutin kuluttua.",
 	"vlj": "Väljä",
 	"voimassaOlevatRajoitukset": "Voimassa olevat rajoitukset ({{count}})",
 	"vuokralainen": "Vuokralainen",

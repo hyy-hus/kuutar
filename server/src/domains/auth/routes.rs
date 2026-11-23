@@ -10,10 +10,11 @@ use validator::Validate;
 
 use super::{
     db,
-    extractor::{RequireAdmin, RequireOwnAccount},
+    extractor::{ClientIp, RequireAdmin, RequireOwnAccount},
     jwt,
     models::{AuthTokens, LoginPayload, RefreshPayload, RegisterPayload, SessionInfo},
     password,
+    rate_limit::{self, email_key},
 };
 use crate::{
     config::Config,
@@ -40,16 +41,20 @@ pub struct AuthState {
     responses(
         (status = 201, description = "User registered successfully", body = AuthTokens),
         (status = 409, description = "Email already registered"),
-        (status = 422, description = "Validation error")
+        (status = 422, description = "Validation error"),
+        (status = 429, description = "Too many registrations from this address")
     )
 )]
-#[tracing::instrument(skip(state, headers))]
+#[tracing::instrument(skip(state, headers, ip))]
 pub async fn register(
     State(state): State<AuthState>,
+    ClientIp(ip): ClientIp,
     headers: HeaderMap,
     Json(payload): Json<RegisterPayload>,
 ) -> Result<(StatusCode, Json<AuthTokens>), AppError> {
     payload.validate()?;
+    rate_limit::check(&state.pool, rate_limit::REGISTER_IP, ip.as_deref()).await?;
+    rate_limit::record(&state.pool, rate_limit::REGISTER_IP, ip.as_deref()).await?;
 
     let password_hash = password::hash_password(&payload.password)?;
     let user = db::create_user(&state.pool, &payload, &password_hash).await?;
@@ -59,7 +64,7 @@ pub async fn register(
         &state,
         &user,
         db::SessionRef::new(),
-        &session_meta(&headers),
+        &session_meta(&headers, ip),
     )
     .await?;
     Ok((StatusCode::CREATED, Json(tokens)))
@@ -73,33 +78,41 @@ pub async fn register(
     request_body = LoginPayload,
     responses(
         (status = 200, description = "Login successful", body = AuthTokens),
-        (status = 401, description = "Invalid credentials")
+        (status = 401, description = "Invalid credentials"),
+        (status = 429, description = "Too many failed attempts for this email or address")
     )
 )]
-#[tracing::instrument(skip(state, headers))]
+#[tracing::instrument(skip(state, headers, ip))]
 pub async fn login(
     State(state): State<AuthState>,
+    ClientIp(ip): ClientIp,
     headers: HeaderMap,
     Json(payload): Json<LoginPayload>,
 ) -> Result<Json<AuthTokens>, AppError> {
     payload.validate()?;
 
-    let user = db::find_user_by_email(&state.pool, &payload.email)
-        .await?
-        .ok_or_else(|| AppError::Unauthorized("Invalid email or password".to_string()))?;
+    // Checked before the (slow) password hash, and whether or not the account exists
+    let email = email_key(&payload.email);
+    rate_limit::check(&state.pool, rate_limit::LOGIN_EMAIL, Some(&email)).await?;
+    rate_limit::check(&state.pool, rate_limit::LOGIN_IP, ip.as_deref()).await?;
 
-    let valid = password::verify_password(&payload.password, &user.password_hash)?;
-    if !valid {
-        return Err(AppError::Unauthorized(
-            "Invalid email or password".to_string(),
-        ));
-    }
+    let user = match db::find_user_by_email(&state.pool, &payload.email).await? {
+        Some(user) if password::verify_password(&payload.password, &user.password_hash)? => user,
+        _ => {
+            rate_limit::record(&state.pool, rate_limit::LOGIN_EMAIL, Some(&email)).await?;
+            rate_limit::record(&state.pool, rate_limit::LOGIN_IP, ip.as_deref()).await?;
+            return Err(AppError::Unauthorized(
+                "Invalid email or password".to_string(),
+            ));
+        }
+    };
+    rate_limit::clear(&state.pool, rate_limit::LOGIN_EMAIL, &email).await?;
 
     let tokens = issue_token_pair(
         &state,
         &user,
         db::SessionRef::new(),
-        &session_meta(&headers),
+        &session_meta(&headers, ip),
     )
     .await?;
     Ok(Json(tokens))
@@ -113,21 +126,26 @@ pub async fn login(
     request_body = RefreshPayload,
     responses(
         (status = 200, description = "Token refreshed successfully", body = AuthTokens),
-        (status = 401, description = "Invalid or expired refresh token")
+        (status = 401, description = "Invalid or expired refresh token"),
+        (status = 429, description = "Too many refreshes from this address")
     )
 )]
-#[tracing::instrument(skip(state, headers))]
+#[tracing::instrument(skip(state, headers, ip, payload))]
 pub async fn refresh(
     State(state): State<AuthState>,
+    ClientIp(ip): ClientIp,
     headers: HeaderMap,
     Json(payload): Json<RefreshPayload>,
 ) -> Result<Json<AuthTokens>, AppError> {
+    rate_limit::check(&state.pool, rate_limit::REFRESH_IP, ip.as_deref()).await?;
+    rate_limit::record(&state.pool, rate_limit::REFRESH_IP, ip.as_deref()).await?;
+
     // Validates refresh token & revokes it (Token Rotation)
     let (user, session, previous) =
         db::verify_and_consume_refresh_token(&state.pool, &payload.refresh_token).await?;
 
     // Keep the device info of the session when this request does not carry any
-    let current = session_meta(&headers);
+    let current = session_meta(&headers, ip);
     let meta = db::SessionMeta {
         user_agent: current.user_agent.or(previous.user_agent),
         ip: current.ip.or(previous.ip),
@@ -186,19 +204,12 @@ async fn issue_token_pair(
     })
 }
 
-/// User agent and client IP of a request. The IP is only known behind a proxy that sets
-/// `X-Forwarded-For`.
-fn session_meta(headers: &HeaderMap) -> db::SessionMeta {
+/// User agent and client IP (from the `ClientIp` extractor) of a request
+fn session_meta(headers: &HeaderMap, ip: Option<String>) -> db::SessionMeta {
     let user_agent = headers
         .get(USER_AGENT)
         .and_then(|v| v.to_str().ok())
         .map(|ua| ua.chars().take(200).collect());
-    let ip = headers
-        .get("x-forwarded-for")
-        .and_then(|v| v.to_str().ok())
-        .and_then(|v| v.split(',').next())
-        .map(|ip| ip.trim().chars().take(45).collect::<String>())
-        .filter(|ip| !ip.is_empty());
     db::SessionMeta { user_agent, ip }
 }
 
@@ -291,10 +302,11 @@ pub async fn logout_other_sessions(
         (status = 404, description = "User not found")
     )
 )]
-#[tracing::instrument(skip(state, headers))]
+#[tracing::instrument(skip(state, headers, ip))]
 pub async fn start_impersonation(
     State(state): State<AuthState>,
     RequireAdmin(admin): RequireAdmin,
+    ClientIp(ip): ClientIp,
     headers: HeaderMap,
     Path(user_id): Path<Uuid>,
 ) -> Result<Json<AuthTokens>, AppError> {
@@ -316,7 +328,7 @@ pub async fn start_impersonation(
         &state,
         &target,
         db::SessionRef::impersonation(admin.id),
-        &session_meta(&headers),
+        &session_meta(&headers, ip),
     )
     .await?;
     tracing::info!(admin_id = %admin.id, user_id = %target.id, "Impersonation started");
@@ -353,15 +365,23 @@ pub async fn end_impersonation(
     responses(
         (status = 200, description = "OTP sent to email if account exists"),
         (status = 422, description = "Validation error"),
-        (status = 429, description = "Account temporarily locked due to too many failed attempts")
+        (status = 429, description = "Too many code requests or failed attempts")
     )
 )]
-#[tracing::instrument(skip(state))]
+#[tracing::instrument(skip(state, ip))]
 pub async fn request_otp(
     State(state): State<AuthState>,
+    ClientIp(ip): ClientIp,
     Json(payload): Json<RequestOtpPayload>,
 ) -> Result<axum::http::StatusCode, AppError> {
     payload.validate()?;
+
+    // Counted whether or not the account exists, so the limit reveals nothing about it
+    let email = email_key(&payload.email);
+    rate_limit::check(&state.pool, rate_limit::OTP_REQUEST_EMAIL, Some(&email)).await?;
+    rate_limit::check(&state.pool, rate_limit::OTP_REQUEST_IP, ip.as_deref()).await?;
+    rate_limit::record(&state.pool, rate_limit::OTP_REQUEST_EMAIL, Some(&email)).await?;
+    rate_limit::record(&state.pool, rate_limit::OTP_REQUEST_IP, ip.as_deref()).await?;
 
     // Check if account is locked out due to too many failed attempts
     db::check_email_lockout(&state.pool, &payload.email).await?;
@@ -394,20 +414,30 @@ pub async fn request_otp(
         (status = 429, description = "Account temporarily locked due to too many failed attempts")
     )
 )]
-#[tracing::instrument(skip(state, headers))]
+#[tracing::instrument(skip(state, headers, ip))]
 pub async fn verify_otp(
     State(state): State<AuthState>,
+    ClientIp(ip): ClientIp,
     headers: HeaderMap,
     Json(payload): Json<VerifyOtpPayload>,
 ) -> Result<Json<AuthTokens>, AppError> {
     payload.validate()?;
+    rate_limit::check(&state.pool, rate_limit::OTP_VERIFY_IP, ip.as_deref()).await?;
 
-    let user = db::verify_and_consume_otp(&state.pool, &payload.email, &payload.code).await?;
+    let user = match db::verify_and_consume_otp(&state.pool, &payload.email, &payload.code).await {
+        Ok(user) => user,
+        Err(err) => {
+            if matches!(err, AppError::Unauthorized(_)) {
+                rate_limit::record(&state.pool, rate_limit::OTP_VERIFY_IP, ip.as_deref()).await?;
+            }
+            return Err(err);
+        }
+    };
     let tokens = issue_token_pair(
         &state,
         &user,
         db::SessionRef::new(),
-        &session_meta(&headers),
+        &session_meta(&headers, ip),
     )
     .await?;
 

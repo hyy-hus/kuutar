@@ -2211,6 +2211,13 @@ export interface operations {
                 };
                 content?: never;
             };
+            /** @description Too many failed attempts for this email or address */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
         };
     };
     logout: {
@@ -2280,7 +2287,7 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description Account temporarily locked due to too many failed attempts */
+            /** @description Too many code requests or failed attempts */
             429: {
                 headers: {
                     [name: string]: unknown;
@@ -2356,6 +2363,13 @@ export interface operations {
                 };
                 content?: never;
             };
+            /** @description Too many refreshes from this address */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
         };
     };
     register: {
@@ -2389,6 +2403,13 @@ export interface operations {
             };
             /** @description Validation error */
             422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Too many registrations from this address */
+            429: {
                 headers: {
                     [name: string]: unknown;
                 };
