@@ -4,7 +4,11 @@ use utoipa::ToSchema;
 use uuid::Uuid;
 use validator::{Validate, ValidateEmail};
 
-use crate::utils::trim::{deserialize_trimmed_option_string, deserialize_trimmed_string};
+use crate::utils::{
+    redact::{Redacted, redact_option},
+    trim::{deserialize_trimmed_option_string, deserialize_trimmed_string},
+};
+use std::fmt;
 
 #[derive(Debug, Serialize, Deserialize, sqlx::FromRow, ToSchema)]
 pub struct User {
@@ -38,7 +42,7 @@ pub struct MeResponse {
     pub impersonator: Option<Impersonator>,
 }
 
-#[derive(Debug, Deserialize, Validate, ToSchema)]
+#[derive(Deserialize, Validate, ToSchema)]
 pub struct CreateUser {
     pub group_id: Uuid,
 
@@ -58,7 +62,7 @@ pub struct CreateUser {
     pub language: Option<String>,
 }
 
-#[derive(Debug, Deserialize, Validate, ToSchema)]
+#[derive(Deserialize, Validate, ToSchema)]
 pub struct UpdateUser {
     #[serde(default, deserialize_with = "deserialize_trimmed_option_string")]
     pub name: Option<String>,
@@ -93,6 +97,34 @@ pub struct UpdateUser {
     pub language: Option<String>,
 }
 
+// Hand-written so passwords never reach the logs
+impl fmt::Debug for CreateUser {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("CreateUser")
+            .field("group_id", &self.group_id)
+            .field("name", &self.name)
+            .field("email", &self.email)
+            .field("password", &Redacted)
+            .field("language", &self.language)
+            .finish()
+    }
+}
+
+impl fmt::Debug for UpdateUser {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("UpdateUser")
+            .field("name", &self.name)
+            .field("email", &self.email)
+            .field("password", &redact_option(&self.password))
+            .field("group_id", &self.group_id)
+            .field("default_contact_person", &self.default_contact_person)
+            .field("default_contact_email", &self.default_contact_email)
+            .field("default_contact_phone", &self.default_contact_phone)
+            .field("language", &self.language)
+            .finish()
+    }
+}
+
 fn validate_optional_email(value: &str) -> Result<(), validator::ValidationError> {
     if value.is_empty() || value.validate_email() {
         Ok(())
@@ -107,4 +139,33 @@ fn validate_optional_email(value: &str) -> Result<(), validator::ValidationError
 pub enum Role {
     Admin,
     User,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn debug_redacts_passwords() {
+        let create = CreateUser {
+            group_id: Uuid::nil(),
+            name: "Test".into(),
+            email: "user@example.test".into(),
+            password: "hunter2-secret".into(),
+            language: None,
+        };
+        let update = UpdateUser {
+            name: None,
+            email: None,
+            password: Some("hunter2-secret".into()),
+            group_id: None,
+            default_contact_person: None,
+            default_contact_email: None,
+            default_contact_phone: None,
+            language: None,
+        };
+        let out = format!("{create:?} {update:?}");
+        assert!(!out.contains("hunter2-secret"), "{out}");
+        assert!(out.contains("password: Some(<redacted>)"), "{out}");
+    }
 }
