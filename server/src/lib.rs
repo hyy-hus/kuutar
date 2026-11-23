@@ -42,7 +42,9 @@ pub fn app(pool: PgPool, config: Config) -> Router {
             Method::DELETE,
             Method::OPTIONS,
         ])
-        .allow_headers([header::AUTHORIZATION, header::CONTENT_TYPE, header::ACCEPT]);
+        .allow_headers([header::AUTHORIZATION, header::CONTENT_TYPE, header::ACCEPT])
+        // The client is on another origin and needs it to say how long a rate limit lasts
+        .expose_headers([header::RETRY_AFTER]);
 
     Router::new()
         .merge(swagger_router)

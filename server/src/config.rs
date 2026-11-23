@@ -20,6 +20,12 @@ pub struct Config {
     #[arg(long, env = "BIND_ADDR", default_value = "127.0.0.1:3000")]
     pub bind_addr: SocketAddr,
 
+    /// Number of reverse proxies in front of the server that append to `X-Forwarded-For`.
+    /// The client IP (rate limits, sessions list) is the entry that many places from the
+    /// right. 1 fits Scaleway Serverless Containers; use 0 when the server is reached directly.
+    #[arg(long, env = "TRUSTED_PROXY_HOPS", default_value_t = 1)]
+    pub trusted_proxy_hops: usize,
+
     #[arg(long, env = "MAX_DB_CONNECTIONS", default_value_t = 5)]
     pub max_db_connections: u32,
 

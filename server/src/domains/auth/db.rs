@@ -434,9 +434,11 @@ pub async fn check_email_lockout(pool: &PgPool, email: &str) -> Result<(), AppEr
     .unwrap_or(0);
 
     if fail_count >= 5 {
-        return Err(AppError::TooManyRequests(
-            "Liian monta virheellistä yritystä. Kirjautuminen on lukittu 5 minuutiksi.".to_string(),
-        ));
+        return Err(AppError::TooManyRequests {
+            message: "Liian monta virheellistä yritystä. Kirjautuminen on lukittu 5 minuutiksi."
+                .to_string(),
+            retry_after_secs: Some(5 * 60),
+        });
     }
 
     Ok(())
@@ -570,10 +572,12 @@ pub async fn verify_and_consume_otp(
                     "[OTP VERIFY] Max attempts reached for email: '{}'. Locking for 5 minutes.",
                     email
                 );
-                return Err(AppError::TooManyRequests(
-                    "Liian monta virheellistä yritystä. Kirjautuminen on lukittu 5 minuutiksi."
-                        .to_string(),
-                ));
+                return Err(AppError::TooManyRequests {
+                    message:
+                        "Liian monta virheellistä yritystä. Kirjautuminen on lukittu 5 minuutiksi."
+                            .to_string(),
+                    retry_after_secs: Some(5 * 60),
+                });
             } else {
                 let remaining = 5 - fail_count;
                 tracing::warn!(

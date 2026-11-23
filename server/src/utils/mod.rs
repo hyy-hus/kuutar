@@ -1,3 +1,4 @@
+pub mod client_ip;
 pub mod lang;
 pub mod mail;
 pub mod redact;

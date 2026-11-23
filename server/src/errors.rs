@@ -1,6 +1,6 @@
 use axum::{
     Json,
-    http::StatusCode,
+    http::{HeaderValue, StatusCode, header},
     response::{IntoResponse, Response},
 };
 use serde_json::json;
@@ -22,8 +22,12 @@ pub enum AppError {
     #[error("Conflict: {0}")]
     Conflict(String),
 
-    #[error("Too many requests: {0}")]
-    TooManyRequests(String),
+    /// HTTP 429. `retry_after_secs` becomes the `Retry-After` header.
+    #[error("Too many requests: {message}")]
+    TooManyRequests {
+        message: String,
+        retry_after_secs: Option<u64>,
+    },
 
     #[error("Validation error: {0}")]
     ValidationError(#[from] validator::ValidationErrors),
@@ -102,7 +106,21 @@ impl IntoResponse for AppError {
             AppError::Forbidden(ref msg) => (StatusCode::FORBIDDEN, msg.clone()),
             AppError::NotFound => (StatusCode::NOT_FOUND, self.to_string()),
             AppError::Conflict(ref msg) => (StatusCode::CONFLICT, msg.clone()),
-            AppError::TooManyRequests(ref msg) => (StatusCode::TOO_MANY_REQUESTS, msg.clone()),
+            AppError::TooManyRequests {
+                ref message,
+                retry_after_secs,
+            } => {
+                let mut res = (
+                    StatusCode::TOO_MANY_REQUESTS,
+                    Json(json!({ "error": message })),
+                )
+                    .into_response();
+                if let Some(secs) = retry_after_secs {
+                    res.headers_mut()
+                        .insert(header::RETRY_AFTER, HeaderValue::from(secs.max(1)));
+                }
+                return res;
+            }
 
             AppError::ValidationError(ref errs) => (
                 StatusCode::UNPROCESSABLE_ENTITY,
@@ -221,10 +239,14 @@ mod tests {
 
     #[tokio::test]
     async fn test_into_response_too_many_requests() {
-        let err = AppError::TooManyRequests("Too many requests".to_string());
+        let err = AppError::TooManyRequests {
+            message: "Too many requests".to_string(),
+            retry_after_secs: Some(120),
+        };
         let res = err.into_response();
 
         assert_eq!(res.status(), StatusCode::TOO_MANY_REQUESTS);
+        assert_eq!(res.headers()[axum::http::header::RETRY_AFTER], "120");
 
         let body = to_bytes(res.into_body(), usize::MAX).await.unwrap();
         let json: Value = serde_json::from_slice(&body).unwrap();

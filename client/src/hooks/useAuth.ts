@@ -10,6 +10,7 @@ import {
 	isImpersonating,
 	storeTokens,
 } from "#/utils/impersonation";
+import { retryAfterMinutes } from "#/utils/rateLimit";
 
 type LoginPayload = components["schemas"]["LoginPayload"];
 type RegisterPayload = components["schemas"]["RegisterPayload"];
@@ -21,6 +22,20 @@ export const authKeys = {
 	all: ["auth"] as const,
 	me: () => [...authKeys.all, "me"] as const,
 };
+
+/** Throws a translated "try again in N min" error when `response` is a 429 */
+function throwIfRateLimited(response: Response | undefined) {
+	const minutes = retryAfterMinutes(response);
+	if (minutes !== null) {
+		throw new Error(
+			i18next.t("liianMontaYritystaYritaUudelleen", {
+				minutes,
+				defaultValue:
+					"Liian monta yritystä. Yritä uudelleen {{minutes}} minuutin kuluttua.",
+			}),
+		);
+	}
+}
 
 const IDLE_TIMEOUT_MS = 15 * 60 * 1000; // 15 minutes of inactivity considered idle
 const REFRESH_BUFFER_MS = 2 * 60 * 1000; // Refresh 2 minutes before expiration
@@ -164,8 +179,11 @@ export function useAuth() {
 
 	const loginMutation = useMutation({
 		mutationFn: async (payload: LoginPayload) => {
-			const { data, error } = await api.POST("/auth/login", { body: payload });
+			const { data, error, response } = await api.POST("/auth/login", {
+				body: payload,
+			});
 			if (error) {
+				throwIfRateLimited(response);
 				const msg =
 					(error as { error?: string })?.error ||
 					i18next.t(
@@ -181,8 +199,11 @@ export function useAuth() {
 
 	const requestOtpMutation = useMutation({
 		mutationFn: async (payload: RequestOtpPayload) => {
-			const { error } = await api.POST("/auth/otp/request", { body: payload });
+			const { error, response } = await api.POST("/auth/otp/request", {
+				body: payload,
+			});
 			if (error) {
+				throwIfRateLimited(response);
 				const msg =
 					(error as { error?: string })?.error ||
 					i18next.t(
@@ -196,10 +217,11 @@ export function useAuth() {
 
 	const verifyOtpMutation = useMutation({
 		mutationFn: async (payload: VerifyOtpPayload) => {
-			const { data, error } = await api.POST("/auth/otp/verify", {
+			const { data, error, response } = await api.POST("/auth/otp/verify", {
 				body: payload,
 			});
 			if (error) {
+				throwIfRateLimited(response);
 				const msg =
 					(error as { error?: string })?.error ||
 					i18next.t(
@@ -215,10 +237,11 @@ export function useAuth() {
 
 	const registerMutation = useMutation({
 		mutationFn: async (payload: RegisterPayload) => {
-			const { data, error } = await api.POST("/auth/register", {
+			const { data, error, response } = await api.POST("/auth/register", {
 				body: payload,
 			});
 			if (error) {
+				throwIfRateLimited(response);
 				const msg =
 					(error as { error?: string })?.error ||
 					i18next.t(

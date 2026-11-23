@@ -490,6 +490,7 @@
 	"virheellinenSahkoposti": "Ogiltig e-postadress",
 	"virheellinenSahkopostiTaiSalasana": "Ogiltig e-postadress eller ogiltigt lösenord.",
 	"virheellinenTaiVanhentunutKoodi": "Ogiltig eller utgången kod.",
+	"liianMontaYritystaYritaUudelleen": "För många försök. Försök igen om {{minutes}} min.",
 	"vlj": "Luftig",
 	"voimassaOlevatRajoitukset": "Gällande begränsningar ({{count}})",
 	"vuokralainen": "Hyresgäst",
