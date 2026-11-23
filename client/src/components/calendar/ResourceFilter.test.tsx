@@ -35,54 +35,57 @@ describe("ResourceFilter", () => {
 		return onChange;
 	};
 
-	it("is collapsed on request and shows the selection itself", () => {
+	it("starts closed and summarises the selection in the button", () => {
 		setup(["r1"], false);
 		expect(screen.queryByRole("button", { name: "Sali 101" })).toBeNull();
-		expect(screen.getByText("Sali 101")).toBeTruthy();
-		expect(
-			screen
-				.getByRole("button", { name: /Resources/ })
-				.getAttribute("aria-expanded"),
-		).toBe("false");
+		const trigger = screen.getByRole("button", { name: /Resources/ });
+		expect(trigger.getAttribute("aria-expanded")).toBe("false");
+		expect(trigger.textContent).toContain("Sali 101");
 	});
 
-	it("shows all-selected, chips with remove buttons, overflow and empty hint", () => {
-		const onChange = setup(["r1", "r2", "r3"], false);
-		expect(screen.getByText("All resources (3)")).toBeTruthy();
-		fireEvent.click(screen.getByRole("button", { name: "Clear" }));
-		expect(onChange).toHaveBeenLastCalledWith([]);
-	});
-
-	it("deselects a chip directly from the collapsed bar", () => {
-		const onChange = setup(["r1", "r2"], false);
-		fireEvent.click(screen.getByRole("button", { name: "Deselect: Kamera" }));
-		expect(onChange).toHaveBeenLastCalledWith(["r1"]);
-		fireEvent.click(screen.getByRole("button", { name: "Select all" }));
-		expect(onChange).toHaveBeenLastCalledWith(["r1", "r2", "r3"]);
-	});
-
-	it("hints when nothing is selected", () => {
-		setup([], false);
-		expect(screen.getByText(/No resources selected/)).toBeTruthy();
-	});
-
-	it("collapses extra chips into a +N chip that opens the panel", () => {
-		const many = Array.from({ length: 10 }, (_, i) => ({
-			id: `m${i}`,
-			name: `Res ${i}`,
-			color: "blue",
-			collection_id: "c1",
-		}));
-		render(
+	it("summarises all, some and none", () => {
+		const { rerender } = render(
 			<ResourceFilter
-				resources={many}
+				resources={resources}
 				collections={collections}
-				selectedIds={many.slice(0, 9).map((r) => r.id)}
+				selectedIds={["r1", "r2", "r3"]}
 				onChange={() => {}}
 			/>,
 		);
-		fireEvent.click(screen.getByRole("button", { name: /\(\+1\)/ }));
-		expect(screen.getByRole("button", { name: "Res 0" })).toBeTruthy();
+		const summary = () => screen.getByTestId("resource-summary").textContent;
+		expect(summary()).toBe("All (3)");
+		rerender(
+			<ResourceFilter
+				resources={resources}
+				collections={collections}
+				selectedIds={["r1", "r2"]}
+				onChange={() => {}}
+			/>,
+		);
+		expect(summary()).toBe("2/3");
+		rerender(
+			<ResourceFilter
+				resources={resources}
+				collections={collections}
+				selectedIds={[]}
+				onChange={() => {}}
+			/>,
+		);
+		expect(summary()).toBe("None");
+	});
+
+	it("opens the popover from the button", () => {
+		setup(["r1"], false);
+		fireEvent.click(screen.getByRole("button", { name: /Resources/ }));
+		expect(screen.getByRole("button", { name: "Kamera" })).toBeTruthy();
+	});
+
+	it("selects all and none from the popover", () => {
+		const onChange = setup(["r1"]);
+		fireEvent.click(screen.getByRole("button", { name: "All" }));
+		expect(onChange).toHaveBeenLastCalledWith(["r1", "r2", "r3"]);
+		fireEvent.click(screen.getByRole("button", { name: "None" }));
+		expect(onChange).toHaveBeenLastCalledWith([]);
 	});
 
 	it("toggles a resource and supports solo with ctrl-click", () => {

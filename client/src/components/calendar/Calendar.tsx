@@ -409,7 +409,7 @@ export function Calendar({
 	}
 
 	return (
-		<div className="flex flex-col gap-3 h-full min-h-0 min-w-0 w-full max-w-7xl">
+		<div className="flex flex-col gap-3 h-full min-h-0 min-w-0 w-full">
 			<PageHeader
 				title={t("kalenteri", "Kalenteri")}
 				actions={
@@ -422,8 +422,18 @@ export function Calendar({
 				}
 			/>
 
-			{/* Two logical groups: date navigation, then view / length / density. Each stays one row. */}
-			<FilterBar className="shrink-0 gap-x-3">
+			{/* Date navigation, then view / length / density, then the resource filter on the right */}
+			<FilterBar
+				className="shrink-0 gap-x-3"
+				actions={
+					<ResourceFilter
+						resources={resources ?? []}
+						collections={collections ?? []}
+						selectedIds={activeResourceIds}
+						onChange={(ids) => onSearchChange({ resources: ids })}
+					/>
+				}
+			>
 				<div className="flex w-full items-center gap-1 md:w-auto">
 					<Button
 						variant="outline"
@@ -515,13 +525,14 @@ export function Calendar({
 				</div>
 			</FilterBar>
 
-			<ResourceFilter
-				className="shrink-0"
-				resources={resources ?? []}
-				collections={collections ?? []}
-				selectedIds={activeResourceIds}
-				onChange={(ids) => onSearchChange({ resources: ids })}
-			/>
+			{activeResourceIds.length === 0 && (
+				<p className="shrink-0 text-sm text-ink-muted">
+					{t(
+						"kalenteriEiValittujaResursseja",
+						"Ei resursseja valittuna. Valitse näytettävät resurssit Resurssit-valikosta.",
+					)}
+				</p>
+			)}
 
 			{/* Main Calendar View */}
 			{isMonth ? (
