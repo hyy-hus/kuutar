@@ -3,7 +3,7 @@ use anyhow::Context;
 use clap::Parser;
 use dotenvy::dotenv;
 use sqlx::postgres::PgPoolOptions;
-use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
+use tracing_subscriber::{EnvFilter, layer::SubscriberExt, util::SubscriberInitExt};
 
 use kuutar::{app, config::Config, seed};
 
@@ -13,7 +13,10 @@ async fn main() -> anyhow::Result<()> {
 
     let config = Config::parse();
 
+    // Without a filter every crate logs at TRACE level, which floods the logs and costs CPU.
+    // RUST_LOG overrides the default, e.g. `RUST_LOG=info,kuutar=debug`.
     tracing_subscriber::registry()
+        .with(EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("info")))
         .with(tracing_subscriber::fmt::layer())
         .init();
 

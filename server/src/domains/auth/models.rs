@@ -4,7 +4,8 @@ use utoipa::ToSchema;
 use uuid::Uuid;
 use validator::Validate;
 
-use crate::utils::trim::deserialize_trimmed_string;
+use crate::utils::{redact::Redacted, trim::deserialize_trimmed_string};
+use std::fmt;
 
 #[derive(Debug, Serialize, Deserialize, sqlx::FromRow, ToSchema)]
 pub struct RefreshToken {
@@ -16,7 +17,7 @@ pub struct RefreshToken {
     pub revoked_at: Option<DateTime<Utc>>,
 }
 
-#[derive(Debug, Serialize, ToSchema)]
+#[derive(Serialize, ToSchema)]
 pub struct AuthTokens {
     pub access_token: String,
     pub refresh_token: String,
@@ -39,7 +40,7 @@ pub struct SessionInfo {
     pub impersonated_by: Option<Uuid>,
 }
 
-#[derive(Debug, Deserialize, Validate, ToSchema)]
+#[derive(Deserialize, Validate, ToSchema)]
 pub struct RegisterPayload {
     pub group_id: Uuid,
 
@@ -55,7 +56,7 @@ pub struct RegisterPayload {
     pub password: String,
 }
 
-#[derive(Debug, Deserialize, Validate, ToSchema)]
+#[derive(Deserialize, Validate, ToSchema)]
 pub struct LoginPayload {
     #[serde(deserialize_with = "deserialize_trimmed_string")]
     #[validate(email(message = "Invalid email address format"))]
@@ -65,7 +66,7 @@ pub struct LoginPayload {
     pub password: String,
 }
 
-#[derive(Debug, Deserialize, Validate, ToSchema)]
+#[derive(Deserialize, Validate, ToSchema)]
 pub struct RefreshPayload {
     pub refresh_token: String,
 }
@@ -77,7 +78,7 @@ pub struct RequestOtpPayload {
     pub email: String,
 }
 
-#[derive(Debug, Deserialize, Validate, ToSchema)]
+#[derive(Deserialize, Validate, ToSchema)]
 pub struct VerifyOtpPayload {
     #[serde(deserialize_with = "deserialize_trimmed_string")]
     #[validate(email(message = "Invalid email address format"))]
@@ -86,6 +87,56 @@ pub struct VerifyOtpPayload {
     #[serde(deserialize_with = "deserialize_trimmed_string")]
     #[validate(length(min = 6, max = 6, message = "OTP code must be 6 digits"))]
     pub code: String,
+}
+
+// Hand-written so passwords, tokens and OTP codes never reach the logs
+
+impl fmt::Debug for AuthTokens {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("AuthTokens")
+            .field("access_token", &Redacted)
+            .field("refresh_token", &Redacted)
+            .field("token_type", &self.token_type)
+            .field("expires_in", &self.expires_in)
+            .finish()
+    }
+}
+
+impl fmt::Debug for RegisterPayload {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("RegisterPayload")
+            .field("group_id", &self.group_id)
+            .field("name", &self.name)
+            .field("email", &self.email)
+            .field("password", &Redacted)
+            .finish()
+    }
+}
+
+impl fmt::Debug for LoginPayload {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("LoginPayload")
+            .field("email", &self.email)
+            .field("password", &Redacted)
+            .finish()
+    }
+}
+
+impl fmt::Debug for RefreshPayload {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("RefreshPayload")
+            .field("refresh_token", &Redacted)
+            .finish()
+    }
+}
+
+impl fmt::Debug for VerifyOtpPayload {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("VerifyOtpPayload")
+            .field("email", &self.email)
+            .field("code", &Redacted)
+            .finish()
+    }
 }
 
 #[cfg(test)]
@@ -217,5 +268,46 @@ mod tests {
         };
 
         assert!(payload.validate().is_ok());
+    }
+
+    // --- Debug output never shows secrets ---
+
+    #[test]
+    fn test_debug_redacts_secrets() {
+        let login = LoginPayload {
+            email: "user@example.test".into(),
+            password: "hunter2-secret".into(),
+        };
+        let refresh = RefreshPayload {
+            refresh_token: "refresh-secret".into(),
+        };
+        let otp = VerifyOtpPayload {
+            email: "user@example.test".into(),
+            code: "123456".into(),
+        };
+        let register = RegisterPayload {
+            group_id: Uuid::nil(),
+            name: "Test".into(),
+            email: "user@example.test".into(),
+            password: "hunter2-secret".into(),
+        };
+        let tokens = AuthTokens {
+            access_token: "access-secret".into(),
+            refresh_token: "refresh-secret".into(),
+            token_type: "Bearer".into(),
+            expires_in: 900,
+        };
+
+        let out = format!("{login:?} {refresh:?} {otp:?} {register:?} {tokens:?}");
+        for secret in [
+            "hunter2-secret",
+            "refresh-secret",
+            "123456",
+            "access-secret",
+        ] {
+            assert!(!out.contains(secret), "{secret} leaked: {out}");
+        }
+        assert!(out.contains("user@example.test"));
+        assert!(out.contains("<redacted>"));
     }
 }
