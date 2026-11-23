@@ -74,6 +74,7 @@ Every page is a `PageContainer` with a `PageHeader` at the top.
 | `default` (`max-w-3xl`) | Detail pages |
 | `narrow` (`max-w-xl`) | Single-column forms |
 | `FormLayout` (`max-w-5xl`) | Create/edit pages |
+| No cap (`w-full`) | The calendar only: its grid uses the whole screen. Its toolbar holds the resource filter as a button with a popover (`ResourceFilter`) so no extra row is needed above the grid |
 
 `PageHeader` slots:
 - `title`: the nav label on list pages, the entity name on detail pages. No icon.

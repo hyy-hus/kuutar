@@ -17,7 +17,15 @@ const resources = [
 const meta = {
 	title: "Calendar/ResourceFilter",
 	component: ResourceFilter,
+	// Room below the button for the open popover
 	parameters: { layout: "padded" },
+	decorators: [
+		(Story) => (
+			<div className="flex min-h-96 justify-end">
+				<Story />
+			</div>
+		),
+	],
 	render: (args) => {
 		const [ids, setIds] = useState(["r1", "r4"]);
 		return <ResourceFilter {...args} selectedIds={ids} onChange={setIds} />;

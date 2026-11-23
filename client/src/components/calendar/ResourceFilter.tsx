@@ -1,6 +1,8 @@
-import { Check, ChevronDown, Layers, X } from "lucide-react";
+import { Check, ChevronDown, Layers } from "lucide-react";
+import { Popover } from "radix-ui";
 import { useId, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Button } from "#/components/Button";
 import { cn } from "#/utils/cn";
 import { getCollectionIcon } from "#/utils/collectionIcons";
 import {
@@ -8,7 +10,6 @@ import {
 	getResourceColor,
 	getResourceHex,
 } from "#/utils/resourceColors";
-import { useIsMobile } from "./useIsMobile";
 
 export interface FilterResource {
 	id: string;
@@ -28,10 +29,13 @@ interface ResourceFilterProps {
 	collections: FilterCollection[];
 	selectedIds: string[];
 	onChange: (ids: string[]) => void;
-	/** Whether the panel starts open; narrow screens start collapsed */
+	/** Whether the popover starts open */
 	defaultOpen?: boolean;
 	className?: string;
 }
+
+/** Colour dots shown in the button for a partial selection */
+const MAX_DOTS = 5;
 
 interface Group {
 	id: string;
@@ -67,8 +71,8 @@ export function groupResources(
 }
 
 /**
- * Collapsible resource filter for the calendar: a bar with the selection count that opens a
- * panel of chips grouped by collection. A selected chip is tinted in the resource's colour.
+ * Resource filter for the calendar toolbar: a button with the selection summary that opens a
+ * popover of chips grouped by collection. A selected chip is tinted in the resource's colour.
  */
 export function ResourceFilter({
 	resources,
@@ -88,13 +92,18 @@ export function ResourceFilter({
 	const selected = new Set(selectedIds);
 	const selectedResources = resources.filter((r) => selected.has(r.id));
 	const selectedCount = selectedResources.length;
-	const isMobile = useIsMobile();
-	// Few enough chips to stay within two lines; the rest collapses into a "+N" chip
-	const maxChips = isMobile ? 3 : 8;
-	const shownChips = selectedResources.slice(0, maxChips);
-	const hiddenCount = selectedCount - shownChips.length;
 	const allSelected =
 		resources.length > 0 && selectedCount === resources.length;
+	// A partial selection shows its colours in the button, a few at most
+	const dots = allSelected ? [] : selectedResources.slice(0, MAX_DOTS);
+
+	const summary = allSelected
+		? t("kaikkiMaara", "Kaikki ({{count}})", { count: resources.length })
+		: selectedCount === 0
+			? t("eiYhtaan", "Ei yhtään")
+			: selectedCount === 1
+				? selectedResources[0].name
+				: `${selectedCount}/${resources.length}`;
 
 	const setGroup = (group: Group, on: boolean) => {
 		const ids = new Set(group.resources.map((r) => r.id));
@@ -112,95 +121,53 @@ export function ResourceFilter({
 		"focus-ring rounded-sm px-1.5 py-0.5 text-xs font-medium text-accent underline-offset-2 hover:underline cursor-pointer";
 
 	return (
-		<div
-			className={cn(
-				"rounded-md border border-stone-300 dark:border-stone-700",
-				className,
-			)}
-		>
-			<div className="flex items-center gap-1 pr-2">
-				<button
-					type="button"
-					aria-expanded={open}
-					aria-controls={panelId}
-					onClick={() => setOpen((o) => !o)}
-					className="focus-ring flex h-10 min-w-0 flex-1 cursor-pointer items-center gap-2 rounded-md px-3 text-sm font-medium hover:bg-stone-100 dark:hover:bg-stone-900"
+		<Popover.Root open={open} onOpenChange={setOpen}>
+			<Popover.Trigger asChild>
+				<Button
+					variant="outline"
+					size="sm"
+					className={cn("min-w-0 max-w-full gap-1.5", className)}
 				>
 					<Layers size={16} aria-hidden="true" />
 					<span>{t("resurssit", "Resurssit")}</span>
+					<span
+						data-testid="resource-summary"
+						className={cn(
+							"min-w-0 truncate font-normal tabular-nums",
+							selectedCount === 0
+								? "text-status-warning-ink"
+								: "text-ink-muted",
+						)}
+					>
+						{summary}
+					</span>
+					{dots.length > 0 && (
+						<span aria-hidden="true" className="flex shrink-0 -space-x-1">
+							{dots.map((res) => (
+								<span
+									key={res.id}
+									className="size-2.5 rounded-full ring-1 ring-surface-raised"
+									style={{ backgroundColor: getResourceHex(res.color) }}
+								/>
+							))}
+						</span>
+					)}
 					<ChevronDown
 						size={16}
 						aria-hidden="true"
-						className={cn("ml-auto transition-transform", open && "rotate-180")}
+						className={cn(
+							"shrink-0 transition-transform",
+							open && "rotate-180",
+						)}
 					/>
-				</button>
-				{resources.length > 0 && (
-					<button
-						type="button"
-						className={quick}
-						onClick={() =>
-							onChange(allSelected ? [] : resources.map((r) => r.id))
-						}
-					>
-						{allSelected
-							? t("tyhjenna", "Tyhjennä")
-							: t("valitseKaikki", "Valitse kaikki")}
-					</button>
-				)}
-			</div>
-
-			<div
-				data-testid="resource-summary"
-				className="flex flex-wrap items-center gap-1.5 px-3 pb-2"
-			>
-				{allSelected ? (
-					<span className="text-sm font-medium">
-						{t("kaikkiResurssitMaara", "Kaikki resurssit ({{count}})", {
-							count: resources.length,
-						})}
-					</span>
-				) : selectedCount === 0 ? (
-					<span className="text-xs text-stone-600 dark:text-stone-400">
-						{t(
-							"kalenteriEiValittujaResursseja",
-							"Ei resursseja valittuna. Avaa lista ja valitse näytettävät resurssit.",
-						)}
-					</span>
-				) : (
-					<>
-						{shownChips.map((res) => (
-							<SelectedChip
-								key={res.id}
-								resource={res}
-								onRemove={() =>
-									onChange(selectedIds.filter((x) => x !== res.id))
-								}
-							/>
-						))}
-						{hiddenCount > 0 && (
-							<button
-								type="button"
-								aria-expanded={open}
-								aria-controls={panelId}
-								aria-label={t(
-									"naytaKaikkiValitut",
-									"Näytä kaikki valitut resurssit (+{{count}})",
-									{ count: hiddenCount },
-								)}
-								onClick={() => setOpen(true)}
-								className="focus-ring cursor-pointer rounded-sm border border-stone-300 px-2 py-1 text-xs font-medium tabular-nums hover:bg-stone-100 dark:border-stone-700 dark:hover:bg-stone-900"
-							>
-								{`+${hiddenCount}`}
-							</button>
-						)}
-					</>
-				)}
-			</div>
-
-			{open && (
-				<div
-					id={panelId}
-					className="space-y-3 border-t border-stone-300 p-3 dark:border-stone-700"
+				</Button>
+			</Popover.Trigger>
+			<Popover.Portal>
+				<Popover.Content
+					align="end"
+					sideOffset={6}
+					collisionPadding={16}
+					className="z-50 max-h-(--radix-popover-content-available-height) w-[40rem] max-w-[calc(100vw-2rem)] space-y-3 overflow-y-auto rounded-md border border-line-strong bg-surface-raised p-3 text-ink focus:outline-none"
 				>
 					<div className="flex flex-wrap items-center gap-x-3 gap-y-1">
 						<p className="text-xs text-stone-600 dark:text-stone-400">
@@ -275,9 +242,9 @@ export function ResourceFilter({
 							</fieldset>
 						);
 					})}
-				</div>
-			)}
-		</div>
+				</Popover.Content>
+			</Popover.Portal>
+		</Popover.Root>
 	);
 }
 
@@ -336,37 +303,5 @@ function ResourceChip({
 			</span>
 			{resource.name}
 		</button>
-	);
-}
-
-/** Compact chip in the collapsed bar: colour dot, name and a button that deselects the resource */
-function SelectedChip({
-	resource,
-	onRemove,
-}: {
-	resource: FilterResource;
-	onRemove: () => void;
-}) {
-	const { t } = useTranslation();
-	const hex = getResourceHex(resource.color);
-	return (
-		<span className="inline-flex max-w-[calc(50%-0.25rem)] items-center gap-1.5 rounded-sm border border-stone-300 bg-stone-50 py-0.5 pr-0.5 pl-2 text-xs font-medium sm:max-w-56 dark:border-stone-700 dark:bg-stone-900">
-			<span
-				aria-hidden="true"
-				className="size-2.5 shrink-0 rounded-full"
-				style={{ backgroundColor: hex }}
-			/>
-			<span className="truncate">{resource.name}</span>
-			<button
-				type="button"
-				aria-label={t("poistaValinta", "Poista valinta: {{name}}", {
-					name: resource.name,
-				})}
-				onClick={onRemove}
-				className="focus-ring inline-flex size-6 shrink-0 cursor-pointer items-center justify-center rounded-sm hover:bg-stone-200 dark:hover:bg-stone-800"
-			>
-				<X size={12} aria-hidden="true" />
-			</button>
-		</span>
 	);
 }
