@@ -23,8 +23,9 @@ pub struct Config {
     #[arg(long, env = "MAX_DB_CONNECTIONS", default_value_t = 5)]
     pub max_db_connections: u32,
 
-    /// Seconds an unused pooled connection stays open. Open connections can keep a
-    /// Serverless SQL database from scaling to zero, so keep this short.
+    /// Seconds an unused pooled connection stays open. Production runs on a managed
+    /// PostgreSQL instance shared with other apps, so idle connections are closed to
+    /// leave room in its connection limit (and so a scale-to-zero database could sleep).
     #[arg(long, env = "DB_IDLE_TIMEOUT_SECONDS", default_value_t = 30)]
     pub db_idle_timeout_seconds: u64,
 

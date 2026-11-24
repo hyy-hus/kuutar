@@ -6,4 +6,6 @@ Muutokset, jotka on yhdistetty `main`-haaraan mutta joita ei ole vielä julkaist
 
 ## Korjattua
 
+- Tuotannon tietokanta siirrettiin palvelimettomasta tietokannasta pysyvästi käynnissä olevaan hallinnoituun PostgreSQL-instanssiin (24.11.2026). Ensimmäinen sivunlataus tauon jälkeen ei enää odota tietokannan heräämistä noin kolmea sekuntia. (#159)
+
 ## Huomioitavaa päivitettäessä
